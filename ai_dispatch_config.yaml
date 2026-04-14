@@ -1,0 +1,11 @@
+experiment:
+  num_experiments: 1000
+  min_candidates: 5
+  max_candidates: 15
+  use_ai_model: true
+
+siliconflow:
+  api_key: "any"
+  model: "Qwen/Qwen2.5-7B-Instruct"
+  base_url: "http://localhost:8008/v1"
+  timeout_sec: 10

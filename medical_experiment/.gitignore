@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# Logs
+*.log
+api.log
+train.log
+api_server.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Ignore original raw data dumps if they are too big (optional)
+# stress_test_results/
+
+# NOTE: adapter_model.safetensors is ~155MB. 
+# If you are NOT using Git LFS, uncomment the line below to prevent upload errors:
+# *.safetensors
