@@ -38,3 +38,4 @@ Thumbs.db
 # NOTE: adapter_model.safetensors is ~155MB. 
 # If you are NOT using Git LFS, uncomment the line below to prevent upload errors:
 # *.safetensors
+medical_experiment/LLaMA-Factory/
