@@ -1,0 +1,4 @@
+[submodule "model_training"]
+	path = model_training
+	url = https://github.com/LCY2117/model_training.git
+	branch = main

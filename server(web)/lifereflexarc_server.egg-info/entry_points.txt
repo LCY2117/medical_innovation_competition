@@ -1,0 +1,2 @@
+[console_scripts]
+lifereflexarc-server = app.cli:main
