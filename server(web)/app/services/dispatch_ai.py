@@ -84,12 +84,19 @@ class DispatchPlanner:
 
     def explain(self) -> dict:
         provider = "fallback"
-        if self.local_base_url:
-            provider = "local_model"
-        elif self.api_key:
-            provider = "siliconflow"
+        if self.prefer_local:
+            if self.local_base_url:
+                provider = "local_model"
+            elif self.api_key:
+                provider = "siliconflow"
+        else:
+            if self.api_key:
+                provider = "siliconflow"
+            elif self.local_base_url:
+                provider = "local_model"
 
         info = {
+            "configured": bool(self.local_base_url or self.api_key),
             "localModelConfigured": bool(self.local_base_url),
             "localModelUrl": self.local_base_url,
             "siliconFlowConfigured": bool(self.api_key),

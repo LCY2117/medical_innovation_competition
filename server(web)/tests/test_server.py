@@ -97,6 +97,17 @@ class ServerTestCase(unittest.TestCase):
         self.assertFalse(payload["frontend"]["ok"])
         self.assertEqual(payload["loadedIncidents"], 0)
 
+    def test_dispatch_meta_is_serializable(self) -> None:
+        with self._client() as client:
+            response = client.get("/api/dispatch/meta")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("configured", payload)
+        self.assertIn("provider", payload)
+        self.assertIn("dispatchDelaySec", payload)
+        self.assertIn("systemPrompt", payload)
+
     def test_auth_register_and_login(self) -> None:
         with self._client() as client:
             register = client.post(
