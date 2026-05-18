@@ -1,0 +1,1056 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Activity,
+  CheckCircle2,
+  Clock,
+  HeartPulse,
+  LogOut,
+  MapPin,
+  Moon,
+  Navigation,
+  Radio,
+  RefreshCw,
+  Shield,
+  Siren,
+  Sun,
+  UserRound,
+  Zap,
+} from 'lucide-react';
+import {
+  autoJoinCurrent,
+  fetchAedSites,
+  fetchClients,
+  fetchCurrentIncident,
+  fetchIncident,
+  fetchMe,
+  joinIncident,
+  loginAccount,
+  logoutAccount,
+  openIncidentSocket,
+  patientSosCancel,
+  patientSosStart,
+  postIncidentAction,
+  registerAccount,
+  registerClient,
+  updateClientLocation,
+  type RegisterForm,
+} from '@/shared/api';
+import {
+  findUserRole,
+  formatDistanceLabel,
+  formatLocationLabel,
+  formatTimeLabel,
+  getResuscitationGuidance,
+  hasRunnerDelivered,
+  hasRunnerPicked,
+  isAedAnalyzing,
+  isRoleJoined,
+  isShockDelivered,
+  translatePhaseLabel,
+  translateRoleLabel,
+  translateRoleStatus,
+} from '@/shared/domain';
+import type { AedSite, AuthUser, ClientInfo, GeoPoint, IncidentState, RoleName } from '@/shared/types';
+import './mobile.css';
+
+type AuthMode = 'login' | 'register';
+type SyncStatus = 'idle' | 'connecting' | 'live' | 'reconnecting' | 'offline';
+type MobileView = 'home' | 'mission' | 'scene' | 'logs';
+type MobileTheme = 'light' | 'dark';
+type Notice = { kind: 'ok' | 'error' | 'info'; text: string } | null;
+
+interface StoredSession {
+  token: string;
+  user: AuthUser;
+  tokenExpiresAt?: number | null;
+}
+
+const SESSION_KEY = 'lra_mobile_session';
+const INCIDENT_KEY = 'lra_mobile_incident_id';
+const LOCATION_KEY = 'lra_mobile_location';
+const MOBILE_THEME_KEY = 'lra_mobile_theme';
+const defaultLocation: GeoPoint = {
+  latitude: 39.90412,
+  longitude: 116.40721,
+  accuracyMeters: 25,
+  label: '医创赛模拟现场',
+  floor: '二层',
+  source: 'mobile-demo',
+};
+
+const profilePresets = [
+  {
+    label: '患者端',
+    values: {
+      organization: '模拟社区',
+      healthCondition: '存在心脏骤停风险',
+      professionIdentity: '患者侧',
+      profileBio: '冠心病病史，需要重点监护，可用于预实验患者端。',
+    },
+  },
+  {
+    label: '医生',
+    values: {
+      organization: '市医院急救科',
+      healthCondition: '身体状态一般',
+      professionIdentity: '医生 / 专业急救人员',
+      profileBio: '熟悉 CPR 和 AED，可承担核心施救任务。',
+    },
+  },
+  {
+    label: 'AED 保障',
+    values: {
+      organization: '大学校园',
+      healthCondition: '身体素质良好',
+      professionIdentity: '有一定急救常识',
+      profileBio: '跑动能力强，熟悉路线，可快速取送 AED。',
+    },
+  },
+  {
+    label: '清障接驳',
+    values: {
+      organization: '校园安保',
+      healthCondition: '身体状态一般',
+      professionIdentity: '安保 / 物业 / 场地协调人员',
+      profileBio: '熟悉出入口、电梯与救护车通道。',
+    },
+  },
+];
+
+function readStoredSession(): StoredSession | null {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as StoredSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredLocation(): GeoPoint {
+  try {
+    const raw = window.localStorage.getItem(LOCATION_KEY);
+    return raw ? { ...defaultLocation, ...(JSON.parse(raw) as GeoPoint) } : defaultLocation;
+  } catch {
+    return defaultLocation;
+  }
+}
+
+function readStoredTheme(): MobileTheme {
+  try {
+    const stored = window.localStorage.getItem(MOBILE_THEME_KEY);
+    if (stored === 'light' || stored === 'dark') {
+      return stored;
+    }
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function saveSession(session: StoredSession | null): void {
+  if (!session) {
+    window.localStorage.removeItem(SESSION_KEY);
+    return;
+  }
+  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+function roleAction(role: RoleName, state: IncidentState | null): { label: string; action: string; disabled?: boolean; hint: string } {
+  if (role === 'PRIME') {
+    if (!state || !isRoleJoined(state.roles.PRIME?.status)) {
+      return { label: '响应核心施救', action: 'JOIN', hint: '确认接单后立即前往患者位置' };
+    }
+    if (!state.roles.PRIME?.status || state.roles.PRIME.status === 'ASSIGNED' || state.roles.PRIME.status === 'JOINED') {
+      return { label: '开始 CPR', action: 'CPR_STARTED', hint: '打开按压节拍与 30:2 提示' };
+    }
+    if (hasRunnerDelivered(state) && !isAedAnalyzing(state) && !isShockDelivered(state)) {
+      return { label: '启动 AED 分析', action: 'AED_ANALYSIS_STARTED', hint: '确认电极片贴附后操作' };
+    }
+    if (isAedAnalyzing(state)) {
+      return { label: '记录一次除颤', action: 'AED_SHOCK_DELIVERED', hint: '仅在 AED 建议电击后记录' };
+    }
+    if (isShockDelivered(state)) {
+      return { label: '二轮 AED 分析', action: 'AED_ANALYSIS_STARTED', hint: '继续 CPR 后可再次分析' };
+    }
+    return { label: '等待 AED 到场', action: 'WAIT', disabled: true, hint: 'AED 保障送达后才能进入分析' };
+  }
+  if (role === 'RUNNER') {
+    if (!state || !isRoleJoined(state.roles.RUNNER?.status)) {
+      return { label: '响应 AED 保障', action: 'JOIN', hint: '确认接单后前往最近 AED 点位' };
+    }
+    if (!hasRunnerPicked(state)) {
+      return { label: '已取到 AED', action: 'AED_PICKED', hint: '到达 AED 箱后点击' };
+    }
+    if (!hasRunnerDelivered(state)) {
+      return { label: 'AED 已送达', action: 'AED_DELIVERED', hint: '回到患者身边后点击' };
+    }
+    return { label: 'AED 已完成送达', action: 'WAIT', disabled: true, hint: '保持通信，协助核心施救' };
+  }
+  if (!state || !isRoleJoined(state.roles.GUIDE?.status)) {
+    return { label: '响应清障接驳', action: 'JOIN', hint: '确认接单后疏通通道' };
+  }
+  if (state.roles.GUIDE?.status !== 'AMBULANCE_ARRIVED' && state.phase !== 'HANDOVER' && state.phase !== 'ARCHIVED') {
+    return { label: '救护车已到场', action: 'AMBULANCE_ARRIVED', hint: '完成接驳后点击' };
+  }
+  if (state.phase !== 'ARCHIVED') {
+    return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
+  }
+  return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本次模拟流程已结束' };
+}
+
+function selectPrimaryAed(state: IncidentState | null, aedSites: AedSite[], role: RoleName | null): AedSite | null {
+  const sites = state?.aedSites?.length ? state.aedSites : aedSites;
+  if (!sites.length) {
+    return null;
+  }
+  const targetId = role ? state?.dispatchRationale?.[role]?.nearestAedSiteId : null;
+  return sites.find((site) => site.siteId === targetId) ?? sites[0];
+}
+
+function shortId(value?: string | null): string {
+  if (!value) {
+    return '未记录';
+  }
+  return value.length > 8 ? value.slice(0, 8) : value;
+}
+
+function translateDispatchSource(source?: string): string {
+  switch (source) {
+    case 'fallback':
+      return '规则兜底';
+    case 'local_model':
+      return '本地模型';
+    case 'siliconflow':
+      return '云端模型';
+    default:
+      return source && !/[A-Za-z]/.test(source) ? source : '系统';
+  }
+}
+
+function translateLogMessage(message: string, clients: ClientInfo[]): string {
+  const displayUser = (userId?: string | null) => {
+    const client = clients.find((item) => item.userId === userId);
+    return client?.displayName || shortId(userId);
+  };
+  const assigned = message.match(/^(PRIME|RUNNER|GUIDE) assigned \(([^)]+)\) via (.+)$/);
+  if (assigned) {
+    return `${translateRoleLabel(assigned[1])}已分配给 ${displayUser(assigned[2])}，来源：${translateDispatchSource(assigned[3])}`;
+  }
+  const joined = message.match(/^(PRIME|RUNNER|GUIDE) joined \(([^)]+)\)$/);
+  if (joined) {
+    return `${translateRoleLabel(joined[1])}已响应，用户：${displayUser(joined[2])}`;
+  }
+  const autoJoined = message.match(/^(PRIME|RUNNER|GUIDE) auto-joined \(([^)]+)\)$/);
+  if (autoJoined) {
+    return `${translateRoleLabel(autoJoined[1])}自动接单，用户：${displayUser(autoJoined[2])}`;
+  }
+  const patientDesignated = message.match(/^Patient designated by (.+) \(([^)]+)\)$/);
+  if (patientDesignated) {
+    const rawSource = patientDesignated[1];
+    const source = rawSource.startsWith('patient SOS') ? '患者 SOS' : rawSource === 'dashboard' ? '调度台' : '系统';
+    return `患者事件已由${source} 触发，患者：${displayUser(patientDesignated[2])}`;
+  }
+  const patientSos = message.match(/^Patient SOS (alerting started|confirmed|alerting canceled) \(([^)]+)\)$/);
+  if (patientSos) {
+    const label =
+      patientSos[1] === 'alerting started'
+        ? '患者 SOS 已启动'
+        : patientSos[1] === 'confirmed'
+          ? '患者 SOS 已确认'
+          : '患者 SOS 已取消';
+    return `${label}，患者：${displayUser(patientSos[2])}`;
+  }
+  const cpr = message.match(/^CPR started by (.+)$/);
+  if (cpr) {
+    return `CPR 已开始，执行者：${displayUser(cpr[1])}`;
+  }
+  const aedPicked = message.match(/^AED picked by (.+)$/);
+  if (aedPicked) {
+    return `AED 已取到，执行者：${displayUser(aedPicked[1])}`;
+  }
+  const aedDelivered = message.match(/^AED delivered by (.+)$/);
+  if (aedDelivered) {
+    return `AED 已送达，执行者：${displayUser(aedDelivered[1])}`;
+  }
+  const analysis = message.match(/^AED analysis started by (.+)$/);
+  if (analysis) {
+    return `AED 分析已开始，执行者：${displayUser(analysis[1])}`;
+  }
+  const shock = message.match(/^AED shock delivered by (.+)$/);
+  if (shock) {
+    return `AED 除颤已记录，执行者：${displayUser(shock[1])}`;
+  }
+  const ambulance = message.match(/^Ambulance arrived \(reported by (.+)\)$/);
+  if (ambulance) {
+    return `救护车已到场，上报者：${displayUser(ambulance[1])}`;
+  }
+  const handover = message.match(/^Handover completed by (.+)$/);
+  if (handover) {
+    return `交接已完成，确认者：${displayUser(handover[1])}`;
+  }
+  const aedUpdated = message.match(/^AED site updated \((.+)\)$/);
+  if (aedUpdated) {
+    return `AED 点位已更新：${aedUpdated[1]}`;
+  }
+  switch (message) {
+    case 'AI dispatching started':
+      return '智能调度已启动';
+    case 'Incident reset':
+      return '事件已重置';
+    case 'Incident created':
+      return '事件已创建';
+    case 'Demo scenario bootstrapped':
+      return '演示场景已初始化';
+    case 'SOS alerting started':
+      return 'SOS 已启动';
+    case 'SOS alerting canceled':
+      return 'SOS 已取消';
+    case 'Incident auto-triggered':
+      return '事件已自动触发';
+    default:
+      return /[A-Za-z]/.test(message) ? '系统记录已更新' : message;
+  }
+}
+
+function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSession) => void }) {
+  const [mode, setMode] = useState<AuthMode>('login');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<Notice>(null);
+  const [form, setForm] = useState<RegisterForm>({
+    displayName: 'LCY 移动端',
+    phone: '',
+    password: '',
+    organization: profilePresets[0].values.organization,
+    healthCondition: profilePresets[0].values.healthCondition,
+    professionIdentity: profilePresets[0].values.professionIdentity,
+    profileBio: profilePresets[0].values.profileBio,
+  });
+
+  const updateForm = (key: keyof RegisterForm, value: string) => setForm((current) => ({ ...current, [key]: value }));
+
+  async function submit() {
+    if (!form.phone.trim() || !form.password.trim()) {
+      setNotice({ kind: 'error', text: '请输入手机号和密码。' });
+      return;
+    }
+    setBusy(true);
+    setNotice(null);
+    try {
+      const auth =
+        mode === 'login'
+          ? await loginAccount(form.phone.trim(), form.password)
+          : await registerAccount({ ...form, phone: form.phone.trim() });
+      const session = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt };
+      saveSession(session);
+      onAuthenticated(session);
+    } catch (error) {
+      setNotice({ kind: 'error', text: error instanceof Error ? error.message : '认证失败' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <main className="mobile-shell mobile-auth-shell">
+      <section className="mobile-hero">
+        <div className="mobile-app-mark">
+          <HeartPulse size={28} />
+        </div>
+        <p className="mobile-kicker">生命反射弧移动端</p>
+        <h1>浏览器应急端</h1>
+        <p>无需安装应用，手机浏览器即可登录、接入事件、触发 SOS、执行急救任务。</p>
+      </section>
+
+      <section className="mobile-panel" id="top">
+        <div className="mobile-segment">
+          <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>
+            登录
+          </button>
+          <button className={mode === 'register' ? 'active' : ''} onClick={() => setMode('register')}>
+            注册
+          </button>
+        </div>
+
+        {mode === 'register' && (
+          <div className="mobile-presets">
+            {profilePresets.map((preset) => (
+              <button
+                key={preset.label}
+                onClick={() => setForm((current) => ({ ...current, ...preset.values }))}
+                type="button"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <label>
+          手机号
+          <input
+            inputMode="tel"
+            autoComplete="tel"
+            value={form.phone}
+            onChange={(event) => updateForm('phone', event.target.value)}
+            placeholder="用于登录演示账号"
+          />
+        </label>
+        <label>
+          密码
+          <input
+            type="password"
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            value={form.password}
+            onChange={(event) => updateForm('password', event.target.value)}
+            placeholder="至少 6 位"
+          />
+        </label>
+
+        {mode === 'register' && (
+          <>
+            <label>
+              昵称
+              <input value={form.displayName} onChange={(event) => updateForm('displayName', event.target.value)} />
+            </label>
+            <label>
+              组织
+              <input value={form.organization} onChange={(event) => updateForm('organization', event.target.value)} />
+            </label>
+            <label>
+              身体状况
+              <input value={form.healthCondition} onChange={(event) => updateForm('healthCondition', event.target.value)} />
+            </label>
+            <label>
+              职业身份
+              <input
+                value={form.professionIdentity}
+                onChange={(event) => updateForm('professionIdentity', event.target.value)}
+              />
+            </label>
+            <label>
+              个人介绍
+              <textarea value={form.profileBio} onChange={(event) => updateForm('profileBio', event.target.value)} rows={3} />
+            </label>
+          </>
+        )}
+
+        {notice && <div className={`mobile-notice ${notice.kind}`}>{notice.text}</div>}
+        <button className="mobile-primary-button" onClick={submit} disabled={busy}>
+          {busy ? '处理中...' : mode === 'login' ? '进入移动端' : '创建账号并进入'}
+        </button>
+      </section>
+    </main>
+  );
+}
+
+function MobileApp() {
+  const [theme, setTheme] = useState<MobileTheme>(() => readStoredTheme());
+  const [session, setSession] = useState<StoredSession | null>(() => readStoredSession());
+  const [booting, setBooting] = useState(Boolean(readStoredSession()));
+  const [incidentIdInput, setIncidentIdInput] = useState(() => window.localStorage.getItem(INCIDENT_KEY) ?? '');
+  const [incident, setIncident] = useState<IncidentState | null>(null);
+  const [clients, setClients] = useState<ClientInfo[]>([]);
+  const [aedSites, setAedSites] = useState<AedSite[]>([]);
+  const [location, setLocation] = useState<GeoPoint>(() => readStoredLocation());
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [notice, setNotice] = useState<Notice>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [activeView, setActiveView] = useState<MobileView>('home');
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectRef = useRef<number | null>(null);
+
+  const token = session?.token ?? '';
+  const user = session?.user ?? null;
+  const userRole = useMemo(() => findUserRole(incident, user?.userId), [incident, user?.userId]);
+  const isPatient = Boolean(incident?.patientUserId && incident.patientUserId === user?.userId);
+  const currentClient = useMemo(
+    () => clients.find((client) => client.userId === user?.userId) ?? null,
+    [clients, user?.userId],
+  );
+  const activeRole = userRole ?? (currentClient?.assignedRole as RoleName | null) ?? null;
+  const primaryAed = useMemo(() => selectPrimaryAed(incident, aedSites, activeRole), [incident, aedSites, activeRole]);
+  const elapsedSec = incident?.sos?.startTs ? Math.max(0, Math.floor((now - incident.sos.startTs) / 1000)) : 0;
+  const sosRemaining =
+    incident?.phase === 'CREATED' && incident?.sos?.status === 'ALERTING'
+      ? Math.max(0, (incident.sos.durationSec ?? 0) - elapsedSec)
+      : null;
+  const cprGuidance = getResuscitationGuidance(Math.floor(now / 1000));
+
+  const toggleTheme = () => {
+    setTheme((current) => {
+      const next = current === 'light' ? 'dark' : 'light';
+      window.localStorage.setItem(MOBILE_THEME_KEY, next);
+      return next;
+    });
+  };
+
+  const loadPeripheralData = useCallback(async () => {
+    const [nextClients, nextAeds] = await Promise.all([fetchClients(), fetchAedSites()]);
+    setClients(nextClients);
+    setAedSites(nextAeds);
+  }, []);
+
+  const connectIncident = useCallback(
+    (incidentId: string) => {
+      if (!incidentId) {
+        return;
+      }
+      wsRef.current?.close();
+      if (reconnectRef.current) {
+        window.clearTimeout(reconnectRef.current);
+        reconnectRef.current = null;
+      }
+      setSyncStatus('connecting');
+      const socket = openIncidentSocket(incidentId);
+      wsRef.current = socket;
+      socket.onopen = () => setSyncStatus('live');
+      socket.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'STATE') {
+            setIncident(msg.payload as IncidentState);
+          }
+        } catch {
+          setNotice({ kind: 'error', text: '实时消息解析失败。' });
+        }
+      };
+      socket.onerror = () => setSyncStatus('offline');
+      socket.onclose = () => {
+        if (wsRef.current !== socket) {
+          return;
+        }
+        setSyncStatus('reconnecting');
+        reconnectRef.current = window.setTimeout(() => connectIncident(incidentId), 1800);
+      };
+    },
+    [],
+  );
+
+  const openCurrentIncident = useCallback(async () => {
+    const state = await fetchCurrentIncident();
+    setIncident(state);
+    setIncidentIdInput(state.incidentId);
+    window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
+    connectIncident(state.incidentId);
+    await loadPeripheralData();
+  }, [connectIncident, loadPeripheralData]);
+
+  async function afterAuthenticated(next: StoredSession) {
+    setSession(next);
+    setBooting(false);
+    await ensurePresence(next, location);
+    await openCurrentIncident();
+  }
+
+  async function ensurePresence(activeSession = session, activeLocation = location) {
+    if (!activeSession) {
+      return;
+    }
+    await registerClient(activeSession.user, activeSession.token, activeLocation);
+  }
+
+  useEffect(() => {
+    document.documentElement.dataset.mobileRoute = 'true';
+    document.documentElement.dataset.mobileTheme = theme;
+    return () => {
+      delete document.documentElement.dataset.mobileTheme;
+    };
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.dataset.mobileRoute = 'true';
+    let mounted = true;
+    async function restore() {
+      if (!session) {
+        setBooting(false);
+        return;
+      }
+      try {
+        const me = await fetchMe(session.token);
+        if (!mounted) {
+          return;
+        }
+        const next = { token: session.token, user: me.user, tokenExpiresAt: me.tokenExpiresAt };
+        saveSession(next);
+        setSession(next);
+        await ensurePresence(next, location);
+        if (incidentIdInput) {
+          const state = await fetchIncident(incidentIdInput);
+          setIncident(state);
+          connectIncident(state.incidentId);
+        } else {
+          await openCurrentIncident();
+        }
+        await loadPeripheralData();
+      } catch (error) {
+        saveSession(null);
+        setSession(null);
+        setNotice({ kind: 'error', text: error instanceof Error ? error.message : '登录态已失效，请重新登录。' });
+      } finally {
+        if (mounted) {
+          setBooting(false);
+        }
+      }
+    }
+    restore();
+    return () => {
+      mounted = false;
+      document.documentElement.removeAttribute('data-mobile-route');
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), document.visibilityState === 'hidden' ? 5000 : 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      wsRef.current?.close();
+      if (reconnectRef.current) {
+        window.clearTimeout(reconnectRef.current);
+      }
+    };
+  }, []);
+
+  async function runAction(label: string, work: () => Promise<void>, okText?: string) {
+    setBusyAction(label);
+    setNotice(null);
+    try {
+      await work();
+      if (incident) {
+        const next = await fetchIncident(incident.incidentId);
+        setIncident(next);
+      }
+      await loadPeripheralData();
+      if (okText) {
+        setNotice({ kind: 'ok', text: okText });
+      }
+    } catch (error) {
+      setNotice({ kind: 'error', text: error instanceof Error ? error.message : '操作失败' });
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function openByInput() {
+    const id = incidentIdInput.trim();
+    if (!id) {
+      setNotice({ kind: 'error', text: '请输入事件编号，或直接打开当前事件。' });
+      return;
+    }
+    await runAction('open', async () => {
+      const state = await fetchIncident(id);
+      setIncident(state);
+      window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
+      connectIncident(state.incidentId);
+      await loadPeripheralData();
+    });
+  }
+
+  async function reportLocation() {
+    if (!session) {
+      return;
+    }
+    await runAction(
+      'location',
+      async () => {
+        let next = { ...location, updatedTs: Date.now() };
+        if (navigator.geolocation) {
+          try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 30000,
+              });
+            });
+            next = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracyMeters: pos.coords.accuracy,
+              label: '浏览器定位',
+              source: 'browser',
+              updatedTs: Date.now(),
+            };
+          } catch {
+            next = { ...next, source: 'mobile-demo', label: location.label || '手动/模拟点位' };
+          }
+        }
+        setLocation(next);
+        window.localStorage.setItem(LOCATION_KEY, JSON.stringify(next));
+        await updateClientLocation(session.user.userId, session.token, next);
+      },
+      '位置已上报。',
+    );
+  }
+
+  async function doLogout() {
+    if (session?.token) {
+      try {
+        await logoutAccount(session.token);
+      } catch {
+        // Local logout is still useful if the network is unavailable.
+      }
+    }
+    saveSession(null);
+    setSession(null);
+    setIncident(null);
+    wsRef.current?.close();
+  }
+
+  async function handlePatientSos() {
+    if (!incident || !session) {
+      return;
+    }
+    await runAction(
+      'sos',
+      async () => patientSosStart(incident.incidentId, session.token),
+      'SOS 已启动，系统会自动确认并分派任务。',
+    );
+  }
+
+  async function cancelPatientSos() {
+    if (!incident || !session) {
+      return;
+    }
+    await runAction('sosCancel', async () => patientSosCancel(incident.incidentId, session.token), 'SOS 已取消。');
+  }
+
+  async function joinRole(role: RoleName) {
+    if (!incident || !session) {
+      return;
+    }
+    await runAction(role, async () => joinIncident(incident.incidentId, role, session.user.userId, session.token), '已响应任务。');
+  }
+
+  async function autoJoin() {
+    if (!session) {
+      return;
+    }
+    await runAction('autoJoin', async () => {
+      const joined = await autoJoinCurrent(session.user.userId, session.token);
+      setIncidentIdInput(joined.incidentId);
+      window.localStorage.setItem(INCIDENT_KEY, joined.incidentId);
+      connectIncident(joined.incidentId);
+      const state = await fetchIncident(joined.incidentId);
+      setIncident(state);
+    });
+  }
+
+  async function executeRoleAction() {
+    if (!activeRole || !incident || !session) {
+      return;
+    }
+    const action = roleAction(activeRole, incident);
+    if (action.action === 'WAIT') {
+      return;
+    }
+    if (action.action === 'JOIN') {
+      await joinRole(activeRole);
+      return;
+    }
+    await runAction(action.action, async () =>
+      postIncidentAction(incident.incidentId, action.action, session.user.userId, session.token),
+    );
+  }
+
+  if (booting) {
+    return (
+      <main className="mobile-shell mobile-loading">
+        <HeartPulse size={36} />
+        <p>正在恢复移动端登录态...</p>
+      </main>
+    );
+  }
+
+  if (!session || !user) {
+    return <AuthPanel onAuthenticated={afterAuthenticated} />;
+  }
+
+  const logs = [...(incident?.logs ?? [])].slice(-8).reverse();
+  const assignedUsers = clients.filter((client) => client.assignedRole);
+  const action = activeRole ? roleAction(activeRole, incident) : null;
+  const visibleClients = clients.slice(0, 5);
+  const viewTabs: Array<{ key: MobileView; label: string; icon: React.ReactNode }> = [
+    { key: 'home', label: '总览', icon: <Activity size={18} /> },
+    { key: 'mission', label: '任务', icon: <Radio size={18} /> },
+    { key: 'scene', label: '现场', icon: <MapPin size={18} /> },
+    { key: 'logs', label: '记录', icon: <Clock size={18} /> },
+  ];
+
+  return (
+    <main className="mobile-shell">
+      <header className="mobile-topbar">
+        <div>
+          <p className="mobile-kicker">生命反射弧移动端</p>
+          <h1>应急协同端</h1>
+        </div>
+        <div className="mobile-top-actions">
+          <button className="mobile-icon-button" onClick={toggleTheme} aria-label={theme === 'light' ? '切换深色模式' : '切换浅色模式'}>
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+          <button className="mobile-icon-button" onClick={doLogout} aria-label="退出登录">
+            <LogOut size={18} />
+          </button>
+        </div>
+      </header>
+
+      <section className="mobile-status-strip">
+        <div>
+          <span className={`sync-dot ${syncStatus}`} />
+          <span>{syncStatus === 'live' ? '实时在线' : syncStatus === 'connecting' ? '连接中' : syncStatus === 'reconnecting' ? '重连中' : '待连接'}</span>
+        </div>
+        <strong>{incident ? translatePhaseLabel(incident.phase) : '未接入事件'}</strong>
+      </section>
+
+      {notice && <div className={`mobile-notice ${notice.kind}`}>{notice.text}</div>}
+
+      <nav className="mobile-view-tabs" aria-label="移动端信息分层">
+        {viewTabs.map(({ key, label, icon }) => (
+          <button key={key} className={activeView === key ? 'active' : ''} onClick={() => setActiveView(key)}>
+            {icon}
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {activeView === 'home' && (
+        <>
+          <section className="mobile-panel mobile-user-panel" id="top">
+            <div className="mobile-user-avatar">
+              <UserRound size={22} />
+            </div>
+            <div>
+              <strong>{user.displayName}</strong>
+              <p>{user.organization} · {user.professionIdentity}</p>
+              <p>{formatLocationLabel(location)}</p>
+            </div>
+          </section>
+
+          {activeRole && action && !isPatient ? (
+            <section className="mobile-emergency-panel responder">
+              <div>
+                {activeRole === 'PRIME' ? <HeartPulse size={28} /> : activeRole === 'RUNNER' ? <Zap size={28} /> : <Shield size={28} />}
+                <p className="mobile-kicker">当前动作</p>
+                <h2>{action.label}</h2>
+                <p>{action.hint}</p>
+              </div>
+              <button className="mobile-primary-button" onClick={executeRoleAction} disabled={action.disabled || Boolean(busyAction)}>
+                {busyAction ? '提交中...' : action.label}
+              </button>
+            </section>
+          ) : (
+            <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''}`}>
+              <div>
+                <Siren size={28} />
+                <p className="mobile-kicker">高优先级</p>
+                <h2>{isPatient ? '患者应急模式' : '患者 SOS'}</h2>
+                <p>
+                  {sosRemaining !== null
+                    ? `倒计时 ${sosRemaining}s，结束后自动智能分派`
+                    : isPatient && incident?.phase !== 'CREATED'
+                      ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
+                    : incident?.phase === 'CREATED'
+                      ? '如你是患者端，可直接触发当前事件'
+                      : '当前事件已进入协同处置'}
+                </p>
+              </div>
+              <div className="mobile-emergency-actions">
+                <button
+                  className="mobile-danger-button"
+                  onClick={handlePatientSos}
+                  disabled={!incident || incident.phase !== 'CREATED' || busyAction === 'sos'}
+                >
+                  {busyAction === 'sos' ? '启动中...' : '启动 SOS'}
+                </button>
+                <button
+                  className="mobile-ghost-button"
+                  onClick={cancelPatientSos}
+                  disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatient || busyAction === 'sosCancel'}
+                >
+                  取消
+                </button>
+              </div>
+            </section>
+          )}
+
+          {!incident && (
+            <section className="mobile-panel mobile-incident-panel">
+              <div className="mobile-section-head">
+                <div>
+                  <p className="mobile-kicker">事件</p>
+                  <h2>接入当前事件</h2>
+                </div>
+                <button className="mobile-small-button" onClick={() => runAction('refresh', openCurrentIncident)} disabled={busyAction === 'refresh'}>
+                  <RefreshCw size={14} />
+                  同步
+                </button>
+              </div>
+              <div className="mobile-input-row mobile-compact-input-row">
+                <input
+                  value={incidentIdInput}
+                  onChange={(event) => setIncidentIdInput(event.target.value)}
+                  placeholder="事件编号"
+                />
+                <button onClick={openByInput} disabled={busyAction === 'open'}>打开</button>
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {activeView === 'mission' && (
+      <section className="mobile-panel">
+        <div className="mobile-section-head">
+          <div>
+            <p className="mobile-kicker">任务</p>
+            <h2>我的任务</h2>
+          </div>
+          <button className="mobile-small-button" onClick={autoJoin} disabled={busyAction === 'autoJoin'}>
+            <Radio size={14} />
+            自动接单
+          </button>
+        </div>
+        {activeRole && action ? (
+          <div className={`mobile-role-card role-${activeRole.toLowerCase()}`}>
+            <div className="mobile-role-title">
+              {activeRole === 'PRIME' ? <HeartPulse size={24} /> : activeRole === 'RUNNER' ? <Zap size={24} /> : <Shield size={24} />}
+              <div>
+                <h3>{translateRoleLabel(activeRole)}</h3>
+                <p>{translateRoleStatus(incident?.roles?.[activeRole]?.status)}</p>
+              </div>
+            </div>
+            <p>{action.hint}</p>
+            {activeRole === 'PRIME' && incident?.roles.PRIME?.status === 'CPR_STARTED' && (
+              <div className="mobile-cpr-meter">
+                <div>
+                  <strong>{cprGuidance.stageAction}</strong>
+                  <span>{cprGuidance.stageTitle} · {cprGuidance.stageRemaining}s</span>
+                </div>
+                <p>{cprGuidance.stageBody}</p>
+              </div>
+            )}
+            <button className="mobile-primary-button" onClick={executeRoleAction} disabled={action.disabled || Boolean(busyAction)}>
+              {busyAction ? '提交中...' : action.label}
+            </button>
+          </div>
+        ) : (
+          <div className="mobile-empty-state">
+            <Radio size={28} />
+            <p>尚未分配到你的任务。保持在线，或在演示模式下点击自动接单。</p>
+          </div>
+        )}
+
+        <div className="mobile-role-grid">
+          {(['PRIME', 'RUNNER', 'GUIDE'] as RoleName[]).map((role) => (
+            <button key={role} onClick={() => joinRole(role)} disabled={!incident || Boolean(busyAction)}>
+              <strong>{translateRoleLabel(role)}</strong>
+              <span>{translateRoleStatus(incident?.roles?.[role]?.status)}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+      )}
+
+      {activeView === 'scene' && (
+      <>
+      <section className="mobile-panel">
+        <div className="mobile-section-head">
+          <div>
+            <p className="mobile-kicker">现场</p>
+            <h2>位置与 AED</h2>
+          </div>
+          <button className="mobile-small-button" onClick={reportLocation} disabled={busyAction === 'location'}>
+            <Navigation size={14} />
+            上报位置
+          </button>
+        </div>
+        {primaryAed ? (
+          <div className="mobile-aed-card">
+            <MapPin size={20} />
+            <div>
+              <strong>{primaryAed.name}</strong>
+              <p>{formatLocationLabel(primaryAed.location)}</p>
+              <p>{primaryAed.accessNotes || primaryAed.status}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="mobile-empty-state compact">暂无 AED 点位，可在 Web 调度台初始化演示场景。</div>
+        )}
+        {activeRole && incident?.dispatchRationale?.[activeRole] && (
+          <div className="mobile-rationale">
+            <div>
+              <span>智能评分</span>
+              <strong>{incident.dispatchRationale[activeRole].score.toFixed(1)}</strong>
+            </div>
+            <div>
+              <span>距患者</span>
+              <strong>{formatDistanceLabel(incident.dispatchRationale[activeRole].distanceToPatientMeters)}</strong>
+            </div>
+            <p>{incident.dispatchRationale[activeRole].reasons.join('；') || '基于画像、距离和任务适配度分派。'}</p>
+          </div>
+        )}
+      </section>
+
+      <section className="mobile-panel">
+        <div className="mobile-section-head">
+          <div>
+            <p className="mobile-kicker">协同</p>
+            <h2>协同状态</h2>
+          </div>
+          <span className="mobile-count">{assignedUsers.length}/{clients.length}</span>
+        </div>
+        <div className="mobile-team-list">
+          {visibleClients.map((client) => (
+            <div key={client.userId}>
+              <span className={client.online ? 'online' : ''} />
+              <div>
+                <strong>{client.displayName}</strong>
+                <p>{client.isPatient ? '患者端' : translateRoleLabel(client.assignedRole)} · {formatLocationLabel(client.location)}</p>
+              </div>
+            </div>
+          ))}
+          {clients.length === 0 && <div className="mobile-empty-state compact">暂无在线终端。</div>}
+          {clients.length > visibleClients.length && (
+            <div className="mobile-empty-state compact">另有 {clients.length - visibleClients.length} 台终端在线，可在 Web 调度台查看完整列表。</div>
+          )}
+        </div>
+      </section>
+      </>
+      )}
+
+      {activeView === 'logs' && (
+      <section className="mobile-panel">
+        <div className="mobile-section-head">
+          <div>
+            <p className="mobile-kicker">记录</p>
+            <h2>最近动态</h2>
+          </div>
+          <Clock size={18} />
+        </div>
+        <div className="mobile-log-list">
+          {logs.map((log) => (
+            <div key={`${log.ts}-${log.msg}`}>
+              <time>{formatTimeLabel(log.ts)}</time>
+              <p>{translateLogMessage(log.msg, clients)}</p>
+            </div>
+          ))}
+          {logs.length === 0 && <div className="mobile-empty-state compact">等待事件触发。</div>}
+        </div>
+      </section>
+      )}
+
+      {incident?.phase === 'ARCHIVED' && (
+        <section className="mobile-panel mobile-summary">
+          <CheckCircle2 size={26} />
+          <h2>本次演练已归档</h2>
+          <p>事件日志、角色响应和 AED 取送信息已经进入实验导出数据，可用于预实验记录。</p>
+        </section>
+      )}
+    </main>
+  );
+}
+
+export default MobileApp;

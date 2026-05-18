@@ -1,6 +1,16 @@
 from pydantic import BaseModel
 
 
+class GeoPoint(BaseModel):
+    latitude: float
+    longitude: float
+    accuracyMeters: float | None = None
+    label: str | None = None
+    floor: str | None = None
+    source: str = "manual"
+    updatedTs: int | None = None
+
+
 class AuthRegisterReq(BaseModel):
     displayName: str
     phone: str
@@ -31,6 +41,17 @@ class AuthResponse(BaseModel):
     ok: bool = True
     token: str
     user: AuthUser
+    tokenExpiresAt: int | None = None
+
+
+class AuthMeResponse(BaseModel):
+    ok: bool = True
+    user: AuthUser
+    tokenExpiresAt: int | None = None
+
+
+class SimpleOkResponse(BaseModel):
+    ok: bool = True
 
 
 class JoinReq(BaseModel):
@@ -55,6 +76,7 @@ class ClientRegisterReq(BaseModel):
     professionIdentity: str
     profileBio: str
     deviceType: str = "ANDROID"
+    location: GeoPoint | None = None
 
 
 class ClientInfo(BaseModel):
@@ -70,10 +92,37 @@ class ClientInfo(BaseModel):
     assignedRole: str | None = None
     patientCandidate: bool = False
     isPatient: bool = False
+    location: GeoPoint | None = None
 
 
 class ClientListResponse(BaseModel):
     clients: list[ClientInfo]
+
+
+class ClientLocationUpdateReq(BaseModel):
+    userId: str
+    location: GeoPoint
+
+
+class AedSite(BaseModel):
+    siteId: str
+    name: str
+    location: GeoPoint
+    status: str = "AVAILABLE"
+    accessNotes: str = ""
+    lastCheckedTs: int | None = None
+
+
+class AedSiteUpsertReq(BaseModel):
+    siteId: str | None = None
+    name: str
+    location: GeoPoint
+    status: str = "AVAILABLE"
+    accessNotes: str = ""
+
+
+class AedSiteListResponse(BaseModel):
+    aedSites: list[AedSite]
 
 
 class DispatchReq(BaseModel):
@@ -95,13 +144,28 @@ class HealthDetailResponse(BaseModel):
     frontend: dict
     currentIncidentId: str | None = None
     loadedIncidents: int
+    registeredClients: int = 0
+    registeredAedSites: int = 0
     activeWebSockets: int
     activeSosTimers: int
+    dispatch: dict = {}
+    demoAdminAuthEnabled: bool = False
 
 
 class IncidentLogEntry(BaseModel):
     ts: int
     msg: str
+
+
+class DispatchRoleDecision(BaseModel):
+    userId: str | None = None
+    score: float = 0
+    reasons: list[str] = []
+    warnings: list[str] = []
+    distanceToPatientMeters: float | None = None
+    nearestAedSiteId: str | None = None
+    distanceToAedMeters: float | None = None
+    aedToPatientMeters: float | None = None
 
 
 class RoleState(BaseModel):
@@ -129,6 +193,8 @@ class IncidentState(BaseModel):
     logs: list[IncidentLogEntry]
     patientUserId: str | None = None
     dispatchSource: str | None = None
+    aedSites: list[AedSite] = []
+    dispatchRationale: dict[str, DispatchRoleDecision] = {}
 
 
 class CreateIncidentResponse(BaseModel):
@@ -153,6 +219,28 @@ class DispatchResponse(BaseModel):
     patientUserId: str
     assignments: dict[str, str | None]
     source: str
+    rationale: dict[str, DispatchRoleDecision] = {}
+
+
+class DemoBootstrapResponse(BaseModel):
+    ok: bool = True
+    incidentId: str
+    clients: list[ClientInfo]
+    aedSites: list[AedSite]
+
+
+class ExperimentExportResponse(BaseModel):
+    incidentId: str
+    generatedAt: int
+    phase: str
+    patientUserId: str | None
+    dispatchSource: str | None
+    assignments: dict[str, str | None]
+    metrics: dict[str, int | float | None]
+    timeline: list[IncidentLogEntry]
+    clients: list[ClientInfo]
+    aedSites: list[AedSite]
+    dispatchRationale: dict[str, DispatchRoleDecision]
 
 
 class DispatchExplainResponse(BaseModel):

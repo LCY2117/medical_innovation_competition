@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass
 from typing import Iterable
 from urllib import error, request
 
-from app.models.schemas import ClientInfo
+from app.models.schemas import AedSite, ClientInfo, DispatchRoleDecision, GeoPoint
 
 
 ROLE_ORDER = ("PRIME", "RUNNER", "GUIDE")
 SELECTION_RULES = {
-    "PRIME": "专业急救人员优先，其次是受过系统急救训练者",
-    "RUNNER": "身体素质好、跑得快、熟悉路线的人优先",
+    "PRIME": "专业急救人员优先，其次距离患者近、受过系统急救训练者优先",
+    "RUNNER": "距离 AED 近、身体素质好、熟悉路线的人优先",
     "GUIDE": "安保、物业、熟悉场地和交通组织的人优先",
 }
 CANDIDATE_FIELDS = [
@@ -26,6 +27,9 @@ CANDIDATE_FIELDS = [
     "online",
     "patientCandidate",
     "isPatient",
+    "location",
+    "distanceToPatientMeters",
+    "nearestAedDistanceMeters",
 ]
 RESPONSE_FORMAT = {
     "PRIME": "userId or null",
@@ -34,9 +38,9 @@ RESPONSE_FORMAT = {
 }
 SYSTEM_PROMPT = (
     "你是院前急救协同系统的调度大脑。"
-    "请根据患者画像和候选协助者画像，在 PRIME、RUNNER、GUIDE 三类任务中各选择一个最合适的人。"
-    "PRIME 优先专业急救能力和临场施救能力；"
-    "RUNNER 优先体能、速度、行动半径和执行力；"
+    "请根据患者画像、候选协助者画像、候选者位置和 AED 点位，在 PRIME、RUNNER、GUIDE 三类任务中各选择一个最合适的人。"
+    "PRIME 优先专业急救能力、临场施救能力和距离患者较近；"
+    "RUNNER 优先靠近 AED、体能速度、行动半径和执行力；"
     "GUIDE 优先物业、安保、组织协调和现场通道能力。"
     "不要把高风险患者或明显身体受限的人分配到高强度任务。"
     "只返回紧凑 JSON，格式必须是 "
@@ -55,14 +59,20 @@ class DispatchPlanner:
     local_timeout_sec: int = 30
     prefer_local: bool = True
 
-    def assign_roles(self, patient_user_id: str, clients: Iterable[ClientInfo]) -> tuple[dict[str, str | None], str]:
+    def assign_roles(
+        self,
+        patient_user_id: str,
+        clients: Iterable[ClientInfo],
+        aed_sites: Iterable[AedSite] | None = None,
+    ) -> tuple[dict[str, str | None], str, dict[str, DispatchRoleDecision]]:
         all_clients = [client for client in clients if client.online]
         patient = next((client for client in all_clients if client.userId == patient_user_id), None)
         candidates = [client for client in all_clients if client.userId != patient_user_id]
+        sites = list(aed_sites or [])
         if not candidates:
-            return {role: None for role in ROLE_ORDER}, "fallback"
+            assignments = {role: None for role in ROLE_ORDER}
+            return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites)
 
-        # Build ordered endpoints according to preference
         endpoints: list[tuple[str, str, str | None, str, int]] = []
         if self.prefer_local:
             if self.local_base_url:
@@ -76,11 +86,16 @@ class DispatchPlanner:
                 endpoints.append(("local", self.local_base_url, None, self.local_model, self.local_timeout_sec))
 
         for name, url, key, model, timeout in endpoints:
-            assignments = self._assign_with_llm(patient, candidates, url, key, model, timeout)
+            assignments = self._assign_with_llm(patient, candidates, sites, url, key, model, timeout)
             if assignments is not None:
-                return assignments, ("local_model" if name == "local" else "siliconflow")
+                return (
+                    assignments,
+                    "local_model" if name == "local" else "siliconflow",
+                    self.explain_assignments(assignments, patient, candidates, sites),
+                )
 
-        return self._fallback_assignments(candidates), "fallback"
+        assignments = self._fallback_assignments(candidates, patient, sites)
+        return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites)
 
     def explain(self) -> dict:
         provider = "fallback"
@@ -110,9 +125,16 @@ class DispatchPlanner:
             "systemPrompt": SYSTEM_PROMPT,
         }
 
-        # probe local model liveness (fast probe)
         try:
-            info["localModelAlive"] = bool(self.local_base_url and self._is_endpoint_alive(self.local_base_url, None, self.local_model, min(2, self.local_timeout_sec)))
+            info["localModelAlive"] = bool(
+                self.local_base_url
+                and self._is_endpoint_alive(
+                    self.local_base_url,
+                    None,
+                    self.local_model,
+                    min(2, self.local_timeout_sec),
+                )
+            )
         except Exception:
             info["localModelAlive"] = False
 
@@ -122,6 +144,7 @@ class DispatchPlanner:
         self,
         patient: ClientInfo | None,
         candidates: list[ClientInfo],
+        aed_sites: list[AedSite],
         base_url: str,
         api_key: str | None,
         model: str,
@@ -131,16 +154,21 @@ class DispatchPlanner:
             "model": model,
             "temperature": 0.1,
             "messages": [
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT,
-                },
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {
                     "role": "user",
                     "content": json.dumps(
                         {
                             "patient": self._client_payload(patient) if patient else None,
-                            "candidates": [self._client_payload(client) for client in candidates],
+                            "candidates": [
+                                self._client_payload(
+                                    client,
+                                    patient_location=patient.location if patient else None,
+                                    aed_sites=aed_sites,
+                                )
+                                for client in candidates
+                            ],
+                            "aedSites": [site.model_dump(mode="json") for site in aed_sites],
                             "selectionRules": SELECTION_RULES,
                         },
                         ensure_ascii=False,
@@ -203,7 +231,6 @@ class DispatchPlanner:
         return None
 
     def _is_endpoint_alive(self, base_url: str, api_key: str | None, model: str, timeout_sec: int) -> bool:
-        # Try a simple /health GET first
         try:
             health_url = f"{base_url}/health"
             headers = {"Content-Type": "application/json"}
@@ -218,7 +245,6 @@ class DispatchPlanner:
         except Exception:
             pass
 
-        # Fallback: small POST to chat/completions
         payload = {
             "model": model,
             "temperature": 0.0,
@@ -231,20 +257,30 @@ class DispatchPlanner:
                 headers["Authorization"] = f"Bearer {api_key}"
 
         try:
-            req = request.Request(url=f"{base_url}/chat/completions", data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
+            req = request.Request(
+                url=f"{base_url}/chat/completions",
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST",
+            )
             with request.urlopen(req, timeout=timeout_sec) as response:
                 body = json.loads(response.read().decode("utf-8"))
                 return isinstance(body, dict)
         except Exception:
             return False
 
-    def _fallback_assignments(self, clients: list[ClientInfo]) -> dict[str, str | None]:
+    def _fallback_assignments(
+        self,
+        clients: list[ClientInfo],
+        patient: ClientInfo | None,
+        aed_sites: list[AedSite],
+    ) -> dict[str, str | None]:
         assignments: dict[str, str | None] = {role: None for role in ROLE_ORDER}
         remaining = list(clients)
 
         for role in ROLE_ORDER:
             scored = sorted(
-                ((self._score_client(client, role), client) for client in remaining),
+                ((self._score_client(client, role, patient, aed_sites), client) for client in remaining),
                 key=lambda item: item[0],
                 reverse=True,
             )
@@ -261,7 +297,51 @@ class DispatchPlanner:
 
         return assignments
 
-    def _score_client(self, client: ClientInfo, role: str) -> int:
+    def explain_assignments(
+        self,
+        assignments: dict[str, str | None],
+        patient: ClientInfo | None,
+        candidates: list[ClientInfo],
+        aed_sites: list[AedSite],
+    ) -> dict[str, DispatchRoleDecision]:
+        candidate_map = {client.userId: client for client in candidates}
+        rationale: dict[str, DispatchRoleDecision] = {}
+        for role in ROLE_ORDER:
+            user_id = assignments.get(role)
+            client = candidate_map.get(user_id or "")
+            if client is None:
+                rationale[role] = DispatchRoleDecision(
+                    userId=None,
+                    score=0,
+                    reasons=["当前没有合适在线终端可分配"],
+                    warnings=["需要人工补位"],
+                )
+                continue
+
+            reasons, warnings = self._decision_notes(client, role, patient, aed_sites)
+            nearest = self._nearest_aed(client.location, aed_sites)
+            rationale[role] = DispatchRoleDecision(
+                userId=client.userId,
+                score=self._score_client(client, role, patient, aed_sites),
+                reasons=reasons,
+                warnings=warnings,
+                distanceToPatientMeters=self._distance_meters(client.location, patient.location if patient else None),
+                nearestAedSiteId=nearest[0].siteId if nearest else None,
+                distanceToAedMeters=nearest[1] if nearest else None,
+                aedToPatientMeters=self._distance_meters(
+                    nearest[0].location if nearest else None,
+                    patient.location if patient else None,
+                ),
+            )
+        return rationale
+
+    def _score_client(
+        self,
+        client: ClientInfo,
+        role: str,
+        patient: ClientInfo | None = None,
+        aed_sites: list[AedSite] | None = None,
+    ) -> int:
         profession = client.professionIdentity.lower()
         bio = client.profileBio.lower()
         organization = client.organization.lower()
@@ -274,12 +354,23 @@ class DispatchPlanner:
         mobility_markers = ("体育", "跑得快", "体能", "行动能力", "奔跑", "运动", "快速")
         medical_identity_markers = ("医生", "医护", "专业急救", "急救人员")
         medical_skill_markers = ("急救", "cpr", "aed", "培训", "训练")
-        guide_markers = ("安保", "物业", "保安", "协调", "交通", "电梯", "场地", "通道") 
+        guide_markers = ("安保", "物业", "保安", "协调", "交通", "电梯", "场地", "通道")
         route_markers = ("熟悉", "校园", "社区", "路线", "楼栋", "点位")
         trained_markers = ("培训", "系统培训", "常识", "救护")
 
         if any(marker in text for marker in high_risk_markers):
             score -= 12 if role in {"PRIME", "RUNNER"} else 3
+
+        distance_to_patient = self._distance_meters(client.location, patient.location if patient else None)
+        nearest_aed = self._nearest_aed(client.location, list(aed_sites or []))
+
+        if distance_to_patient is not None:
+            if distance_to_patient <= 80:
+                score += 8 if role == "PRIME" else 2
+            elif distance_to_patient <= 250:
+                score += 4 if role in {"PRIME", "GUIDE"} else 2
+            elif distance_to_patient > 800:
+                score -= 6
 
         if role == "PRIME":
             if any(marker in profession for marker in medical_identity_markers):
@@ -297,6 +388,14 @@ class DispatchPlanner:
                 score += 4
             if any(marker in text for marker in trained_markers):
                 score += 2
+            if nearest_aed is not None:
+                aed_distance = nearest_aed[1]
+                if aed_distance <= 120:
+                    score += 10
+                elif aed_distance <= 350:
+                    score += 6
+                elif aed_distance > 900:
+                    score -= 4
         elif role == "GUIDE":
             if any(marker in text for marker in guide_markers):
                 score += 14
@@ -310,10 +409,85 @@ class DispatchPlanner:
 
         return score
 
+    def _decision_notes(
+        self,
+        client: ClientInfo,
+        role: str,
+        patient: ClientInfo | None,
+        aed_sites: list[AedSite],
+    ) -> tuple[list[str], list[str]]:
+        profession = client.professionIdentity.lower()
+        bio = client.profileBio.lower()
+        text = " ".join([client.healthCondition.lower(), profession, bio, client.organization.lower()])
+        reasons: list[str] = []
+        warnings: list[str] = []
+
+        distance_to_patient = self._distance_meters(client.location, patient.location if patient else None)
+        if distance_to_patient is not None:
+            reasons.append(f"距离患者约 {round(distance_to_patient)} 米")
+        else:
+            warnings.append("缺少实时位置，使用画像和文本规则补偿")
+
+        if role == "PRIME":
+            if any(marker in profession for marker in ("医生", "医护", "专业急救", "急救人员")):
+                reasons.append("具备医护或专业急救身份")
+            if any(marker in bio for marker in ("急救", "cpr", "aed", "培训", "训练")):
+                reasons.append("画像显示掌握 CPR/AED 急救技能")
+        elif role == "RUNNER":
+            nearest = self._nearest_aed(client.location, aed_sites)
+            if nearest:
+                reasons.append(f"距离最近 AED 点约 {round(nearest[1])} 米")
+            if any(marker in text for marker in ("体育", "跑得快", "体能", "运动", "快速")):
+                reasons.append("体能和移动能力适合 AED 取送")
+        elif role == "GUIDE":
+            if any(marker in text for marker in ("安保", "物业", "保安", "协调", "交通", "电梯", "场地", "通道")):
+                reasons.append("适合现场通道协调和救护车接驳")
+            if any(marker in text for marker in ("熟悉", "校园", "社区", "路线", "楼栋", "点位")):
+                reasons.append("熟悉场地路线")
+
+        if any(marker in text for marker in ("心脏", "冠心病", "骤停风险", "体能受限", "高风险")):
+            warnings.append("健康画像提示风险，避免承担高强度任务")
+        if client.isPatient:
+            warnings.append("当前为患者端，不应被分配救援任务")
+
+        if not reasons:
+            reasons.append("综合在线状态和基础画像完成兜底分配")
+        return reasons, warnings
+
     @staticmethod
-    def _client_payload(client: ClientInfo | None) -> dict | None:
+    def _distance_meters(a: GeoPoint | None, b: GeoPoint | None) -> float | None:
+        if a is None or b is None:
+            return None
+        radius = 6_371_000
+        lat1 = math.radians(a.latitude)
+        lat2 = math.radians(b.latitude)
+        delta_lat = math.radians(b.latitude - a.latitude)
+        delta_lon = math.radians(b.longitude - a.longitude)
+        hav = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+        return 2 * radius * math.asin(math.sqrt(hav))
+
+    def _nearest_aed(self, origin: GeoPoint | None, aed_sites: list[AedSite]) -> tuple[AedSite, float] | None:
+        if origin is None:
+            return None
+        available_sites = [site for site in aed_sites if site.status.upper() == "AVAILABLE"]
+        distances = [
+            (site, distance)
+            for site in available_sites
+            if (distance := self._distance_meters(origin, site.location)) is not None
+        ]
+        if not distances:
+            return None
+        return min(distances, key=lambda item: item[1])
+
+    def _client_payload(
+        self,
+        client: ClientInfo | None,
+        patient_location: GeoPoint | None = None,
+        aed_sites: list[AedSite] | None = None,
+    ) -> dict | None:
         if client is None:
             return None
+        nearest = self._nearest_aed(client.location, list(aed_sites or []))
         return {
             "userId": client.userId,
             "displayName": client.displayName,
@@ -325,4 +499,7 @@ class DispatchPlanner:
             "online": client.online,
             "patientCandidate": client.patientCandidate,
             "isPatient": client.isPatient,
+            "location": client.location.model_dump(mode="json") if client.location else None,
+            "distanceToPatientMeters": self._distance_meters(client.location, patient_location),
+            "nearestAedDistanceMeters": nearest[1] if nearest else None,
         }

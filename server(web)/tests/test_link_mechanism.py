@@ -157,10 +157,11 @@ class LinkMechanismTestCase(unittest.TestCase):
                 local_timeout_sec=2,
                 prefer_local=True,
             )
-            assignments, source = planner.assign_roles("patient-1", self._clients())
+            assignments, source, rationale = planner.assign_roles("patient-1", self._clients())
 
             self.assertEqual(source, "local_model")
             self.assertEqual(assignments["PRIME"], "doctor-1")
+            self.assertEqual(rationale["PRIME"].userId, "doctor-1")
             self.assertEqual(local.calls, 1)
             self.assertEqual(api.calls, 0)
         finally:
@@ -201,10 +202,11 @@ class LinkMechanismTestCase(unittest.TestCase):
                 local_timeout_sec=1,
                 prefer_local=True,
             )
-            assignments, source = planner.assign_roles("patient-1", self._clients())
+            assignments, source, rationale = planner.assign_roles("patient-1", self._clients())
 
             self.assertEqual(source, "siliconflow")
             self.assertEqual(assignments["GUIDE"], "guide-1")
+            self.assertEqual(rationale["GUIDE"].userId, "guide-1")
             self.assertEqual(api.calls, 1)
         finally:
             api.stop()
@@ -220,10 +222,11 @@ class LinkMechanismTestCase(unittest.TestCase):
             local_timeout_sec=1,
             prefer_local=True,
         )
-        assignments, source = planner.assign_roles("patient-1", self._clients())
+        assignments, source, rationale = planner.assign_roles("patient-1", self._clients())
 
         self.assertEqual(source, "fallback")
         self.assertTrue(any(value is not None for value in assignments.values()))
+        self.assertIn("PRIME", rationale)
 
     def test_prefer_remote_when_switch_disabled(self) -> None:
         local = MockLLMServer(
@@ -274,9 +277,10 @@ class LinkMechanismTestCase(unittest.TestCase):
                 local_timeout_sec=2,
                 prefer_local=False,
             )
-            _, source = planner.assign_roles("patient-1", self._clients())
+            _, source, rationale = planner.assign_roles("patient-1", self._clients())
 
             self.assertEqual(source, "siliconflow")
+            self.assertIn("RUNNER", rationale)
             self.assertEqual(api.calls, 1)
             self.assertEqual(local.calls, 0)
         finally:

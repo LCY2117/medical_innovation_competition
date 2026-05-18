@@ -16,10 +16,16 @@ import {
   FileText,
   ChevronRight,
   RotateCcw,
+  Download,
   Navigation,
   X,
   ArrowUp,
-  Siren
+  KeyRound,
+  Siren,
+  Moon,
+  Sun,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -199,6 +205,38 @@ interface IncidentState {
     GUIDE: { status: string; userId: string | null };
   };
   logs: { ts: number; msg: string }[];
+  aedSites?: AedSite[];
+  dispatchRationale?: Record<string, DispatchRoleDecision>;
+}
+
+interface GeoPoint {
+  latitude: number;
+  longitude: number;
+  accuracyMeters?: number | null;
+  label?: string | null;
+  floor?: string | null;
+  source?: string;
+  updatedTs?: number | null;
+}
+
+interface AedSite {
+  siteId: string;
+  name: string;
+  location: GeoPoint;
+  status: string;
+  accessNotes?: string;
+  lastCheckedTs?: number | null;
+}
+
+interface DispatchRoleDecision {
+  userId?: string | null;
+  score: number;
+  reasons: string[];
+  warnings: string[];
+  distanceToPatientMeters?: number | null;
+  nearestAedSiteId?: string | null;
+  distanceToAedMeters?: number | null;
+  aedToPatientMeters?: number | null;
 }
 
 interface ClientInfo {
@@ -214,6 +252,7 @@ interface ClientInfo {
   assignedRole?: string | null;
   patientCandidate?: boolean;
   isPatient?: boolean;
+  location?: GeoPoint | null;
 }
 
 interface DispatchMeta {
@@ -230,6 +269,13 @@ interface DispatchMeta {
   responseFormat: Record<string, string>;
   systemPrompt: string;
 }
+
+interface HealthDetail {
+  demoAdminAuthEnabled?: boolean;
+  frontend?: { ok?: boolean };
+}
+
+type ThemeMode = 'dark' | 'light';
 
 const ENV_API_BASE = import.meta.env.VITE_API_BASE?.trim();
 const ENV_WS_BASE = import.meta.env.VITE_WS_BASE?.trim();
@@ -333,6 +379,90 @@ function formatTimeLabel(ts?: number | null): string {
     return '--:--:--';
   }
   return new Date(ts).toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+function getStoredDemoAdminToken(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return window.localStorage.getItem('lra_demo_admin_token') ?? '';
+}
+
+function getStoredThemeMode(): ThemeMode {
+  if (typeof window === 'undefined') {
+    return 'dark';
+  }
+  const stored = window.localStorage.getItem('lra_theme_mode');
+  if (stored === 'dark' || stored === 'light') {
+    return stored;
+  }
+  if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+    return 'light';
+  }
+  return 'dark';
+}
+
+function buildDemoAdminHeaders(token: string, extra?: HeadersInit): HeadersInit {
+  const headers = new Headers(extra);
+  const trimmed = token.trim();
+  if (trimmed) {
+    headers.set('X-Demo-Admin-Token', trimmed);
+  }
+  return headers;
+}
+
+function explainStatusError(status: number, fallback: string): string {
+  if (status === 403) {
+    return `${fallback}：需要演示管理员口令`;
+  }
+  return `${fallback}（${status}）`;
+}
+
+async function explainResponseError(response: Response, fallback: string): Promise<string> {
+  try {
+    const payload = await response.clone().json();
+    const detail = typeof payload?.detail === 'string' ? payload.detail : '';
+    if (detail) {
+      return `${fallback}：${detail}`;
+    }
+  } catch {
+    // Fall back to status-only text below.
+  }
+  return explainStatusError(response.status, fallback);
+}
+
+function formatDistanceLabel(value?: number | null): string {
+  if (value === undefined || value === null || Number.isNaN(value)) {
+    return '--';
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(2)} km`;
+  }
+  return `${Math.round(value)} m`;
+}
+
+function formatLocationLabel(location?: GeoPoint | null): string {
+  if (!location) {
+    return '未上报位置';
+  }
+  const floor = location.floor ? ` · ${location.floor}` : '';
+  const accuracy = location.accuracyMeters ? ` · 精度 ${formatDistanceLabel(location.accuracyMeters)}` : '';
+  return `${location.label ?? '模拟点位'}${floor}${accuracy}`;
+}
+
+function downloadJson(filename: string, data: unknown): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }
 
 function getDispatchStartTs(state?: IncidentState | null): number | null {
@@ -695,7 +825,11 @@ export default function App() {
   });
   const [incidentState, setIncidentState] = useState<IncidentState | null>(null);
   const [clients, setClients] = useState<ClientInfo[]>([]);
+  const [aedSites, setAedSites] = useState<AedSite[]>([]);
   const [dispatchMeta, setDispatchMeta] = useState<DispatchMeta | null>(null);
+  const [healthDetail, setHealthDetail] = useState<HealthDetail | null>(null);
+  const [demoAdminToken, setDemoAdminToken] = useState(getStoredDemoAdminToken);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredThemeMode);
   const [lastClientRefreshTs, setLastClientRefreshTs] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [liveNowMs, setLiveNowMs] = useState(Date.now());
@@ -746,11 +880,70 @@ export default function App() {
   const actionDisabledTitle = actionsDisabled ? '等待服务端状态同步' : undefined;
   const incidentStartTs = incidentState?.logs?.[0]?.ts ?? null;
   const dispatchStream = buildDispatchStream(incidentState, clients, dispatchMeta, dispatchNowMs);
+  const rationale = incidentState?.dispatchRationale ?? {};
+  const rationaleEntries = Object.entries(rationale);
+  const visibleAedSites = incidentState?.aedSites?.length ? incidentState.aedSites : aedSites;
+  const getClientDisplayName = (userId?: string | null) =>
+    clients.find((client) => client.userId === userId)?.displayName ?? userId ?? '未分配';
   const cprLogTs = getLatestLogTs(incidentState, 'CPR started');
   const shockLogTs = getLatestLogTs(incidentState, 'AED shock delivered');
   const guidanceStartTs = isPrimeShockDelivered ? shockLogTs : cprLogTs;
   const guidanceElapsedSec = guidanceStartTs ? Math.max(0, Math.floor((liveNowMs - guidanceStartTs) / 1000)) : 0;
   const resuscitationGuidance = getResuscitationGuidance(guidanceElapsedSec);
+  const demoAdminRequired = Boolean(healthDetail?.demoAdminAuthEnabled);
+  const demoAdminReady = !demoAdminRequired || demoAdminToken.trim().length > 0;
+  const demoAdminStatusLabel = demoAdminRequired
+    ? demoAdminReady ? '口令已填' : '需要口令'
+    : '本地免口令';
+
+  const getActorId = (role: 'PRIME' | 'RUNNER' | 'GUIDE'): string => {
+    const serverUserId = incidentState?.roles?.[role]?.userId;
+    return serverUserId || `${clientId}-${role.toLowerCase()}`;
+  };
+
+  const getActionActorId = (action: 'CPR_STARTED' | 'AED_ANALYSIS_STARTED' | 'AED_SHOCK_DELIVERED' | 'AED_PICKED' | 'AED_DELIVERED' | 'AMBULANCE_ARRIVED' | 'HANDOVER_COMPLETED'): string => {
+    if (action === 'AED_PICKED' || action === 'AED_DELIVERED') {
+      return getActorId('RUNNER');
+    }
+    if (action === 'AMBULANCE_ARRIVED' || action === 'HANDOVER_COMPLETED') {
+      return getActorId('GUIDE');
+    }
+    return getActorId('PRIME');
+  };
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
+    document.documentElement.classList.toggle('dark', themeMode === 'dark');
+    document.documentElement.dataset.theme = themeMode;
+    window.localStorage.setItem('lra_theme_mode', themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const trimmed = demoAdminToken.trim();
+    if (trimmed) {
+      window.localStorage.setItem('lra_demo_admin_token', trimmed);
+    } else {
+      window.localStorage.removeItem('lra_demo_admin_token');
+    }
+  }, [demoAdminToken]);
+
+  const loadHealthDetail = async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/health/detail`);
+      if (!res.ok) {
+        return;
+      }
+      const data = await res.json();
+      setHealthDetail(data as HealthDetail);
+    } catch {
+      setHealthDetail(null);
+    }
+  };
 
   useEffect(() => {
     if (!stickLogsToBottom) {
@@ -855,7 +1048,10 @@ export default function App() {
       try {
         const msg = JSON.parse(event.data);
         if (msg?.type === 'STATE') {
-          setIncidentState(msg.payload as IncidentState);
+          const nextState = msg.payload as IncidentState;
+          if (nextState?.incidentId === id) {
+            setIncidentState(nextState);
+          }
         } else if (msg?.type === 'ERROR') {
           setWsError(String(msg.payload ?? 'WebSocket error'));
         }
@@ -885,9 +1081,12 @@ export default function App() {
   const createIncident = async () => {
     try {
       setErrorMessage(null);
-      const res = await fetch(`${getApiBase()}/incidents`, { method: 'POST' });
+      const res = await fetch(`${getApiBase()}/incidents`, {
+        method: 'POST',
+        headers: buildDemoAdminHeaders(demoAdminToken),
+      });
       if (!res.ok) {
-        throw new Error(`Create incident failed (${res.status})`);
+        throw new Error(await explainResponseError(res, '创建事件失败'));
       }
       const data = await res.json();
     if (data?.incidentId) {
@@ -910,7 +1109,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current`);
       if (!res.ok) {
-        throw new Error(`Load current incident failed (${res.status})`);
+        throw new Error(await explainResponseError(res, '加载当前事件失败'));
       }
       const data = await res.json();
       if (data?.incidentId) {
@@ -931,7 +1130,7 @@ export default function App() {
     try {
       const res = await fetch(`${getApiBase()}/clients`);
       if (!res.ok) {
-        throw new Error(`加载终端列表失败（${res.status}）`);
+        throw new Error(await explainResponseError(res, '加载终端列表失败'));
       }
       const data = await res.json();
       setClients(Array.isArray(data?.clients) ? (data.clients as ClientInfo[]) : []);
@@ -945,12 +1144,69 @@ export default function App() {
     try {
       const res = await fetch(`${getApiBase()}/dispatch/meta`);
       if (!res.ok) {
-        throw new Error(`加载 AI 调度说明失败（${res.status}）`);
+        throw new Error(await explainResponseError(res, '加载 AI 调度说明失败'));
       }
       const data = await res.json();
       setDispatchMeta(data as DispatchMeta);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '加载 AI 调度说明失败');
+    }
+  };
+
+  const loadAedSites = async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/aed-sites`);
+      if (!res.ok) {
+        throw new Error(await explainResponseError(res, '加载 AED 点位失败'));
+      }
+      const data = await res.json();
+      setAedSites(Array.isArray(data?.aedSites) ? (data.aedSites as AedSite[]) : []);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '加载 AED 点位失败');
+    }
+  };
+
+  const bootstrapDemo = async () => {
+    try {
+      setErrorMessage(null);
+      const res = await fetch(`${getApiBase()}/demo/bootstrap`, {
+        method: 'POST',
+        headers: buildDemoAdminHeaders(demoAdminToken),
+      });
+      if (!res.ok) {
+        throw new Error(await explainResponseError(res, '初始化演示场景失败'));
+      }
+      const data = await res.json();
+      if (data?.incidentId) {
+        setIncidentId(data.incidentId);
+        triggerRequestedRef.current = false;
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('incidentId', data.incidentId);
+          window.history.replaceState(null, '', url.toString());
+        }
+      }
+      setClients(Array.isArray(data?.clients) ? (data.clients as ClientInfo[]) : []);
+      setAedSites(Array.isArray(data?.aedSites) ? (data.aedSites as AedSite[]) : []);
+      await loadCurrentIncident();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '初始化演示场景失败');
+    }
+  };
+
+  const exportExperiment = async () => {
+    try {
+      setErrorMessage(null);
+      const res = await fetch(`${getApiBase()}/experiments/current/export`, {
+        headers: buildDemoAdminHeaders(demoAdminToken),
+      });
+      if (!res.ok) {
+        throw new Error(await explainResponseError(res, '导出实验数据失败'));
+      }
+      const data = await res.json();
+      downloadJson(`lifereflex-experiment-${data?.incidentId ?? 'current'}.json`, data);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '导出实验数据失败');
     }
   };
 
@@ -968,9 +1224,10 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current/reset`, {
         method: 'POST',
+        headers: buildDemoAdminHeaders(demoAdminToken),
       });
       if (!res.ok) {
-        throw new Error(`重置事件失败（${res.status}）`);
+        throw new Error(await explainResponseError(res, '重置事件失败'));
       }
       const data = await res.json();
       if (data?.incidentId) {
@@ -987,11 +1244,11 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current/designate_patient`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: buildDemoAdminHeaders(demoAdminToken, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ patientUserId }),
       });
       if (!res.ok) {
-        throw new Error(`触发患者端失败（${res.status}）`);
+        throw new Error(await explainResponseError(res, '触发患者端失败'));
       }
       const data = await res.json();
       if (data?.incidentId) {
@@ -1003,6 +1260,7 @@ export default function App() {
         }
       }
       await loadClients();
+      await loadCurrentIncident();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '触发患者端失败');
     }
@@ -1016,11 +1274,11 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, userId: `${clientId}-${role.toLowerCase()}` }),
+        headers: buildDemoAdminHeaders(demoAdminToken, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ role, userId: getActorId(role) }),
       });
       if (!res.ok) {
-        throw new Error(`Join ${role} failed (${res.status})`);
+        throw new Error(await explainResponseError(res, `${translateRoleLabel(role)}响应失败`));
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Join failed');
@@ -1035,11 +1293,11 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/actions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, userId: `${clientId}-${activeRole}` }),
+        headers: buildDemoAdminHeaders(demoAdminToken, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ action, userId: getActionActorId(action) }),
       });
       if (!res.ok) {
-        throw new Error(`Action ${action} failed (${res.status})`);
+        throw new Error(await explainResponseError(res, `动作 ${action} 失败`));
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Action failed');
@@ -1054,9 +1312,10 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/trigger`, {
         method: 'POST',
+        headers: buildDemoAdminHeaders(demoAdminToken),
       });
       if (!res.ok) {
-        throw new Error(`Trigger incident failed (${res.status})`);
+        throw new Error(await explainResponseError(res, '触发事件失败'));
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Trigger incident failed');
@@ -1071,9 +1330,10 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/sos_start`, {
         method: 'POST',
+        headers: buildDemoAdminHeaders(demoAdminToken),
       });
       if (!res.ok) {
-        throw new Error(`SOS start failed (${res.status})`);
+        throw new Error(await explainResponseError(res, '启动 SOS 失败'));
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'SOS start failed');
@@ -1088,9 +1348,10 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/sos_cancel`, {
         method: 'POST',
+        headers: buildDemoAdminHeaders(demoAdminToken),
       });
       if (!res.ok) {
-        throw new Error(`SOS cancel failed (${res.status})`);
+        throw new Error(await explainResponseError(res, '取消 SOS 失败'));
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'SOS cancel failed');
@@ -1112,6 +1373,8 @@ export default function App() {
 
   useEffect(() => {
     loadDispatchMeta();
+    loadAedSites();
+    loadHealthDetail();
   }, []);
 
   useEffect(() => {
@@ -1748,10 +2011,10 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
+    <div className="lra-dashboard flex flex-col h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
       
       {/*Top Bar*/}
-      <header className="h-16 border-b border-slate-800 bg-slate-900 flex items-center justify-between px-6 z-50 shadow-md flex-shrink-0">
+      <header className="min-h-16 border-b border-slate-800 bg-slate-900 flex flex-wrap items-center justify-between gap-3 px-6 py-3 z-50 shadow-md flex-shrink-0">
         <div className="flex items-center space-x-4">
             <div className="font-bold text-xl tracking-tight text-white flex items-center">
             <Activity className="mr-2 text-red-500"/> 生命反射弧
@@ -1762,7 +2025,38 @@ export default function App() {
           </div>
         </div>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <button
+              onClick={() => setThemeMode((current) => current === 'dark' ? 'light' : 'dark')}
+              className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-700 bg-black/30 text-slate-200 hover:bg-slate-800 transition-colors"
+              title={themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+            >
+              {themeMode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <div className="h-9 flex items-center gap-2 rounded-lg border border-slate-700 bg-black/30 px-3">
+              <KeyRound size={14} className="text-slate-400" />
+              <input
+                value={demoAdminToken}
+                onChange={(event) => setDemoAdminToken(event.target.value)}
+                type="password"
+                autoComplete="off"
+                placeholder="演示口令"
+                className="w-28 bg-transparent text-xs text-slate-200 outline-none placeholder:text-slate-500"
+                title="服务器启用演示管理员口令后，用于初始化、触发、重置和导出"
+              />
+            </div>
+            <div
+              className={cn(
+                "h-9 flex items-center gap-2 rounded-lg border px-3 text-[10px] font-bold uppercase tracking-wider",
+                demoAdminReady
+                  ? "border-emerald-700/60 bg-emerald-950/40 text-emerald-300"
+                  : "border-amber-700/60 bg-amber-950/40 text-amber-300"
+              )}
+              title="读取 /api/health/detail 后判断公网演示是否启用管理员口令"
+            >
+              {demoAdminReady ? <Unlock size={14} /> : <Lock size={14} />}
+              {demoAdminStatusLabel}
+            </div>
             <div className="font-mono text-xs font-bold text-slate-200 px-3 py-2 text-center bg-black/30 rounded border border-white/10">
               {incidentId ? `事件: ${incidentId.slice(0, 8)}` : '事件: --'}
             </div>
@@ -1770,10 +2064,24 @@ export default function App() {
               {incidentStartTs ? `耗时: ${formatElapsed(elapsedSeconds)}` : '耗时: --:--'}
             </div>
             
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
+             <button
+               onClick={bootstrapDemo}
+               className="h-9 px-3 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
+               title="初始化可演示的患者、救援者和 AED 场景"
+             >
+               <Siren size={16} /> 演示场景
+             </button>
+             <button
+               onClick={exportExperiment}
+               className="h-9 px-3 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
+               title="导出当前事件的实验数据 JSON"
+             >
+               <Download size={16} /> 导出数据
+             </button>
              <button
                onClick={resetCurrentIncident}
-               className="p-2 hover:bg-slate-800 rounded-full transition-colors text-yellow-300 hover:text-yellow-200"
+               className="h-9 w-9 flex items-center justify-center hover:bg-slate-800 rounded-full transition-colors text-yellow-300 hover:text-yellow-200"
                title="重置当前事件"
              >
                <RotateCcw size={20} />
@@ -1814,6 +2122,26 @@ export default function App() {
           </div>
           <div className="text-xs text-slate-500">
             任务状态: 核心施救={translateRoleStatus(incidentState?.roles?.PRIME?.status)} | AED 保障={translateRoleStatus(incidentState?.roles?.RUNNER?.status)} | 环境清障={translateRoleStatus(incidentState?.roles?.GUIDE?.status)}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              onClick={bootstrapDemo}
+              className="min-h-12 rounded-lg border border-red-500/60 bg-red-950/40 px-4 py-3 text-left hover:bg-red-950/70 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Siren size={16} className="text-red-300" /> 初始化医创赛演示场景
+              </div>
+              <div className="text-xs text-slate-400 mt-1">自动生成患者、医生、AED 保障、环境清障和 AED 点位。</div>
+            </button>
+            <button
+              onClick={exportExperiment}
+              className="min-h-12 rounded-lg border border-slate-700 bg-slate-800/70 px-4 py-3 text-left hover:bg-slate-800 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Download size={16} className="text-blue-300" /> 导出预实验数据
+              </div>
+              <div className="text-xs text-slate-400 mt-1">导出事件时间线、分派依据、AED 与终端画像 JSON。</div>
+            </button>
           </div>
           {wsError && (
             <div className="text-xs text-red-400 border border-red-900/60 bg-red-950/40 rounded-lg px-3 py-2">
@@ -1910,6 +2238,85 @@ export default function App() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">AED 点位库</div>
+                  <div className="text-sm text-white font-semibold mt-1">可用于调度评分与预实验记录</div>
+                </div>
+                <button
+                  onClick={loadAedSites}
+                  className="text-[10px] text-slate-400 hover:text-white transition-colors"
+                >
+                  刷新
+                </button>
+              </div>
+              <div className="space-y-2">
+                {visibleAedSites.length === 0 && (
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-4 text-xs text-slate-400">
+                    暂无 AED 点位，点击“演示场景”可自动生成模拟点位。
+                  </div>
+                )}
+                {visibleAedSites.map((site) => (
+                  <div key={site.siteId} className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-white">{site.name}</div>
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-[10px] font-bold",
+                        site.status === 'AVAILABLE' ? "bg-emerald-500/15 text-emerald-300 border border-emerald-700/50" : "bg-amber-500/15 text-amber-300 border border-amber-700/50"
+                      )}>
+                        {site.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-400 mt-2">{formatLocationLabel(site.location)}</div>
+                    {site.accessNotes && (
+                      <div className="text-xs text-slate-500 mt-2 leading-5">{site.accessNotes}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
+              <div className="mb-3">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">调度解释</div>
+                <div className="text-sm text-white font-semibold mt-1">角色选择理由与风险提示</div>
+              </div>
+              <div className="space-y-2">
+                {rationaleEntries.length === 0 && (
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-4 text-xs text-slate-400">
+                    尚未完成分派，选择患者端后会生成可解释结果。
+                  </div>
+                )}
+                {rationaleEntries.map(([role, decision]) => (
+                  <div key={role} className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-white">{translateRoleLabel(role)}</div>
+                        <div className="text-xs text-slate-400 mt-1">{getClientDisplayName(decision.userId)}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-slate-500 uppercase tracking-wider">评分</div>
+                        <div className="text-sm font-mono text-emerald-300">{decision.score.toFixed(1)}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-3 text-[10px] text-slate-400">
+                      <div className="rounded bg-black/20 px-2 py-2">距患者 {formatDistanceLabel(decision.distanceToPatientMeters)}</div>
+                      <div className="rounded bg-black/20 px-2 py-2">距 AED {formatDistanceLabel(decision.distanceToAedMeters)}</div>
+                    </div>
+                    {decision.reasons.length > 0 && (
+                      <div className="text-xs text-slate-300 mt-3 leading-5">{decision.reasons.join('；')}</div>
+                    )}
+                    {decision.warnings.length > 0 && (
+                      <div className="text-xs text-amber-300 mt-2 leading-5">{decision.warnings.join('；')}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -1957,6 +2364,9 @@ export default function App() {
                     </div>
                     <div className="text-[10px] text-slate-500 mt-1 truncate">
                       {client.organization} · {client.profileBio}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1 truncate">
+                      位置：{formatLocationLabel(client.location)}
                     </div>
                   </div>
                   <button
@@ -2137,6 +2547,9 @@ export default function App() {
                             ? incidentState?.roles?.GUIDE?.status
                             : null
                     )}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-2">
+                    位置：{formatLocationLabel(client.location)}
                   </div>
                 </div>
               </div>

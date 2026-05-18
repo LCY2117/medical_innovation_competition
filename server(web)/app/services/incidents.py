@@ -9,10 +9,14 @@ from typing import Dict
 from fastapi import HTTPException, WebSocket, WebSocketDisconnect
 
 from app.models.schemas import (
+    AedSite,
     AutoJoinResponse,
     ClientInfo,
     CreateIncidentResponse,
+    DemoBootstrapResponse,
     DispatchResponse,
+    ExperimentExportResponse,
+    GeoPoint,
     IncidentLogEntry,
     IncidentState,
     MutationResponse,
@@ -47,7 +51,8 @@ class IncidentService:
         self.ws_connections: Dict[str, list[WebSocket]] = {}
         self.sos_tasks: Dict[str, asyncio.Task[None]] = {}
         self.current_incident_id: str | None = snapshot.current_incident_id
-        self.clients: Dict[str, ClientInfo] = {}
+        self.clients: Dict[str, ClientInfo] = snapshot.clients
+        self.aed_sites: Dict[str, AedSite] = snapshot.aed_sites
         self.dispatch_planner = DispatchPlanner(
             api_key=siliconflow_api_key,
             model=siliconflow_model,
@@ -80,6 +85,7 @@ class IncidentService:
         profession_identity: str,
         profile_bio: str,
         device_type: str = "ANDROID",
+        location: GeoPoint | None = None,
     ) -> ClientInfo:
         client = ClientInfo(
             userId=user_id,
@@ -94,9 +100,23 @@ class IncidentService:
             assignedRole=self._assigned_role_for(user_id),
             patientCandidate=self._is_patient_candidate(health_condition, profile_bio),
             isPatient=self._is_patient(user_id),
+            location=location,
         )
         self.clients[user_id] = client
+        self._persist()
         return client
+
+    def update_client_location(self, user_id: str, location: GeoPoint) -> ClientInfo:
+        client = self.clients.get(user_id)
+        if client is None:
+            raise HTTPException(status_code=404, detail="Client not registered")
+        updated_location = location.model_copy(update={"updatedTs": location.updatedTs or self._now_ms()})
+        updated = client.model_copy(
+            update={"location": updated_location, "lastSeenTs": self._now_ms(), "online": True}
+        )
+        self.clients[user_id] = updated
+        self._persist()
+        return updated
 
     def list_clients(self) -> list[ClientInfo]:
         clients: list[ClientInfo] = []
@@ -108,6 +128,7 @@ class IncidentService:
                         "assignedRole": self._assigned_role_for(user_id),
                         "patientCandidate": self._is_patient_candidate(client.healthCondition, client.profileBio),
                         "isPatient": self._is_patient(user_id),
+                        "location": client.location,
                     }
                 )
             )
@@ -120,16 +141,46 @@ class IncidentService:
             ),
         )
 
-    async def designate_patient(self, patient_user_id: str) -> DispatchResponse:
+    def list_aed_sites(self) -> list[AedSite]:
+        return sorted(self.aed_sites.values(), key=lambda site: site.name)
+
+    def upsert_aed_site(
+        self,
+        name: str,
+        location: GeoPoint,
+        status: str = "AVAILABLE",
+        access_notes: str = "",
+        site_id: str | None = None,
+    ) -> AedSite:
+        now = self._now_ms()
+        normalized_id = site_id or f"aed-{uuid.uuid4()}"
+        site = AedSite(
+            siteId=normalized_id,
+            name=name,
+            location=location.model_copy(update={"updatedTs": location.updatedTs or now}),
+            status=status,
+            accessNotes=access_notes,
+            lastCheckedTs=now,
+        )
+        self.aed_sites[normalized_id] = site
+        state = self.get_current_incident()
+        state.aedSites = self.list_aed_sites()
+        state.logs.append(IncidentLogEntry(ts=now, msg=f"AED site updated ({site.name})"))
+        self._persist()
+        return site
+
+    async def designate_patient(self, patient_user_id: str, source_label: str = "dashboard") -> DispatchResponse:
         state = self.get_current_incident()
         now = self._now_ms()
+        if patient_user_id not in self.clients:
+            raise HTTPException(status_code=404, detail="Patient client not registered")
 
         state.phase = "DISPATCHING"
         state.sos = self._new_sos(status="ALERTING", start_ts=now)
         state.roles = self._new_roles()
         state.patientUserId = patient_user_id
         state.dispatchSource = None
-        state.logs.append(IncidentLogEntry(ts=now, msg=f"Patient designated by dashboard ({patient_user_id})"))
+        state.logs.append(IncidentLogEntry(ts=now, msg=f"Patient designated by {source_label} ({patient_user_id})"))
         state.logs.append(IncidentLogEntry(ts=now, msg="AI dispatching started"))
         self._touch_client(patient_user_id)
         self._persist()
@@ -138,9 +189,16 @@ class IncidentService:
         if self.dispatch_delay_sec > 0:
             await asyncio.sleep(self.dispatch_delay_sec)
 
-        assignments, source = self.dispatch_planner.assign_roles(patient_user_id, self.list_clients())
+        assignments, source, rationale = await asyncio.to_thread(
+            self.dispatch_planner.assign_roles,
+            patient_user_id,
+            self.list_clients(),
+            self.list_aed_sites(),
+        )
         state.phase = "DISPATCHED"
         state.dispatchSource = source
+        state.dispatchRationale = rationale
+        state.aedSites = self.list_aed_sites()
         for role_name, assigned_user_id in assignments.items():
             if assigned_user_id is None:
                 continue
@@ -157,6 +215,7 @@ class IncidentService:
             patientUserId=patient_user_id,
             assignments=assignments,
             source=source,
+            rationale=rationale,
         )
 
     async def reset_current_incident(self) -> MutationResponse:
@@ -175,6 +234,8 @@ class IncidentService:
         state.roles = self._new_roles()
         state.patientUserId = None
         state.dispatchSource = None
+        state.dispatchRationale = {}
+        state.aedSites = self.list_aed_sites()
         state.logs = [IncidentLogEntry(ts=self._now_ms(), msg="Incident reset")]
 
         task = self.sos_tasks.get(self.current_incident_id)
@@ -210,6 +271,58 @@ class IncidentService:
 
         state.sos = self._new_sos(status="MONITORING", start_ts=None)
         state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="SOS alerting canceled"))
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+
+        task = self.sos_tasks.get(incident_id)
+        if task and not task.done():
+            task.cancel()
+
+        return MutationResponse(incidentId=incident_id, phase=state.phase)
+
+    async def patient_sos_start(self, incident_id: str, patient_user_id: str) -> MutationResponse:
+        state = self._require_incident(incident_id)
+        if state.phase != "CREATED":
+            raise HTTPException(status_code=400, detail="Incident already dispatched")
+        if patient_user_id not in self.clients:
+            raise HTTPException(status_code=404, detail="Patient client not registered")
+
+        start_ts = self._now_ms()
+        state.sos = self._new_sos(status="ALERTING", start_ts=start_ts)
+        state.patientUserId = patient_user_id
+        state.roles = self._new_roles()
+        state.dispatchSource = None
+        state.dispatchRationale = {}
+        state.aedSites = self.list_aed_sites()
+        state.logs.append(IncidentLogEntry(ts=start_ts, msg=f"Patient SOS alerting started ({patient_user_id})"))
+        self._touch_client(patient_user_id)
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+
+        task = self.sos_tasks.get(incident_id)
+        if task and not task.done():
+            task.cancel()
+        if self.sos_duration_sec <= 0:
+            state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"Patient SOS confirmed ({patient_user_id})"))
+            self._persist()
+            dispatch = await self.designate_patient(patient_user_id, source_label="patient SOS")
+            return MutationResponse(incidentId=dispatch.incidentId, phase=self.incidents[dispatch.incidentId].phase)
+        self.sos_tasks[incident_id] = asyncio.create_task(
+            self._auto_designate_after(incident_id, patient_user_id, start_ts)
+        )
+
+        return MutationResponse(incidentId=incident_id, phase=state.phase)
+
+    async def patient_sos_cancel(self, incident_id: str, patient_user_id: str) -> MutationResponse:
+        state = self._require_incident(incident_id)
+        if state.phase != "CREATED":
+            return MutationResponse(incidentId=incident_id, phase=state.phase)
+        if state.patientUserId not in (None, patient_user_id):
+            raise HTTPException(status_code=403, detail="Only the active patient can cancel SOS")
+
+        state.sos = self._new_sos(status="MONITORING", start_ts=None)
+        state.patientUserId = None
+        state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"Patient SOS alerting canceled ({patient_user_id})"))
         self._persist()
         await self._broadcast_state_async(incident_id)
 
@@ -357,6 +470,60 @@ class IncidentService:
         await self._broadcast_state_async(incident_id)
         return MutationResponse(incidentId=incident_id, phase=state.phase)
 
+    async def bootstrap_demo(self) -> DemoBootstrapResponse:
+        self.clients = {}
+        self.aed_sites = {}
+        incident_id = self._new_incident()
+        self.current_incident_id = incident_id
+
+        demo_locations = {
+            "patient": GeoPoint(latitude=39.904120, longitude=116.407210, label="教学楼 A 座 2 层走廊", floor="2F", source="demo"),
+            "doctor": GeoPoint(latitude=39.904210, longitude=116.407260, label="教学楼 A 座 1 层大厅", floor="1F", source="demo"),
+            "runner": GeoPoint(latitude=39.903920, longitude=116.407020, label="操场入口", floor="1F", source="demo"),
+            "guide": GeoPoint(latitude=39.904500, longitude=116.407620, label="校门岗亭", floor="1F", source="demo"),
+            "aed1": GeoPoint(latitude=39.904030, longitude=116.406920, label="二楼服务台 AED 箱", floor="2F", source="demo"),
+            "aed2": GeoPoint(latitude=39.904560, longitude=116.407700, label="校门值班室 AED 箱", floor="1F", source="demo"),
+        }
+
+        self.register_client("demo-patient", "冠心病患者", "模拟社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"])
+        self.register_client("demo-doctor", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"])
+        self.register_client("demo-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", demo_locations["runner"])
+        self.register_client("demo-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", demo_locations["guide"])
+        self.upsert_aed_site("二楼服务台 AED", demo_locations["aed1"], access_notes="教学楼 A 座服务台左侧红色 AED 箱", site_id="demo-aed-1")
+        self.upsert_aed_site("校门值班室 AED", demo_locations["aed2"], access_notes="校门岗亭内，安保可协助取用", site_id="demo-aed-2")
+
+        state = self.incidents[incident_id]
+        state.aedSites = self.list_aed_sites()
+        state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="Demo scenario bootstrapped"))
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+        return DemoBootstrapResponse(
+            incidentId=incident_id,
+            clients=self.list_clients(),
+            aedSites=self.list_aed_sites(),
+        )
+
+    def export_experiment(self, incident_id: str | None = None) -> ExperimentExportResponse:
+        state = self._require_incident(incident_id) if incident_id else self.get_current_incident()
+        assignments = {
+            "PRIME": state.roles.PRIME.userId,
+            "RUNNER": state.roles.RUNNER.userId,
+            "GUIDE": state.roles.GUIDE.userId,
+        }
+        return ExperimentExportResponse(
+            incidentId=state.incidentId,
+            generatedAt=self._now_ms(),
+            phase=state.phase,
+            patientUserId=state.patientUserId,
+            dispatchSource=state.dispatchSource,
+            assignments=assignments,
+            metrics=self._experiment_metrics(state),
+            timeline=state.logs,
+            clients=self.list_clients(),
+            aedSites=state.aedSites or self.list_aed_sites(),
+            dispatchRationale=state.dispatchRationale,
+        )
+
     async def bootstrap(self) -> None:
         for incident_id, state in list(self.incidents.items()):
             if state.phase != "CREATED":
@@ -370,13 +537,30 @@ class IncidentService:
                 task.cancel()
 
             if remaining <= 0:
-                state.phase = "DISPATCHED"
-                state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="Incident auto-triggered after restart"))
-                self._persist()
+                if state.patientUserId:
+                    state.logs.append(
+                        IncidentLogEntry(ts=self._now_ms(), msg="Patient SOS confirmed after restart")
+                    )
+                    self._persist()
+                    await self.designate_patient(state.patientUserId, source_label="patient SOS after restart")
+                else:
+                    state.phase = "DISPATCHED"
+                    state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="Incident auto-triggered after restart"))
+                    self._persist()
             else:
-                self.sos_tasks[incident_id] = asyncio.create_task(
-                    self._auto_trigger_after(incident_id, state.sos.startTs, delay_override=remaining)
-                )
+                if state.patientUserId:
+                    self.sos_tasks[incident_id] = asyncio.create_task(
+                        self._auto_designate_after(
+                            incident_id,
+                            state.patientUserId,
+                            state.sos.startTs,
+                            delay_override=remaining,
+                        )
+                    )
+                else:
+                    self.sos_tasks[incident_id] = asyncio.create_task(
+                        self._auto_trigger_after(incident_id, state.sos.startTs, delay_override=remaining)
+                    )
 
     def health(self) -> dict:
         store_health = self.store.health()
@@ -392,6 +576,7 @@ class IncidentService:
             "currentIncidentId": self.current_incident_id,
             "loadedIncidents": len(self.incidents),
             "registeredClients": len(self.clients),
+            "registeredAedSites": len(self.aed_sites),
             "activeWebSockets": sum(len(connections) for connections in self.ws_connections.values()),
             "activeSosTimers": sum(1 for task in self.sos_tasks.values() if not task.done()),
             "dispatch": dispatch_info,
@@ -441,6 +626,8 @@ class IncidentService:
             logs=[IncidentLogEntry(ts=self._now_ms(), msg="Incident created")],
             patientUserId=None,
             dispatchSource=None,
+            aedSites=self.list_aed_sites(),
+            dispatchRationale={},
         )
         self.ws_connections.setdefault(incident_id, [])
         return incident_id
@@ -491,6 +678,28 @@ class IncidentService:
         self._persist()
         await self._broadcast_state_async(incident_id)
 
+    async def _auto_designate_after(
+        self,
+        incident_id: str,
+        patient_user_id: str,
+        start_ts: int,
+        delay_override: int | None = None,
+    ) -> None:
+        await asyncio.sleep(delay_override if delay_override is not None else self.sos_duration_sec)
+        state = self.incidents.get(incident_id)
+        if state is None:
+            return
+        if state.phase != "CREATED":
+            return
+        if state.sos.status != "ALERTING" or state.sos.startTs != start_ts:
+            return
+        if state.patientUserId != patient_user_id:
+            return
+
+        state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"Patient SOS confirmed ({patient_user_id})"))
+        self._persist()
+        await self.designate_patient(patient_user_id, source_label="patient SOS")
+
     @staticmethod
     def _incident_payload(state: IncidentState) -> dict:
         return state.model_dump(mode="json")
@@ -500,13 +709,44 @@ class IncidentService:
         return int(time.time() * 1000)
 
     def _persist(self) -> None:
-        self.store.save_snapshot(self.incidents, self.current_incident_id)
+        self.store.save_snapshot(self.incidents, self.current_incident_id, self.clients, self.aed_sites)
 
     def _touch_client(self, user_id: str) -> None:
         client = self.clients.get(user_id)
         if client is None:
             return
         self.clients[user_id] = client.model_copy(update={"lastSeenTs": self._now_ms(), "online": True})
+        self._persist()
+
+    @staticmethod
+    def _latest_log_ts(state: IncidentState, keyword: str) -> int | None:
+        lowered = keyword.lower()
+        for entry in reversed(state.logs):
+            if lowered in entry.msg.lower():
+                return entry.ts
+        return None
+
+    def _experiment_metrics(self, state: IncidentState) -> dict[str, int | float | None]:
+        designated_ts = self._latest_log_ts(state, "Patient designated") or self._latest_log_ts(state, "SOS alerting started")
+        dispatch_done_ts = self._latest_log_ts(state, "assigned")
+        cpr_ts = self._latest_log_ts(state, "CPR started")
+        aed_picked_ts = self._latest_log_ts(state, "AED picked")
+        aed_delivered_ts = self._latest_log_ts(state, "AED delivered")
+        ambulance_ts = self._latest_log_ts(state, "Ambulance arrived")
+
+        def delta_seconds(start: int | None, end: int | None) -> int | None:
+            if start is None or end is None:
+                return None
+            return max(0, round((end - start) / 1000))
+
+        return {
+            "dispatchSeconds": delta_seconds(designated_ts, dispatch_done_ts),
+            "cprStartSeconds": delta_seconds(designated_ts, cpr_ts),
+            "aedPickupSeconds": delta_seconds(designated_ts, aed_picked_ts),
+            "aedDeliverySeconds": delta_seconds(designated_ts, aed_delivered_ts),
+            "ambulanceArriveSeconds": delta_seconds(designated_ts, ambulance_ts),
+            "logCount": len(state.logs),
+        }
 
     def _assigned_role_for(self, user_id: str) -> str | None:
         if not self.current_incident_id or self.current_incident_id not in self.incidents:

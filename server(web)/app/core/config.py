@@ -69,6 +69,8 @@ class Settings:
     local_model_name: str = "default"
     local_model_timeout_sec: int = 30
     prefer_local_model: bool = True
+    demo_admin_token: str | None = None
+    auth_token_ttl_sec: int = 604800
 
 
 @lru_cache(maxsize=1)
@@ -103,4 +105,6 @@ def get_settings() -> Settings:
         local_model_name=os.getenv("LRA_LOCAL_MODEL_NAME", "default"),
         local_model_timeout_sec=int(os.getenv("LRA_LOCAL_MODEL_TIMEOUT_SEC", "30")),
         prefer_local_model=_parse_bool(os.getenv("LRA_PREFER_LOCAL_MODEL"), default=True),
+        demo_admin_token=(os.getenv("LRA_DEMO_ADMIN_TOKEN") or "").strip() or None,
+        auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
     )

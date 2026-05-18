@@ -1,0 +1,756 @@
+:root[data-mobile-route='true'] {
+  color-scheme: light;
+  --mobile-bg: #f5f7f8;
+  --mobile-surface: #ffffff;
+  --mobile-surface-2: #eef3f4;
+  --mobile-surface-3: #f8fbfb;
+  --mobile-ink: #102125;
+  --mobile-text: #102125;
+  --mobile-muted: #64777b;
+  --mobile-soft: #8da0a4;
+  --mobile-border: #dfe8ea;
+  --mobile-danger: #d92d43;
+  --mobile-danger-2: #a71830;
+  --mobile-danger-soft: #fff1f3;
+  --mobile-ok: #0f9f72;
+  --mobile-ok-soft: #e9f8f1;
+  --mobile-ok-text: #086447;
+  --mobile-warn: #b7791f;
+  --mobile-blue: #2563eb;
+  --mobile-shadow: 0 12px 32px rgba(21, 38, 44, 0.08);
+  --mobile-panel-shadow: 0 10px 28px rgba(21, 38, 44, 0.07);
+  --mobile-tab-bg: rgba(255, 255, 255, 0.96);
+  --mobile-topbar-bg: rgba(245, 247, 248, 0.94);
+  --mobile-cta: #14343a;
+  --mobile-cta-text: #ffffff;
+  --mobile-danger-text: #742132;
+}
+
+:root[data-mobile-route='true'][data-mobile-theme='dark'] {
+  color-scheme: dark;
+  --mobile-bg: #0d1517;
+  --mobile-surface: #142022;
+  --mobile-surface-2: #1d2c2f;
+  --mobile-surface-3: #101b1d;
+  --mobile-ink: #f2f7f7;
+  --mobile-text: #edf4f4;
+  --mobile-muted: #a6b5b8;
+  --mobile-soft: #7d9095;
+  --mobile-border: #2b3d41;
+  --mobile-danger: #fb5b70;
+  --mobile-danger-2: #ff8fa0;
+  --mobile-danger-soft: #35161c;
+  --mobile-ok: #2ad39b;
+  --mobile-ok-soft: #0f3028;
+  --mobile-ok-text: #a4f4d6;
+  --mobile-warn: #f4bf54;
+  --mobile-blue: #7aa2ff;
+  --mobile-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --mobile-panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.26);
+  --mobile-tab-bg: rgba(20, 32, 34, 0.96);
+  --mobile-topbar-bg: rgba(13, 21, 23, 0.92);
+  --mobile-cta: #d7f0ef;
+  --mobile-cta-text: #0c1719;
+  --mobile-danger-text: #ffd7dd;
+}
+
+:root[data-mobile-route='true'],
+:root[data-mobile-route='true'] body,
+:root[data-mobile-route='true'] #root {
+  min-height: 100%;
+  background: var(--mobile-bg);
+}
+
+.mobile-shell {
+  min-height: 100dvh;
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: calc(12px + env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom));
+  color: var(--mobile-text);
+  background: var(--mobile-bg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.mobile-auth-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: center;
+}
+
+.mobile-loading {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: var(--mobile-muted);
+}
+
+.mobile-hero {
+  padding: 18px 2px 8px;
+}
+
+.mobile-hero h1,
+.mobile-topbar h1,
+.mobile-panel h2,
+.mobile-role-card h3,
+.mobile-summary h2 {
+  margin: 0;
+  color: var(--mobile-ink);
+  letter-spacing: 0;
+}
+
+.mobile-hero h1 {
+  font-size: 2rem;
+  line-height: 1.08;
+  font-weight: 780;
+}
+
+.mobile-hero p {
+  max-width: 28rem;
+  margin: 10px 0 0;
+  color: var(--mobile-muted);
+  line-height: 1.6;
+}
+
+.mobile-app-mark,
+.mobile-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+}
+
+.mobile-kicker {
+  margin: 0 0 4px;
+  color: var(--mobile-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.mobile-panel,
+.mobile-emergency-panel {
+  margin-top: 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  background: var(--mobile-surface);
+  box-shadow: var(--mobile-panel-shadow);
+}
+
+.mobile-panel {
+  padding: 14px;
+}
+
+.mobile-emergency-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-color: #f6c8cf;
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-emergency-panel.patient {
+  border-color: #ef9aaa;
+}
+
+.mobile-emergency-panel.responder {
+  border-color: rgba(15, 159, 114, 0.38);
+  background: var(--mobile-ok-soft);
+}
+
+.mobile-emergency-panel svg {
+  color: var(--mobile-danger);
+}
+
+.mobile-emergency-panel.responder svg {
+  color: var(--mobile-ok);
+}
+
+.mobile-emergency-panel h2,
+.mobile-emergency-panel p {
+  margin: 8px 0 0;
+}
+
+.mobile-emergency-panel p {
+  color: var(--mobile-danger-text);
+  line-height: 1.52;
+}
+
+.mobile-emergency-panel.responder p {
+  color: var(--mobile-ok-text);
+}
+
+.mobile-topbar,
+.mobile-section-head,
+.mobile-status-strip,
+.mobile-user-panel,
+.mobile-role-title,
+.mobile-aed-card,
+.mobile-team-list > div,
+.mobile-log-list > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-topbar,
+.mobile-section-head,
+.mobile-status-strip {
+  justify-content: space-between;
+}
+
+.mobile-topbar {
+  margin: -12px -14px 0;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 10px;
+  background: var(--mobile-topbar-bg);
+  border-bottom: 1px solid rgba(223, 232, 234, 0.8);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-topbar h1,
+.mobile-panel h2 {
+  font-size: 1.18rem;
+  line-height: 1.2;
+  font-weight: 760;
+}
+
+.mobile-status-strip {
+  min-height: 36px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  background: var(--mobile-surface);
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  box-shadow: 0 6px 18px rgba(21, 38, 44, 0.05);
+}
+
+.mobile-status-strip div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-status-strip strong {
+  color: var(--mobile-ink);
+  font-size: 0.84rem;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.sync-dot.live {
+  background: var(--mobile-ok);
+}
+
+.sync-dot.connecting,
+.sync-dot.reconnecting {
+  background: var(--mobile-warn);
+}
+
+.sync-dot.offline {
+  background: var(--mobile-danger);
+}
+
+.mobile-segment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--mobile-surface-2);
+}
+
+.mobile-view-tabs {
+  position: fixed;
+  right: max(14px, calc((100vw - 480px) / 2 + 14px));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  left: max(14px, calc((100vw - 480px) / 2 + 14px));
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  max-width: 452px;
+  margin: 0 auto;
+  padding: 4px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  background: var(--mobile-tab-bg);
+  box-shadow: 0 12px 34px rgba(21, 38, 44, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.mobile-view-tabs button {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mobile-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.mobile-view-tabs button.active {
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+}
+
+.mobile-segment button,
+.mobile-presets button,
+.mobile-icon-button,
+.mobile-small-button,
+.mobile-input-row button,
+.mobile-role-grid button,
+.mobile-primary-button,
+.mobile-danger-button,
+.mobile-ghost-button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  touch-action: manipulation;
+}
+
+.mobile-segment button {
+  background: transparent;
+  color: var(--mobile-muted);
+  font-weight: 740;
+}
+
+.mobile-segment button.active {
+  background: #ffffff;
+  color: var(--mobile-ink);
+  box-shadow: 0 4px 14px rgba(21, 38, 44, 0.08);
+}
+
+.mobile-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-presets button,
+.mobile-small-button,
+.mobile-role-grid button,
+.mobile-ghost-button {
+  border: 1px solid var(--mobile-border);
+  background: var(--mobile-surface);
+}
+
+.mobile-icon-button {
+  width: 42px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-muted);
+}
+
+.mobile-top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-small-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+}
+
+.mobile-primary-button,
+.mobile-danger-button {
+  width: 100%;
+  min-height: 48px;
+  font-weight: 800;
+}
+
+.mobile-primary-button {
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+}
+
+.mobile-danger-button {
+  background: var(--mobile-danger);
+  color: #ffffff;
+}
+
+.mobile-ghost-button {
+  width: 100%;
+  color: var(--mobile-danger-text);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.mobile-panel label {
+  display: block;
+  margin-top: 12px;
+  color: var(--mobile-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.mobile-panel input,
+.mobile-panel textarea,
+.mobile-input-row input {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--mobile-surface);
+  color: var(--mobile-ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.mobile-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 8px;
+}
+
+.mobile-input-row input {
+  margin-top: 0;
+}
+
+.mobile-input-row button {
+  background: var(--mobile-surface-2);
+  color: var(--mobile-ink);
+  font-weight: 760;
+}
+
+.mobile-notice {
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.mobile-notice.ok {
+  background: var(--mobile-ok-soft);
+  color: var(--mobile-ok-text);
+}
+
+.mobile-notice.error {
+  background: var(--mobile-danger-soft);
+  color: var(--mobile-danger-text);
+}
+
+.mobile-notice.info {
+  background: #eef4ff;
+  color: #1d4ed8;
+}
+
+.mobile-user-panel {
+  align-items: flex-start;
+}
+
+.mobile-user-panel strong,
+.mobile-aed-card strong,
+.mobile-team-list strong {
+  display: block;
+  color: var(--mobile-ink);
+  font-weight: 760;
+}
+
+.mobile-user-panel p,
+.mobile-aed-card p,
+.mobile-team-list p,
+.mobile-role-card p,
+.mobile-summary p {
+  margin: 4px 0 0;
+  color: var(--mobile-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.mobile-incident-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-incident-panel {
+  box-shadow: none;
+  background: var(--mobile-surface-3);
+}
+
+.mobile-incident-panel .mobile-section-head {
+  margin-bottom: 8px;
+}
+
+.mobile-incident-panel h2 {
+  font-size: 1.02rem;
+}
+
+.mobile-compact-input-row input,
+.mobile-compact-input-row button {
+  min-height: 40px;
+}
+
+.mobile-incident-card > div,
+.mobile-rationale > div,
+.mobile-cpr-meter {
+  border-radius: 8px;
+  background: var(--mobile-surface-2);
+  padding: 10px;
+}
+
+.mobile-incident-card span,
+.mobile-rationale span {
+  display: block;
+  color: var(--mobile-muted);
+  font-size: 0.72rem;
+}
+
+.mobile-incident-card strong,
+.mobile-rationale strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mobile-ink);
+  overflow-wrap: anywhere;
+}
+
+.mobile-emergency-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 8px;
+}
+
+.mobile-role-card {
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--mobile-surface);
+}
+
+.mobile-role-card.role-prime {
+  border-color: #f3b5bf;
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-role-card.role-runner {
+  border-color: #bfd3ff;
+  background: color-mix(in srgb, var(--mobile-blue) 10%, var(--mobile-surface));
+}
+
+.mobile-role-card.role-guide {
+  border-color: #f5dfb8;
+  background: color-mix(in srgb, var(--mobile-warn) 12%, var(--mobile-surface));
+}
+
+.mobile-role-title {
+  align-items: flex-start;
+}
+
+.mobile-role-title h3 {
+  font-size: 1.08rem;
+}
+
+.mobile-cpr-meter {
+  margin: 12px 0;
+}
+
+.mobile-cpr-meter div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-cpr-meter span {
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+}
+
+.mobile-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-role-grid button {
+  min-height: 64px;
+  padding: 8px;
+  text-align: left;
+}
+
+.mobile-role-grid strong,
+.mobile-role-grid span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.mobile-role-grid strong {
+  color: var(--mobile-ink);
+  font-size: 0.78rem;
+}
+
+.mobile-role-grid span {
+  margin-top: 4px;
+  color: var(--mobile-muted);
+  font-size: 0.72rem;
+}
+
+.mobile-aed-card {
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mobile-warn) 14%, var(--mobile-surface));
+}
+
+.mobile-aed-card svg {
+  color: var(--mobile-warn);
+}
+
+.mobile-rationale {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mobile-rationale p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--mobile-muted);
+  line-height: 1.5;
+}
+
+.mobile-team-list,
+.mobile-log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-team-list > div,
+.mobile-log-list > div {
+  align-items: flex-start;
+  border-radius: 8px;
+  background: var(--mobile-surface-2);
+  padding: 10px;
+}
+
+.mobile-team-list span {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.mobile-team-list span.online {
+  background: var(--mobile-ok);
+}
+
+.mobile-log-list time {
+  flex: 0 0 62px;
+  color: var(--mobile-muted);
+  font-size: 0.75rem;
+}
+
+.mobile-log-list p {
+  margin: 0;
+  color: var(--mobile-ink);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.mobile-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 108px;
+  color: var(--mobile-muted);
+  text-align: center;
+  line-height: 1.55;
+}
+
+.mobile-empty-state.compact {
+  min-height: auto;
+  display: block;
+  padding: 10px;
+  text-align: left;
+}
+
+.mobile-count {
+  color: var(--mobile-muted);
+  font-weight: 800;
+}
+
+.mobile-summary {
+  text-align: center;
+}
+
+.mobile-bottom-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--mobile-tab-bg);
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  box-shadow: 0 10px 30px rgba(21, 38, 44, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-mobile-route='true'] {
+    color-scheme: light dark;
+  }
+}
+
+@media (max-width: 380px) {
+  .mobile-shell {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .mobile-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-incident-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -8,13 +8,14 @@ import uuid
 
 from fastapi import HTTPException
 
-from app.models.schemas import AuthResponse, AuthUser
+from app.models.schemas import AuthMeResponse, AuthResponse, AuthUser, SimpleOkResponse
 from app.storage.sqlite_auth_store import SqliteAuthStore, UserRecord
 
 
 class AuthService:
-    def __init__(self, store: SqliteAuthStore) -> None:
+    def __init__(self, store: SqliteAuthStore, token_ttl_sec: int = 604800) -> None:
         self.store = store
+        self.token_ttl_sec = token_ttl_sec
 
     def register(
         self,
@@ -44,8 +45,8 @@ class AuthService:
             created_at=self._now_ms(),
         )
         self.store.create_user(record)
-        token = self._issue_token(record.user_id)
-        return AuthResponse(token=token, user=self._to_auth_user(record))
+        token, expires_at = self._issue_token(record.user_id)
+        return AuthResponse(token=token, user=self._to_auth_user(record), tokenExpiresAt=expires_at)
 
     def login(self, phone: str, password: str) -> AuthResponse:
         normalized_phone = self._normalize_phone(phone)
@@ -53,15 +54,22 @@ class AuthService:
         if user is None or not self._verify_password(password, user.password_hash):
             raise HTTPException(status_code=401, detail="手机号或密码错误")
 
-        token = self._issue_token(user.user_id)
-        return AuthResponse(token=token, user=self._to_auth_user(user))
+        token, expires_at = self._issue_token(user.user_id)
+        return AuthResponse(token=token, user=self._to_auth_user(user), tokenExpiresAt=expires_at)
+
+    def me(self, authorization: str | None) -> AuthMeResponse:
+        token = self._extract_token(authorization)
+        user = self._require_user_by_token(token)
+        return AuthMeResponse(user=self._to_auth_user(user), tokenExpiresAt=self.store.get_token_expires_at(token))
+
+    def logout(self, authorization: str | None) -> SimpleOkResponse:
+        token = self._extract_token(authorization)
+        self.store.delete_token(token)
+        return SimpleOkResponse()
 
     def require_user(self, authorization: str | None) -> UserRecord:
         token = self._extract_token(authorization)
-        user = self.store.get_user_by_token(token)
-        if user is None:
-            raise HTTPException(status_code=401, detail="登录态已失效，请重新登录")
-        return user
+        return self._require_user_by_token(token)
 
     @staticmethod
     def _normalize_phone(phone: str) -> str:
@@ -78,10 +86,25 @@ class AuthService:
         if len(profile_bio.strip()) < 8:
             raise HTTPException(status_code=400, detail="个人介绍至少 8 个字")
 
-    def _issue_token(self, user_id: str) -> str:
+    def _issue_token(self, user_id: str) -> tuple[str, int | None]:
         token = secrets.token_urlsafe(32)
-        self.store.save_token(token, user_id, self._now_ms())
-        return token
+        issued_at = self._now_ms()
+        expires_at = self._token_expires_at(issued_at)
+        self.store.save_token(token, user_id, issued_at, expires_at)
+        return token, expires_at
+
+    def _require_user_by_token(self, token: str) -> UserRecord:
+        user = self.store.get_user_by_token(token, self._now_ms())
+        if user is None:
+            raise HTTPException(status_code=401, detail="登录态已失效，请重新登录")
+        return user
+
+    def _token_expires_at(self, issued_at: int) -> int | None:
+        if self.token_ttl_sec > 0:
+            return issued_at + self.token_ttl_sec * 1000
+        if self.token_ttl_sec < 0:
+            return issued_at - 1
+        return None
 
     @staticmethod
     def _hash_password(password: str) -> str:
