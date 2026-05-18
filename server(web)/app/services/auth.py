@@ -24,7 +24,7 @@ class AuthService:
             "profile_bio": "多年冠心病病史，需要重点监护，可用于预实验患者端。",
         },
         "prime": {
-            "user_id": "demo-doctor",
+            "user_id": "demo-prime",
             "display_name": "张医生",
             "phone": "13900001002",
             "organization": "市医院急救科",

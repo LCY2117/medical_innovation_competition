@@ -206,7 +206,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(unknown.status_code, 400)
         self.assertEqual(patient.json()["user"]["userId"], "demo-patient")
         self.assertEqual(repeat_patient.json()["user"]["userId"], "demo-patient")
-        self.assertEqual(prime.json()["user"]["userId"], "demo-doctor")
+        self.assertEqual(prime.json()["user"]["userId"], "demo-prime")
         self.assertNotEqual(patient.json()["token"], repeat_patient.json()["token"])
         self.assertEqual(me.status_code, 200)
         self.assertEqual(me.json()["user"]["userId"], "demo-patient")
@@ -330,7 +330,7 @@ class ServerTestCase(unittest.TestCase):
             )
             self.assertEqual(dispatch.status_code, 200)
             payload = dispatch.json()
-            self.assertEqual(payload["assignments"]["PRIME"], "demo-doctor")
+            self.assertEqual(payload["assignments"]["PRIME"], "demo-prime")
             self.assertEqual(payload["assignments"]["RUNNER"], "demo-runner")
             self.assertEqual(payload["assignments"]["GUIDE"], "demo-guide")
             self.assertGreater(payload["rationale"]["RUNNER"]["distanceToAedMeters"], 0)
@@ -361,7 +361,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(dispatch.status_code, 200)
         self.assertEqual(len(clients.json()["clients"]), 4)
         self.assertEqual(len(aed_sites.json()["aedSites"]), 2)
-        self.assertEqual(dispatch.json()["assignments"]["PRIME"], "demo-doctor")
+        self.assertEqual(dispatch.json()["assignments"]["PRIME"], "demo-prime")
 
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:
