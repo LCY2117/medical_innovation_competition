@@ -209,6 +209,79 @@ interface IncidentState {
   dispatchRationale?: Record<string, DispatchRoleDecision>;
 }
 
+type ServerRole = keyof IncidentState['roles'];
+
+const SERVER_ROLES: ServerRole[] = ['PRIME', 'RUNNER', 'GUIDE'];
+
+const PHASE_RANK: Record<string, number> = {
+  CREATED: 0,
+  DISPATCHING: 1,
+  DISPATCHED: 2,
+  CPR: 3,
+  AED_PICKED: 4,
+  AED_DELIVERED: 5,
+  AED_ANALYZING: 6,
+  SHOCK_DELIVERED: 7,
+  HANDOVER: 8,
+  ARCHIVED: 9,
+};
+
+function getStateLatestTs(state?: IncidentState | null): number {
+  return Math.max(0, ...(state?.logs ?? []).map((entry) => entry.ts));
+}
+
+function getDispatchRationaleCount(state?: IncidentState | null): number {
+  return Object.keys(state?.dispatchRationale ?? {}).length;
+}
+
+function hasAssignedServerRoles(state?: IncidentState | null): boolean {
+  return SERVER_ROLES.some((role) => Boolean(state?.roles?.[role]?.userId));
+}
+
+function isIncidentResetState(state: IncidentState): boolean {
+  return state.logs.length === 1 && state.logs[0]?.msg === 'Incident reset';
+}
+
+function getPhaseRank(phase?: string | null): number {
+  return phase ? PHASE_RANK[phase] ?? 2 : -1;
+}
+
+function mergeIncidentState(current: IncidentState | null, next: IncidentState): IncidentState {
+  if (!current || current.incidentId !== next.incidentId) {
+    return next;
+  }
+
+  const currentTs = getStateLatestTs(current);
+  const nextTs = getStateLatestTs(next);
+  if (nextTs < currentTs) {
+    return current;
+  }
+
+  const currentRationaleCount = getDispatchRationaleCount(current);
+  const nextRationaleCount = getDispatchRationaleCount(next);
+  const currentAssigned = hasAssignedServerRoles(current);
+  const nextAssigned = hasAssignedServerRoles(next);
+  const nextIsNewReset = isIncidentResetState(next) && nextTs >= currentTs;
+
+  if (!nextIsNewReset && nextTs === currentTs) {
+    if (currentRationaleCount > 0 && nextRationaleCount === 0) {
+      return current;
+    }
+    if (currentAssigned && !nextAssigned && getPhaseRank(next.phase) <= getPhaseRank(current.phase)) {
+      return current;
+    }
+  }
+
+  if (!nextIsNewReset && currentRationaleCount > 0 && nextRationaleCount === 0 && getPhaseRank(next.phase) >= getPhaseRank(current.phase)) {
+    return {
+      ...next,
+      dispatchRationale: current.dispatchRationale,
+    };
+  }
+
+  return next;
+}
+
 interface GeoPoint {
   latitude: number;
   longitude: number;
@@ -882,6 +955,19 @@ export default function App() {
   const dispatchStream = buildDispatchStream(incidentState, clients, dispatchMeta, dispatchNowMs);
   const rationale = incidentState?.dispatchRationale ?? {};
   const rationaleEntries = Object.entries(rationale);
+  const assignedRoleEntries = incidentState
+    ? SERVER_ROLES.map((role) => [role, incidentState.roles[role]] as const).filter(([, roleState]) => Boolean(roleState.userId))
+    : [];
+  const hasDispatchRationale = rationaleEntries.length > 0;
+  const hasRoleAssignments = assignedRoleEntries.length > 0;
+  const dispatchExplanationPending = incidentState?.phase === 'DISPATCHING';
+  const dispatchProgressLabel = incidentState
+    ? incidentState.phase === 'DISPATCHING'
+      ? '流式输出中'
+      : hasDispatchRationale || hasRoleAssignments
+        ? '分派已完成'
+        : '等待触发'
+    : '等待事件';
   const visibleAedSites = incidentState?.aedSites?.length ? incidentState.aedSites : aedSites;
   const getClientDisplayName = (userId?: string | null) =>
     clients.find((client) => client.userId === userId)?.displayName ?? userId ?? '未分配';
@@ -1050,7 +1136,7 @@ export default function App() {
         if (msg?.type === 'STATE') {
           const nextState = msg.payload as IncidentState;
           if (nextState?.incidentId === id) {
-            setIncidentState(nextState);
+            setIncidentState((current) => mergeIncidentState(current, nextState));
           }
         } else if (msg?.type === 'ERROR') {
           setWsError(String(msg.payload ?? 'WebSocket error'));
@@ -1114,7 +1200,7 @@ export default function App() {
       const data = await res.json();
       if (data?.incidentId) {
         setIncidentId(data.incidentId);
-        setIncidentState(data as IncidentState);
+        setIncidentState((current) => mergeIncidentState(current, data as IncidentState));
         if (typeof window !== 'undefined') {
           const url = new URL(window.location.href);
           url.searchParams.set('incidentId', data.incidentId);
@@ -2222,11 +2308,15 @@ export default function App() {
               <div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">AI 流式分派过程</div>
                 <div className="text-sm text-white font-semibold mt-1">
-                  {incidentState?.phase === 'DISPATCHING' ? '正在分步分析患者与候选终端' : '展示最近一次分派决策链路'}
+                  {incidentState?.phase === 'DISPATCHING'
+                    ? '正在分步分析患者与候选终端'
+                    : hasDispatchRationale || hasRoleAssignments
+                      ? '展示最近一次分派决策链路'
+                      : '等待患者端触发事件'}
                 </div>
               </div>
               <div className="text-xs text-slate-400">
-                {incidentState?.phase === 'DISPATCHING' ? '流式输出中' : '分派已完成'}
+                {dispatchProgressLabel}
               </div>
             </div>
             <div className="space-y-3">
@@ -2304,9 +2394,33 @@ export default function App() {
                 <div className="text-sm text-white font-semibold mt-1">角色选择理由与风险提示</div>
               </div>
               <div className="space-y-2">
-                {rationaleEntries.length === 0 && (
+                {rationaleEntries.length === 0 && !hasRoleAssignments && (
                   <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-4 text-xs text-slate-400">
-                    尚未完成分派，选择患者端后会生成可解释结果。
+                    {dispatchExplanationPending ? 'AI 正在生成角色选择理由，请稍候。' : '尚未触发患者端事件，选择患者端后会生成可解释结果。'}
+                  </div>
+                )}
+                {rationaleEntries.length === 0 && hasRoleAssignments && (
+                  <div className="space-y-2">
+                    <div className="rounded-lg border border-emerald-700/50 bg-emerald-950/20 px-4 py-3 text-xs text-emerald-200">
+                      已完成任务分派，解释详情正在同步；下方先显示服务端确认的角色任务单。
+                    </div>
+                    {assignedRoleEntries.map(([role, roleState]) => (
+                      <div key={role} className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-white">{translateRoleLabel(role)}</div>
+                            <div className="text-xs text-slate-400 mt-1">{getClientDisplayName(roleState.userId)}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] text-slate-500 uppercase tracking-wider">状态</div>
+                            <div className="text-sm text-emerald-300">{translateRoleStatus(roleState.status)}</div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-slate-400 mt-3 leading-5">
+                          服务端已确认该终端承担 {translateRoleLabel(role)} 任务，可继续在手机端响应协同流程。
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {rationaleEntries.map(([role, decision]) => (
