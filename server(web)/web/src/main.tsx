@@ -6,9 +6,28 @@ import "./styles/index.css";
 const DesktopApp = React.lazy(() => import("./app/App"));
 const MobileApp = React.lazy(() => import("./mobile/MobileApp"));
 
+function isMobileRoute() {
+  return window.location.pathname === "/mobile" || window.location.pathname.startsWith("/mobile/");
+}
+
+function cleanMobileUrlState() {
+  if (!isMobileRoute() || !window.location.search) {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("incidentId")) {
+    return;
+  }
+
+  url.searchParams.delete("incidentId");
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+cleanMobileUrlState();
+
 function Root() {
-  const isMobileRoute = window.location.pathname === "/mobile" || window.location.pathname.startsWith("/mobile/");
-  const App = isMobileRoute ? MobileApp : DesktopApp;
+  const App = isMobileRoute() ? MobileApp : DesktopApp;
 
   return (
     <Suspense
@@ -23,7 +42,7 @@ function Root() {
   );
 }
 
-if ("serviceWorker" in navigator && window.location.pathname.startsWith("/mobile")) {
+if ("serviceWorker" in navigator && isMobileRoute()) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/mobile-sw.js").catch(() => {
       // PWA support should never block emergency browser access.
