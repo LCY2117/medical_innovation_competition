@@ -5,9 +5,14 @@ import "./styles/index.css";
 
 const DesktopApp = React.lazy(() => import("./app/App"));
 const MobileApp = React.lazy(() => import("./mobile/MobileApp"));
+const MobileDemoStage = React.lazy(() => import("./mobile/MobileDemoStage"));
 
 function isMobileRoute() {
   return window.location.pathname === "/mobile" || window.location.pathname.startsWith("/mobile/");
+}
+
+function isMobileDemoRoute() {
+  return window.location.pathname === "/mobile-demo" || window.location.pathname.startsWith("/mobile-demo/");
 }
 
 function cleanMobileUrlState() {
@@ -27,7 +32,7 @@ function cleanMobileUrlState() {
 cleanMobileUrlState();
 
 function Root() {
-  const App = isMobileRoute() ? MobileApp : DesktopApp;
+  const App = isMobileDemoRoute() ? MobileDemoStage : isMobileRoute() ? MobileApp : DesktopApp;
 
   return (
     <Suspense

@@ -156,6 +156,19 @@ function readDemoPersonaFromUrl(): DemoPersona | null {
   return null;
 }
 
+function readDemoSlotFromUrl(): string {
+  const raw = new URLSearchParams(window.location.search).get('slot')?.trim().toLowerCase() || 'default';
+  return raw.replace(/[^a-z0-9_-]/g, '').slice(0, 24) || 'default';
+}
+
+function tabSessionKey(): string {
+  return `${TAB_SESSION_KEY}_${readDemoSlotFromUrl()}`;
+}
+
+function tabLocationKey(): string {
+  return `${LOCATION_KEY}_${readDemoSlotFromUrl()}`;
+}
+
 function demoLocationFor(persona?: DemoPersona | null): GeoPoint {
   return demoPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
 }
@@ -201,7 +214,7 @@ const profilePresets = [
 
 function readStoredSession(): StoredSession | null {
   try {
-    const raw = window.sessionStorage.getItem(TAB_SESSION_KEY) || window.localStorage.getItem(SESSION_KEY);
+    const raw = window.sessionStorage.getItem(tabSessionKey()) || window.sessionStorage.getItem(TAB_SESSION_KEY) || window.localStorage.getItem(SESSION_KEY);
     return raw ? (JSON.parse(raw) as StoredSession) : null;
   } catch {
     return null;
@@ -210,7 +223,7 @@ function readStoredSession(): StoredSession | null {
 
 function readStoredLocation(): GeoPoint {
   try {
-    const raw = window.sessionStorage.getItem(LOCATION_KEY) || window.localStorage.getItem(LOCATION_KEY);
+    const raw = window.sessionStorage.getItem(tabLocationKey()) || window.sessionStorage.getItem(LOCATION_KEY) || window.localStorage.getItem(LOCATION_KEY);
     return raw ? { ...defaultLocation, ...(JSON.parse(raw) as GeoPoint) } : defaultLocation;
   } catch {
     return defaultLocation;
@@ -231,12 +244,13 @@ function readStoredTheme(): MobileTheme {
 
 function saveSession(session: StoredSession | null): void {
   if (!session) {
+    window.sessionStorage.removeItem(tabSessionKey());
     window.sessionStorage.removeItem(TAB_SESSION_KEY);
     window.localStorage.removeItem(SESSION_KEY);
     return;
   }
   const storage = session.demoPersona ? window.sessionStorage : window.localStorage;
-  const key = session.demoPersona ? TAB_SESSION_KEY : SESSION_KEY;
+  const key = session.demoPersona ? tabSessionKey() : SESSION_KEY;
   storage.setItem(key, JSON.stringify(session));
   if (session.demoPersona) {
     window.localStorage.removeItem(SESSION_KEY);
@@ -446,7 +460,7 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
       const session = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, demoPersona: persona };
       const location = demoLocationFor(persona);
       saveSession(session);
-      window.sessionStorage.setItem(LOCATION_KEY, JSON.stringify(location));
+      window.sessionStorage.setItem(tabLocationKey(), JSON.stringify(location));
       onAuthenticated(session, location);
     } catch (error) {
       setNotice({ kind: 'error', text: error instanceof Error ? error.message : '进入演示模式失败' });
@@ -692,7 +706,7 @@ function MobileApp() {
           const nextLocation = demoLocationFor(urlDemoPersona);
           const next = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, demoPersona: urlDemoPersona };
           saveSession(next);
-          window.sessionStorage.setItem(LOCATION_KEY, JSON.stringify(nextLocation));
+          window.sessionStorage.setItem(tabLocationKey(), JSON.stringify(nextLocation));
           if (!mounted) {
             return;
           }
@@ -831,7 +845,7 @@ function MobileApp() {
         }
         setLocation(next);
         const locationStorage = session.demoPersona ? window.sessionStorage : window.localStorage;
-        locationStorage.setItem(LOCATION_KEY, JSON.stringify(next));
+        locationStorage.setItem(session.demoPersona ? tabLocationKey() : LOCATION_KEY, JSON.stringify(next));
         await updateClientLocation(session.user.userId, session.token, next);
       },
       '位置已上报。',

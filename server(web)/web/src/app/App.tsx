@@ -1194,28 +1194,14 @@ export default function App() {
     }
   };
 
-  const openMobileDemoTabs = () => {
+  const openMobileDemoStage = () => {
     if (typeof window === 'undefined') {
       return;
     }
-    const personas = [
-      { key: 'patient', label: '患者端' },
-      { key: 'prime', label: '核心施救' },
-      { key: 'runner', label: 'AED 保障' },
-      { key: 'guide', label: '清障接驳' },
-    ];
-    const sessionId = Date.now();
-    const blocked: string[] = [];
-    personas.forEach((persona) => {
-      const url = new URL('/mobile', window.location.origin);
-      url.searchParams.set('demo', persona.key);
-      const opened = window.open(url.toString(), `lifereflex-mobile-${persona.key}-${sessionId}`);
-      if (!opened) {
-        blocked.push(persona.label);
-      }
-    });
-    if (blocked.length) {
-      setErrorMessage(`浏览器拦截了 ${blocked.join('、')} 标签页，请允许本站弹出窗口后重试。`);
+    const url = new URL('/mobile-demo', window.location.origin);
+    const opened = window.open(url.toString(), 'lifereflex-mobile-demo-stage');
+    if (!opened) {
+      setErrorMessage('浏览器拦截了 4端演示台，请允许本站弹出窗口后重试。');
       return;
     }
     setErrorMessage(null);
@@ -2100,9 +2086,9 @@ export default function App() {
                <Siren size={16} /> 演示场景
              </button>
              <button
-               onClick={openMobileDemoTabs}
+               onClick={openMobileDemoStage}
                className="h-9 px-3 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
-               title="新开患者、核心施救、AED 保障、清障接驳四个移动端标签页"
+               title="新开单个 4 端分屏演示台，兼容 Edge 弹窗限制"
              >
                <Smartphone size={16} /> 4端演示
              </button>
