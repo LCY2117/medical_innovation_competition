@@ -174,6 +174,10 @@ class IncidentService:
         now = self._now_ms()
         if patient_user_id not in self.clients:
             raise HTTPException(status_code=404, detail="Patient client not registered")
+        if state.phase != "CREATED":
+            if state.patientUserId == patient_user_id:
+                return self._dispatch_response_from_state(state)
+            raise HTTPException(status_code=409, detail="Incident already has an active patient; reset before selecting another patient")
 
         state.phase = "DISPATCHING"
         state.sos = self._new_sos(status="ALERTING", start_ts=now)
@@ -183,6 +187,11 @@ class IncidentService:
         state.logs.append(IncidentLogEntry(ts=now, msg=f"Patient designated by {source_label} ({patient_user_id})"))
         state.logs.append(IncidentLogEntry(ts=now, msg="AI dispatching started"))
         self._touch_client(patient_user_id)
+
+        task = self.sos_tasks.get(state.incidentId)
+        if task and not task.done():
+            task.cancel()
+
         self._persist()
         await self._broadcast_state_async(state.incidentId)
 
@@ -283,9 +292,13 @@ class IncidentService:
     async def patient_sos_start(self, incident_id: str, patient_user_id: str) -> MutationResponse:
         state = self._require_incident(incident_id)
         if state.phase != "CREATED":
+            if state.patientUserId == patient_user_id:
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             raise HTTPException(status_code=400, detail="Incident already dispatched")
         if patient_user_id not in self.clients:
             raise HTTPException(status_code=404, detail="Patient client not registered")
+        if state.sos.status == "ALERTING" and state.patientUserId == patient_user_id:
+            return MutationResponse(incidentId=incident_id, phase=state.phase)
 
         start_ts = self._now_ms()
         state.sos = self._new_sos(status="ALERTING", start_ts=start_ts)
@@ -522,6 +535,20 @@ class IncidentService:
             clients=self.list_clients(),
             aedSites=state.aedSites or self.list_aed_sites(),
             dispatchRationale=state.dispatchRationale,
+        )
+
+    def _dispatch_response_from_state(self, state: IncidentState) -> DispatchResponse:
+        assignments = {
+            "PRIME": state.roles.PRIME.userId,
+            "RUNNER": state.roles.RUNNER.userId,
+            "GUIDE": state.roles.GUIDE.userId,
+        }
+        return DispatchResponse(
+            incidentId=state.incidentId,
+            patientUserId=state.patientUserId,
+            assignments=assignments,
+            source=state.dispatchSource or "existing",
+            rationale=state.dispatchRationale,
         )
 
     async def bootstrap(self) -> None:

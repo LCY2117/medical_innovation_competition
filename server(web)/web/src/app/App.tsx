@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { mergeIncidentState, roleNames } from '@/shared/domain';
+import type { IncidentState as SharedIncidentState } from '@/shared/types';
 
 // Utility for Tailwind classes
 function cn(...inputs: ClassValue[]) {
@@ -207,79 +209,6 @@ interface IncidentState {
   logs: { ts: number; msg: string }[];
   aedSites?: AedSite[];
   dispatchRationale?: Record<string, DispatchRoleDecision>;
-}
-
-type ServerRole = keyof IncidentState['roles'];
-
-const SERVER_ROLES: ServerRole[] = ['PRIME', 'RUNNER', 'GUIDE'];
-
-const PHASE_RANK: Record<string, number> = {
-  CREATED: 0,
-  DISPATCHING: 1,
-  DISPATCHED: 2,
-  CPR: 3,
-  AED_PICKED: 4,
-  AED_DELIVERED: 5,
-  AED_ANALYZING: 6,
-  SHOCK_DELIVERED: 7,
-  HANDOVER: 8,
-  ARCHIVED: 9,
-};
-
-function getStateLatestTs(state?: IncidentState | null): number {
-  return Math.max(0, ...(state?.logs ?? []).map((entry) => entry.ts));
-}
-
-function getDispatchRationaleCount(state?: IncidentState | null): number {
-  return Object.keys(state?.dispatchRationale ?? {}).length;
-}
-
-function hasAssignedServerRoles(state?: IncidentState | null): boolean {
-  return SERVER_ROLES.some((role) => Boolean(state?.roles?.[role]?.userId));
-}
-
-function isIncidentResetState(state: IncidentState): boolean {
-  return state.logs.length === 1 && state.logs[0]?.msg === 'Incident reset';
-}
-
-function getPhaseRank(phase?: string | null): number {
-  return phase ? PHASE_RANK[phase] ?? 2 : -1;
-}
-
-function mergeIncidentState(current: IncidentState | null, next: IncidentState): IncidentState {
-  if (!current || current.incidentId !== next.incidentId) {
-    return next;
-  }
-
-  const currentTs = getStateLatestTs(current);
-  const nextTs = getStateLatestTs(next);
-  if (nextTs < currentTs) {
-    return current;
-  }
-
-  const currentRationaleCount = getDispatchRationaleCount(current);
-  const nextRationaleCount = getDispatchRationaleCount(next);
-  const currentAssigned = hasAssignedServerRoles(current);
-  const nextAssigned = hasAssignedServerRoles(next);
-  const nextIsNewReset = isIncidentResetState(next) && nextTs >= currentTs;
-
-  if (!nextIsNewReset && nextTs === currentTs) {
-    if (currentRationaleCount > 0 && nextRationaleCount === 0) {
-      return current;
-    }
-    if (currentAssigned && !nextAssigned && getPhaseRank(next.phase) <= getPhaseRank(current.phase)) {
-      return current;
-    }
-  }
-
-  if (!nextIsNewReset && currentRationaleCount > 0 && nextRationaleCount === 0 && getPhaseRank(next.phase) >= getPhaseRank(current.phase)) {
-    return {
-      ...next,
-      dispatchRationale: current.dispatchRationale,
-    };
-  }
-
-  return next;
 }
 
 interface GeoPoint {
@@ -956,7 +885,7 @@ export default function App() {
   const rationale = incidentState?.dispatchRationale ?? {};
   const rationaleEntries = Object.entries(rationale);
   const assignedRoleEntries = incidentState
-    ? SERVER_ROLES.map((role) => [role, incidentState.roles[role]] as const).filter(([, roleState]) => Boolean(roleState.userId))
+    ? roleNames.map((role) => [role, incidentState.roles[role]] as const).filter(([, roleState]) => Boolean(roleState.userId))
     : [];
   const hasDispatchRationale = rationaleEntries.length > 0;
   const hasRoleAssignments = assignedRoleEntries.length > 0;
@@ -1136,7 +1065,9 @@ export default function App() {
         if (msg?.type === 'STATE') {
           const nextState = msg.payload as IncidentState;
           if (nextState?.incidentId === id) {
-            setIncidentState((current) => mergeIncidentState(current, nextState));
+            setIncidentState((current) =>
+              mergeIncidentState(current as SharedIncidentState | null, nextState as SharedIncidentState) as IncidentState,
+            );
           }
         } else if (msg?.type === 'ERROR') {
           setWsError(String(msg.payload ?? 'WebSocket error'));
@@ -1200,7 +1131,9 @@ export default function App() {
       const data = await res.json();
       if (data?.incidentId) {
         setIncidentId(data.incidentId);
-        setIncidentState((current) => mergeIncidentState(current, data as IncidentState));
+        setIncidentState((current) =>
+          mergeIncidentState(current as SharedIncidentState | null, data as SharedIncidentState) as IncidentState,
+        );
         if (typeof window !== 'undefined') {
           const url = new URL(window.location.href);
           url.searchParams.set('incidentId', data.incidentId);

@@ -47,6 +47,7 @@ import {
   isAedAnalyzing,
   isRoleJoined,
   isShockDelivered,
+  mergeIncidentState,
   translatePhaseLabel,
   translateRoleLabel,
   translateRoleStatus,
@@ -646,7 +647,7 @@ function MobileApp() {
         try {
           const msg = JSON.parse(event.data);
           if (msg.type === 'STATE') {
-            setIncident(msg.payload as IncidentState);
+            setIncident((current) => mergeIncidentState(current, msg.payload as IncidentState));
           }
         } catch {
           setNotice({ kind: 'error', text: '实时消息解析失败。' });
@@ -666,7 +667,7 @@ function MobileApp() {
 
   const openCurrentIncident = useCallback(async () => {
     const state = await fetchCurrentIncident();
-    setIncident(state);
+    setIncident((current) => mergeIncidentState(current, state));
     setIncidentIdInput(state.incidentId);
     window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
     connectIncident(state.incidentId);
@@ -742,7 +743,7 @@ function MobileApp() {
         await ensurePresence(next, location);
         if (incidentIdInput) {
           const state = await fetchIncident(incidentIdInput);
-          setIncident(state);
+          setIncident((current) => mergeIncidentState(current, state));
           connectIncident(state.incidentId);
         } else {
           await openCurrentIncident();
@@ -786,7 +787,7 @@ function MobileApp() {
       await work();
       if (incident) {
         const next = await fetchIncident(incident.incidentId);
-        setIncident(next);
+        setIncident((current) => mergeIncidentState(current, next));
       }
       await loadPeripheralData();
       if (okText) {
@@ -807,7 +808,7 @@ function MobileApp() {
     }
     await runAction('open', async () => {
       const state = await fetchIncident(id);
-      setIncident(state);
+      setIncident((current) => mergeIncidentState(current, state));
       window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
       connectIncident(state.incidentId);
       await loadPeripheralData();
@@ -901,7 +902,7 @@ function MobileApp() {
       window.localStorage.setItem(INCIDENT_KEY, joined.incidentId);
       connectIncident(joined.incidentId);
       const state = await fetchIncident(joined.incidentId);
-      setIncident(state);
+      setIncident((current) => mergeIncidentState(current, state));
     });
   }
 

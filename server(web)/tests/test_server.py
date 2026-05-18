@@ -312,6 +312,20 @@ class ServerTestCase(unittest.TestCase):
             self.assertIn("dispatchRationale", current_payload)
             self.assertEqual(current_payload["dispatchRationale"]["PRIME"]["userId"], user_ids["张医生"])
 
+            repeated = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": user_ids["冠心病患者"]},
+            )
+            self.assertEqual(repeated.status_code, 200)
+            repeated_payload = repeated.json()
+            self.assertEqual(repeated_payload["assignments"]["PRIME"], user_ids["张医生"])
+
+            current_after_repeat = client.get("/api/incidents/current")
+            self.assertEqual(current_after_repeat.status_code, 200)
+            current_after_repeat_payload = current_after_repeat.json()
+            self.assertEqual(current_after_repeat_payload["phase"], "DISPATCHED")
+            self.assertEqual(current_after_repeat_payload["dispatchRationale"]["PRIME"]["userId"], user_ids["张医生"])
+
     def test_demo_bootstrap_aed_dispatch_and_export(self) -> None:
         with self._client() as client:
             bootstrapped = client.post("/api/demo/bootstrap")

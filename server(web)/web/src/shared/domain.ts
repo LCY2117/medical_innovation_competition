@@ -1,5 +1,76 @@
 import type { GeoPoint, IncidentState, RoleName } from './types';
 
+export const roleNames: RoleName[] = ['PRIME', 'RUNNER', 'GUIDE'];
+
+const phaseRank: Record<string, number> = {
+  CREATED: 0,
+  DISPATCHING: 1,
+  DISPATCHED: 2,
+  CPR: 3,
+  AED_PICKED: 4,
+  AED_DELIVERED: 5,
+  AED_ANALYZING: 6,
+  SHOCK_DELIVERED: 7,
+  HANDOVER: 8,
+  ARCHIVED: 9,
+};
+
+export function getStateLatestTs(state?: IncidentState | null): number {
+  return Math.max(0, ...(state?.logs ?? []).map((entry) => entry.ts));
+}
+
+export function hasAssignedRoles(state?: IncidentState | null): boolean {
+  return roleNames.some((role) => Boolean(state?.roles?.[role]?.userId));
+}
+
+function getDispatchRationaleCount(state?: IncidentState | null): number {
+  return Object.keys(state?.dispatchRationale ?? {}).length;
+}
+
+function getPhaseRank(phase?: string | null): number {
+  return phase ? phaseRank[phase] ?? 2 : -1;
+}
+
+function isIncidentResetState(state: IncidentState): boolean {
+  return state.logs.length === 1 && state.logs[0]?.msg === 'Incident reset';
+}
+
+export function mergeIncidentState(current: IncidentState | null, next: IncidentState): IncidentState {
+  if (!current || current.incidentId !== next.incidentId) {
+    return next;
+  }
+
+  const currentTs = getStateLatestTs(current);
+  const nextTs = getStateLatestTs(next);
+  if (nextTs < currentTs) {
+    return current;
+  }
+
+  const currentRationaleCount = getDispatchRationaleCount(current);
+  const nextRationaleCount = getDispatchRationaleCount(next);
+  const currentAssigned = hasAssignedRoles(current);
+  const nextAssigned = hasAssignedRoles(next);
+  const nextIsNewReset = isIncidentResetState(next) && nextTs >= currentTs;
+
+  if (!nextIsNewReset && nextTs === currentTs) {
+    if (currentRationaleCount > 0 && nextRationaleCount === 0) {
+      return current;
+    }
+    if (currentAssigned && !nextAssigned && getPhaseRank(next.phase) <= getPhaseRank(current.phase)) {
+      return current;
+    }
+  }
+
+  if (!nextIsNewReset && currentRationaleCount > 0 && nextRationaleCount === 0 && getPhaseRank(next.phase) >= getPhaseRank(current.phase)) {
+    return {
+      ...next,
+      dispatchRationale: current.dispatchRationale,
+    };
+  }
+
+  return next;
+}
+
 export function isRoleJoined(status?: string | null): boolean {
   if (!status) {
     return false;

@@ -35,7 +35,7 @@ def build_frontend_router(settings: Settings) -> APIRouter:
 
         requested_file = settings.web_dist_dir / Path(full_path)
         if requested_file.is_file():
-            return FileResponse(requested_file)
+            return FileResponse(requested_file, headers=_frontend_file_headers(requested_file))
 
         return _serve_frontend(settings)
 
@@ -53,4 +53,20 @@ def _serve_frontend(settings: Settings) -> FileResponse:
             status_code=503,
             detail="Frontend build not found. Run `npm install` and `npm run build` inside `web/` first.",
         )
-    return FileResponse(index_file)
+    return FileResponse(
+        index_file,
+        headers=_no_store_headers(),
+    )
+
+
+def _frontend_file_headers(path: Path) -> dict[str, str]:
+    if path.name in {"index.html", "mobile-sw.js"}:
+        return _no_store_headers()
+    return {}
+
+
+def _no_store_headers() -> dict[str, str]:
+    return {
+        "Cache-Control": "no-store, max-age=0",
+        "Pragma": "no-cache",
+    }
