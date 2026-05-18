@@ -206,7 +206,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(unknown.status_code, 400)
         self.assertEqual(patient.json()["user"]["userId"], "demo-patient")
         self.assertEqual(repeat_patient.json()["user"]["userId"], "demo-patient")
-        self.assertEqual(prime.json()["user"]["userId"], "demo-prime")
+        self.assertEqual(prime.json()["user"]["userId"], "demo-doctor")
         self.assertNotEqual(patient.json()["token"], repeat_patient.json()["token"])
         self.assertEqual(me.status_code, 200)
         self.assertEqual(me.json()["user"]["userId"], "demo-patient")

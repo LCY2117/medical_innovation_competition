@@ -15,6 +15,7 @@ from app.storage.sqlite_auth_store import SqliteAuthStore, UserRecord
 class AuthService:
     DEMO_PERSONAS = {
         "patient": {
+            "user_id": "demo-patient",
             "display_name": "冠心病患者",
             "phone": "13900001001",
             "organization": "模拟社区",
@@ -23,6 +24,7 @@ class AuthService:
             "profile_bio": "多年冠心病病史，需要重点监护，可用于预实验患者端。",
         },
         "prime": {
+            "user_id": "demo-doctor",
             "display_name": "张医生",
             "phone": "13900001002",
             "organization": "市医院急救科",
@@ -31,6 +33,7 @@ class AuthService:
             "profile_bio": "急救科医生，熟悉 CPR 和 AED 处置，可承担核心施救任务。",
         },
         "runner": {
+            "user_id": "demo-runner",
             "display_name": "体育生小李",
             "phone": "13900001003",
             "organization": "大学校园",
@@ -39,6 +42,7 @@ class AuthService:
             "profile_bio": "体育生，跑得快，熟悉校园路线，可快速取送 AED。",
         },
         "guide": {
+            "user_id": "demo-guide",
             "display_name": "安保老王",
             "phone": "13900001004",
             "organization": "校园安保",
@@ -101,7 +105,7 @@ class AuthService:
         user = self.store.get_user_by_phone(profile["phone"])
         if user is None:
             user = UserRecord(
-                user_id=f"demo-{normalized_persona}",
+                user_id=profile["user_id"],
                 display_name=profile["display_name"],
                 phone=profile["phone"],
                 password_hash=self._hash_password("LCY"),
