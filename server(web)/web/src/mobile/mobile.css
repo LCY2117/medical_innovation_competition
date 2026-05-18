@@ -272,6 +272,51 @@
   background: var(--mobile-surface-2);
 }
 
+.mobile-demo-entry {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--mobile-border);
+}
+
+.mobile-demo-entry .mobile-section-head {
+  margin-bottom: 10px;
+}
+
+.mobile-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-demo-grid button {
+  min-height: 78px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--mobile-surface-3);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.mobile-demo-grid strong,
+.mobile-demo-grid span {
+  display: block;
+}
+
+.mobile-demo-grid strong {
+  color: var(--mobile-ink);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.mobile-demo-grid span {
+  margin-top: 4px;
+  color: var(--mobile-muted);
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
 .mobile-view-tabs {
   position: fixed;
   right: max(14px, calc((100vw - 480px) / 2 + 14px));

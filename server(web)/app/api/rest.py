@@ -10,6 +10,7 @@ from app.models.schemas import (
     AedSiteUpsertReq,
     AuthMeResponse,
     AuthLoginReq,
+    AuthDemoReq,
     AuthResponse,
     AuthRegisterReq,
     AutoJoinReq,
@@ -98,6 +99,10 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     @router.post("/auth/login", response_model=AuthResponse)
     async def login(req: AuthLoginReq) -> AuthResponse:
         return auth_service.login(phone=req.phone, password=req.password)
+
+    @router.post("/auth/demo", response_model=AuthResponse)
+    async def demo_login(req: AuthDemoReq) -> AuthResponse:
+        return auth_service.demo_login(req.persona)
 
     @router.get("/auth/me", response_model=AuthMeResponse)
     async def auth_me(authorization: str | None = Header(default=None)) -> AuthMeResponse:

@@ -127,6 +127,18 @@ export async function loginAccount(phone: string, password: string): Promise<Aut
   );
 }
 
+export async function loginDemoPersona(persona: string): Promise<AuthResponse> {
+  return requestJson<AuthResponse>(
+    '/auth/demo',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ persona }),
+    },
+    '进入演示模式失败',
+  );
+}
+
 export async function fetchMe(token: string): Promise<AuthMeResponse> {
   return requestJson<AuthMeResponse>('/auth/me', { headers: buildAuthHeaders(token) }, '校验登录态失败');
 }

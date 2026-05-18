@@ -13,6 +13,41 @@ from app.storage.sqlite_auth_store import SqliteAuthStore, UserRecord
 
 
 class AuthService:
+    DEMO_PERSONAS = {
+        "patient": {
+            "display_name": "冠心病患者",
+            "phone": "13900001001",
+            "organization": "模拟社区",
+            "health_condition": "存在心脏骤停风险",
+            "profession_identity": "患者侧",
+            "profile_bio": "多年冠心病病史，需要重点监护，可用于预实验患者端。",
+        },
+        "prime": {
+            "display_name": "张医生",
+            "phone": "13900001002",
+            "organization": "市医院急救科",
+            "health_condition": "身体状态一般",
+            "profession_identity": "医生 / 专业急救人员",
+            "profile_bio": "急救科医生，熟悉 CPR 和 AED 处置，可承担核心施救任务。",
+        },
+        "runner": {
+            "display_name": "体育生小李",
+            "phone": "13900001003",
+            "organization": "大学校园",
+            "health_condition": "身体素质良好",
+            "profession_identity": "有一定急救常识",
+            "profile_bio": "体育生，跑得快，熟悉校园路线，可快速取送 AED。",
+        },
+        "guide": {
+            "display_name": "安保老王",
+            "phone": "13900001004",
+            "organization": "校园安保",
+            "health_condition": "身体状态一般",
+            "profession_identity": "安保 / 物业 / 场地协调人员",
+            "profile_bio": "熟悉楼栋出入口、电梯和救护车通道，可承担环境协调与接驳。",
+        },
+    }
+
     def __init__(self, store: SqliteAuthStore, token_ttl_sec: int = 604800) -> None:
         self.store = store
         self.token_ttl_sec = token_ttl_sec
@@ -53,6 +88,31 @@ class AuthService:
         user = self.store.get_user_by_phone(normalized_phone)
         if user is None or not self._verify_password(password, user.password_hash):
             raise HTTPException(status_code=401, detail="手机号或密码错误")
+
+        token, expires_at = self._issue_token(user.user_id)
+        return AuthResponse(token=token, user=self._to_auth_user(user), tokenExpiresAt=expires_at)
+
+    def demo_login(self, persona: str) -> AuthResponse:
+        normalized_persona = persona.strip().lower()
+        profile = self.DEMO_PERSONAS.get(normalized_persona)
+        if profile is None:
+            raise HTTPException(status_code=400, detail="未知演示身份")
+
+        user = self.store.get_user_by_phone(profile["phone"])
+        if user is None:
+            user = UserRecord(
+                user_id=f"demo-{normalized_persona}",
+                display_name=profile["display_name"],
+                phone=profile["phone"],
+                password_hash=self._hash_password("LCY"),
+                organization=profile["organization"],
+                health_condition=profile["health_condition"],
+                profession_identity=profile["profession_identity"],
+                profile_bio=profile["profile_bio"],
+                credential_status=self._credential_status(profile["health_condition"], profile["profession_identity"]),
+                created_at=self._now_ms(),
+            )
+            self.store.create_user(user)
 
         token, expires_at = self._issue_token(user.user_id)
         return AuthResponse(token=token, user=self._to_auth_user(user), tokenExpiresAt=expires_at)

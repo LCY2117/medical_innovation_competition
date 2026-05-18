@@ -25,6 +25,7 @@ import {
   fetchMe,
   joinIncident,
   loginAccount,
+  loginDemoPersona,
   logoutAccount,
   openIncidentSocket,
   patientSosCancel,
@@ -58,17 +59,86 @@ type SyncStatus = 'idle' | 'connecting' | 'live' | 'reconnecting' | 'offline';
 type MobileView = 'home' | 'mission' | 'scene' | 'logs';
 type MobileTheme = 'light' | 'dark';
 type Notice = { kind: 'ok' | 'error' | 'info'; text: string } | null;
+type DemoPersona = 'patient' | 'prime' | 'runner' | 'guide';
 
 interface StoredSession {
   token: string;
   user: AuthUser;
   tokenExpiresAt?: number | null;
+  demoPersona?: DemoPersona;
 }
 
 const SESSION_KEY = 'lra_mobile_session';
+const TAB_SESSION_KEY = 'lra_mobile_tab_session';
 const INCIDENT_KEY = 'lra_mobile_incident_id';
 const LOCATION_KEY = 'lra_mobile_location';
 const MOBILE_THEME_KEY = 'lra_mobile_theme';
+
+const demoPersonas: Array<{
+  key: DemoPersona;
+  label: string;
+  title: string;
+  description: string;
+  location: GeoPoint;
+}> = [
+  {
+    key: 'patient',
+    label: '患者端',
+    title: 'Patient',
+    description: '触发 SOS，观察系统分派',
+    location: {
+      latitude: 39.90412,
+      longitude: 116.40721,
+      accuracyMeters: 25,
+      label: '教学楼 A 座 2 层走廊',
+      floor: '2F',
+      source: 'mobile-demo',
+    },
+  },
+  {
+    key: 'prime',
+    label: '核心施救',
+    title: 'PRIME',
+    description: '接单、CPR、AED 分析',
+    location: {
+      latitude: 39.90421,
+      longitude: 116.40726,
+      accuracyMeters: 18,
+      label: '教学楼 A 座 1 层大厅',
+      floor: '1F',
+      source: 'mobile-demo',
+    },
+  },
+  {
+    key: 'runner',
+    label: 'AED 保障',
+    title: 'RUNNER',
+    description: '取 AED 并送达患者',
+    location: {
+      latitude: 39.90392,
+      longitude: 116.40702,
+      accuracyMeters: 18,
+      label: '操场入口',
+      floor: '1F',
+      source: 'mobile-demo',
+    },
+  },
+  {
+    key: 'guide',
+    label: '清障接驳',
+    title: 'GUIDE',
+    description: '疏通通道，接引救护车',
+    location: {
+      latitude: 39.9045,
+      longitude: 116.40762,
+      accuracyMeters: 20,
+      label: '校门岗亭',
+      floor: '1F',
+      source: 'mobile-demo',
+    },
+  },
+];
+
 const defaultLocation: GeoPoint = {
   latitude: 39.90412,
   longitude: 116.40721,
@@ -77,6 +147,18 @@ const defaultLocation: GeoPoint = {
   floor: '二层',
   source: 'mobile-demo',
 };
+
+function readDemoPersonaFromUrl(): DemoPersona | null {
+  const raw = new URLSearchParams(window.location.search).get('demo')?.trim().toLowerCase();
+  if (raw === 'patient' || raw === 'prime' || raw === 'runner' || raw === 'guide') {
+    return raw;
+  }
+  return null;
+}
+
+function demoLocationFor(persona?: DemoPersona | null): GeoPoint {
+  return demoPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
+}
 
 const profilePresets = [
   {
@@ -119,7 +201,7 @@ const profilePresets = [
 
 function readStoredSession(): StoredSession | null {
   try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
+    const raw = window.sessionStorage.getItem(TAB_SESSION_KEY) || window.localStorage.getItem(SESSION_KEY);
     return raw ? (JSON.parse(raw) as StoredSession) : null;
   } catch {
     return null;
@@ -128,7 +210,7 @@ function readStoredSession(): StoredSession | null {
 
 function readStoredLocation(): GeoPoint {
   try {
-    const raw = window.localStorage.getItem(LOCATION_KEY);
+    const raw = window.sessionStorage.getItem(LOCATION_KEY) || window.localStorage.getItem(LOCATION_KEY);
     return raw ? { ...defaultLocation, ...(JSON.parse(raw) as GeoPoint) } : defaultLocation;
   } catch {
     return defaultLocation;
@@ -149,10 +231,16 @@ function readStoredTheme(): MobileTheme {
 
 function saveSession(session: StoredSession | null): void {
   if (!session) {
+    window.sessionStorage.removeItem(TAB_SESSION_KEY);
     window.localStorage.removeItem(SESSION_KEY);
     return;
   }
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  const storage = session.demoPersona ? window.sessionStorage : window.localStorage;
+  const key = session.demoPersona ? TAB_SESSION_KEY : SESSION_KEY;
+  storage.setItem(key, JSON.stringify(session));
+  if (session.demoPersona) {
+    window.localStorage.removeItem(SESSION_KEY);
+  }
 }
 
 function roleAction(role: RoleName, state: IncidentState | null): { label: string; action: string; disabled?: boolean; hint: string } {
@@ -312,9 +400,9 @@ function translateLogMessage(message: string, clients: ClientInfo[]): string {
   }
 }
 
-function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSession) => void }) {
+function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSession, location?: GeoPoint) => void }) {
   const [mode, setMode] = useState<AuthMode>('login');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const [form, setForm] = useState<RegisterForm>({
     displayName: 'LCY 移动端',
@@ -333,7 +421,7 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
       setNotice({ kind: 'error', text: '请输入手机号和密码。' });
       return;
     }
-    setBusy(true);
+    setBusy('auth');
     setNotice(null);
     try {
       const auth =
@@ -346,7 +434,24 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
     } catch (error) {
       setNotice({ kind: 'error', text: error instanceof Error ? error.message : '认证失败' });
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  }
+
+  async function enterDemo(persona: DemoPersona) {
+    setBusy(persona);
+    setNotice(null);
+    try {
+      const auth = await loginDemoPersona(persona);
+      const session = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, demoPersona: persona };
+      const location = demoLocationFor(persona);
+      saveSession(session);
+      window.sessionStorage.setItem(LOCATION_KEY, JSON.stringify(location));
+      onAuthenticated(session, location);
+    } catch (error) {
+      setNotice({ kind: 'error', text: error instanceof Error ? error.message : '进入演示模式失败' });
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -362,6 +467,23 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
       </section>
 
       <section className="mobile-panel" id="top">
+        <div className="mobile-demo-entry">
+          <div className="mobile-section-head">
+            <div>
+              <p className="mobile-kicker">Demo mode</p>
+              <h2>演示模式直达</h2>
+            </div>
+          </div>
+          <div className="mobile-demo-grid">
+            {demoPersonas.map((persona) => (
+              <button key={persona.key} type="button" onClick={() => enterDemo(persona.key)} disabled={Boolean(busy)}>
+                <strong>{busy === persona.key ? '进入中...' : persona.label}</strong>
+                <span>{persona.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mobile-segment">
           <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>
             登录
@@ -435,8 +557,8 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
         )}
 
         {notice && <div className={`mobile-notice ${notice.kind}`}>{notice.text}</div>}
-        <button className="mobile-primary-button" onClick={submit} disabled={busy}>
-          {busy ? '处理中...' : mode === 'login' ? '进入移动端' : '创建账号并进入'}
+        <button className="mobile-primary-button" onClick={submit} disabled={Boolean(busy)}>
+          {busy === 'auth' ? '处理中...' : mode === 'login' ? '进入移动端' : '创建账号并进入'}
         </button>
       </section>
     </main>
@@ -444,9 +566,10 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
 }
 
 function MobileApp() {
+  const urlDemoPersona = useMemo(() => readDemoPersonaFromUrl(), []);
   const [theme, setTheme] = useState<MobileTheme>(() => readStoredTheme());
-  const [session, setSession] = useState<StoredSession | null>(() => readStoredSession());
-  const [booting, setBooting] = useState(Boolean(readStoredSession()));
+  const [session, setSession] = useState<StoredSession | null>(() => (urlDemoPersona ? null : readStoredSession()));
+  const [booting, setBooting] = useState(Boolean(urlDemoPersona) || Boolean(readStoredSession()));
   const [incidentIdInput, setIncidentIdInput] = useState(() => window.localStorage.getItem(INCIDENT_KEY) ?? '');
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [clients, setClients] = useState<ClientInfo[]>([]);
@@ -536,10 +659,11 @@ function MobileApp() {
     await loadPeripheralData();
   }, [connectIncident, loadPeripheralData]);
 
-  async function afterAuthenticated(next: StoredSession) {
+  async function afterAuthenticated(next: StoredSession, nextLocation = location) {
     setSession(next);
+    setLocation(nextLocation);
     setBooting(false);
-    await ensurePresence(next, location);
+    await ensurePresence(next, nextLocation);
     await openCurrentIncident();
   }
 
@@ -562,6 +686,33 @@ function MobileApp() {
     document.documentElement.dataset.mobileRoute = 'true';
     let mounted = true;
     async function restore() {
+      if (!session && urlDemoPersona) {
+        try {
+          const auth = await loginDemoPersona(urlDemoPersona);
+          const nextLocation = demoLocationFor(urlDemoPersona);
+          const next = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, demoPersona: urlDemoPersona };
+          saveSession(next);
+          window.sessionStorage.setItem(LOCATION_KEY, JSON.stringify(nextLocation));
+          if (!mounted) {
+            return;
+          }
+          setSession(next);
+          setLocation(nextLocation);
+          await ensurePresence(next, nextLocation);
+          await openCurrentIncident();
+          setNotice({ kind: 'ok', text: `已进入${demoPersonas.find((item) => item.key === urlDemoPersona)?.label ?? '演示'}身份。` });
+        } catch (error) {
+          saveSession(null);
+          if (mounted) {
+            setNotice({ kind: 'error', text: error instanceof Error ? error.message : '演示模式启动失败。' });
+          }
+        } finally {
+          if (mounted) {
+            setBooting(false);
+          }
+        }
+        return;
+      }
       if (!session) {
         setBooting(false);
         return;
@@ -679,7 +830,8 @@ function MobileApp() {
           }
         }
         setLocation(next);
-        window.localStorage.setItem(LOCATION_KEY, JSON.stringify(next));
+        const locationStorage = session.demoPersona ? window.sessionStorage : window.localStorage;
+        locationStorage.setItem(LOCATION_KEY, JSON.stringify(next));
         await updateClientLocation(session.user.userId, session.token, next);
       },
       '位置已上报。',

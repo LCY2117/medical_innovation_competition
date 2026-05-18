@@ -189,6 +189,28 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(login_payload["user"]["phone"], "13800138000")
         self.assertEqual(me.json()["user"]["phone"], "13800138000")
 
+    def test_demo_auth_personas_issue_reusable_sessions(self) -> None:
+        with self._client() as client:
+            patient = client.post("/api/auth/demo", json={"persona": "patient"})
+            repeat_patient = client.post("/api/auth/demo", json={"persona": "patient"})
+            prime = client.post("/api/auth/demo", json={"persona": "prime"})
+            unknown = client.post("/api/auth/demo", json={"persona": "pilot"})
+            me = client.get(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {patient.json()['token']}"},
+            )
+
+        self.assertEqual(patient.status_code, 200)
+        self.assertEqual(repeat_patient.status_code, 200)
+        self.assertEqual(prime.status_code, 200)
+        self.assertEqual(unknown.status_code, 400)
+        self.assertEqual(patient.json()["user"]["userId"], "demo-patient")
+        self.assertEqual(repeat_patient.json()["user"]["userId"], "demo-patient")
+        self.assertEqual(prime.json()["user"]["userId"], "demo-prime")
+        self.assertNotEqual(patient.json()["token"], repeat_patient.json()["token"])
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(me.json()["user"]["userId"], "demo-patient")
+
     def test_expired_auth_token_is_rejected(self) -> None:
         with self._client_with_expired_auth_tokens() as client:
             register = client.post(

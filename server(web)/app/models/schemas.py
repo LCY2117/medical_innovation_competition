@@ -26,6 +26,10 @@ class AuthLoginReq(BaseModel):
     password: str
 
 
+class AuthDemoReq(BaseModel):
+    persona: str
+
+
 class AuthUser(BaseModel):
     userId: str
     displayName: str
