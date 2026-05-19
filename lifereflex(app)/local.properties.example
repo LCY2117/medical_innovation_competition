@@ -1,0 +1,24 @@
+# Android SDK path.
+# Copy this file to local.properties and change sdk.dir to your own machine path.
+sdk.dir=C:\\Users\\LCY\\AppData\\Local\\Android\\Sdk
+
+# ==============================
+# LifeReflex Android runtime config
+# ==============================
+# REST API base URL. Must end with /.
+LRA_API_BASE=https://lifereflex.mddcommunity.top/
+
+# WebSocket endpoint for incident state streaming.
+LRA_WS_BASE=wss://lifereflex.mddcommunity.top/ws
+
+# ==============================
+# AMap Android Key / 高德 Android Key
+# ==============================
+# AMap console platform type: Android平台
+# Package name: com.example.lifereflexarc
+# Debug SHA1:
+# 53:3B:99:71:CA:A7:9D:09:60:16:A0:6C:3D:45:59:DC:8B:46:2E:76
+# Release SHA1:
+# 7F:7A:41:ED:51:CF:0D:B5:6F:5C:D1:CC:5B:A5:BC:C4:F1:8A:C7:18
+# Keep the real key in local.properties only. Never commit secrets.
+LRA_AMAP_ANDROID_KEY=
