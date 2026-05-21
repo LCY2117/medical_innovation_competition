@@ -153,7 +153,7 @@ const defaultLocation: GeoPoint = {
   latitude: 39.90412,
   longitude: 116.40721,
   accuracyMeters: 25,
-  label: '医创赛模拟现场',
+  label: '协同演示现场',
   floor: '二层',
   source: 'mobile-demo',
 };
@@ -202,7 +202,7 @@ function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSign
       sleepQuality: 'poor',
       riskTags: ['tachycardia', 'low_spo2', 'high_pressure'],
       updatedTs: now,
-      note: 'OPPO Health mock fallback for mobile patient demo',
+      note: '演示健康摘要：患者端风险样例',
     };
   }
   if (text.includes('体育') || text.includes('跑') || persona === 'runner') {
@@ -217,7 +217,7 @@ function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSign
       sleepQuality: 'good',
       riskTags: [],
       updatedTs: now,
-      note: 'OPPO Health mock fallback for mobile runner demo',
+      note: '演示健康摘要：AED 保障端体能样例',
     };
   }
   return {
@@ -231,7 +231,7 @@ function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSign
     sleepQuality: 'good',
     riskTags: [],
     updatedTs: now,
-    note: 'OPPO Health mock fallback for mobile browser',
+    note: '演示健康摘要：移动浏览器端',
   };
 }
 
@@ -239,7 +239,7 @@ const profilePresets = [
   {
     label: '患者端',
     values: {
-      organization: '模拟社区',
+      organization: '演示社区',
       healthCondition: '存在心脏骤停风险',
       professionIdentity: '患者侧',
       profileBio: '冠心病病史，需要重点监护，可用于预实验患者端。',
@@ -359,7 +359,7 @@ function roleAction(role: RoleName, state: IncidentState | null): { label: strin
   if (state.phase !== 'ARCHIVED') {
     return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
   }
-  return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本次模拟流程已结束' };
+  return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
 }
 
 function primeNextStep(state: IncidentState | null): { title: string; body: string; tone: 'wait' | 'ready' | 'danger' } | null {
@@ -586,7 +586,7 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
         <p className="mobile-kicker">生命反射弧移动端</p>
         <h1>浏览器应急端</h1>
         <p>无需安装应用，手机浏览器即可登录、接入事件、触发 SOS、执行急救任务。</p>
-        <p className="mobile-safety-copy">仅用于模拟演练和训练复盘，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。</p>
+        <p className="mobile-safety-copy">仅用于协同演练、训练复盘与研究验证，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。</p>
       </section>
 
       <section className="mobile-panel" id="top">
@@ -995,7 +995,7 @@ function MobileApp() {
               updatedTs: Date.now(),
             };
           } catch {
-            next = { ...next, source: 'mobile-demo', label: location.label || '手动/模拟点位' };
+            next = { ...next, source: 'mobile-demo', label: location.label || '手动/演示点位' };
           }
         }
         setLocation(next);
@@ -1088,7 +1088,7 @@ function MobileApp() {
     await runAction(
       'package',
       () => downloadExperimentPackage(session?.token, demoAdminToken),
-      '预实验证据包已开始下载。',
+      '事件证据包已开始下载。',
     );
   }
 
@@ -1440,7 +1440,7 @@ function MobileApp() {
         <section className="mobile-panel mobile-summary">
           <CheckCircle2 size={26} />
           <h2>本次演练已归档</h2>
-          <p>事件日志、角色响应和 AED 取送信息已经进入预实验证据包。对外展示请优先使用匿名化文件、专家复核清单和观察员记录表，本系统不宣称真实临床疗效。</p>
+          <p>事件日志、角色响应和 AED 取送信息已经进入事件证据包。对外展示请优先使用匿名化文件、专家复核清单和观察员记录表，本系统不宣称真实临床疗效。</p>
           <label className="mobile-token-field">
             <span>演示口令</span>
             <input
@@ -1451,7 +1451,7 @@ function MobileApp() {
             />
           </label>
           <button className="mobile-primary-button mobile-summary-action" onClick={downloadArchivePackage} disabled={busyAction === 'package'}>
-            {busyAction === 'package' ? '下载中...' : '下载预实验证据包'}
+            {busyAction === 'package' ? '下载中...' : '下载事件证据包'}
           </button>
           <p className="mobile-summary-note">手机端会保存该口令并与 Web 总控台共享；若你已用正式管理员账号登录，也可直接下载。</p>
         </section>

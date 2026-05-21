@@ -405,9 +405,9 @@ private fun HealthSignalSummaryCard(
             Text("OPPO 健康增强", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 text = if (healthSignals == null) {
-                    "真实 OPPO 健康授权完成前，系统使用演示健康摘要维持医创赛闭环。"
+                    "真实健康授权完成前，系统使用演示健康摘要维持协同演练闭环。"
                 } else {
-                    "当前为 OPPO 健康模拟接入摘要，用于演示调度如何参考健康风险。"
+                    "当前健康摘要用于展示调度如何参考健康风险。"
                 },
                 color = PhoneColors.GrayText,
                 fontSize = 13.sp,

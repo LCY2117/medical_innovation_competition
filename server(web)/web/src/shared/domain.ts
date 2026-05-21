@@ -232,7 +232,7 @@ export function formatLocationLabel(location?: GeoPoint | null): string {
   const floorLabel = formatFloorLabel(location.floor);
   const floor = floorLabel ? ` · ${floorLabel}` : '';
   const accuracy = location.accuracyMeters ? ` · 精度 ${formatDistanceLabel(location.accuracyMeters)}` : '';
-  return `${location.label ?? '模拟点位'}${floor}${accuracy}`;
+  return `${location.label ?? '演示点位'}${floor}${accuracy}`;
 }
 
 export function translateHealthSource(source?: string | null): string {

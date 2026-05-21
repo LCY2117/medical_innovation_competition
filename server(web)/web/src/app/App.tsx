@@ -755,7 +755,7 @@ function formatLocationLabel(location?: GeoPoint | null): string {
   }
   const floor = location.floor ? ` · ${location.floor}` : '';
   const accuracy = location.accuracyMeters ? ` · 精度 ${formatDistanceLabel(location.accuracyMeters)}` : '';
-  return `${location.label ?? '模拟点位'}${floor}${accuracy}`;
+  return `${location.label ?? '演示点位'}${floor}${accuracy}`;
 }
 
 function formatTechnicalValue(value: unknown): string {
@@ -964,7 +964,7 @@ function buildDemoFlowSteps(state: IncidentState | null) {
     { title: '患者 SOS', detail: '患者端触发告警并锁定位置', complete: dispatchStarted, active: hasIncident && !dispatchStarted },
     { title: '智能分派', detail: '生成核心施救、AED 保障、环境清障任务', complete: rolesAssigned, active: dispatchStarted && !rolesAssigned },
     { title: '现场处置', detail: 'CPR、AED 取送、清障接车', complete: rescueStarted || handover, active: rolesAssigned && !handover },
-    { title: '交接归档', detail: '导出预实验证据包', complete: archived, active: handover && !archived },
+    { title: '交接归档', detail: '导出事件证据包', complete: archived, active: handover && !archived },
   ];
   return definitions;
 }
@@ -1866,11 +1866,11 @@ export default function App() {
         headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
-        throw new Error(await explainResponseError(res, '导出预实验证据包失败'));
+        throw new Error(await explainResponseError(res, '导出事件证据包失败'));
       }
       await downloadResponseBlob(res, `lifereflex-experiment-${incidentId ?? 'current'}.zip`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '导出预实验证据包失败');
+      setErrorMessage(error instanceof Error ? error.message : '导出事件证据包失败');
     }
   };
 
@@ -2880,7 +2880,7 @@ export default function App() {
              <button
                onClick={exportExperimentPackage}
                className="h-9 px-3 rounded-lg bg-indigo-700 text-white hover:bg-indigo-600 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
-               title="下载包含 JSON、CSV 和说明文档的预实验证据包"
+               title="下载包含 JSON、CSV 和说明文档的事件证据包"
              >
                <FileText size={16} /> 证据包
              </button>
@@ -3180,7 +3180,7 @@ export default function App() {
           <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">AI 调度引擎</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">智能调度引擎</div>
                 <div className="text-sm text-white font-semibold mt-1">
                   {dispatchMeta?.configured ? '云端智能分派已启用，按画像和距离生成任务单' : '当前以本地规则调度生成任务单'}
                 </div>
@@ -3600,7 +3600,7 @@ export default function App() {
                   </div>
                   <div className="rounded-xl bg-black/20 px-3 py-3 col-span-2">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-slate-500">OPPO 健康摘要</div>
+                      <div className="text-slate-500">健康摘要</div>
                       <span className={cn(
                         "rounded-full px-2 py-0.5 text-[10px] font-bold",
                         client.healthSignals?.source === 'mock'
