@@ -1145,10 +1145,27 @@ class IncidentService:
             )
         manifest = {
             "schemaVersion": 1,
+            "packageType": "LifeReflexArc pre-experiment evidence package",
             "incidentId": export.incidentId,
             "generatedAt": export.generatedAt,
             "generatedAtIso": self._iso_timestamp(export.generatedAt),
             "phase": export.phase,
+            "privacyGuidance": {
+                "publicOrExpertReview": [
+                    "experiment_anonymized.json",
+                    "clients_anonymized.csv",
+                    "timeline.csv",
+                    "metrics.csv",
+                    "dispatch_rationale.csv",
+                    "expert_summary.md",
+                ],
+                "internalReviewOnly": ["experiment.json", "clients.csv"],
+                "note": "Use anonymized files for PPT, expert feedback, and externally shared materials.",
+            },
+            "verification": {
+                "algorithm": "SHA-256",
+                "covers": "all package files except manifest.json",
+            },
             "fileCountExcludingManifest": len(files),
             "files": entries,
         }
@@ -1293,10 +1310,11 @@ class IncidentService:
 - `aed_sites.csv`：AED 点位与访问备注。
 - `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
 - `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
+- `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv` 和 `expert_summary.md`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:

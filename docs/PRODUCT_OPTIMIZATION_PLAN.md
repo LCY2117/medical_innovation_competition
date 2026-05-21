@@ -65,11 +65,11 @@ Acceptance:
 
 ## P1: Experiment And Evidence Readiness
 
-- [ ] 实验导出增加 CSV/XLSX 友好结构或至少稳定 JSON schema。
-- [ ] 每次事件归档包含时间线、角色响应耗时、AED 取送耗时、交接耗时。
-- [ ] Web 增加“预实验记录包”下载入口：事件 JSON、说明、可复制摘要。
+- [x] 实验导出增加 CSV 友好结构和稳定 JSON schema。
+- [x] 每次事件归档包含时间线、角色响应耗时、AED 取送耗时、交接耗时。
+- [x] Web 增加“预实验记录包”下载入口：事件 JSON、匿名化 JSON/CSV、说明、专家摘要和 manifest 校验清单。
 - [ ] Android 本地归档可展示参与者视角的任务总结。
-- [ ] 补充专家反馈模板中的系统截图清单和演示脚本。
+- [x] 补充专家反馈模板中的证据包审阅材料。
 
 Acceptance:
 

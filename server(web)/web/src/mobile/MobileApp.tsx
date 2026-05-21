@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
   CheckCircle2,
+  ChevronDown,
   Clock,
   HeartPulse,
   LogOut,
@@ -648,6 +649,7 @@ function MobileApp() {
   const [now, setNow] = useState(() => Date.now());
   const [activeView, setActiveView] = useState<MobileView>('home');
   const [sosConfirming, setSosConfirming] = useState(false);
+  const [showManualJoin, setShowManualJoin] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
 
@@ -1185,13 +1187,26 @@ function MobileApp() {
           </div>
         )}
 
-        <div className="mobile-role-grid">
-          {(['PRIME', 'RUNNER', 'GUIDE'] as RoleName[]).map((role) => (
-            <button key={role} onClick={() => joinRole(role)} disabled={!incident || Boolean(busyAction)}>
-              <strong>{translateRoleLabel(role)}</strong>
-              <span>{translateRoleStatus(incident?.roles?.[role]?.status)}</span>
-            </button>
-          ))}
+        <div className="mobile-manual-join">
+          <button
+            type="button"
+            className="mobile-manual-toggle"
+            onClick={() => setShowManualJoin((visible) => !visible)}
+            aria-expanded={showManualJoin}
+          >
+            <span>演示备用：手动选择角色</span>
+            <ChevronDown size={16} />
+          </button>
+          {showManualJoin && (
+            <div className="mobile-role-grid">
+              {(['PRIME', 'RUNNER', 'GUIDE'] as RoleName[]).map((role) => (
+                <button key={role} onClick={() => joinRole(role)} disabled={!incident || Boolean(busyAction)}>
+                  <strong>{translateRoleLabel(role)}</strong>
+                  <span>{translateRoleStatus(incident?.roles?.[role]?.status)}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
       )}

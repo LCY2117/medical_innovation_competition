@@ -14,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lifereflexarc.data.IncidentState
 import com.example.lifereflexarc.data.IncidentArchiveEntry
+import com.example.lifereflexarc.data.LogEntry
 import com.example.lifereflexarc.data.UserRole
 import com.example.lifereflexarc.data.UserSession
 import com.example.lifereflexarc.data.AedSite
@@ -34,6 +36,9 @@ import com.example.lifereflexarc.ui.components.SectionTitle
 import com.example.lifereflexarc.ui.components.SummaryRow
 import com.example.lifereflexarc.ui.theme.PhoneColors
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun CommandHomeScreen(
@@ -140,6 +145,7 @@ fun TasksScreen(
             deviceUserId = deviceUserId,
             incidentViewModel = incidentViewModel,
         )
+        RecentTimelineCard(logs = incidentState.logs)
 
         if (incidentState.phase != "ARCHIVED") {
             PressableButton(
@@ -209,8 +215,67 @@ fun IncidentScreen(
                 }
             }
         }
+        RecentTimelineCard(logs = incidentState.logs)
         AedSitesCard(aedSites = incidentState.aedSites)
         DispatchRationaleCard(incidentState = incidentState)
+    }
+}
+
+@Composable
+private fun RecentTimelineCard(
+    logs: List<LogEntry>,
+) {
+    val formatter = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
+    val recentLogs = logs.takeLast(6).asReversed()
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFF1E293B)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("最近现场时间线", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            if (recentLogs.isEmpty()) {
+                Text(
+                    text = "暂无现场日志。患者触发、角色接单和 AED 进展会同步到这里。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+            } else {
+                recentLogs.forEach { log ->
+                    TimelineLogRow(
+                        timeLabel = formatter.format(Date(log.ts)),
+                        message = translateTimelineMessage(log.msg),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineLogRow(
+    timeLabel: String,
+    message: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = timeLabel,
+            color = Color(0xFF93C5FD),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = message,
+            color = Color(0xFFE2E8F0),
+            fontSize = 13.sp,
+            lineHeight = 19.sp,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -379,6 +444,27 @@ private fun translateHealthRiskTag(tag: String): String = when (tag) {
     "high_pressure" -> "压力偏高"
     "limited_mobility" -> "行动能力受限"
     else -> tag
+}
+
+private fun translateTimelineMessage(message: String): String {
+    val normalized = message.lowercase(Locale.ROOT)
+    return when {
+        normalized.contains("patient designated") -> "患者端已被标记，现场协同链路开始启动"
+        normalized.contains("ai dispatching") -> "AI 正在生成核心施救、AED 保障与清障分派"
+        normalized.contains("dispatch") || normalized.contains("assigned") -> "云端已完成角色分派，任务同步到各终端"
+        normalized.contains("sos") && normalized.contains("cancel") -> "患者已取消 SOS 告警"
+        normalized.contains("sos") || normalized.contains("alert") -> "患者端触发 SOS 告警"
+        normalized.contains("cpr started") -> "核心施救者已启动 CPR"
+        normalized.contains("aed picked") -> "AED 保障者已取到设备，正在回送现场"
+        normalized.contains("aed delivered") -> "AED 已送达患者位置"
+        normalized.contains("aed analysis") || normalized.contains("aed analyzing") -> "AED 正在分析心律"
+        normalized.contains("aed shock delivered") || normalized.contains("shock delivered") -> "AED 已完成一次除颤"
+        normalized.contains("ambulance arrived") -> "救护车已到达，环境清障进入接驳"
+        normalized.contains("handover") -> "现场任务进入医疗交接"
+        normalized.contains("archive") -> "事件记录已归档"
+        normalized.contains("join") -> "协同成员已响应任务"
+        else -> message
+    }
 }
 
 @Composable

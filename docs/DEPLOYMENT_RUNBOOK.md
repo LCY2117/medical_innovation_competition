@@ -185,7 +185,7 @@ curl -fsS http://127.0.0.1:8029/api/health/detail
 | WebSocket | Web 调度台显示“实时同步” |
 | 演示场景 | 点击“初始化医创赛演示场景”后出现 4 个终端和 AED 点位 |
 | 调度解释 | 触发患者后出现三类角色评分和理由 |
-| 数据导出 | 点击“导出预实验数据”获得 JSON |
+| 数据导出 | 点击“证据包”或“导出预实验证据包”获得 ZIP，包内含 JSON、CSV、专家摘要和 manifest 校验信息 |
 | 公网演示保护 | 配置 `LRA_DEMO_ADMIN_TOKEN` 后，未带口令的管理接口返回 403 |
 | Android | App 安装后能登录并连接同一事件 |
 
@@ -218,5 +218,27 @@ sudo systemctl restart lifereflex
 4. 选择患者端触发心脏骤停模拟。
 5. 展示 AI/规则分派过程和调度解释。
 6. 在 Android App 或 Web 端完成 CPR、AED、接应动作。
-7. 点击“导出预实验数据”，展示时间线和指标。
+7. 点击“导出预实验证据包”，展示 `timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json` 和 `expert_summary.md`。
 8. 总结：系统价值是缩短协同组织链路、明确角色任务、记录演练数据，不直接宣称临床疗效。
+
+## 9. 预实验证据包说明
+
+Web 调度台提供两个导出接口：
+
+- `GET /api/experiments/current/export`：返回当前事件的完整结构化 JSON，适合开发调试和接口联调。
+- `GET /api/experiments/current/package`：返回 ZIP 证据包，适合医创赛材料、专家反馈、预实验归档和 Excel 统计。
+
+ZIP 包当前包含：
+
+- `experiment.json`：完整事件数据，保留终端、AED、调度依据和健康摘要。
+- `experiment_anonymized.json`：匿名化事件数据，优先用于 PPT、专家反馈和对外展示。
+- `clients.csv` / `clients_anonymized.csv`：终端画像、角色、位置和健康摘要表。
+- `timeline.csv`：含 `ts`、`tsIso`、`elapsedSec`、`eventType`、`actorUserId`、`role`、`msg` 的结构化时间线。
+- `metrics.csv`：响应耗时、AED 取送、交接、角色完整度、定位/健康覆盖率等指标。
+- `aed_sites.csv`：AED 点位、可用状态、楼层和取用说明。
+- `dispatch_rationale.csv`：每个角色的分派对象、评分因素和解释。
+- `expert_summary.md`：给专家/指导教师快速审阅的预实验摘要。
+- `README.md`：证据包使用说明。
+- `manifest.json`：文件清单、SHA256 校验、生成时间和事件编号。
+
+对外材料默认使用匿名化文件。完整 `experiment.json` 只用于内部复核，不应直接发给专家或放入公开 PPT。

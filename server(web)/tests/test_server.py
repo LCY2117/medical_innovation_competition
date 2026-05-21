@@ -527,6 +527,10 @@ class ServerTestCase(unittest.TestCase):
                 manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
                 self.assertEqual(manifest["incidentId"], exported["incidentId"])
                 self.assertIn("generatedAtIso", manifest)
+                self.assertEqual(manifest["packageType"], "LifeReflexArc pre-experiment evidence package")
+                self.assertEqual(manifest["verification"]["algorithm"], "SHA-256")
+                self.assertIn("experiment_anonymized.json", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("experiment.json", manifest["privacyGuidance"]["internalReviewOnly"])
                 manifest_files = {item["fileName"]: item for item in manifest["files"]}
                 self.assertIn("expert_summary.md", manifest_files)
                 for name, entry in manifest_files.items():
