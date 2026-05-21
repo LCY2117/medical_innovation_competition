@@ -37,7 +37,7 @@ fun CprMetronomeScreen(onCprStarted: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("CPR METRONOME", color = PhoneColors.GrayText, fontSize = PhoneTokens.Caption)
+            Text("CPR 节律辅助", color = PhoneColors.GrayText, fontSize = PhoneTokens.Caption)
             Spacer(modifier = Modifier.height(12.dp))
             Box(contentAlignment = Alignment.Center) {
                 Canvas(modifier = Modifier.size(220.dp)) {
@@ -57,7 +57,7 @@ fun CprMetronomeScreen(onCprStarted: () -> Unit) {
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("AI VOICE ASSISTANT ACTIVE", color = PhoneColors.GrayText, fontSize = PhoneTokens.Caption)
+            Text("语音辅助已启用", color = PhoneColors.GrayText, fontSize = PhoneTokens.Caption)
             Spacer(modifier = Modifier.height(10.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
