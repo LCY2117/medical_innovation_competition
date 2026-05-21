@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 6b832e7
-- Last update: 2026-05-22 04:05:00 +08:00
+- HEAD: f0ce716
+- Last update: 2026-05-22 04:10:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -65,6 +65,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 40. Reorder Android home event actions to prioritize current event and auto-join. (done, validating)
 41. Push Android current-event CTA checkpoint. (done)
 42. Run final P0/P1 validation sweep. (done)
+43. Document third-party provider contract and mark AI/SMS fallback readiness. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -162,6 +163,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android local archive entries now persist and display participant-perspective task summaries for patient, PRIME, RUNNER, GUIDE, and standby roles.
 - Deployment runbook now includes production backup commands, SQLite online backup, 1Panel/OpenResty check commands, config path cautions, database rollback, and DB Git hygiene notes. P1 deployment checklist now marks env examples, `/opt` layout, health checks, and debug DB hygiene as complete.
 - Android Home now emphasizes entering the current event and auto-joining first; creating a new event is labeled as demo backup to reduce accidental public-demo incident creation.
+- Third-party resources doc now defines provider/fallback contracts for map, AI, health, push, and SMS. Product plan marks AI provider abstraction and SMS non-blocking login strategy complete.
 
 ## Validation Log
 
@@ -224,6 +226,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `4600663` (`checkpoint: prioritize android current event`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `6b832e7` (`checkpoint: record android current event push`) created and pushed to `origin/codex/competition-hardening`.
 - Final P0/P1 validation sweep: backend full unittest discovery passed, 30 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `f0ce716` (`checkpoint: record final validation sweep`) created and pushed to `origin/codex/competition-hardening`.
+- Provider-contract doc validation: `rg` confirmed provider env vars, fallback behavior, AI provider, SMS provider, and no-secret rules are present.
 
 ## Blockers Summary
 
@@ -232,7 +236,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push final validation record; continue only if a clearly unblocked high-value polish remains, leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push provider-contract documentation, then continue only if a clearly unblocked high-value polish remains, leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 

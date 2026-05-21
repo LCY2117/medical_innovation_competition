@@ -233,3 +233,23 @@ AI API Key：
 ```
 
 不要把这些 Key 发到公开仓库；可以让我直接写入服务器 `.env` 或本机未提交的 `.env`。
+
+## 9. Provider 接入契约
+
+第三方能力全部按“真实 provider + demo fallback”接入，避免 Key、审核、配额或网络波动阻塞医创赛演示。
+
+| 能力 | provider 环境变量 | 真实 provider | fallback | 前端/APP 暴露内容 |
+| --- | --- | --- | --- | --- |
+| 地图/距离 | `LRA_MAP_PROVIDER` | `amap`、后续可扩展 `tencent`、`baidu` | `demo` 内置坐标和后端 Haversine 距离 | 仅展示点位、距离、路线提示，不暴露服务端 Key |
+| AI 调度 | `LRA_PREFER_LOCAL_MODEL` + `LRA_SILICONFLOW_*` | 本地 OpenAI-compatible 或 SiliconFlow | 规则调度 | 展示调度来源、评分、理由、风险提示 |
+| 健康数据 | `LRA_HEALTH_PROVIDER` | OPPO Health SDK/API | mock/manual health summary | 展示“演示健康数据/OPPO 健康模拟接入”，不作临床诊断 |
+| 推送 | 未来 `LRA_PUSH_PROVIDER` | 厂商推送/极光 | 前台 WebSocket + 移动 Web 轮询 | 展示实时同步状态，不承诺锁屏必达 |
+| 短信/验证码 | 未来 `LRA_SMS_PROVIDER` | 阿里云/腾讯云短信 | 密码账号 + demo persona | 比赛版不把短信作为登录阻塞项 |
+
+后续编码原则：
+
+- 服务端 Key 只进入服务器 `.env` 或 secret storage，前端和 Android 不直接持有服务端 Key。
+- provider 不可用时返回结构化状态，例如 `provider=demo`、`source=fallback`、`warning=quota_or_key_missing`，不要让用户看到堆栈错误。
+- 调度解释必须记录 provider 来源，预实验证据包中保留 `dispatchSource` 和健康摘要 `source`。
+- 对外材料只说“可接入某 provider / 已完成接口预埋 / 当前演示使用 fallback”，不把 fallback 说成真实第三方数据。
+- 申请到 Key 后优先只改 `.env` 和 provider adapter，避免重写业务流程。

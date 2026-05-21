@@ -38,6 +38,7 @@
 - 部署手册已补生产备份、SQLite 在线备份、1Panel/OpenResty 检查、数据库回滚和本地 DB 不提交的 Git 注意事项。
 - Android 首页快速入口已改为优先“进入当前事件/自动接单”，新建事件降级为“演示备用”。
 - 最终 P0/P1 验证已通过：后端 30 项测试、Web typecheck/build、Android debug APK 构建均通过。
+- 第三方资源文档新增 provider/fallback 接入契约：地图、AI、健康、推送、短信都按真实 provider + demo fallback 设计。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -114,6 +115,7 @@ gradle :app:assembleDebug --no-daemon
 - `7e9c65e`：记录部署手册检查点已推送。
 - `4600663`：Android 首页优先进入当前事件/自动接单，新建事件降级为演示备用。
 - `6b832e7`：记录 Android 首页 CTA 检查点已推送。
+- `f0ce716`：记录最终 P0/P1 验证结果。
 
 ## 你醒来后最该做的三件事
 

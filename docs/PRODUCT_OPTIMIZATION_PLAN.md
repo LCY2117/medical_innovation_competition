@@ -94,8 +94,8 @@ Acceptance:
 - [ ] 地图 provider 抽象：高德/腾讯/百度/纯 demo 坐标。
 - [ ] Android 定位权限、手动定位、地图 SDK 接入点预留。
 - [ ] 推送 provider 抽象：极光/厂商推送/本地 WebSocket fallback。
-- [ ] AI provider 抽象：本地模型、硅基流动、OpenAI-compatible API。
-- [ ] 短信/验证码作为未来真实注册增强，不作为当前演示阻塞项。
+- [x] AI provider 抽象：本地模型、硅基流动、OpenAI-compatible API。
+- [x] 短信/验证码作为未来真实注册增强，不作为当前演示阻塞项。
 
 Acceptance:
 
