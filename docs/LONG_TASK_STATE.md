@@ -6,7 +6,7 @@
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
 - HEAD: a8bf982
-- Last update: 2026-05-22 03:10:00 +08:00
+- Last update: 2026-05-22 03:28:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -31,6 +31,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 6. Continue competition hardening after checkpoint: improve pre-experiment export/evidence package. (done, checkpointing)
 7. Improve deployment/operations observability through richer health detail. (done, checkpointing)
 8. Feed OPPO/mock health summaries into dispatch scoring and rationale. (done, checkpointing)
+9. Smoke-check Web UI after evidence package and health-summary additions. (done)
 
 ## Sub-Agent Ledger
 
@@ -115,6 +116,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Health detail validation: backend full tests passed after adding version/auth/features/healthProvider diagnostics.
 - Git checkpoint: `c27a34f` (`checkpoint: expand health diagnostics`) created and pushed to `origin/codex/competition-hardening`.
 - Dispatch health-scoring validation: backend full tests passed, 27 tests OK.
+- Git checkpoint: `6b531af` (`checkpoint: use health signals in dispatch`) created and pushed to `origin/codex/competition-hardening`.
+- Local smoke check: temporary backend on `127.0.0.1:18080` with temp DB opened dashboard, initialized demo scenario, confirmed evidence-package UI, AED sites, health summaries, `healthSignals` dispatch field, and ZIP package contents. Smoke service stopped and temp DB removed.
 
 ## Blockers Summary
 
@@ -123,7 +126,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Create and push dispatch-health checkpoint, then continue with the next unblocked product hardening task.
+Checkpoint smoke-state update, then continue with the next unblocked product hardening task.
 
 ## Resume Instructions
 
