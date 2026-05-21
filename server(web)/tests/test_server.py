@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import tempfile
 import unittest
 import zipfile
@@ -139,6 +141,25 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["healthProvider"]["mode"], "mock")
         self.assertFalse(payload["frontend"]["assetsReady"])
         self.assertFalse(payload["demoAdminAuthEnabled"])
+        self.assertFalse(payload["demoReadiness"]["ready"])
+        self.assertIn("尚未创建当前事件", payload["demoReadiness"]["warnings"])
+
+    def test_health_detail_reports_demo_readiness_after_bootstrap(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            response = client.get("/api/health/detail")
+
+        self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(response.status_code, 200)
+        readiness = response.json()["demoReadiness"]
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["clientCount"], 4)
+        self.assertEqual(readiness["availableAedSiteCount"], 2)
+        self.assertEqual(readiness["clientsWithLocation"], 4)
+        self.assertEqual(readiness["clientsWithHealthSignals"], 4)
+        self.assertEqual(readiness["healthCoveragePercent"], 100.0)
+        self.assertTrue(readiness["exportReady"])
+        self.assertEqual(readiness["warnings"], [])
 
     def test_dispatch_meta_is_serializable(self) -> None:
         with self._client() as client:
@@ -458,6 +479,12 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(exported["patientUserId"], "demo-patient")
             self.assertEqual(exported["assignments"]["RUNNER"], "demo-runner")
             self.assertIn("dispatchSeconds", exported["metrics"])
+            self.assertEqual(exported["metrics"]["participantCount"], 4)
+            self.assertEqual(exported["metrics"]["aedSiteCount"], 2)
+            self.assertEqual(exported["metrics"]["clientsWithHealthSignals"], 4)
+            self.assertEqual(exported["metrics"]["healthCoveragePercent"], 100.0)
+            self.assertEqual(exported["metrics"]["roleAssignmentCompleteness"], 1.0)
+            self.assertGreater(exported["metrics"]["runnerRouteMeters"], 0)
             self.assertTrue(exported["timeline"])
             patient = next(item for item in exported["clients"] if item["userId"] == "demo-patient")
             self.assertEqual(patient["healthSignals"]["source"], "mock")
@@ -469,12 +496,42 @@ class ServerTestCase(unittest.TestCase):
             with zipfile.ZipFile(BytesIO(package.content)) as archive:
                 names = set(archive.namelist())
                 self.assertIn("experiment.json", names)
+                self.assertIn("experiment_anonymized.json", names)
+                self.assertIn("expert_summary.md", names)
                 self.assertIn("clients.csv", names)
+                self.assertIn("clients_anonymized.csv", names)
                 self.assertIn("timeline.csv", names)
                 self.assertIn("dispatch_rationale.csv", names)
+                self.assertIn("manifest.json", names)
                 clients_csv = archive.read("clients.csv").decode("utf-8-sig")
                 self.assertIn("heartRateBpm", clients_csv)
                 self.assertIn("demo-patient", clients_csv)
+                metrics_csv = archive.read("metrics.csv").decode("utf-8-sig")
+                self.assertIn("healthCoveragePercent", metrics_csv)
+                self.assertIn("runnerRouteMeters", metrics_csv)
+                timeline_csv = archive.read("timeline.csv").decode("utf-8-sig")
+                self.assertIn("tsIso", timeline_csv)
+                self.assertIn("eventType", timeline_csv)
+                self.assertIn("ROLE_ASSIGNED", timeline_csv)
+                anonymized_clients_csv = archive.read("clients_anonymized.csv").decode("utf-8-sig")
+                self.assertIn("participantCode", anonymized_clients_csv)
+                self.assertIn("P001", anonymized_clients_csv)
+                self.assertNotIn("demo-patient", anonymized_clients_csv)
+                anonymized_json = archive.read("experiment_anonymized.json").decode("utf-8")
+                self.assertIn("participantMap", anonymized_json)
+                self.assertIn("P001", anonymized_json)
+                self.assertNotIn("demo-patient", anonymized_json)
+                expert_summary = archive.read("expert_summary.md").decode("utf-8")
+                self.assertIn("生命反射弧预实验专家摘要", expert_summary)
+                self.assertIn("数据使用边界", expert_summary)
+                manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+                self.assertEqual(manifest["incidentId"], exported["incidentId"])
+                self.assertIn("generatedAtIso", manifest)
+                manifest_files = {item["fileName"]: item for item in manifest["files"]}
+                self.assertIn("expert_summary.md", manifest_files)
+                for name, entry in manifest_files.items():
+                    content = archive.read(name)
+                    self.assertEqual(hashlib.sha256(content).hexdigest(), entry["sha256"])
 
     def test_demo_clients_and_aed_sites_persist_across_app_recreation(self) -> None:
         with self._client() as client:
@@ -495,6 +552,36 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(len(clients.json()["clients"]), 4)
         self.assertEqual(len(aed_sites.json()["aedSites"]), 2)
         self.assertEqual(dispatch.json()["assignments"]["PRIME"], "demo-prime")
+
+    def test_historical_export_uses_target_incident_roles(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            old_incident_id = bootstrapped.json()["incidentId"]
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+
+            created = client.post("/api/incidents")
+            self.assertEqual(created.status_code, 200)
+            self.assertNotEqual(created.json()["incidentId"], old_incident_id)
+            current_export = client.get("/api/experiments/current/export")
+            self.assertEqual(current_export.status_code, 200)
+            current_clients = current_export.json()["clients"]
+            current_prime = next(item for item in current_clients if item["userId"] == "demo-prime")
+            self.assertIsNone(current_prime["assignedRole"])
+
+            old_export = client.get(f"/api/experiments/{old_incident_id}/export")
+            self.assertEqual(old_export.status_code, 200)
+            old_payload = old_export.json()
+            old_prime = next(item for item in old_payload["clients"] if item["userId"] == "demo-prime")
+            old_patient = next(item for item in old_payload["clients"] if item["userId"] == "demo-patient")
+
+        self.assertEqual(old_payload["assignments"]["PRIME"], "demo-prime")
+        self.assertEqual(old_prime["assignedRole"], "PRIME")
+        self.assertTrue(old_patient["isPatient"])
 
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:

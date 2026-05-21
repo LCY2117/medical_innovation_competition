@@ -171,6 +171,7 @@ class HealthDetailResponse(BaseModel):
     auth: dict = {}
     features: dict = {}
     healthProvider: dict = {}
+    demoReadiness: dict = {}
     currentIncidentId: str | None = None
     loadedIncidents: int
     registeredClients: int = 0

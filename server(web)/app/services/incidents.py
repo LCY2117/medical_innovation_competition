@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import hashlib
 import io
 import json
+import math
 import random
+import re
 import time
 import uuid
 import zipfile
+from datetime import datetime, timezone
 from typing import Dict
 
 from fastapi import HTTPException, WebSocket, WebSocketDisconnect
@@ -31,6 +35,12 @@ from app.models.schemas import (
 )
 from app.services.dispatch_ai import DispatchPlanner
 from app.storage.sqlite_store import SqliteIncidentStore
+
+
+class NearestAedResult:
+    def __init__(self, site: AedSite, distance_meters: float) -> None:
+        self.site = site
+        self.distanceMeters = distance_meters
 
 
 class IncidentService:
@@ -591,6 +601,8 @@ class IncidentService:
             "RUNNER": state.roles.RUNNER.userId,
             "GUIDE": state.roles.GUIDE.userId,
         }
+        aed_sites = state.aedSites or self.list_aed_sites()
+        clients = self._clients_for_export(state)
         return ExperimentExportResponse(
             incidentId=state.incidentId,
             generatedAt=self._now_ms(),
@@ -598,81 +610,46 @@ class IncidentService:
             patientUserId=state.patientUserId,
             dispatchSource=state.dispatchSource,
             assignments=assignments,
-            metrics=self._experiment_metrics(state),
+            metrics=self._experiment_metrics(state, clients, aed_sites),
             timeline=state.logs,
-            clients=self.list_clients(),
-            aedSites=state.aedSites or self.list_aed_sites(),
+            clients=clients,
+            aedSites=aed_sites,
             dispatchRationale=state.dispatchRationale,
         )
 
     def export_experiment_package(self, incident_id: str | None = None) -> tuple[str, bytes]:
         export = self.export_experiment(incident_id)
         payload = export.model_dump(mode="json")
+        anonymized_payload, participant_map = self._anonymized_experiment_payload(export)
+        files: dict[str, str] = {
+            "README.md": self._experiment_readme(export),
+            "expert_summary.md": self._expert_summary(export, participant_map),
+            "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
+            "experiment_anonymized.json": json.dumps(anonymized_payload, ensure_ascii=False, indent=2),
+            "metrics.csv": self._csv_text(
+                [{"metric": key, "value": value} for key, value in export.metrics.items()],
+                ["metric", "value"],
+            ),
+            "timeline.csv": self._csv_text(
+                self._timeline_export_rows(export.timeline),
+                self._timeline_export_fields(),
+            ),
+            "clients.csv": self._csv_text(self._client_export_rows(export.clients), self._client_export_fields()),
+            "clients_anonymized.csv": self._csv_text(
+                self._client_export_rows(export.clients, participant_map=participant_map, anonymized=True),
+                self._client_export_fields(anonymized=True),
+            ),
+            "aed_sites.csv": self._csv_text(self._aed_site_export_rows(export.aedSites), self._aed_site_export_fields()),
+            "dispatch_rationale.csv": self._csv_text(
+                self._dispatch_rationale_export_rows(export, participant_map),
+                self._dispatch_rationale_export_fields(),
+            ),
+        }
+        files["manifest.json"] = self._package_manifest(export, files)
         archive = io.BytesIO()
         with zipfile.ZipFile(archive, mode="w", compression=zipfile.ZIP_DEFLATED) as package:
-            package.writestr("README.md", self._experiment_readme(export), compress_type=zipfile.ZIP_DEFLATED)
-            package.writestr(
-                "experiment.json",
-                json.dumps(payload, ensure_ascii=False, indent=2),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
-            package.writestr(
-                "metrics.csv",
-                self._csv_text(
-                    [{"metric": key, "value": value} for key, value in export.metrics.items()],
-                    ["metric", "value"],
-                ),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
-            package.writestr(
-                "timeline.csv",
-                self._csv_text(
-                    [{"ts": item.ts, "msg": item.msg} for item in export.timeline],
-                    ["ts", "msg"],
-                ),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
-            package.writestr(
-                "clients.csv",
-                self._csv_text(self._client_export_rows(export.clients), self._client_export_fields()),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
-            package.writestr(
-                "aed_sites.csv",
-                self._csv_text(self._aed_site_export_rows(export.aedSites), self._aed_site_export_fields()),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
-            package.writestr(
-                "dispatch_rationale.csv",
-                self._csv_text(
-                    [
-                        {
-                            "role": role,
-                            "userId": decision.userId,
-                            "score": decision.score,
-                            "reasons": "；".join(decision.reasons),
-                            "warnings": "；".join(decision.warnings),
-                            "distanceToPatientMeters": decision.distanceToPatientMeters,
-                            "nearestAedSiteId": decision.nearestAedSiteId,
-                            "distanceToAedMeters": decision.distanceToAedMeters,
-                            "aedToPatientMeters": decision.aedToPatientMeters,
-                        }
-                        for role, decision in sorted(export.dispatchRationale.items())
-                    ],
-                    [
-                        "role",
-                        "userId",
-                        "score",
-                        "reasons",
-                        "warnings",
-                        "distanceToPatientMeters",
-                        "nearestAedSiteId",
-                        "distanceToAedMeters",
-                        "aedToPatientMeters",
-                    ],
-                ),
-                compress_type=zipfile.ZIP_DEFLATED,
-            )
+            for name, content in files.items():
+                package.writestr(name, content, compress_type=zipfile.ZIP_DEFLATED)
         filename = f"lifereflex-experiment-{export.incidentId}.zip"
         return filename, archive.getvalue()
 
@@ -746,6 +723,7 @@ class IncidentService:
             "activeWebSockets": sum(len(connections) for connections in self.ws_connections.values()),
             "activeSosTimers": sum(1 for task in self.sos_tasks.values() if not task.done()),
             "dispatch": dispatch_info,
+            "demoReadiness": self._demo_readiness(),
         }
 
     def dispatch_explain(self) -> dict:
@@ -760,6 +738,48 @@ class IncidentService:
             "LRA_SILICONFLOW_TIMEOUT_SEC",
         ]
         return explanation
+
+    def _demo_readiness(self) -> dict:
+        state = self.incidents.get(self.current_incident_id or "") if self.current_incident_id else None
+        clients = self._clients_for_export(state) if state else self.list_clients()
+        aed_sites = state.aedSites if state and state.aedSites else self.list_aed_sites()
+        clients_with_location = sum(1 for client in clients if client.location is not None)
+        clients_with_health = sum(1 for client in clients if client.healthSignals is not None)
+        available_aed_count = sum(1 for site in aed_sites if site.status.upper() == "AVAILABLE")
+        assigned_count = (
+            sum(1 for role_name in ("PRIME", "RUNNER", "GUIDE") if getattr(state.roles, role_name).userId)
+            if state
+            else 0
+        )
+        warnings: list[str] = []
+        if state is None:
+            warnings.append("尚未创建当前事件")
+        if len(clients) < 4:
+            warnings.append("建议至少准备 4 台终端：患者、PRIME、RUNNER、GUIDE")
+        if available_aed_count < 1:
+            warnings.append("缺少可用 AED 点位")
+        if clients_with_location < len(clients):
+            warnings.append("部分终端未上报位置")
+        if clients_with_health < len(clients):
+            warnings.append("部分终端缺少健康摘要")
+        if state and state.phase in {"DISPATCHED", "CPR", "AED_PICKED", "AED_DELIVERED", "AED_ANALYZING", "SHOCK_DELIVERED", "HANDOVER", "ARCHIVED"} and assigned_count < 3:
+            warnings.append("角色分派未完整覆盖 PRIME/RUNNER/GUIDE")
+
+        return {
+            "ready": state is not None and len(clients) >= 4 and available_aed_count >= 1 and not warnings,
+            "incidentId": state.incidentId if state else None,
+            "phase": state.phase if state else None,
+            "patientSelected": bool(state and state.patientUserId),
+            "clientCount": len(clients),
+            "assignedRoleCount": assigned_count,
+            "availableAedSiteCount": available_aed_count,
+            "clientsWithLocation": clients_with_location,
+            "locationCoveragePercent": round((clients_with_location / len(clients)) * 100, 1) if clients else 0,
+            "clientsWithHealthSignals": clients_with_health,
+            "healthCoveragePercent": round((clients_with_health / len(clients)) * 100, 1) if clients else 0,
+            "exportReady": state is not None and bool(state.logs),
+            "warnings": warnings,
+        }
 
     async def handle_websocket(self, websocket: WebSocket, incident_id: str) -> None:
         await websocket.accept()
@@ -892,13 +912,90 @@ class IncidentService:
                 return entry.ts
         return None
 
-    def _experiment_metrics(self, state: IncidentState) -> dict[str, int | float | None]:
+    @staticmethod
+    def _iso_timestamp(ts: int | None) -> str | None:
+        if ts is None:
+            return None
+        return datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat()
+
+    @staticmethod
+    def _distance_meters(a: GeoPoint | None, b: GeoPoint | None) -> float | None:
+        if a is None or b is None:
+            return None
+        radius = 6_371_000
+        lat1 = math.radians(a.latitude)
+        lat2 = math.radians(b.latitude)
+        delta_lat = math.radians(b.latitude - a.latitude)
+        delta_lon = math.radians(b.longitude - a.longitude)
+        hav = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+        return 2 * radius * math.asin(math.sqrt(hav))
+
+    def _nearest_aed(self, origin: GeoPoint | None, aed_sites: list[AedSite]) -> NearestAedResult | None:
+        if origin is None:
+            return None
+        candidates: list[NearestAedResult] = []
+        for site in aed_sites:
+            if site.status.upper() != "AVAILABLE":
+                continue
+            distance = self._distance_meters(origin, site.location)
+            if distance is not None:
+                candidates.append(NearestAedResult(site=site, distance_meters=distance))
+        if not candidates:
+            return None
+        return min(candidates, key=lambda item: item.distanceMeters)
+
+    def _clients_for_export(self, state: IncidentState) -> list[ClientInfo]:
+        clients: list[ClientInfo] = []
+        for client in self.clients.values():
+            assigned_role = None
+            for role_name in ("PRIME", "RUNNER", "GUIDE"):
+                if getattr(state.roles, role_name).userId == client.userId:
+                    assigned_role = role_name
+                    break
+            clients.append(
+                client.model_copy(
+                    update={
+                        "assignedRole": assigned_role,
+                        "patientCandidate": self._is_patient_candidate(client.healthCondition, client.profileBio),
+                        "isPatient": state.patientUserId == client.userId,
+                        "location": client.location,
+                        "healthSignals": client.healthSignals,
+                    }
+                )
+            )
+        return sorted(
+            clients,
+            key=lambda item: (
+                0 if item.isPatient else 1,
+                0 if item.patientCandidate else 1,
+                -item.lastSeenTs,
+            ),
+        )
+
+    def _experiment_metrics(
+        self,
+        state: IncidentState,
+        clients: list[ClientInfo],
+        aed_sites: list[AedSite],
+    ) -> dict[str, int | float | None]:
         designated_ts = self._latest_log_ts(state, "Patient designated") or self._latest_log_ts(state, "SOS alerting started")
         dispatch_done_ts = self._latest_log_ts(state, "assigned")
         cpr_ts = self._latest_log_ts(state, "CPR started")
         aed_picked_ts = self._latest_log_ts(state, "AED picked")
         aed_delivered_ts = self._latest_log_ts(state, "AED delivered")
         ambulance_ts = self._latest_log_ts(state, "Ambulance arrived")
+        patient = next((client for client in clients if client.userId == state.patientUserId), None)
+        runner = next((client for client in clients if client.userId == state.roles.RUNNER.userId), None)
+        nearest_aed = self._nearest_aed(runner.location if runner else None, aed_sites)
+        runner_route_meters = None
+        if runner and patient and nearest_aed and patient.location:
+            aed_to_patient = self._distance_meters(nearest_aed.site.location, patient.location)
+            if aed_to_patient is not None:
+                runner_route_meters = round(nearest_aed.distanceMeters + aed_to_patient, 1)
+        assigned_count = sum(1 for role_name in ("PRIME", "RUNNER", "GUIDE") if getattr(state.roles, role_name).userId)
+        available_aed_count = sum(1 for site in aed_sites if site.status.upper() == "AVAILABLE")
+        clients_with_location = sum(1 for client in clients if client.location is not None)
+        clients_with_health = sum(1 for client in clients if client.healthSignals is not None)
 
         def delta_seconds(start: int | None, end: int | None) -> int | None:
             if start is None or end is None:
@@ -912,6 +1009,16 @@ class IncidentService:
             "aedDeliverySeconds": delta_seconds(designated_ts, aed_delivered_ts),
             "ambulanceArriveSeconds": delta_seconds(designated_ts, ambulance_ts),
             "logCount": len(state.logs),
+            "participantCount": len(clients),
+            "aedSiteCount": len(aed_sites),
+            "availableAedSiteCount": available_aed_count,
+            "roleAssignmentCompleteness": round(assigned_count / 3, 3),
+            "clientsWithLocation": clients_with_location,
+            "locationCoveragePercent": round((clients_with_location / len(clients)) * 100, 1) if clients else 0,
+            "clientsWithHealthSignals": clients_with_health,
+            "healthCoveragePercent": round((clients_with_health / len(clients)) * 100, 1) if clients else 0,
+            "runnerRouteMeters": runner_route_meters,
+            "dispatchSourceIsFallback": 1 if state.dispatchSource == "fallback" else 0,
         }
 
     @staticmethod
@@ -924,8 +1031,132 @@ class IncidentService:
         return buffer.getvalue()
 
     @staticmethod
-    def _client_export_fields() -> list[str]:
+    def _timeline_export_fields() -> list[str]:
+        return ["ts", "tsIso", "elapsedSec", "eventType", "actorUserId", "role", "msg"]
+
+    def _timeline_export_rows(self, timeline: list[IncidentLogEntry]) -> list[dict]:
+        start_ts = timeline[0].ts if timeline else None
+        rows: list[dict] = []
+        for item in timeline:
+            parsed = self._parse_timeline_message(item.msg)
+            rows.append(
+                {
+                    "ts": item.ts,
+                    "tsIso": self._iso_timestamp(item.ts),
+                    "elapsedSec": round((item.ts - start_ts) / 1000, 3) if start_ts else 0,
+                    "eventType": parsed["eventType"],
+                    "actorUserId": parsed["actorUserId"],
+                    "role": parsed["role"],
+                    "msg": item.msg,
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _parse_timeline_message(message: str) -> dict[str, str]:
+        patterns = [
+            (r"^(PRIME|RUNNER|GUIDE) assigned \(([^)]+)\)", "ROLE_ASSIGNED"),
+            (r"^(PRIME|RUNNER|GUIDE) joined \(([^)]+)\)", "ROLE_JOINED"),
+            (r"^(PRIME|RUNNER|GUIDE) auto-joined \(([^)]+)\)", "ROLE_AUTO_JOINED"),
+        ]
+        for pattern, event_type in patterns:
+            match = re.search(pattern, message)
+            if match:
+                return {"eventType": event_type, "role": match.group(1), "actorUserId": match.group(2)}
+
+        by_action = [
+            (r"CPR started by (.+)$", "CPR_STARTED", "PRIME"),
+            (r"AED picked by (.+)$", "AED_PICKED", "RUNNER"),
+            (r"AED delivered by (.+)$", "AED_DELIVERED", "RUNNER"),
+            (r"AED analysis started by (.+)$", "AED_ANALYSIS_STARTED", "PRIME"),
+            (r"AED shock delivered by (.+)$", "AED_SHOCK_DELIVERED", "PRIME"),
+            (r"Ambulance arrived \(reported by (.+)\)$", "AMBULANCE_ARRIVED", "GUIDE"),
+            (r"Handover completed by (.+)$", "HANDOVER_COMPLETED", "GUIDE"),
+        ]
+        for pattern, event_type, role in by_action:
+            match = re.search(pattern, message)
+            if match:
+                return {"eventType": event_type, "role": role, "actorUserId": match.group(1)}
+
+        patient_match = re.search(r"Patient (?:SOS alerting started|SOS confirmed|designated).*?\(([^)]+)\)", message)
+        if patient_match:
+            event_type = "PATIENT_SOS" if "SOS" in message else "PATIENT_DESIGNATED"
+            return {"eventType": event_type, "role": "PATIENT", "actorUserId": patient_match.group(1)}
+
+        if "AI dispatching started" in message:
+            return {"eventType": "DISPATCH_STARTED", "role": "", "actorUserId": ""}
+        if "Demo scenario bootstrapped" in message:
+            return {"eventType": "DEMO_BOOTSTRAPPED", "role": "", "actorUserId": ""}
+        if "AED site updated" in message:
+            return {"eventType": "AED_SITE_UPDATED", "role": "", "actorUserId": ""}
+        if "Incident reset" in message:
+            return {"eventType": "INCIDENT_RESET", "role": "", "actorUserId": ""}
+        if "Incident created" in message:
+            return {"eventType": "INCIDENT_CREATED", "role": "", "actorUserId": ""}
+        return {"eventType": "LOG", "role": "", "actorUserId": ""}
+
+    @staticmethod
+    def _dispatch_rationale_export_fields() -> list[str]:
         return [
+            "role",
+            "userId",
+            "participantCode",
+            "score",
+            "reasons",
+            "warnings",
+            "distanceToPatientMeters",
+            "nearestAedSiteId",
+            "distanceToAedMeters",
+            "aedToPatientMeters",
+        ]
+
+    @staticmethod
+    def _dispatch_rationale_export_rows(
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> list[dict]:
+        return [
+            {
+                "role": role,
+                "userId": decision.userId,
+                "participantCode": participant_map.get(decision.userId or "", ""),
+                "score": decision.score,
+                "reasons": "；".join(decision.reasons),
+                "warnings": "；".join(decision.warnings),
+                "distanceToPatientMeters": decision.distanceToPatientMeters,
+                "nearestAedSiteId": decision.nearestAedSiteId,
+                "distanceToAedMeters": decision.distanceToAedMeters,
+                "aedToPatientMeters": decision.aedToPatientMeters,
+            }
+            for role, decision in sorted(export.dispatchRationale.items())
+        ]
+
+    def _package_manifest(self, export: ExperimentExportResponse, files: dict[str, str]) -> str:
+        entries = []
+        for name, content in sorted(files.items()):
+            raw = content.encode("utf-8")
+            entries.append(
+                {
+                    "fileName": name,
+                    "bytes": len(raw),
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                    "lineCount": content.count("\n") + (1 if content else 0),
+                }
+            )
+        manifest = {
+            "schemaVersion": 1,
+            "incidentId": export.incidentId,
+            "generatedAt": export.generatedAt,
+            "generatedAtIso": self._iso_timestamp(export.generatedAt),
+            "phase": export.phase,
+            "fileCountExcludingManifest": len(files),
+            "files": entries,
+        }
+        return json.dumps(manifest, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def _client_export_fields(anonymized: bool = False) -> list[str]:
+        base = [
             "userId",
             "displayName",
             "organization",
@@ -951,40 +1182,60 @@ class IncidentService:
             "riskTags",
             "healthNote",
         ]
+        if not anonymized:
+            return base
+        return ["participantCode", *[field for field in base if field not in {"userId", "displayName", "organization", "profileBio", "healthNote"}]]
 
     @staticmethod
-    def _client_export_rows(clients: list[ClientInfo]) -> list[dict]:
+    def _client_export_rows(
+        clients: list[ClientInfo],
+        participant_map: dict[str, str] | None = None,
+        anonymized: bool = False,
+    ) -> list[dict]:
         rows: list[dict] = []
         for client in clients:
             health = client.healthSignals
             location = client.location
-            rows.append(
-                {
-                    "userId": client.userId,
-                    "displayName": client.displayName,
-                    "organization": client.organization,
-                    "healthCondition": client.healthCondition,
-                    "professionIdentity": client.professionIdentity,
-                    "deviceType": client.deviceType,
-                    "online": client.online,
-                    "assignedRole": client.assignedRole,
-                    "patientCandidate": client.patientCandidate,
-                    "isPatient": client.isPatient,
-                    "locationLabel": location.label if location else None,
-                    "locationFloor": location.floor if location else None,
-                    "locationSource": location.source if location else None,
-                    "latitude": location.latitude if location else None,
-                    "longitude": location.longitude if location else None,
-                    "healthSource": health.source if health else None,
-                    "healthAuthorizationStatus": health.authorizationStatus if health else None,
-                    "heartRateBpm": health.heartRateBpm if health else None,
-                    "bloodOxygenPercent": health.bloodOxygenPercent if health else None,
-                    "pressureScore": health.pressureScore if health else None,
-                    "activityLevel": health.activityLevel if health else None,
-                    "sleepQuality": health.sleepQuality if health else None,
-                    "riskTags": "；".join(health.riskTags) if health else "",
-                    "healthNote": health.note if health else None,
+            participant_code = (participant_map or {}).get(client.userId, client.userId)
+            row = {
+                "userId": client.userId,
+                "displayName": client.displayName,
+                "organization": client.organization,
+                "healthCondition": client.healthCondition,
+                "professionIdentity": client.professionIdentity,
+                "profileBio": client.profileBio,
+                "deviceType": client.deviceType,
+                "online": client.online,
+                "assignedRole": client.assignedRole,
+                "patientCandidate": client.patientCandidate,
+                "isPatient": client.isPatient,
+                "locationLabel": location.label if location else None,
+                "locationFloor": location.floor if location else None,
+                "locationSource": location.source if location else None,
+                "latitude": location.latitude if location else None,
+                "longitude": location.longitude if location else None,
+                "healthSource": health.source if health else None,
+                "healthAuthorizationStatus": health.authorizationStatus if health else None,
+                "heartRateBpm": health.heartRateBpm if health else None,
+                "bloodOxygenPercent": health.bloodOxygenPercent if health else None,
+                "pressureScore": health.pressureScore if health else None,
+                "activityLevel": health.activityLevel if health else None,
+                "sleepQuality": health.sleepQuality if health else None,
+                "riskTags": "；".join(health.riskTags) if health else "",
+                "healthNote": health.note if health else None,
+            }
+            if anonymized:
+                row = {
+                    **row,
+                    "participantCode": participant_code,
+                    "userId": participant_code,
+                    "displayName": participant_code,
+                    "organization": "REDACTED",
+                    "profileBio": "REDACTED",
+                    "healthNote": None,
                 }
+            rows.append(
+                row
             )
         return rows
 
@@ -1034,8 +1285,11 @@ class IncidentService:
 ## 文件说明
 
 - `experiment.json`：完整结构化导出，保留事件、终端、AED、调度依据和健康摘要。
+- `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
+- `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
 - `clients.csv`：参与终端画像、位置、角色和 OPPO/mock 健康摘要。
+- `clients_anonymized.csv`：匿名化参与者表，隐藏 userId、姓名、组织和个人简介。
 - `aed_sites.csv`：AED 点位与访问备注。
 - `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
 - `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
@@ -1043,6 +1297,115 @@ class IncidentService:
 ## 使用建议
 
 该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+"""
+
+    def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:
+        aliases: dict[str, str] = {}
+        if export.patientUserId:
+            aliases[export.patientUserId] = "P001"
+
+        for role in ("PRIME", "RUNNER", "GUIDE"):
+            user_id = export.assignments.get(role)
+            if user_id and user_id not in aliases:
+                aliases[user_id] = f"R{len([value for value in aliases.values() if value.startswith('R')]) + 1:03d}-{role}"
+
+        for client in export.clients:
+            if client.userId not in aliases:
+                aliases[client.userId] = f"C{len(aliases) + 1:03d}"
+        return aliases
+
+    @staticmethod
+    def _replace_participant_ids(value: object, participant_map: dict[str, str]) -> object:
+        if isinstance(value, str):
+            updated = value
+            for raw, alias in sorted(participant_map.items(), key=lambda item: len(item[0]), reverse=True):
+                updated = updated.replace(raw, alias)
+            return updated
+        if isinstance(value, list):
+            return [IncidentService._replace_participant_ids(item, participant_map) for item in value]
+        if isinstance(value, dict):
+            return {
+                key: IncidentService._replace_participant_ids(item, participant_map)
+                for key, item in value.items()
+            }
+        return value
+
+    def _anonymized_experiment_payload(self, export: ExperimentExportResponse) -> tuple[dict, dict[str, str]]:
+        participant_map = self._participant_aliases(export)
+        payload = export.model_dump(mode="json")
+        anonymized = self._replace_participant_ids(payload, participant_map)
+        if not isinstance(anonymized, dict):
+            return payload, participant_map
+
+        anonymized["patientUserId"] = participant_map.get(export.patientUserId or "", export.patientUserId)
+        anonymized["assignments"] = {
+            role: participant_map.get(user_id or "", user_id)
+            for role, user_id in export.assignments.items()
+        }
+        anonymized["participantMap"] = [
+            {
+                "participantCode": participant_map[client.userId],
+                "role": "PATIENT" if client.userId == export.patientUserId else client.assignedRole,
+                "deviceType": client.deviceType,
+                "professionIdentity": client.professionIdentity,
+                "healthCondition": client.healthCondition,
+                "healthSource": client.healthSignals.source if client.healthSignals else None,
+                "riskTags": client.healthSignals.riskTags if client.healthSignals else [],
+            }
+            for client in export.clients
+        ]
+        for client in anonymized.get("clients", []):
+            if not isinstance(client, dict):
+                continue
+            participant_code = participant_map.get(str(client.get("userId")), str(client.get("userId")))
+            client["participantCode"] = participant_code
+            client["userId"] = participant_code
+            client["displayName"] = participant_code
+            client["organization"] = "REDACTED"
+            client["profileBio"] = "REDACTED"
+            if isinstance(client.get("healthSignals"), dict):
+                client["healthSignals"]["note"] = None
+        return anonymized, participant_map
+
+    @staticmethod
+    def _format_metric(value: int | float | None) -> str:
+        return "--" if value is None else f"{value}s"
+
+    def _expert_summary(self, export: ExperimentExportResponse, participant_map: dict[str, str]) -> str:
+        assignments = {
+            role: participant_map.get(user_id or "", user_id or "未分派")
+            for role, user_id in export.assignments.items()
+        }
+        metrics = export.metrics
+        return f"""# 生命反射弧预实验专家摘要
+
+## 事件概况
+
+- 事件编号：{export.incidentId}
+- 事件阶段：{export.phase}
+- 患者代号：{participant_map.get(export.patientUserId or "", export.patientUserId or "未指定")}
+- 调度来源：{export.dispatchSource or "未记录"}
+- 参与终端数：{len(export.clients)}
+- AED 点位数：{len(export.aedSites)}
+
+## 角色分派
+
+- PRIME 核心施救：{assignments.get("PRIME", "未分派")}
+- RUNNER AED 保障：{assignments.get("RUNNER", "未分派")}
+- GUIDE 环境清障/接车：{assignments.get("GUIDE", "未分派")}
+
+## 关键耗时
+
+- 调度耗时：{self._format_metric(metrics.get("dispatchSeconds"))}
+- CPR 开始耗时：{self._format_metric(metrics.get("cprStartSeconds"))}
+- AED 取出耗时：{self._format_metric(metrics.get("aedPickupSeconds"))}
+- AED 送达耗时：{self._format_metric(metrics.get("aedDeliverySeconds"))}
+- 救护接管耗时：{self._format_metric(metrics.get("ambulanceArriveSeconds"))}
+- 事件日志数：{metrics.get("logCount", 0)}
+
+## 数据使用边界
+
+本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。OPPO 健康数据若来源为 `mock`，仅代表演示闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
 """
 
     def _assigned_role_for(self, user_id: str) -> str | None:

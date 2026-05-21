@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a8bf982
-- Last update: 2026-05-22 03:28:00 +08:00
+- HEAD: 0b14f44
+- Last update: 2026-05-22 02:17:34 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -32,12 +32,16 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 7. Improve deployment/operations observability through richer health detail. (done, checkpointing)
 8. Feed OPPO/mock health summaries into dispatch scoring and rationale. (done, checkpointing)
 9. Smoke-check Web UI after evidence package and health-summary additions. (done)
+10. Strengthen pre-experiment evidence integrity: anonymized package, manifest hashes, structured timeline, richer metrics, historical export correctness, and demo readiness. (done, validating)
 
 ## Sub-Agent Ledger
 
 - Web/mobile explorer (`019e4b97-e5bd-7200-a64b-fb9c42167d8e`): completed read-only; identified `ClientInfo.healthSignals`, Web console, `/mobile`, and export insertion points.
 - Android explorer (`019e4b98-1336-70d0-b06d-72d187a79a14`): completed read-only; identified Kotlin provider, register, DTO, and UI insertion points.
 - OPPO docs explorer (`019e4b98-45d3-7fb3-96c0-c6831d5d5701`): completed read-only; produced checklist-ready OPPO materials and blockers.
+- Web/mobile UI explorer (`019e4bb7-9d4e-7372-9536-5ab5537730b1`): completed read-only; recommended demo stepper, mobile demo script, SOS confirm, task fallback folding, and next-action cards.
+- Backend evidence explorer (`019e4bb7-b138-7263-abf1-99c38ba0bfa5`): completed read-only; recommended target-incident export roles, ZIP manifest, richer metrics, structured timeline, demo readiness, and input constraints.
+- Android APK explorer (`019e4bb7-c511-78f2-af54-44692d632c16`): completed read-only; recommended wiring auto-join, adding timeline visibility, Chinese health presentation, demo location switching, and AED/CPR status cards.
 
 ## Git Baseline
 
@@ -102,6 +106,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Web console and `/mobile` show mock/OPPO health summaries; mobile web also syncs a mock health summary after login/demo entry.
 - Android app has `HealthSignalProvider`, `MockOppoHealthSignalProvider`, OPPO package visibility, server sync, and Compose health summary cards.
 - OPPO checklist doc added.
+- Evidence package now includes anonymized JSON/CSV, `expert_summary.md`, structured `timeline.csv`, richer experiment metrics, and `manifest.json` with SHA256 hashes.
+- Historical event export now derives participant roles/patient flags from the target incident instead of the current incident.
+- `/api/health/detail` now reports `demoReadiness` with readiness warnings, location coverage, health coverage, AED availability, and export readiness.
 
 ## Validation Log
 
@@ -118,6 +125,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Dispatch health-scoring validation: backend full tests passed, 27 tests OK.
 - Git checkpoint: `6b531af` (`checkpoint: use health signals in dispatch`) created and pushed to `origin/codex/competition-hardening`.
 - Local smoke check: temporary backend on `127.0.0.1:18080` with temp DB opened dashboard, initialized demo scenario, confirmed evidence-package UI, AED sites, health summaries, `healthSignals` dispatch field, and ZIP package contents. Smoke service stopped and temp DB removed.
+- Evidence integrity targeted tests: `.\.venv\Scripts\python.exe -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_health_detail_reports_demo_readiness_after_bootstrap tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export tests.test_server.ServerTestCase.test_historical_export_uses_target_incident_roles -v` passed, 4 tests OK.
 
 ## Blockers Summary
 
@@ -126,7 +134,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint smoke-state update, then continue with the next unblocked product hardening task.
+Run full backend validation for the evidence-integrity milestone, then wire the Android auto-join entry if still unblocked.
 
 ## Resume Instructions
 
