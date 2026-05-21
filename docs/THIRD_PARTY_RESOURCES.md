@@ -202,6 +202,8 @@ LRA_SILICONFLOW_TIMEOUT_SEC=8
 - App 前台 WebSocket 实时推送。
 - 后台/锁屏推送用“后续计划”描述。
 
+当前后端已完成 `NotificationProvider` 抽象，`LRA_PUSH_PROVIDER=websocket` 是默认比赛版方案。若先写成 `jpush` 或 `vendor`，系统会在 `/api/health/detail.pushProvider` 显示 adapter pending，并继续用 WebSocket 同步，不会让演示链路中断。
+
 ## 7. 半夜自动申请策略
 
 可以自动推进：
@@ -249,7 +251,7 @@ AI API Key：
 | Android 定位 | Android runtime permission + 未来 `LRA_AMAP_ANDROID_KEY` | 未来高德/腾讯/百度 Android SDK adapter | 系统最近定位 + App 演示坐标按钮 | “我的 > 位置同步”展示来源、坐标、精度和同步状态 |
 | AI 调度 | `LRA_PREFER_LOCAL_MODEL` + `LRA_SILICONFLOW_*` | 本地 OpenAI-compatible 或 SiliconFlow | 规则调度 | 展示调度来源、评分、理由、风险提示 |
 | 健康数据 | `LRA_HEALTH_PROVIDER` | OPPO Health SDK/API | mock/manual health summary | 展示“演示健康数据/OPPO 健康模拟接入”，不作临床诊断 |
-| 推送 | 未来 `LRA_PUSH_PROVIDER` | 厂商推送/极光 | 前台 WebSocket + 移动 Web 轮询 | 展示实时同步状态，不承诺锁屏必达 |
+| 推送 | `LRA_PUSH_PROVIDER` | 未来厂商推送/极光 adapter | 前台 WebSocket state sync | `/api/health/detail.pushProvider` 显示 provider、activeProvider、channel 和 fallback 原因，不承诺锁屏必达 |
 | 短信/验证码 | 未来 `LRA_SMS_PROVIDER` | 阿里云/腾讯云短信 | 密码账号 + demo persona | 比赛版不把短信作为登录阻塞项 |
 
 后续编码原则：

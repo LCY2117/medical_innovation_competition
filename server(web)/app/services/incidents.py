@@ -34,6 +34,7 @@ from app.models.schemas import (
     SosState,
 )
 from app.services.dispatch_ai import DispatchPlanner
+from app.services.notifications import NotificationIntent, NotificationProvider, WebSocketFallbackNotificationProvider
 from app.services.spatial import SpatialProvider
 from app.storage.sqlite_store import SqliteIncidentStore
 
@@ -61,6 +62,8 @@ class IncidentService:
         map_provider: str = "demo",
         amap_service_key: str | None = None,
         map_distance_timeout_sec: int = 3,
+        push_provider: str = "websocket",
+        notification_provider: NotificationProvider | None = None,
     ) -> None:
         self.store = store
         self.sos_duration_sec = sos_duration_sec
@@ -76,6 +79,10 @@ class IncidentService:
             provider=map_provider,
             amap_service_key=amap_service_key,
             timeout_sec=map_distance_timeout_sec,
+        )
+        self.notification_provider = notification_provider or WebSocketFallbackNotificationProvider(
+            provider=push_provider,
+            send_state=self._send_websocket_state,
         )
         self.dispatch_planner = DispatchPlanner(
             api_key=siliconflow_api_key,
@@ -740,6 +747,7 @@ class IncidentService:
             "activeSosTimers": sum(1 for task in self.sos_tasks.values() if not task.done()),
             "dispatch": dispatch_info,
             "mapProvider": self.spatial_provider.explain(),
+            "pushProvider": self.notification_provider.explain(),
             "demoReadiness": self._demo_readiness(),
         }
 
@@ -856,9 +864,19 @@ class IncidentService:
         return state
 
     async def _broadcast_state_async(self, incident_id: str) -> None:
+        await self.notification_provider.notify(
+            NotificationIntent(
+                incident_id=incident_id,
+                event_type="state_updated",
+                title="Incident state updated",
+                body="Incident state has changed and should be synchronized.",
+            )
+        )
+
+    async def _send_websocket_state(self, incident_id: str) -> int:
         state = self.incidents.get(incident_id)
         if state is None:
-            return
+            return 0
 
         payload = {"type": "STATE", "payload": self._incident_payload(state)}
         alive: list[WebSocket] = []
@@ -869,6 +887,7 @@ class IncidentService:
             except Exception:
                 pass
         self.ws_connections[incident_id] = alive
+        return len(alive)
 
     async def _auto_trigger_after(self, incident_id: str, start_ts: int, delay_override: int | None = None) -> None:
         await asyncio.sleep(delay_override if delay_override is not None else self.sos_duration_sec)

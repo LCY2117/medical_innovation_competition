@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 1259394
-- Last update: 2026-05-22 03:58:26 +08:00
+- HEAD: f30be6d
+- Last update: 2026-05-22 04:07:05 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -74,7 +74,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 49. Push security-hardening checkpoint to GitHub. (done)
 50. Record pushed security checkpoint in handoff/state. (done)
 51. Add backend map/spatial provider abstraction with AMap WebService fallback. (done, pushed)
-52. Add Android native location provider with system-location and demo fallback. (done, checkpointing)
+52. Add Android native location provider with system-location and demo fallback. (done, pushed)
+53. Add backend notification provider with WebSocket fallback. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -181,6 +182,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android Gradle JVM args now use a larger heap/metaspace to avoid GC thrashing after adding AndroidX Security.
 - Backend map distances now flow through `SpatialProvider`: default demo/Haversine distance, AMap WebService distance when `LRA_MAP_PROVIDER=amap` and `LRA_AMAP_SERVICE_KEY` is configured, and structured fallback metadata in health/detail and dispatch/meta.
 - Android location now flows through a `LocationProvider`: app startup/terminal registration and the Profile location card can use system last-known location when runtime permission is granted; missing permission, disabled provider, or no recent location falls back to demo coordinates.
+- Backend notifications now flow through `NotificationProvider`: default WebSocket state sync, future `jpush`/`vendor` placeholder values report adapter-pending fallback in `/api/health/detail.pushProvider`.
 
 ## Validation Log
 
@@ -254,6 +256,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Map provider full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 33 tests OK.
 - Git checkpoint: `1259394` (`checkpoint: add map distance provider`) created and pushed to `origin/codex/competition-hardening`.
 - Android location validation: `gradle :app:assembleDebug --no-daemon` passed; existing `PhoneAppRoot.kt` non-blocking Kotlin warning remains.
+- Git checkpoint: `f30be6d` (`checkpoint: add android location provider`) created and pushed to `origin/codex/competition-hardening`.
+- Notification provider targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_push_provider_placeholder_falls_back_to_websocket tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export -v` passed, 3 tests OK.
+- Notification provider full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 34 tests OK.
 
 ## Blockers Summary
 
@@ -262,7 +267,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit/push the Android native location checkpoint excluding local DB/output/OPPO doc copy. After that, consider backend notification provider/WebSocket fallback abstraction as the next independent P2 polish.
+Commit/push the notification provider checkpoint excluding local DB/output/OPPO doc copy. After that, continue with formal admin/RBAC or demo UX polish if time remains.
 
 ## Resume Instructions
 

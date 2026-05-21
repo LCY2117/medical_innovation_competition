@@ -191,6 +191,7 @@ class HealthDetailResponse(BaseModel):
     features: dict = {}
     healthProvider: dict = {}
     mapProvider: dict = {}
+    pushProvider: dict = {}
     demoReadiness: dict = {}
     currentIncidentId: str | None = None
     loadedIncidents: int

@@ -33,6 +33,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         map_provider=settings.map_provider,
         amap_service_key=settings.amap_service_key,
         map_distance_timeout_sec=settings.map_distance_timeout_sec,
+        push_provider=settings.push_provider,
     )
 
     @asynccontextmanager

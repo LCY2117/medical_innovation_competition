@@ -47,6 +47,7 @@
 - Android Gradle JVM 堆已提高到 2GB，避免新增安全依赖后 Windows 构建出现 GC thrashing。
 - 后端地图距离 provider 已抽象：默认 demo/Haversine，`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；健康检查和调度元数据会显示 provider、距离来源和 fallback 原因。
 - Android 原生定位 provider 已预埋：无需第三方 Key 即可走系统最近定位 + 演示坐标 fallback，后续高德 Android SDK 可作为 adapter 接入。
+- 后端通知 provider 已抽象：比赛版默认 `LRA_PUSH_PROVIDER=websocket`，未来 `jpush`/`vendor` provider 未接入时会显示 pending 并回退 WebSocket。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -127,7 +128,8 @@ gradle :app:assembleDebug --no-daemon
 - `f0ce716`：记录最终 P0/P1 验证结果。
 - `4b0f11f`：后端审计日志/频控、Web 审计面板、Android 加密 token 存储、Gradle 构建稳定性，已推送。
 - `1259394`：地图距离 provider 抽象与高德 WebService 预埋，已推送。
-- 待本轮提交：Android 系统定位 provider 与位置同步 UI。
+- `f30be6d`：Android 系统定位 provider 与位置同步 UI，已推送。
+- 待本轮提交：后端通知 provider 与 WebSocket fallback。
 
 ## 你醒来后最该做的三件事
 

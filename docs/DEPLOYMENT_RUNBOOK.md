@@ -35,6 +35,7 @@ LRA_RATE_LIMIT_ENABLED=true
 LRA_RATE_LIMIT_AUTH_PER_MINUTE=20
 LRA_RATE_LIMIT_ADMIN_PER_MINUTE=60
 LRA_RATE_LIMIT_ACTOR_PER_MINUTE=120
+LRA_PUSH_PROVIDER=websocket
 LRA_MAP_PROVIDER=demo
 LRA_AMAP_SERVICE_KEY=
 LRA_MAP_DISTANCE_TIMEOUT_SEC=3
@@ -46,6 +47,8 @@ LRA_SILICONFLOW_API_KEY=
 `LRA_AUDIT_LOG_ENABLED` 默认开启，会在 SQLite 中记录登录、演示管理、角色响应、现场动作、实验导出和审计读取事件。Web 总控台“审计”按钮读取 `GET /api/audit/events`，该接口同样需要演示管理员口令。审计事件不保存密码、token 或 API Key，仅保留 actor/target、结果、脱敏请求 hash 和结构化元数据。
 
 `LRA_RATE_LIMIT_*` 是轻量级进程内滑动窗口限流，适合比赛公开演示和小规模预实验防误刷。多进程/多实例生产部署时，应在 OpenResty、1Panel WAF、Redis 或网关层补充集中限流。
+
+`LRA_PUSH_PROVIDER=websocket` 是比赛版默认通知 provider，复用现有 WebSocket 状态同步。未来可设置 `jpush` 或 `vendor` 作为厂商推送预留值；在 adapter 和凭据未配置前，系统会在健康检查中显示 fallback 原因并继续走 WebSocket。
 
 如果配置 AI：
 
@@ -239,6 +242,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | 演示场景 | 点击“初始化医创赛演示场景”后出现 4 个终端和 AED 点位 |
 | 调度解释 | 触发患者后出现三类角色评分和理由 |
 | 地图距离 provider | `health.detail.mapProvider` 显示 `mode`、`distanceSource`、`configured` 和 fallback 原因；未配置 Key 时仍可完整演示 |
+| 推送 provider | `health.detail.pushProvider` 显示 `mode=websocket`、`channel=websocket_state`；配置未来 provider 时应显示 fallback 原因 |
 | 数据导出 | 点击“证据包”或“导出预实验证据包”获得 ZIP，包内含 JSON、CSV、专家摘要和 manifest 校验信息 |
 | 公网演示保护 | 配置 `LRA_DEMO_ADMIN_TOKEN` 后，未带口令的管理接口返回 403 |
 | 审计日志 | Web 总控台点击“审计”可看到最近登录、演示、导出和现场动作；无口令读取返回 403 |

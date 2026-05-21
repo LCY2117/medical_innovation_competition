@@ -157,6 +157,8 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["healthProvider"]["mode"], "mock")
         self.assertEqual(payload["mapProvider"]["mode"], "demo")
         self.assertEqual(payload["mapProvider"]["distanceSource"], "haversine_demo")
+        self.assertEqual(payload["pushProvider"]["mode"], "websocket")
+        self.assertEqual(payload["pushProvider"]["channel"], "websocket_state")
         self.assertEqual(payload["storage"]["auditEventCount"], 0)
         self.assertTrue(payload["security"]["auditLogEnabled"])
         self.assertTrue(payload["security"]["rateLimitEnabled"])
@@ -244,6 +246,32 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(provider["distanceSource"], "haversine_demo")
         self.assertEqual(meta.status_code, 200)
         self.assertEqual(meta.json()["mapProvider"]["fallbackReason"], "amap_service_key_missing")
+
+    def test_push_provider_placeholder_falls_back_to_websocket(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            push_provider="jpush",
+        )
+        with TestClient(create_app(settings)) as client:
+            health = client.get("/api/health/detail")
+            bootstrapped = client.post("/api/demo/bootstrap")
+
+        self.assertEqual(health.status_code, 200)
+        provider = health.json()["pushProvider"]
+        self.assertEqual(provider["requestedProvider"], "jpush")
+        self.assertEqual(provider["mode"], "jpush")
+        self.assertEqual(provider["activeProvider"], "websocket")
+        self.assertEqual(provider["fallbackReason"], "jpush_adapter_pending")
+        self.assertEqual(bootstrapped.status_code, 200)
 
     def test_auth_register_and_login(self) -> None:
         with self._client() as client:
