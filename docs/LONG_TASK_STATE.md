@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 9b373f4
-- Last update: 2026-05-22 04:33:20 +08:00
+- HEAD: a648ad8
+- Last update: 2026-05-22 04:36:10 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -79,7 +79,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 54. Add backend formal admin account minimal RBAC. (done, pushed)
 55. Align frontend admin user type. (done, pushed)
 56. Fix mobile patient SOS delayed auto-dispatch and wire Web command center admin login. (done, pushed)
-57. Localize visible Web command-center and `/mobile-demo` demo labels. (done, checkpointing)
+57. Localize visible Web command-center and `/mobile-demo` demo labels. (done, pushed)
+58. Run final post-polish validation sweep. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -197,6 +198,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Web command center now exposes optional formal admin login when `LRA_ADMIN_PHONES` is configured, uses the admin Bearer token for management APIs and dashboard-simulated role actions, and keeps the old demo admin token as a fallback.
 - Git checkpoint `9b373f4` (`checkpoint: fix patient sos and admin console login`) was pushed to `origin/codex/competition-hardening`.
 - `/mobile-demo` now uses Chinese primary role labels; Web command-center audit labels, scenario phase, AED status, and visible timeline logs are localized for presentation while preserving raw backend logs for exports.
+- Git checkpoint `a648ad8` (`checkpoint: polish demo visible labels`) was pushed to `origin/codex/competition-hardening`.
 
 ## Validation Log
 
@@ -287,6 +289,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `9b373f4` (`checkpoint: fix patient sos and admin console login`) created and pushed to `origin/codex/competition-hardening`.
 - Web localization validation: `npm run typecheck` passed; `npm run build` passed with dashboard chunk `217.60 kB` raw / `66.63 kB` gzip.
 - Browser smoke: temporary local backend on `127.0.0.1:18084` verified command-center Chinese scenario label and `/mobile-demo` Chinese role labels; temporary local backend on `127.0.0.1:18085` with `LRA_ADMIN_PHONES` verified admin-permission state shows “需要权限” and no longer reports “本地免口令”. Both services were stopped and temporary smoke DBs removed.
+- Final post-polish validation sweep: backend unittest discovery passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with dashboard chunk `217.60 kB` raw / `66.63 kB` gzip.
+- Git checkpoint: `a648ad8` (`checkpoint: polish demo visible labels`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -295,7 +299,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Web/mobile visible-label localization without committing DB/output/OPPO doc copy. Then continue with one more low-risk demo polish or validation sweep.
+Checkpoint the final post-polish validation record. Next safe work: either Android build sweep or more visible text/localization polish.
 
 ## Resume Instructions
 
