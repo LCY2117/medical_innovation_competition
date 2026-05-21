@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: f0ce716
-- Last update: 2026-05-22 04:10:00 +08:00
+- HEAD: 615566d
+- Last update: 2026-05-22 04:12:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -66,6 +66,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 41. Push Android current-event CTA checkpoint. (done)
 42. Run final P0/P1 validation sweep. (done)
 43. Document third-party provider contract and mark AI/SMS fallback readiness. (done, validating)
+44. Push provider fallback documentation checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -228,6 +229,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Final P0/P1 validation sweep: backend full unittest discovery passed, 30 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `f0ce716` (`checkpoint: record final validation sweep`) created and pushed to `origin/codex/competition-hardening`.
 - Provider-contract doc validation: `rg` confirmed provider env vars, fallback behavior, AI provider, SMS provider, and no-secret rules are present.
+- Git checkpoint: `615566d` (`checkpoint: document provider fallbacks`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -236,7 +238,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push provider-contract documentation, then continue only if a clearly unblocked high-value polish remains, leaving local DB/output/OPPO doc copy uncommitted.
+Review remaining P2/security items and continue only if a clearly unblocked high-value polish remains, leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
