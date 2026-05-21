@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b2b650f
-- Last update: 2026-05-22 03:45:00 +08:00
+- HEAD: 9e48785
+- Last update: 2026-05-22 03:49:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -60,6 +60,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 35. Push Web/mobile safety-boundary checkpoint. (done)
 36. Add Android local archive participant-perspective task summary. (done, validating)
 37. Push Android archive-summary checkpoint. (done)
+38. Complete deployment backup/rollback/1Panel/OpenResty runbook details. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -155,6 +156,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `/api/health/detail` frontend diagnostics now report index readiness, index mtime, asset count, latest asset mtime, mobile chunk readiness, and desktop chunk readiness.
 - Web dashboard and mobile Web now show concise safety-boundary copy: simulation/training/pre-experiment only, not a substitute for 120, AED voice prompts, professional medical judgment, or real diagnosis. Mobile archive copy now points users to anonymized evidence package materials.
 - Android local archive entries now persist and display participant-perspective task summaries for patient, PRIME, RUNNER, GUIDE, and standby roles.
+- Deployment runbook now includes production backup commands, SQLite online backup, 1Panel/OpenResty check commands, config path cautions, database rollback, and DB Git hygiene notes. P1 deployment checklist now marks env examples, `/opt` layout, health checks, and debug DB hygiene as complete.
 
 ## Validation Log
 
@@ -209,6 +211,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `7e39ee3` (`checkpoint: record safety copy push`) created and pushed to `origin/codex/competition-hardening`.
 - Android archive-summary validation: `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `b2b650f` (`checkpoint: summarize android archives`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `9e48785` (`checkpoint: record archive summary push`) created and pushed to `origin/codex/competition-hardening`.
+- Deployment runbook doc validation: `rg` confirmed backup, rollback, 1Panel/OpenResty checks, `/opt/lifereflex`, `.env.example`, and DB hygiene notes are present.
 
 ## Blockers Summary
 
@@ -217,7 +221,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue from remote checkpoint `b2b650f` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push deployment runbook hardening, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 

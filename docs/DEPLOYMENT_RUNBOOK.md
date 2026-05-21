@@ -159,6 +159,25 @@ sudo systemctl status lifereflex --no-pager
 curl -fsS http://127.0.0.1:8029/api/health/detail
 ```
 
+### 4.6 生产备份
+
+每次部署前建议先备份代码版本、环境变量和 SQLite 数据：
+
+```bash
+cd /opt/lifereflex/app
+git rev-parse --short HEAD
+backup_dir="/opt/lifereflex/backups/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$backup_dir"
+cp -a "server(web)/.env" "$backup_dir/server.env"
+cp -a "server(web)/data/lifereflexarc.db" "$backup_dir/lifereflexarc.db"
+```
+
+如数据库正在高频写入，优先使用 SQLite 在线备份：
+
+```bash
+sqlite3 "/opt/lifereflex/app/server(web)/data/lifereflexarc.db" ".backup '/opt/lifereflex/backups/lifereflexarc-$(date +%Y%m%d-%H%M%S).db'"
+```
+
 ## 5. 1Panel / OpenResty
 
 在 1Panel 中配置：
@@ -175,6 +194,25 @@ curl -fsS http://127.0.0.1:8029/api/health/detail
 - 备份 `/opt/1panel/db/agent.db`。
 - 写入 1Panel 数据库记录，确保面板网站列表可管理。
 - `nginx -t` 成功后再 reload OpenResty。
+
+常用检查命令：
+
+```bash
+dig +short lifereflex.mddcommunity.top
+sudo cp -a /opt/1panel/db/agent.db /opt/1panel/db/agent.db.bak.$(date +%Y%m%d-%H%M%S)
+sudo openresty -t || sudo nginx -t
+sudo systemctl reload openresty || sudo systemctl reload nginx
+curl -I https://lifereflex.mddcommunity.top/
+curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
+```
+
+1Panel/OpenResty 配置文件位置可能随安装版本变化，常见路径包括：
+
+- `/opt/1panel/www/sites/<domain>/proxy/*.conf`
+- `/opt/1panel/www/conf.d/<domain>.conf`
+- `/usr/local/openresty/nginx/conf/conf.d/*.conf`
+
+自动化脚本必须先探测实际路径并备份原文件，不要盲写固定路径。
 
 ## 6. 验收清单
 
@@ -202,6 +240,21 @@ cd "server(web)/web" && npm ci && npm run build
 cd .. && . .venv/bin/activate && pip install -r requirements.txt
 sudo systemctl restart lifereflex
 ```
+
+数据库回滚：
+
+```bash
+sudo systemctl stop lifereflex
+cp -a /opt/lifereflex/backups/<backup-dir>/lifereflexarc.db "/opt/lifereflex/app/server(web)/data/lifereflexarc.db"
+sudo chown deploy:deploy "/opt/lifereflex/app/server(web)/data/lifereflexarc.db"
+sudo systemctl start lifereflex
+curl -fsS http://127.0.0.1:8029/api/health/detail
+```
+
+Git 注意事项：
+
+- `server(web)/data/lifereflexarc.db` 是本地/演示运行数据，部署前后都不要把临时运行产生的 DB diff 提交进功能检查点。
+- 如必须提交数据库结构样例，先停服务、脱敏、说明用途，并单独提交。
 
 1Panel/OpenResty 回滚：
 
