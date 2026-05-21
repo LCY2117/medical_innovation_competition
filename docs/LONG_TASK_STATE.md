@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 261b05d
-- Last update: 2026-05-22 03:10:00 +08:00
+- HEAD: e8e23b8
+- Last update: 2026-05-22 03:13:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -51,6 +51,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 26. Push mobile Web PRIME next-step checkpoint. (done)
 27. Add Android profile demo-location selector. (done, validating)
 28. Push Android demo-location checkpoint. (done)
+29. Run post-demo-polish validation sweep. (done)
 
 ## Sub-Agent Ledger
 
@@ -181,6 +182,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `449815f` (`checkpoint: record mobile guidance push`) created and pushed to `origin/codex/competition-hardening`.
 - Android demo-location validation: `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `261b05d` (`checkpoint: add android demo locations`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `e8e23b8` (`checkpoint: record demo locations push`) created and pushed to `origin/codex/competition-hardening`.
+- Post-polish validation sweep: backend targeted evidence/export test passed; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -189,7 +192,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Run a lightweight post-checkpoint validation pass, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit the post-polish validation record, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
