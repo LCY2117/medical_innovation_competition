@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 3432d11
-- Last update: 2026-05-22 05:47:46 +08:00
+- HEAD: e4fca63
+- Last update: 2026-05-22 05:50:10 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -95,7 +95,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 70. Add pre-experiment round-summary CSV into ZIP evidence package. (done, pushed)
 71. Refresh README with current demo entries, validation commands, evidence package, admin auth, and provider fallback. (done, pushed)
 72. Record README checkpoint and resume state after context handoff. (done, pushed)
-73. Add participant consent/safety brief and questionnaire into ZIP evidence package. (done, validating)
+73. Add participant consent/safety brief and questionnaire into ZIP evidence package. (done, pushed)
 
 ## Sub-Agent Ledger
 
@@ -355,6 +355,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `3432d11` (`checkpoint: record README handoff`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence package now includes `participant_consent_safety_brief.md` for pre-round safety/consent briefing and `participant_questionnaire.csv` for post-round participant scores. README, pre-experiment protocol, deployment runbook, expert feedback template, product plan, whitepaper, and morning handoff are updated to list these materials.
 - Evidence participant-material validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
+- Git checkpoint: `e4fca63` (`checkpoint: add participant evidence forms`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -363,7 +364,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Stage, commit, and push the participant evidence-material checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Continue the next safe competition-hardening slice. Candidate: add a baseline-vs-system comparison template for pre-experiment analysis, or refresh outdated handoff validation wording. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
