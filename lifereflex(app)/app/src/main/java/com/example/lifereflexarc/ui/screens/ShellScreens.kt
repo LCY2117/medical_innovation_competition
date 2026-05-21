@@ -76,9 +76,9 @@ fun CommandHomeScreen(
                 )
                 Text(
                     text = if (incidentState == null) {
-                        "当前无活动急救事件，可以发起监测、创建事件或接入现场。"
+                        "优先进入网页指挥台创建的当前事件；公共演示环境下不建议在 App 端随意新建事件。"
                     } else {
-                        "当前存在活动事件，建议直接进入事件页处理实时任务。"
+                        "当前存在活动事件，建议直接查看任务或自动接单。"
                     },
                     color = Color(0xFFE2E8F0),
                     fontSize = 14.sp,
@@ -654,18 +654,12 @@ private fun IncidentQuickActionsCard(
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("事件入口", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                text = "支持新建事件和进入当前事件。患者触发、角色分派和整体调度都由网页指挥台完成。",
+                text = "比赛演示优先进入当前事件或自动接单。新建事件仅作为本地备用入口，正式演示由网页指挥台初始化。",
                 color = PhoneColors.GrayText,
                 fontSize = 13.sp,
                 lineHeight = 20.sp,
             )
 
-            PressableButton(
-                text = "新建事件",
-                onClick = onCreateIncident,
-                colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Green, contentColor = Color.White),
-                modifier = Modifier.fillMaxWidth(),
-            )
             PressableButton(
                 text = "进入当前事件",
                 onClick = onOpenCurrent,
@@ -680,6 +674,12 @@ private fun IncidentQuickActionsCard(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            PressableButton(
+                text = "演示备用：新建事件",
+                onClick = onCreateIncident,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155), contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

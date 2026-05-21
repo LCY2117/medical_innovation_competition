@@ -36,6 +36,7 @@
 - Web 总控和移动端已加入简短安全边界：仅用于模拟演练、训练复盘和预实验，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。
 - Android 本地归档会展示参与者视角任务总结，患者、PRIME、RUNNER、GUIDE、待命终端都有不同复盘要点。
 - 部署手册已补生产备份、SQLite 在线备份、1Panel/OpenResty 检查、数据库回滚和本地 DB 不提交的 Git 注意事项。
+- Android 首页快速入口已改为优先“进入当前事件/自动接单”，新建事件降级为“演示备用”。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -108,6 +109,8 @@ gradle :app:assembleDebug --no-daemon
 - `7e39ee3`：记录安全边界检查点已推送。
 - `b2b650f`：Android 本地归档加入参与者视角任务总结。
 - `9e48785`：记录 Android 归档总结检查点已推送。
+- `aa0160b`：补充部署备份、回滚和 1Panel/OpenResty 检查命令。
+- `7e9c65e`：记录部署手册检查点已推送。
 
 ## 你醒来后最该做的三件事
 

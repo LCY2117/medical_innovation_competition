@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: aa0160b
-- Last update: 2026-05-22 03:52:00 +08:00
+- HEAD: 7e9c65e
+- Last update: 2026-05-22 03:57:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -62,6 +62,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 37. Push Android archive-summary checkpoint. (done)
 38. Complete deployment backup/rollback/1Panel/OpenResty runbook details. (done, validating)
 39. Push deployment runbook hardening checkpoint. (done)
+40. Reorder Android home event actions to prioritize current event and auto-join. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -158,6 +159,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Web dashboard and mobile Web now show concise safety-boundary copy: simulation/training/pre-experiment only, not a substitute for 120, AED voice prompts, professional medical judgment, or real diagnosis. Mobile archive copy now points users to anonymized evidence package materials.
 - Android local archive entries now persist and display participant-perspective task summaries for patient, PRIME, RUNNER, GUIDE, and standby roles.
 - Deployment runbook now includes production backup commands, SQLite online backup, 1Panel/OpenResty check commands, config path cautions, database rollback, and DB Git hygiene notes. P1 deployment checklist now marks env examples, `/opt` layout, health checks, and debug DB hygiene as complete.
+- Android Home now emphasizes entering the current event and auto-joining first; creating a new event is labeled as demo backup to reduce accidental public-demo incident creation.
 
 ## Validation Log
 
@@ -215,6 +217,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `9e48785` (`checkpoint: record archive summary push`) created and pushed to `origin/codex/competition-hardening`.
 - Deployment runbook doc validation: `rg` confirmed backup, rollback, 1Panel/OpenResty checks, `/opt/lifereflex`, `.env.example`, and DB hygiene notes are present.
 - Git checkpoint: `aa0160b` (`checkpoint: harden deployment runbook`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `7e9c65e` (`checkpoint: record deployment runbook push`) created and pushed to `origin/codex/competition-hardening`.
+- Android home action validation: `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -223,7 +227,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue from remote checkpoint `aa0160b` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push Android home-action polish, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
