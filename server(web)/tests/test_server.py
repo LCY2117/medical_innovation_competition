@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import zipfile
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -359,6 +361,19 @@ class ServerTestCase(unittest.TestCase):
             patient = next(item for item in exported["clients"] if item["userId"] == "demo-patient")
             self.assertEqual(patient["healthSignals"]["source"], "mock")
             self.assertIn("low_spo2", patient["healthSignals"]["riskTags"])
+
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+            self.assertEqual(package.headers["content-type"], "application/zip")
+            with zipfile.ZipFile(BytesIO(package.content)) as archive:
+                names = set(archive.namelist())
+                self.assertIn("experiment.json", names)
+                self.assertIn("clients.csv", names)
+                self.assertIn("timeline.csv", names)
+                self.assertIn("dispatch_rationale.csv", names)
+                clients_csv = archive.read("clients.csv").decode("utf-8-sig")
+                self.assertIn("heartRateBpm", clients_csv)
+                self.assertIn("demo-patient", clients_csv)
 
     def test_demo_clients_and_aed_sites_persist_across_app_recreation(self) -> None:
         with self._client() as client:

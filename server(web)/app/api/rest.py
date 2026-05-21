@@ -1,6 +1,8 @@
 import hmac
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.responses import Response
 
 from app.core.config import Settings
 from app.core.frontend import frontend_ready
@@ -198,12 +200,33 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def export_current_experiment(admin: None = Depends(require_demo_admin)) -> ExperimentExportResponse:
         return service.export_experiment()
 
+    @router.get("/experiments/current/package")
+    async def export_current_experiment_package(admin: None = Depends(require_demo_admin)) -> Response:
+        filename, content = service.export_experiment_package()
+        return Response(
+            content=content,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
+        )
+
     @router.get("/experiments/{incident_id}/export", response_model=ExperimentExportResponse)
     async def export_experiment(
         incident_id: str,
         admin: None = Depends(require_demo_admin),
     ) -> ExperimentExportResponse:
         return service.export_experiment(incident_id)
+
+    @router.get("/experiments/{incident_id}/package")
+    async def export_experiment_package(
+        incident_id: str,
+        admin: None = Depends(require_demo_admin),
+    ) -> Response:
+        filename, content = service.export_experiment_package(incident_id)
+        return Response(
+            content=content,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
+        )
 
     @router.post("/incidents/current/designate_patient", response_model=DispatchResponse)
     async def designate_patient(

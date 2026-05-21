@@ -469,6 +469,25 @@ function downloadJson(filename: string, data: unknown): void {
   window.URL.revokeObjectURL(url);
 }
 
+async function downloadResponseBlob(response: Response, fallbackFilename: string): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/)?.[1];
+  const plain = disposition.match(/filename="?([^";]+)"?/)?.[1];
+  const filename = encoded ? decodeURIComponent(encoded) : plain || fallbackFilename;
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 function getDispatchStartTs(state?: IncidentState | null): number | null {
   if (!state) {
     return null;
@@ -1260,6 +1279,21 @@ export default function App() {
       downloadJson(`lifereflex-experiment-${data?.incidentId ?? 'current'}.json`, data);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '导出实验数据失败');
+    }
+  };
+
+  const exportExperimentPackage = async () => {
+    try {
+      setErrorMessage(null);
+      const res = await fetch(`${getApiBase()}/experiments/current/package`, {
+        headers: buildDemoAdminHeaders(demoAdminToken),
+      });
+      if (!res.ok) {
+        throw new Error(await explainResponseError(res, '导出预实验证据包失败'));
+      }
+      await downloadResponseBlob(res, `lifereflex-experiment-${incidentId ?? 'current'}.zip`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '导出预实验证据包失败');
     }
   };
 
@@ -2140,6 +2174,13 @@ export default function App() {
                <Download size={16} /> 导出数据
              </button>
              <button
+               onClick={exportExperimentPackage}
+               className="h-9 px-3 rounded-lg bg-indigo-700 text-white hover:bg-indigo-600 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
+               title="下载包含 JSON、CSV 和说明文档的预实验证据包"
+             >
+               <FileText size={16} /> 证据包
+             </button>
+             <button
                onClick={resetCurrentIncident}
                className="h-9 w-9 flex items-center justify-center hover:bg-slate-800 rounded-full transition-colors text-yellow-300 hover:text-yellow-200"
                title="重置当前事件"
@@ -2194,13 +2235,13 @@ export default function App() {
               <div className="text-xs text-slate-400 mt-1">自动生成患者、医生、AED 保障、环境清障和 AED 点位。</div>
             </button>
             <button
-              onClick={exportExperiment}
+              onClick={exportExperimentPackage}
               className="min-h-12 rounded-lg border border-slate-700 bg-slate-800/70 px-4 py-3 text-left hover:bg-slate-800 transition-colors"
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Download size={16} className="text-blue-300" /> 导出预实验数据
+                <Download size={16} className="text-blue-300" /> 导出预实验证据包
               </div>
-              <div className="text-xs text-slate-400 mt-1">导出事件时间线、分派依据、AED 与终端画像 JSON。</div>
+              <div className="text-xs text-slate-400 mt-1">下载 JSON、CSV 表格和说明文件，便于 Excel 统计与专家反馈归档。</div>
             </button>
           </div>
           {wsError && (

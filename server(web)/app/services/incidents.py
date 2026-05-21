@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import csv
+import io
+import json
 import random
 import time
 import uuid
+import zipfile
 from typing import Dict
 
 from fastapi import HTTPException, WebSocket, WebSocketDisconnect
@@ -601,6 +605,77 @@ class IncidentService:
             dispatchRationale=state.dispatchRationale,
         )
 
+    def export_experiment_package(self, incident_id: str | None = None) -> tuple[str, bytes]:
+        export = self.export_experiment(incident_id)
+        payload = export.model_dump(mode="json")
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, mode="w", compression=zipfile.ZIP_DEFLATED) as package:
+            package.writestr("README.md", self._experiment_readme(export), compress_type=zipfile.ZIP_DEFLATED)
+            package.writestr(
+                "experiment.json",
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+            package.writestr(
+                "metrics.csv",
+                self._csv_text(
+                    [{"metric": key, "value": value} for key, value in export.metrics.items()],
+                    ["metric", "value"],
+                ),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+            package.writestr(
+                "timeline.csv",
+                self._csv_text(
+                    [{"ts": item.ts, "msg": item.msg} for item in export.timeline],
+                    ["ts", "msg"],
+                ),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+            package.writestr(
+                "clients.csv",
+                self._csv_text(self._client_export_rows(export.clients), self._client_export_fields()),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+            package.writestr(
+                "aed_sites.csv",
+                self._csv_text(self._aed_site_export_rows(export.aedSites), self._aed_site_export_fields()),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+            package.writestr(
+                "dispatch_rationale.csv",
+                self._csv_text(
+                    [
+                        {
+                            "role": role,
+                            "userId": decision.userId,
+                            "score": decision.score,
+                            "reasons": "；".join(decision.reasons),
+                            "warnings": "；".join(decision.warnings),
+                            "distanceToPatientMeters": decision.distanceToPatientMeters,
+                            "nearestAedSiteId": decision.nearestAedSiteId,
+                            "distanceToAedMeters": decision.distanceToAedMeters,
+                            "aedToPatientMeters": decision.aedToPatientMeters,
+                        }
+                        for role, decision in sorted(export.dispatchRationale.items())
+                    ],
+                    [
+                        "role",
+                        "userId",
+                        "score",
+                        "reasons",
+                        "warnings",
+                        "distanceToPatientMeters",
+                        "nearestAedSiteId",
+                        "distanceToAedMeters",
+                        "aedToPatientMeters",
+                    ],
+                ),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
+        filename = f"lifereflex-experiment-{export.incidentId}.zip"
+        return filename, archive.getvalue()
+
     def _dispatch_response_from_state(self, state: IncidentState) -> DispatchResponse:
         assignments = {
             "PRIME": state.roles.PRIME.userId,
@@ -838,6 +913,137 @@ class IncidentService:
             "ambulanceArriveSeconds": delta_seconds(designated_ts, ambulance_ts),
             "logCount": len(state.logs),
         }
+
+    @staticmethod
+    def _csv_text(rows: list[dict], fieldnames: list[str]) -> str:
+        buffer = io.StringIO()
+        buffer.write("\ufeff")
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+        return buffer.getvalue()
+
+    @staticmethod
+    def _client_export_fields() -> list[str]:
+        return [
+            "userId",
+            "displayName",
+            "organization",
+            "healthCondition",
+            "professionIdentity",
+            "deviceType",
+            "online",
+            "assignedRole",
+            "patientCandidate",
+            "isPatient",
+            "locationLabel",
+            "locationFloor",
+            "locationSource",
+            "latitude",
+            "longitude",
+            "healthSource",
+            "healthAuthorizationStatus",
+            "heartRateBpm",
+            "bloodOxygenPercent",
+            "pressureScore",
+            "activityLevel",
+            "sleepQuality",
+            "riskTags",
+            "healthNote",
+        ]
+
+    @staticmethod
+    def _client_export_rows(clients: list[ClientInfo]) -> list[dict]:
+        rows: list[dict] = []
+        for client in clients:
+            health = client.healthSignals
+            location = client.location
+            rows.append(
+                {
+                    "userId": client.userId,
+                    "displayName": client.displayName,
+                    "organization": client.organization,
+                    "healthCondition": client.healthCondition,
+                    "professionIdentity": client.professionIdentity,
+                    "deviceType": client.deviceType,
+                    "online": client.online,
+                    "assignedRole": client.assignedRole,
+                    "patientCandidate": client.patientCandidate,
+                    "isPatient": client.isPatient,
+                    "locationLabel": location.label if location else None,
+                    "locationFloor": location.floor if location else None,
+                    "locationSource": location.source if location else None,
+                    "latitude": location.latitude if location else None,
+                    "longitude": location.longitude if location else None,
+                    "healthSource": health.source if health else None,
+                    "healthAuthorizationStatus": health.authorizationStatus if health else None,
+                    "heartRateBpm": health.heartRateBpm if health else None,
+                    "bloodOxygenPercent": health.bloodOxygenPercent if health else None,
+                    "pressureScore": health.pressureScore if health else None,
+                    "activityLevel": health.activityLevel if health else None,
+                    "sleepQuality": health.sleepQuality if health else None,
+                    "riskTags": "；".join(health.riskTags) if health else "",
+                    "healthNote": health.note if health else None,
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _aed_site_export_fields() -> list[str]:
+        return [
+            "siteId",
+            "name",
+            "status",
+            "accessNotes",
+            "lastCheckedTs",
+            "locationLabel",
+            "locationFloor",
+            "locationSource",
+            "latitude",
+            "longitude",
+        ]
+
+    @staticmethod
+    def _aed_site_export_rows(aed_sites: list[AedSite]) -> list[dict]:
+        return [
+            {
+                "siteId": site.siteId,
+                "name": site.name,
+                "status": site.status,
+                "accessNotes": site.accessNotes,
+                "lastCheckedTs": site.lastCheckedTs,
+                "locationLabel": site.location.label,
+                "locationFloor": site.location.floor,
+                "locationSource": site.location.source,
+                "latitude": site.location.latitude,
+                "longitude": site.location.longitude,
+            }
+            for site in aed_sites
+        ]
+
+    @staticmethod
+    def _experiment_readme(export: ExperimentExportResponse) -> str:
+        return f"""# 生命反射弧预实验证据包
+
+事件编号：{export.incidentId}
+导出时间戳：{export.generatedAt}
+事件阶段：{export.phase}
+患者终端：{export.patientUserId or "未指定"}
+调度来源：{export.dispatchSource or "未记录"}
+
+## 文件说明
+
+- `experiment.json`：完整结构化导出，保留事件、终端、AED、调度依据和健康摘要。
+- `timeline.csv`：事件时间线，适合直接导入 Excel。
+- `clients.csv`：参与终端画像、位置、角色和 OPPO/mock 健康摘要。
+- `aed_sites.csv`：AED 点位与访问备注。
+- `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
+- `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
+
+## 使用建议
+
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+"""
 
     def _assigned_role_for(self, user_id: str) -> str | None:
         if not self.current_incident_id or self.current_incident_id not in self.incidents:
