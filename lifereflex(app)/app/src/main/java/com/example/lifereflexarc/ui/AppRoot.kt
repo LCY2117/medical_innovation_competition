@@ -207,7 +207,11 @@ fun AppRoot(
                         incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
                         activeTab = MainTab.Incident
                     },
-                    onAutoJoinCurrent = null,
+                    onAutoJoinCurrent = {
+                        incidentViewModel.clearError()
+                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = true)
+                        activeTab = MainTab.Tasks
+                    },
                 )
                 MainTab.Tasks -> TasksScreen(
                     session = session,
@@ -232,7 +236,10 @@ fun AppRoot(
                         incidentViewModel.clearError()
                         incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
                     },
-                    onAutoJoinCurrent = null,
+                    onAutoJoinCurrent = {
+                        incidentViewModel.clearError()
+                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = true)
+                    },
                 )
                 MainTab.Archive -> ArchiveScreen(
                     incidentState = incidentState,

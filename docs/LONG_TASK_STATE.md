@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 0b14f44
-- Last update: 2026-05-22 02:17:34 +08:00
+- HEAD: 7c2bcac
+- Last update: 2026-05-22 02:20:39 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -33,6 +33,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 8. Feed OPPO/mock health summaries into dispatch scoring and rationale. (done, checkpointing)
 9. Smoke-check Web UI after evidence package and health-summary additions. (done)
 10. Strengthen pre-experiment evidence integrity: anonymized package, manifest hashes, structured timeline, richer metrics, historical export correctness, and demo readiness. (done, validating)
+11. Wire Android app auto-join entry into the current AppRoot flow. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -109,6 +110,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence package now includes anonymized JSON/CSV, `expert_summary.md`, structured `timeline.csv`, richer experiment metrics, and `manifest.json` with SHA256 hashes.
 - Historical event export now derives participant roles/patient flags from the target incident instead of the current incident.
 - `/api/health/detail` now reports `demoReadiness` with readiness warnings, location coverage, health coverage, AED availability, and export readiness.
+- Android Home and Incident tabs now expose the existing auto-join flow, passing the logged-in token and routing the user to Tasks after auto-join.
 
 ## Validation Log
 
@@ -126,6 +128,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `6b531af` (`checkpoint: use health signals in dispatch`) created and pushed to `origin/codex/competition-hardening`.
 - Local smoke check: temporary backend on `127.0.0.1:18080` with temp DB opened dashboard, initialized demo scenario, confirmed evidence-package UI, AED sites, health summaries, `healthSignals` dispatch field, and ZIP package contents. Smoke service stopped and temp DB removed.
 - Evidence integrity targeted tests: `.\.venv\Scripts\python.exe -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_health_detail_reports_demo_readiness_after_bootstrap tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export tests.test_server.ServerTestCase.test_historical_export_uses_target_incident_roles -v` passed, 4 tests OK.
+- Backend full tests after evidence integrity: `.\.venv\Scripts\python.exe -m unittest discover -s tests -v` passed, 29 tests OK.
+- Android auto-join validation: `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -134,7 +138,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Run full backend validation for the evidence-integrity milestone, then wire the Android auto-join entry if still unblocked.
+Checkpoint Android auto-join, then continue to the next unblocked Web/mobile demo-guidance polish.
 
 ## Resume Instructions
 
