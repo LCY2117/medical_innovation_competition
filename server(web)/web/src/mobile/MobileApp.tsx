@@ -105,7 +105,7 @@ const demoPersonas: Array<{
   {
     key: 'prime',
     label: '核心施救',
-    title: 'PRIME',
+    title: '核心施救端',
     description: '接单、CPR、AED 分析',
     location: {
       latitude: 39.90421,
@@ -119,7 +119,7 @@ const demoPersonas: Array<{
   {
     key: 'runner',
     label: 'AED 保障',
-    title: 'RUNNER',
+    title: 'AED 保障端',
     description: '取 AED 并送达患者',
     location: {
       latitude: 39.90392,
@@ -133,7 +133,7 @@ const demoPersonas: Array<{
   {
     key: 'guide',
     label: '清障接驳',
-    title: 'GUIDE',
+    title: '清障接驳端',
     description: '疏通通道，接引救护车',
     location: {
       latitude: 39.9045,

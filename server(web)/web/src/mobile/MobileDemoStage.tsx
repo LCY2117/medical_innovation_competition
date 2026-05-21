@@ -3,9 +3,9 @@ import './mobile-demo-stage.css';
 
 const demoFrames = [
   { key: 'patient', label: '患者端', caption: '触发 SOS' },
-  { key: 'prime', label: '核心施救', caption: 'PRIME 辅助代号' },
-  { key: 'runner', label: 'AED 保障', caption: 'RUNNER 辅助代号' },
-  { key: 'guide', label: '清障接驳', caption: 'GUIDE 辅助代号' },
+  { key: 'prime', label: '核心施救', caption: 'CPR 与 AED 分析' },
+  { key: 'runner', label: 'AED 保障', caption: '取送设备' },
+  { key: 'guide', label: '清障接驳', caption: '通道与救护车接应' },
 ];
 
 const runbookSteps = [

@@ -57,6 +57,7 @@
 - `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
 - 移动 Web “现场/协同”页已进一步分层：默认只展示 AED 位置、队友角色、在线状态和任务状态；分派评分、理由、健康摘要和风险标记收进“分派依据与健康摘要”展开区。
+- 移动 Web 演示入口和 4 端演示台进一步弱化 PRIME/RUNNER/GUIDE 辅助代号，优先展示“核心施救端、AED 保障端、清障接驳端”和具体职责。
 - 最新验证扫尾已通过：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -152,7 +153,8 @@ gradle :app:assembleDebug --no-daemon
 - `a648ad8`：Web 总控台和 `/mobile-demo` 可见标签中文化，已推送。
 - `c15d60f`：记录后端/Web 验证扫尾，已推送。
 - `36b818b`：记录 Android debug APK 验证扫尾，已推送。
-- 待提交：预实验证据包新增 `expert_review_checklist.md` 和 `observer_record_form.csv`，并同步测试与材料口径。
+- `169a615`：预实验证据包新增 `expert_review_checklist.md` 和 `observer_record_form.csv`，并同步测试与材料口径，已推送。
+- 待提交：移动 Web 演示入口和 4 端演示台进一步中文职责化。
 
 ## 你醒来后最该做的三件事
 
