@@ -72,6 +72,11 @@ class Settings:
     demo_admin_token: str | None = None
     auth_token_ttl_sec: int = 604800
     health_provider: str = "mock"
+    audit_log_enabled: bool = True
+    rate_limit_enabled: bool = True
+    rate_limit_auth_per_minute: int = 20
+    rate_limit_admin_per_minute: int = 60
+    rate_limit_actor_per_minute: int = 120
 
 
 @lru_cache(maxsize=1)
@@ -109,4 +114,9 @@ def get_settings() -> Settings:
         demo_admin_token=(os.getenv("LRA_DEMO_ADMIN_TOKEN") or "").strip() or None,
         auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
         health_provider=os.getenv("LRA_HEALTH_PROVIDER", "mock").strip() or "mock",
+        audit_log_enabled=_parse_bool(os.getenv("LRA_AUDIT_LOG_ENABLED"), default=True),
+        rate_limit_enabled=_parse_bool(os.getenv("LRA_RATE_LIMIT_ENABLED"), default=True),
+        rate_limit_auth_per_minute=int(os.getenv("LRA_RATE_LIMIT_AUTH_PER_MINUTE", "20")),
+        rate_limit_admin_per_minute=int(os.getenv("LRA_RATE_LIMIT_ADMIN_PER_MINUTE", "60")),
+        rate_limit_actor_per_minute=int(os.getenv("LRA_RATE_LIMIT_ACTOR_PER_MINUTE", "120")),
     )

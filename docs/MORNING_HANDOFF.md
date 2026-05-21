@@ -40,6 +40,10 @@
 - 最终 P0/P1 验证已通过：后端 30 项测试、Web typecheck/build、Android debug APK 构建均通过。
 - 第三方资源文档新增 provider/fallback 接入契约：地图、AI、健康、推送、短信都按真实 provider + demo fallback 设计。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
+- 后端新增 SQLite 审计日志和轻量频控：登录、demo 管理、患者指定、角色响应、现场动作、实验导出均有脱敏留痕，`/api/health/detail` 可查看安全控制状态。
+- Web 总控台新增“审计”按钮，可用演示口令查看最近操作留痕，适合作为比赛答辩中的安全合规截图。
+- Android session/token 已从普通 SharedPreferences 迁移到 AndroidX Security 加密存储，并兼容旧明文登录态迁移；若设备安全存储不可用，不再把 token 落盘。
+- Android Gradle JVM 堆已提高到 2GB，避免新增安全依赖后 Windows 构建出现 GC thrashing。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -62,7 +66,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest tests.test_server tests.test_link_mechanism
 ```
 
-结果：30 项通过。
+结果：32 项通过。
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)\web"
@@ -83,7 +87,7 @@ gradle tasks --no-daemon
 gradle :app:assembleDebug --no-daemon
 ```
 
-结果：通过，APK 大小约 12 MB，使用 Android debug 签名。
+结果：通过，APK 大小约 12 MB，使用 Android debug 签名。当前构建会提示 AndroidX Security API deprecation warning，不影响 debug APK 生成。
 
 ## 本轮新增检查点
 
@@ -116,6 +120,7 @@ gradle :app:assembleDebug --no-daemon
 - `4600663`：Android 首页优先进入当前事件/自动接单，新建事件降级为演示备用。
 - `6b832e7`：记录 Android 首页 CTA 检查点已推送。
 - `f0ce716`：记录最终 P0/P1 验证结果。
+- 待提交：后端审计日志/频控、Web 审计面板、Android 加密 token 存储、Gradle 构建稳定性。
 
 ## 你醒来后最该做的三件事
 

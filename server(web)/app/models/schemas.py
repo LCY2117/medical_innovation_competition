@@ -198,7 +198,25 @@ class HealthDetailResponse(BaseModel):
     activeWebSockets: int
     activeSosTimers: int
     dispatch: dict = {}
+    security: dict = {}
     demoAdminAuthEnabled: bool = False
+
+
+class AuditEvent(BaseModel):
+    eventId: str
+    ts: int
+    eventType: str
+    actorType: str
+    actorId: str | None = None
+    targetType: str | None = None
+    targetId: str | None = None
+    outcome: str
+    requestHash: str | None = None
+    metadata: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+
+
+class AuditLogResponse(BaseModel):
+    events: list[AuditEvent]
 
 
 class IncidentLogEntry(BaseModel):

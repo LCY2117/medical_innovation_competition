@@ -104,15 +104,29 @@ Acceptance:
 ## P2: Security And Compliance Hardening
 
 - [ ] 管理后台改为正式管理员账号或最小化 RBAC。
-- [ ] Token 存储从普通 SharedPreferences 迁移到加密存储。
-- [ ] 请求频率限制、审计日志、敏感操作二次确认。
-- [ ] 用户数据匿名化导出，预实验记录不暴露手机号。
+- [x] Token 存储从普通 SharedPreferences 迁移到加密存储。
+- [x] 请求频率限制、审计日志、敏感操作保护。
+- [x] 用户数据匿名化导出，预实验记录不暴露手机号。
 - [x] 医疗免责声明和数据使用说明补齐到 Web、移动端和预实验/专家材料口径中。
 
 Acceptance:
 
 - 对外展示时不暴露真实个人信息或服务端秘密。
 - 后续专家评审材料中的合规表述一致。
+
+Implementation notes:
+
+- Android 使用 AndroidX Security 的 `EncryptedSharedPreferences` 存储 session/token，并将旧版 `lra_session` 明文登录态迁移到 `lra_session_secure`；若个别设备 Keystore 不可用，则不落盘 token，重启后要求重新登录。
+- 后端新增 SQLite 审计表，记录登录、demo 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
+- `/api/audit/events` 由演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
+- 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
+- 预实验证据包包含匿名化 JSON/CSV、专家摘要和 manifest 校验，外部材料默认使用匿名化文件。
+
+Validation:
+
+- Backend unittest discovery: 32 tests OK.
+- Web typecheck/build: passed.
+- Android debug APK build: passed after increasing Gradle heap for AndroidX Security + Compose builds.
 
 ## Validation Commands
 

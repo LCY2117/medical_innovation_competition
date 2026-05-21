@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 615566d
-- Last update: 2026-05-22 04:12:00 +08:00
+- HEAD: 27b7725
+- Last update: 2026-05-22 03:38:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -67,6 +67,10 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 42. Run final P0/P1 validation sweep. (done)
 43. Document third-party provider contract and mark AI/SMS fallback readiness. (done, validating)
 44. Push provider fallback documentation checkpoint. (done)
+45. Add backend audit log, rate limits, and Web audit panel. (done, validating)
+46. Migrate Android token/session storage to encrypted preferences with legacy migration. (done, validating)
+47. Increase Android Gradle heap for reliable APK builds after security dependency. (done, validating)
+48. Update docs and create security-hardening checkpoint. (in progress)
 
 ## Sub-Agent Ledger
 
@@ -165,6 +169,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Deployment runbook now includes production backup commands, SQLite online backup, 1Panel/OpenResty check commands, config path cautions, database rollback, and DB Git hygiene notes. P1 deployment checklist now marks env examples, `/opt` layout, health checks, and debug DB hygiene as complete.
 - Android Home now emphasizes entering the current event and auto-joining first; creating a new event is labeled as demo backup to reduce accidental public-demo incident creation.
 - Third-party resources doc now defines provider/fallback contracts for map, AI, health, push, and SMS. Product plan marks AI provider abstraction and SMS non-blocking login strategy complete.
+- Backend now persists audit events in SQLite and exposes admin-protected `/api/audit/events`; `/api/health/detail` reports `storage.auditEventCount` and `security` settings.
+- Lightweight per-process sliding-window rate limits now protect auth, admin, and actor mutation buckets through configurable `.env` values.
+- Web dashboard now includes an “审计” control that loads recent login/demo/export/role/action audit events with actor, target, outcome, and request hash.
+- Android session/token storage now uses AndroidX Security encrypted preferences with migration from legacy `lra_session`; if secure storage is unavailable, token persistence is disabled rather than falling back to plaintext.
+- Android Gradle JVM args now use a larger heap/metaspace to avoid GC thrashing after adding AndroidX Security.
 
 ## Validation Log
 
@@ -230,6 +239,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `f0ce716` (`checkpoint: record final validation sweep`) created and pushed to `origin/codex/competition-hardening`.
 - Provider-contract doc validation: `rg` confirmed provider env vars, fallback behavior, AI provider, SMS provider, and no-secret rules are present.
 - Git checkpoint: `615566d` (`checkpoint: document provider fallbacks`) created and pushed to `origin/codex/competition-hardening`.
+- Security hardening targeted backend tests passed: audit events, health security fields, demo-admin protection, and auth rate limiting.
+- Security hardening full validation: backend full unittest discovery passed, 32 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -238,7 +249,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Review remaining P2/security items and continue only if a clearly unblocked high-value polish remains, leaving local DB/output/OPPO doc copy uncommitted.
+Create and push a safe security-hardening checkpoint, leaving local DB/output/OPPO doc copy uncommitted. Then review remaining P2 map/push abstractions and formal admin/RBAC as the next independent polish.
 
 ## Resume Instructions
 

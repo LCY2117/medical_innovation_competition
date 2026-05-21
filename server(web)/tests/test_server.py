@@ -72,6 +72,22 @@ class ServerTestCase(unittest.TestCase):
         )
         return TestClient(create_app(settings))
 
+    def _client_with_auth_rate_limit(self, limit: int = 1) -> TestClient:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            rate_limit_auth_per_minute=limit,
+        )
+        return TestClient(create_app(settings))
+
     @staticmethod
     def _register_payload(
         display_name: str,
@@ -139,6 +155,10 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["auth"]["tokenTtlSec"], self.settings.auth_token_ttl_sec)
         self.assertTrue(payload["features"]["experimentZipPackage"])
         self.assertEqual(payload["healthProvider"]["mode"], "mock")
+        self.assertEqual(payload["storage"]["auditEventCount"], 0)
+        self.assertTrue(payload["security"]["auditLogEnabled"])
+        self.assertTrue(payload["security"]["rateLimitEnabled"])
+        self.assertEqual(payload["security"]["rateLimitAuthPerMinute"], self.settings.rate_limit_auth_per_minute)
         self.assertFalse(payload["frontend"]["indexReady"])
         self.assertFalse(payload["frontend"]["assetsReady"])
         self.assertEqual(payload["frontend"]["assetCount"], 0)
@@ -1057,6 +1077,58 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(allowed_join.status_code, 200)
         self.assertEqual(allowed_action.status_code, 200)
         self.assertEqual(allowed_export.status_code, 200)
+
+    def test_audit_events_capture_sensitive_demo_and_actor_actions(self) -> None:
+        token = "test-demo-admin"
+        with self._client_with_demo_admin_token(token) as client:
+            denied_bootstrap = client.post("/api/demo/bootstrap")
+            bootstrapped = client.post(
+                "/api/demo/bootstrap",
+                headers={"X-Demo-Admin-Token": token},
+            )
+            designated = client.post(
+                "/api/incidents/current/designate_patient",
+                headers={"X-Demo-Admin-Token": token},
+                json={"patientUserId": "demo-patient"},
+            )
+            joined = client.post(
+                f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
+                headers={"X-Demo-Admin-Token": token},
+                json={"role": "PRIME", "userId": "demo-prime"},
+            )
+            package = client.get(
+                "/api/experiments/current/package",
+                headers={"X-Demo-Admin-Token": token},
+            )
+            audit_log = client.get(
+                "/api/audit/events?limit=20",
+                headers={"X-Demo-Admin-Token": token},
+            )
+            health = client.get("/api/health/detail")
+
+        self.assertEqual(denied_bootstrap.status_code, 403)
+        self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(designated.status_code, 200)
+        self.assertEqual(joined.status_code, 200)
+        self.assertEqual(package.status_code, 200)
+        self.assertEqual(audit_log.status_code, 200)
+        events = audit_log.json()["events"]
+        event_types = {event["eventType"] for event in events}
+        self.assertIn("demo_admin_denied", event_types)
+        self.assertIn("demo_bootstrapped", event_types)
+        self.assertIn("patient_designated", event_types)
+        self.assertIn("role_joined", event_types)
+        self.assertIn("experiment_package_exported", event_types)
+        self.assertTrue(all("requestHash" in event for event in events))
+        self.assertGreater(health.json()["storage"]["auditEventCount"], 0)
+
+    def test_auth_rate_limit_returns_429(self) -> None:
+        with self._client_with_auth_rate_limit(limit=1) as client:
+            first = client.post("/api/auth/login", json={"phone": "13800139999", "password": "bad"})
+            second = client.post("/api/auth/login", json={"phone": "13800139999", "password": "bad"})
+
+        self.assertEqual(first.status_code, 401)
+        self.assertEqual(second.status_code, 429)
 
     def test_role_progress_does_not_reset_prime_after_runner_update(self) -> None:
         with self._client() as client:

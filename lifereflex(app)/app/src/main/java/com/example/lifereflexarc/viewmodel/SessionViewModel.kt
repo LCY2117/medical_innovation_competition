@@ -2,6 +2,9 @@ package com.example.lifereflexarc.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lifereflexarc.BuildConfig
@@ -23,7 +26,9 @@ import kotlinx.coroutines.launch
 
 class SessionViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val legacyPrefs = application.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs = runCatching { createSecurePreferences(application).also { migrateLegacyPreferences(it) } }
+        .getOrNull()
     private val repository = AuthRepository(apiBase = BuildConfig.LRA_API_BASE)
     private val gson = Gson()
 
@@ -159,7 +164,22 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun clearStoredSession() {
-        prefs.edit()
+        prefs?.let { activePrefs ->
+            activePrefs.edit()
+                .remove(KEY_LOGGED_IN)
+                .remove(KEY_USER_ID)
+                .remove(KEY_AUTH_TOKEN)
+                .remove(KEY_TOKEN_EXPIRES_AT)
+                .remove(KEY_NAME)
+                .remove(KEY_PHONE)
+                .remove(KEY_ORGANIZATION)
+                .remove(KEY_HEALTH)
+                .remove(KEY_IDENTITY)
+                .remove(KEY_BIO)
+                .remove(KEY_CREDENTIAL)
+                .apply()
+        }
+        legacyPrefs.edit()
             .remove(KEY_LOGGED_IN)
             .remove(KEY_USER_ID)
             .remove(KEY_AUTH_TOKEN)
@@ -240,28 +260,29 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun loadSession(): UserSession {
-        val loggedIn = prefs.getBoolean(KEY_LOGGED_IN, false)
+        val activePrefs = prefs ?: return UserSession()
+        val loggedIn = activePrefs.getBoolean(KEY_LOGGED_IN, false)
         if (!loggedIn) {
             return UserSession()
         }
-        val healthValue = prefs.getString(KEY_HEALTH, HealthCondition.GENERAL.name).orEmpty()
+        val healthValue = activePrefs.getString(KEY_HEALTH, HealthCondition.GENERAL.name).orEmpty()
         val healthCondition = HealthCondition.entries.firstOrNull { it.name == healthValue } ?: HealthCondition.GENERAL
-        val identityValue = prefs.getString(KEY_IDENTITY, ProfessionIdentity.BASIC_KNOWLEDGE.name).orEmpty()
+        val identityValue = activePrefs.getString(KEY_IDENTITY, ProfessionIdentity.BASIC_KNOWLEDGE.name).orEmpty()
         val professionIdentity = ProfessionIdentity.entries.firstOrNull { it.name == identityValue }
             ?: ProfessionIdentity.BASIC_KNOWLEDGE
         return UserSession(
             isLoggedIn = true,
-            userId = prefs.getString(KEY_USER_ID, "").orEmpty(),
-            authToken = prefs.getString(KEY_AUTH_TOKEN, "").orEmpty(),
-            displayName = prefs.getString(KEY_NAME, "").orEmpty(),
-            phone = prefs.getString(KEY_PHONE, "").orEmpty(),
-            organization = prefs.getString(KEY_ORGANIZATION, "").orEmpty(),
+            userId = activePrefs.getString(KEY_USER_ID, "").orEmpty(),
+            authToken = activePrefs.getString(KEY_AUTH_TOKEN, "").orEmpty(),
+            displayName = activePrefs.getString(KEY_NAME, "").orEmpty(),
+            phone = activePrefs.getString(KEY_PHONE, "").orEmpty(),
+            organization = activePrefs.getString(KEY_ORGANIZATION, "").orEmpty(),
             healthCondition = healthCondition,
             professionIdentity = professionIdentity,
-            bio = prefs.getString(KEY_BIO, "").orEmpty(),
-            credentialStatus = prefs.getString(KEY_CREDENTIAL, "未认证").orEmpty(),
-            tokenExpiresAt = if (prefs.contains(KEY_TOKEN_EXPIRES_AT)) {
-                prefs.getLong(KEY_TOKEN_EXPIRES_AT, 0L).takeIf { it > 0L }
+            bio = activePrefs.getString(KEY_BIO, "").orEmpty(),
+            credentialStatus = activePrefs.getString(KEY_CREDENTIAL, "未认证").orEmpty(),
+            tokenExpiresAt = if (activePrefs.contains(KEY_TOKEN_EXPIRES_AT)) {
+                activePrefs.getLong(KEY_TOKEN_EXPIRES_AT, 0L).takeIf { it > 0L }
             } else {
                 null
             },
@@ -269,7 +290,8 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun saveSession(session: UserSession) {
-        val editor = prefs.edit()
+        val activePrefs = prefs ?: return
+        val editor = activePrefs.edit()
             .putBoolean(KEY_LOGGED_IN, session.isLoggedIn)
             .putString(KEY_USER_ID, session.userId)
             .putString(KEY_AUTH_TOKEN, session.authToken)
@@ -289,16 +311,59 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun loadArchives(): List<IncidentArchiveEntry> {
-        val json = prefs.getString(KEY_ARCHIVES, null) ?: return emptyList()
+        val json = prefs?.getString(KEY_ARCHIVES, null) ?: return emptyList()
         val type = object : TypeToken<List<IncidentArchiveEntry>>() {}.type
         return runCatching { gson.fromJson<List<IncidentArchiveEntry>>(json, type) ?: emptyList() }
             .getOrDefault(emptyList())
     }
 
     private fun saveArchives(entries: List<IncidentArchiveEntry>) {
-        prefs.edit()
-            .putString(KEY_ARCHIVES, gson.toJson(entries))
-            .apply()
+        prefs?.let { activePrefs ->
+            activePrefs.edit()
+                .putString(KEY_ARCHIVES, gson.toJson(entries))
+                .apply()
+        }
+    }
+
+    private fun createSecurePreferences(context: Context): SharedPreferences {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        return EncryptedSharedPreferences.create(
+            context,
+            SECURE_PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
+    }
+
+    private fun migrateLegacyPreferences(securePrefs: SharedPreferences) {
+        if (securePrefs.getBoolean(KEY_SECURE_MIGRATED, false)) {
+            return
+        }
+        val legacyValues = legacyPrefs.all
+        val keysToMigrate = SECURE_STORAGE_KEYS.filter { legacyValues.containsKey(it) }
+        if (keysToMigrate.isEmpty()) {
+            securePrefs.edit().putBoolean(KEY_SECURE_MIGRATED, true).apply()
+            return
+        }
+
+        val secureEditor = securePrefs.edit()
+        keysToMigrate.forEach { key ->
+            when (val value = legacyValues[key]) {
+                is Boolean -> secureEditor.putBoolean(key, value)
+                is Float -> secureEditor.putFloat(key, value)
+                is Int -> secureEditor.putInt(key, value)
+                is Long -> secureEditor.putLong(key, value)
+                is String -> secureEditor.putString(key, value)
+            }
+        }
+        secureEditor.putBoolean(KEY_SECURE_MIGRATED, true).apply()
+
+        val legacyEditor = legacyPrefs.edit()
+        keysToMigrate.forEach { key -> legacyEditor.remove(key) }
+        legacyEditor.putBoolean(KEY_SECURE_MIGRATED, true).apply()
     }
 
     private fun archiveTaskSummary(
@@ -365,7 +430,8 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     private fun normalizePhone(phone: String): String = phone.filter(Char::isDigit)
 
     private companion object {
-        const val PREFS_NAME = "lra_session"
+        const val LEGACY_PREFS_NAME = "lra_session"
+        const val SECURE_PREFS_NAME = "lra_session_secure"
         const val KEY_LOGGED_IN = "logged_in"
         const val KEY_USER_ID = "user_id"
         const val KEY_AUTH_TOKEN = "auth_token"
@@ -378,5 +444,20 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         const val KEY_BIO = "bio"
         const val KEY_CREDENTIAL = "credential"
         const val KEY_ARCHIVES = "archives"
+        const val KEY_SECURE_MIGRATED = "secure_storage_migrated"
+        val SECURE_STORAGE_KEYS = listOf(
+            KEY_LOGGED_IN,
+            KEY_USER_ID,
+            KEY_AUTH_TOKEN,
+            KEY_TOKEN_EXPIRES_AT,
+            KEY_NAME,
+            KEY_PHONE,
+            KEY_ORGANIZATION,
+            KEY_HEALTH,
+            KEY_IDENTITY,
+            KEY_BIO,
+            KEY_CREDENTIAL,
+            KEY_ARCHIVES,
+        )
     }
 }

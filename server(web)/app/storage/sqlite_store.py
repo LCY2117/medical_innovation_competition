@@ -7,7 +7,7 @@ from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.models.schemas import AedSite, ClientInfo, IncidentState
+from app.models.schemas import AedSite, AuditEvent, ClientInfo, IncidentState
 
 
 @dataclass(frozen=True)
@@ -111,12 +111,53 @@ class SqliteIncidentStore:
     def health(self) -> dict:
         with closing(self._connect()) as conn, self._lock:
             incident_count = conn.execute("SELECT COUNT(*) AS count FROM incidents").fetchone()["count"]
+            audit_event_count = conn.execute("SELECT COUNT(*) AS count FROM audit_events").fetchone()["count"]
 
         return {
             "ok": True,
             "dbPath": str(self.db_path),
             "incidentCount": incident_count,
+            "auditEventCount": audit_event_count,
         }
+
+    def append_audit_event(self, event: AuditEvent) -> None:
+        with closing(self._connect()) as conn, self._lock:
+            conn.execute(
+                """
+                INSERT INTO audit_events (
+                    event_id, ts, event_type, actor_type, actor_id,
+                    target_type, target_id, outcome, request_hash, metadata_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event.eventId,
+                    event.ts,
+                    event.eventType,
+                    event.actorType,
+                    event.actorId,
+                    event.targetType,
+                    event.targetId,
+                    event.outcome,
+                    event.requestHash,
+                    json.dumps(event.metadata, ensure_ascii=False),
+                ),
+            )
+            conn.commit()
+
+    def list_audit_events(self, limit: int = 100) -> list[AuditEvent]:
+        safe_limit = max(1, min(limit, 500))
+        with closing(self._connect()) as conn, self._lock:
+            rows = conn.execute(
+                """
+                SELECT event_id, ts, event_type, actor_type, actor_id,
+                       target_type, target_id, outcome, request_hash, metadata_json
+                FROM audit_events
+                ORDER BY ts DESC, event_id DESC
+                LIMIT ?
+                """,
+                (safe_limit,),
+            ).fetchall()
+        return [self._row_to_audit_event(row) for row in rows]
 
     def _initialize(self) -> None:
         with closing(self._connect()) as conn, self._lock:
@@ -136,6 +177,28 @@ class SqliteIncidentStore:
                     key TEXT PRIMARY KEY,
                     value_json TEXT NOT NULL
                 )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    event_id TEXT PRIMARY KEY,
+                    ts INTEGER NOT NULL,
+                    event_type TEXT NOT NULL,
+                    actor_type TEXT NOT NULL,
+                    actor_id TEXT,
+                    target_type TEXT,
+                    target_id TEXT,
+                    outcome TEXT NOT NULL,
+                    request_hash TEXT,
+                    metadata_json TEXT NOT NULL DEFAULT '{}'
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_audit_events_ts
+                ON audit_events(ts DESC)
                 """
             )
             conn.commit()
@@ -162,3 +225,24 @@ class SqliteIncidentStore:
         if not isinstance(value, list):
             return []
         return [item for item in value if isinstance(item, dict)]
+
+    @staticmethod
+    def _row_to_audit_event(row: sqlite3.Row) -> AuditEvent:
+        try:
+            metadata = json.loads(row["metadata_json"])
+        except json.JSONDecodeError:
+            metadata = {}
+        if not isinstance(metadata, dict):
+            metadata = {}
+        return AuditEvent(
+            eventId=row["event_id"],
+            ts=row["ts"],
+            eventType=row["event_type"],
+            actorType=row["actor_type"],
+            actorId=row["actor_id"],
+            targetType=row["target_type"],
+            targetId=row["target_id"],
+            outcome=row["outcome"],
+            requestHash=row["request_hash"],
+            metadata=metadata,
+        )

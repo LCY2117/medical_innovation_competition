@@ -18,6 +18,7 @@ from fastapi import HTTPException, WebSocket, WebSocketDisconnect
 
 from app.models.schemas import (
     AedSite,
+    AuditEvent,
     AutoJoinResponse,
     ClientInfo,
     CreateIncidentResponse,
@@ -174,6 +175,12 @@ class IncidentService:
 
     def list_aed_sites(self) -> list[AedSite]:
         return sorted(self.aed_sites.values(), key=lambda site: site.name)
+
+    def record_audit_event(self, event: AuditEvent) -> None:
+        self.store.append_audit_event(event)
+
+    def list_audit_events(self, limit: int = 100) -> list[AuditEvent]:
+        return self.store.list_audit_events(limit)
 
     def upsert_aed_site(
         self,

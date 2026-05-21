@@ -26,6 +26,7 @@ import {
   Sun,
   Lock,
   Unlock,
+  ShieldCheck,
   HeartPulse
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -277,6 +278,19 @@ interface DispatchMeta {
 interface HealthDetail {
   demoAdminAuthEnabled?: boolean;
   frontend?: { ok?: boolean };
+}
+
+interface AuditEvent {
+  eventId: string;
+  ts: number;
+  eventType: string;
+  actorType: string;
+  actorId?: string | null;
+  targetType?: string | null;
+  targetId?: string | null;
+  outcome: string;
+  requestHash?: string | null;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 type ThemeMode = 'dark' | 'light';
@@ -903,6 +917,8 @@ export default function App() {
   const [aedSites, setAedSites] = useState<AedSite[]>([]);
   const [dispatchMeta, setDispatchMeta] = useState<DispatchMeta | null>(null);
   const [healthDetail, setHealthDetail] = useState<HealthDetail | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [showAuditPanel, setShowAuditPanel] = useState(false);
   const [demoAdminToken, setDemoAdminToken] = useState(getStoredDemoAdminToken);
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredThemeMode);
   const [lastClientRefreshTs, setLastClientRefreshTs] = useState<number | null>(null);
@@ -1256,6 +1272,23 @@ export default function App() {
       setAedSites(Array.isArray(data?.aedSites) ? (data.aedSites as AedSite[]) : []);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '加载 AED 点位失败');
+    }
+  };
+
+  const loadAuditEvents = async () => {
+    try {
+      setErrorMessage(null);
+      const res = await fetch(`${getApiBase()}/audit/events?limit=30`, {
+        headers: buildDemoAdminHeaders(demoAdminToken),
+      });
+      if (!res.ok) {
+        throw new Error(await explainResponseError(res, '加载审计日志失败'));
+      }
+      const data = await res.json();
+      setAuditEvents(Array.isArray(data?.events) ? (data.events as AuditEvent[]) : []);
+      setShowAuditPanel(true);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '加载审计日志失败');
     }
   };
 
@@ -2215,6 +2248,13 @@ export default function App() {
                <FileText size={16} /> 证据包
              </button>
              <button
+               onClick={loadAuditEvents}
+               className="h-9 px-3 rounded-lg bg-emerald-800 text-emerald-50 hover:bg-emerald-700 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
+               title="查看最近的登录、演示、导出和角色动作审计记录"
+             >
+               <ShieldCheck size={16} /> 审计
+             </button>
+             <button
                onClick={resetCurrentIncident}
                className="h-9 w-9 flex items-center justify-center hover:bg-slate-800 rounded-full transition-colors text-yellow-300 hover:text-yellow-200"
                title="重置当前事件"
@@ -2224,6 +2264,47 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {showAuditPanel && (
+        <div className="border-b border-emerald-900/60 bg-emerald-950/40 px-6 py-4">
+          <div className="mx-auto flex max-w-[1800px] flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Security Audit Trail</div>
+                <div className="text-sm text-slate-100">最近管理、登录、导出和现场动作留痕</div>
+              </div>
+              <button
+                onClick={() => setShowAuditPanel(false)}
+                className="h-8 px-3 rounded-lg border border-emerald-800 text-[10px] font-bold uppercase tracking-wider text-emerald-100 hover:bg-emerald-900/70"
+              >
+                收起
+              </button>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {auditEvents.length === 0 ? (
+                <div className="rounded-lg border border-emerald-900/70 bg-slate-950/40 p-3 text-xs text-slate-300">
+                  暂无审计事件，或当前口令无权读取。
+                </div>
+              ) : (
+                auditEvents.slice(0, 9).map((event) => (
+                  <div key={event.eventId} className="rounded-lg border border-emerald-900/70 bg-slate-950/40 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-emerald-200">{event.eventType}</span>
+                      <span className="text-[10px] text-slate-500">{formatTimeLabel(event.ts)}</span>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                      <span>actor: {event.actorId || event.actorType}</span>
+                      <span>outcome: {event.outcome}</span>
+                      <span>target: {event.targetId || event.targetType || '--'}</span>
+                      <span>req: {event.requestHash || '--'}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
