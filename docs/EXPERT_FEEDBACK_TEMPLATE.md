@@ -34,6 +34,7 @@
 | 3-5 分钟演示脚本 |  |
 | 预实验方案 |  |
 | 预实验证据包 ZIP 样例 |  |
+| 证据包审阅索引 `review_index.md` |  |
 | 匿名化预实验 JSON / CSV |  |
 | 专家摘要 `expert_summary.md` |  |
 | 专家现场复核清单 `expert_review_checklist.md` |  |

@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: f775954
-- Last update: 2026-05-22 06:42:36 +08:00
+- HEAD: 56ea748
+- Last update: 2026-05-22 06:49:12 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -102,7 +102,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 77. Add Web command-center demo entrance share links. (done, pushed)
 78. Add facilitator run sheet into ZIP evidence package. (done, pushed)
 79. Add reliable Web command-center opener for four mobile terminal tabs. (done, pushed)
-80. Polish Android PRIME navigation visible language and placeholder distance. (done, checkpointing)
+80. Polish Android PRIME navigation visible language and placeholder distance. (done, pushed)
+81. Add ZIP evidence-package review index for expert/judge review. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -392,6 +393,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `f775954` (`checkpoint: improve mobile demo opener`) created and pushed to `origin/codex/competition-hardening`.
 - Android PRIME navigation polish in progress: removed visible `AHEAD`, `Start CPR`, and hardcoded `15 m`; the screen now shows Chinese labels and uses dispatch distance when available, otherwise shows a cautious no-precise-distance instruction.
 - Android PRIME navigation validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning and a non-blocking `SosState` safe-call warning remain.
+- Git checkpoint: `56ea748` (`checkpoint: polish android prime navigation`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence package now includes `review_index.md`, a judge/expert-facing quick index that lists the recommended 3-minute file opening order, explains each public review artifact, summarizes T1-T6 metrics, separates external materials from internal-only files, and repeats prohibited clinical-effectiveness claims.
+- Review-index validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -400,7 +404,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Android PRIME navigation polish slice, then continue with the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the evidence package review index slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

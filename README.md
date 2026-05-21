@@ -267,6 +267,7 @@ Web 总控台可下载 ZIP 证据包：
 
 ZIP 包含：
 
+- `review_index.md`：专家/评委快速审阅索引，说明建议打开顺序、材料用途和公开边界。
 - `experiment_anonymized.json`：匿名化结构化事件。
 - `clients_anonymized.csv`：匿名化终端画像、角色、位置和健康摘要。
 - `timeline.csv`：结构化事件时间线。
@@ -284,7 +285,7 @@ ZIP 包含：
 - `pre_experiment_round_summary.csv`：单轮汇总行，适合多轮演练合并到 Excel 做描述性统计。
 - `manifest.json`：文件清单和 SHA-256 校验。
 
-对外材料优先使用匿名化文件、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、分析说明、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
+对外材料优先使用审阅索引、匿名化文件、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、分析说明、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
 
 ## AI 调度说明
 

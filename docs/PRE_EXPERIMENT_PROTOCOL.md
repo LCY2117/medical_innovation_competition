@@ -87,7 +87,7 @@
 2. 选择患者端，触发心脏骤停模拟。
 3. 系统自动给核心施救、AED 保障、环境清障角色下发任务。
 4. 各终端按任务操作，依次记录加入、CPR 开始、AED 取到、AED 送达、AED 分析、救护接管。
-5. Web 调度台下载“预实验证据包”ZIP，并记录包内 `manifest.json` 的生成时间与文件校验信息。
+5. Web 调度台下载“预实验证据包”ZIP，先打开包内 `review_index.md`，并记录 `manifest.json` 的生成时间与文件校验信息。
 6. 主持人/观察员使用包内 `facilitator_run_sheet.md` 跑完整轮演练，按 T1-T6 记录关键节点。
 7. 演练前使用包内 `participant_consent_safety_brief.md` 完成参与者安全边界说明；演练后让参与者填写 `participant_questionnaire.csv`。
 8. 观察员打开包内 `observer_record_form.csv`，补充记录无法由系统自动采集的行为、评分和开放反馈。
@@ -169,7 +169,7 @@
 - 每轮关键时间点折线图或条形图。
 - 使用系统前后 T1-T6 的均值、中位数和范围。
 - 参与者问卷均值和典型反馈。
-- 系统导出的预实验证据包摘要：优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
+- 系统导出的预实验证据包摘要：优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
 - 对照分析表：把无系统基线轮的 T1-T6、主观评分填入 `baseline_vs_system_comparison.csv`，与系统轮导出的耗时和演练后人工填写的问卷评分做差值、百分比变化；小样本只报告描述性变化，不做夸大显著性推断。
 - 调度解释案例：展示为什么某人被分配为核心施救、AED 保障、环境清障。
 
@@ -186,7 +186,7 @@
 - 系统访问地址和测试账号。
 - 3-5 分钟演示视频或现场演示脚本。
 - 预实验流程图。
-- 预实验证据包 ZIP 样例，含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 `manifest.json` 校验清单。
+- 预实验证据包 ZIP 样例，含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 `manifest.json` 校验清单。
 - 对外展示和专家审阅优先使用匿名化文件，避免暴露真实账号、手机号、设备编号或个人身份信息。
 - 调度解释截图。
 - 专家反馈表。
@@ -202,7 +202,7 @@
 | S05 | AED 点位与 AED 保障者距离/取用说明 | 展示位置和 AED 因素进入流程 |
 | S06 | 移动 Web 或 Android 任务页：我的任务、下一动作、现场时间线 | 展示低门槛移动端执行能力 |
 | S07 | CPR/AED 分析/除颤/恢复 CPR 状态 | 展示急救流程提示闭环 |
-| S08 | 证据包 ZIP 文件列表、`manifest.json`、`expert_summary.md`、专家反馈签字表、主持人跑场单、数据分析说明、参与者问卷、安全边界简表和基线对照分析表 | 展示预实验数据可归档、可匿名化、可校验，并可形成专家签字留档 |
+| S08 | 证据包 ZIP 文件列表、`review_index.md`、`manifest.json`、`expert_summary.md`、专家反馈签字表、主持人跑场单、数据分析说明、参与者问卷、安全边界简表和基线对照分析表 | 展示预实验数据可归档、可匿名化、可校验，并可形成专家签字留档 |
 
 3-5 分钟演示脚本：
 
@@ -211,7 +211,7 @@
 3. 40 秒：患者端触发 SOS，说明系统进入智能分派，结合人员画像、位置、AED 距离和健康风险生成核心施救、AED 保障、环境清障三类任务。
 4. 60 秒：展示移动 Web 或 Android 端执行任务。核心施救端开始 CPR，AED 保障端取送 AED，环境清障端接应救护车。
 5. 40 秒：展示调度解释、现场时间线和 AED/CPR 下一动作提示，强调 AI 是辅助分派与解释，不替代 120 或专业医护。
-6. 30 秒：完成交接归档，下载预实验证据包，展示匿名化数据、指标 CSV、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、参与者安全简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验。
+6. 30 秒：完成交接归档，下载预实验证据包，展示审阅索引、匿名化数据、指标 CSV、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、参与者安全简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验。
 
 希望专家重点评价：
 

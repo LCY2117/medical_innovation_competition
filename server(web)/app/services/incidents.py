@@ -652,6 +652,7 @@ class IncidentService:
         anonymized_payload, participant_map = self._anonymized_experiment_payload(export)
         files: dict[str, str] = {
             "README.md": self._experiment_readme(export),
+            "review_index.md": self._review_index(export),
             "expert_summary.md": self._expert_summary(export, participant_map),
             "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
             "expert_feedback_form.md": self._expert_feedback_form(export, participant_map),
@@ -1458,6 +1459,7 @@ class IncidentService:
                     "timeline.csv",
                     "metrics.csv",
                     "dispatch_rationale.csv",
+                    "review_index.md",
                     "expert_summary.md",
                     "expert_review_checklist.md",
                     "expert_feedback_form.md",
@@ -1611,6 +1613,7 @@ class IncidentService:
 
 ## 文件说明
 
+- `review_index.md`：专家/评委快速审阅索引，建议先打开，用于理解每份材料的用途和公开边界。
 - `experiment.json`：完整结构化导出，保留事件、终端、AED、调度依据和健康摘要。
 - `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
@@ -1633,7 +1636,87 @@ class IncidentService:
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+"""
+
+    def _review_index(self, export: ExperimentExportResponse) -> str:
+        metrics = export.metrics
+        generated_at = self._iso_timestamp(export.generatedAt)
+        role_summary = "；".join(
+            f"{role}={user_id or '未分派'}"
+            for role, user_id in export.assignments.items()
+        )
+        return f"""# 生命反射弧证据包审阅索引
+
+事件编号：{export.incidentId}
+导出时间：{generated_at}
+事件阶段：{export.phase}
+患者终端：{export.patientUserId or "未指定"}
+角色分派：{role_summary}
+
+## 一、建议 3 分钟打开顺序
+
+1. `expert_summary.md`：先看项目场景、分派结果、T1-T6 指标和安全边界。
+2. `facilitator_run_sheet.md`：确认这轮演练是否按预实验流程执行，特别是 T0-T6 记录点。
+3. `timeline.csv` 与 `metrics.csv`：核对自动记录的事件时间线和核心耗时。
+4. `dispatch_rationale.csv`：查看核心施救、AED 保障、环境清障的分派依据。
+5. `expert_feedback_form.md`：填写专家评分、意见和签字。
+
+## 二、材料用途速查
+
+| 材料 | 建议读者 | 主要证明什么 | 公开边界 |
+| --- | --- | --- | --- |
+| `expert_summary.md` | 专家、指导教师、PPT 制作者 | 这轮演练的医学场景、协同流程、指标和谨慎结论 | 可外部展示 |
+| `expert_review_checklist.md` | 专家、指导教师 | 医学安全边界、AI 分派、数据记录是否可接受 | 可外部展示 |
+| `expert_feedback_form.md` | 专家 | 事件级评分、改进意见和签字材料 | 可外部展示 |
+| `facilitator_run_sheet.md` | 主持人、观察员 | 现场跑场流程、T0-T6 记录提示、演练后整理步骤 | 可外部展示 |
+| `analysis_guide.md` | 数据整理同学、PPT 制作者 | 如何解释 T1-T6、问卷、基线对照和不可夸大结论 | 可外部展示 |
+| `observer_record_form.csv` | 观察员 | 系统无法自动采集的现场行为、错误、理解度 | 可外部展示 |
+| `participant_questionnaire.csv` | 参与者、数据整理同学 | 参与者主观评分和反馈 | 可外部展示，需匿名 |
+| `baseline_vs_system_comparison.csv` | 数据整理同学 | 无系统基线轮与系统轮的描述性对照 | 可外部展示 |
+| `pre_experiment_round_summary.csv` | 数据整理同学 | 多轮演练合并统计的一行摘要 | 可外部展示 |
+| `manifest.json` | 复核者 | 文件清单、SHA-256 校验和隐私边界 | 可外部展示 |
+
+## 三、自动指标快照
+
+| 指标 | 本轮记录 |
+| --- | --- |
+| T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} |
+| T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} |
+| T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} |
+| T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |
+| T6 触发到救护接管 | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} |
+| 角色完整度 | {metrics.get("roleAssignmentCompleteness", "--")} |
+| 定位覆盖率 | {metrics.get("locationCoveragePercent", "--")}% |
+| 健康摘要覆盖率 | {metrics.get("healthCoveragePercent", "--")}% |
+
+## 四、对外材料优先使用
+
+- `review_index.md`
+- `experiment_anonymized.json`
+- `clients_anonymized.csv`
+- `expert_summary.md`
+- `expert_review_checklist.md`
+- `expert_feedback_form.md`
+- `facilitator_run_sheet.md`
+- `analysis_guide.md`
+- `participant_consent_safety_brief.md`
+- `observer_record_form.csv`
+- `participant_questionnaire.csv`
+- `baseline_vs_system_comparison.csv`
+- `pre_experiment_round_summary.csv`
+
+## 五、内部复核材料
+
+- `experiment.json` 与 `clients.csv` 保留原始 userId、终端画像和完整事件内容，只建议团队内部排查或复核使用。
+- `aed_sites.csv` 可用于核对 AED 点位和访问备注；若点位来自真实场地，外部展示前应检查是否涉及不宜公开的位置细节。
+
+## 六、必须避免的结论
+
+- 不宣称提高抢救成功率或改善患者预后。
+- 不宣称系统可替代 120、AED 语音提示或专业医护判断。
+- 不把 mock/演示健康摘要描述成真实临床监测、诊断或疗效依据。
+- 小样本预实验只写流程可行性、可用性、协同清晰度和专家接受度，不写统计显著性临床结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:
