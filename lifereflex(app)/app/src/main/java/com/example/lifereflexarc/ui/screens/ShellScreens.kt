@@ -27,6 +27,7 @@ import com.example.lifereflexarc.data.UserRole
 import com.example.lifereflexarc.data.UserSession
 import com.example.lifereflexarc.data.AedSite
 import com.example.lifereflexarc.data.DispatchRoleDecision
+import com.example.lifereflexarc.data.GeoPoint
 import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.ui.accentForRole
 import com.example.lifereflexarc.ui.components.EmptyStateCard
@@ -536,6 +537,9 @@ fun ArchiveScreen(
 fun ProfileScreen(
     session: UserSession,
     healthSignals: HealthSignalSummary?,
+    location: GeoPoint?,
+    locationStatus: String,
+    onSyncSystemLocation: () -> Unit,
     onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
     onLogout: () -> Unit,
 ) {
@@ -564,7 +568,12 @@ fun ProfileScreen(
 
         HealthSignalSummaryCard(healthSignals = healthSignals)
 
-        DemoLocationCard(onDemoLocationSelected = onDemoLocationSelected)
+        DemoLocationCard(
+            location = location,
+            locationStatus = locationStatus,
+            onSyncSystemLocation = onSyncSystemLocation,
+            onDemoLocationSelected = onDemoLocationSelected,
+        )
 
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
@@ -599,6 +608,9 @@ fun ProfileScreen(
 
 @Composable
 private fun DemoLocationCard(
+    location: GeoPoint?,
+    locationStatus: String,
+    onSyncSystemLocation: () -> Unit,
     onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
 ) {
     val points = listOf(
@@ -613,12 +625,28 @@ private fun DemoLocationCard(
         border = BorderStroke(1.dp, Color(0xFF1E293B)),
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("演示位置", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text("位置同步", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                text = "切换后会把当前终端位置同步到云端，用于网页调度台的距离与角色分派演示。",
+                text = locationStatus,
                 color = PhoneColors.GrayText,
                 fontSize = 13.sp,
                 lineHeight = 20.sp,
+            )
+            SummaryRow("当前位置", location?.label ?: "未同步", dark = true)
+            SummaryRow("坐标来源", location?.source ?: "--", dark = true)
+            SummaryRow("经纬度", location?.let { formatCoordinate(it) } ?: "--", dark = true)
+            SummaryRow("精度", location?.accuracyMeters?.let { "${it.toInt()} m" } ?: "--", dark = true)
+            PressableButton(
+                text = "同步系统定位",
+                onClick = onSyncSystemLocation,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF047857), contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = "演示备用位置",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
             )
             points.forEach { point ->
                 PressableButton(
@@ -638,6 +666,10 @@ private data class DemoLocationPoint(
     val latitude: Double,
     val longitude: Double,
 )
+
+private fun formatCoordinate(location: GeoPoint): String {
+    return "%.6f, %.6f".format(Locale.US, location.latitude, location.longitude)
+}
 
 @Composable
 private fun IncidentQuickActionsCard(

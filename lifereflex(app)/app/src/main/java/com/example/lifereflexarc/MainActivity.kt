@@ -11,9 +11,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.lifereflexarc.data.AndroidSystemLocationProvider
 import com.example.lifereflexarc.ui.AppRoot
 import com.example.lifereflexarc.ui.theme.LifeReflexArcTheme
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
@@ -35,14 +38,19 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DemoApp(modifier: Modifier = Modifier, vm: IncidentViewModel = viewModel()) {
+fun DemoApp(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val incidentViewModel: IncidentViewModel = viewModel(
+        factory = remember(context) {
+            IncidentViewModelFactory(context.applicationContext)
+        }
+    )
     val userId = remember {
         getOrCreateTerminalId(context)
     }
     androidx.compose.foundation.layout.Box(modifier = modifier.fillMaxSize()) {
         AppRoot(
-            incidentViewModel = vm,
+            incidentViewModel = incidentViewModel,
             sessionViewModel = viewModel<SessionViewModel>(),
             deviceUserId = userId,
         )
@@ -70,3 +78,17 @@ private fun getOrCreateTerminalId(context: Context): String {
 }
 
 private const val KEY_TERMINAL_ID = "terminal_id"
+
+private class IncidentViewModelFactory(
+    private val context: Context,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(IncidentViewModel::class.java)) {
+            return IncidentViewModel(
+                locationProvider = AndroidSystemLocationProvider(context),
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
+}

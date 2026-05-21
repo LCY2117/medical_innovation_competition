@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b07bb63
-- Last update: 2026-05-22 03:50:00 +08:00
+- HEAD: 1259394
+- Last update: 2026-05-22 03:58:26 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -73,7 +73,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 48. Update docs and create security-hardening checkpoint. (done)
 49. Push security-hardening checkpoint to GitHub. (done)
 50. Record pushed security checkpoint in handoff/state. (done)
-51. Add backend map/spatial provider abstraction with AMap WebService fallback. (done, checkpointing)
+51. Add backend map/spatial provider abstraction with AMap WebService fallback. (done, pushed)
+52. Add Android native location provider with system-location and demo fallback. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -179,6 +180,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android session/token storage now uses AndroidX Security encrypted preferences with migration from legacy `lra_session`; if secure storage is unavailable, token persistence is disabled rather than falling back to plaintext.
 - Android Gradle JVM args now use a larger heap/metaspace to avoid GC thrashing after adding AndroidX Security.
 - Backend map distances now flow through `SpatialProvider`: default demo/Haversine distance, AMap WebService distance when `LRA_MAP_PROVIDER=amap` and `LRA_AMAP_SERVICE_KEY` is configured, and structured fallback metadata in health/detail and dispatch/meta.
+- Android location now flows through a `LocationProvider`: app startup/terminal registration and the Profile location card can use system last-known location when runtime permission is granted; missing permission, disabled provider, or no recent location falls back to demo coordinates.
 
 ## Validation Log
 
@@ -250,6 +252,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `b07bb63` (`checkpoint: record security hardening push`) created and pushed to `origin/codex/competition-hardening`.
 - Map provider targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_dispatch_meta_is_serializable tests.test_server.ServerTestCase.test_amap_distance_provider_falls_back_without_service_key tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export -v` passed, 4 tests OK.
 - Map provider full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 33 tests OK.
+- Git checkpoint: `1259394` (`checkpoint: add map distance provider`) created and pushed to `origin/codex/competition-hardening`.
+- Android location validation: `gradle :app:assembleDebug --no-daemon` passed; existing `PhoneAppRoot.kt` non-blocking Kotlin warning remains.
 
 ## Blockers Summary
 
@@ -258,7 +262,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit/push the map provider checkpoint excluding local DB/output/OPPO doc copy. After that, consider Android native location prewiring as the next independent P2 polish.
+Commit/push the Android native location checkpoint excluding local DB/output/OPPO doc copy. After that, consider backend notification provider/WebSocket fallback abstraction as the next independent P2 polish.
 
 ## Resume Instructions
 

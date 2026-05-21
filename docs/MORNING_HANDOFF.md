@@ -31,6 +31,7 @@
 - Android 任务页和现场总览新增“最近现场时间线”，APK 端可以直接看到患者触发、角色响应、AED 取送、交接等日志。
 - Android AED 保障者全屏任务页会显示目标 AED 名称、位置楼层、取用说明、到 AED 距离和回送患者距离。
 - Android “我的”页新增演示位置切换，可一键上报患者走廊、一层大厅、校门岗亭、操场入口，方便演示调度距离变化。
+- Android “我的”页新增位置同步：可申请系统定位权限、同步系统最近定位，并显示位置来源、经纬度和精度；未授权或没有定位时自动回退演示坐标。
 - 预实验方案已补 S01-S08 系统截图清单和 3-5 分钟专家/PPT 演示脚本。
 - `/api/health/detail` 可检查前端构建产物：index、assets 数量、mobile chunk、desktop chunk、最新资源时间。
 - Web 总控和移动端已加入简短安全边界：仅用于模拟演练、训练复盘和预实验，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。
@@ -45,6 +46,7 @@
 - Android session/token 已从普通 SharedPreferences 迁移到 AndroidX Security 加密存储，并兼容旧明文登录态迁移；若设备安全存储不可用，不再把 token 落盘。
 - Android Gradle JVM 堆已提高到 2GB，避免新增安全依赖后 Windows 构建出现 GC thrashing。
 - 后端地图距离 provider 已抽象：默认 demo/Haversine，`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；健康检查和调度元数据会显示 provider、距离来源和 fallback 原因。
+- Android 原生定位 provider 已预埋：无需第三方 Key 即可走系统最近定位 + 演示坐标 fallback，后续高德 Android SDK 可作为 adapter 接入。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -90,7 +92,7 @@ gradle tasks --no-daemon
 gradle :app:assembleDebug --no-daemon
 ```
 
-结果：通过，APK 大小约 12 MB，使用 Android debug 签名。当前构建会提示 AndroidX Security API deprecation warning，不影响 debug APK 生成。
+结果：通过，APK 大小约 12 MB，使用 Android debug 签名。当前构建会提示 AndroidX Security API deprecation warning，以及 `PhoneAppRoot.kt` 一个非阻塞 Kotlin warning，不影响 debug APK 生成。
 
 ## 本轮新增检查点
 
@@ -124,7 +126,8 @@ gradle :app:assembleDebug --no-daemon
 - `6b832e7`：记录 Android 首页 CTA 检查点已推送。
 - `f0ce716`：记录最终 P0/P1 验证结果。
 - `4b0f11f`：后端审计日志/频控、Web 审计面板、Android 加密 token 存储、Gradle 构建稳定性，已推送。
-- 待本轮提交：地图距离 provider 抽象与高德 WebService 预埋。
+- `1259394`：地图距离 provider 抽象与高德 WebService 预埋，已推送。
+- 待本轮提交：Android 系统定位 provider 与位置同步 UI。
 
 ## 你醒来后最该做的三件事
 

@@ -1,5 +1,6 @@
 package com.example.lifereflexarc.ui
 
+import android.Manifest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
 import com.example.lifereflexarc.viewmodel.SessionViewModel
 import com.example.lifereflexarc.ui.components.ActiveIncidentBanner
@@ -54,7 +57,14 @@ fun AppRoot(
     val incidentError by incidentViewModel.error.collectAsState(null)
     val assignedRoleRaw by incidentViewModel.assignedRole.collectAsState(null)
     val healthSignals by incidentViewModel.healthSignals.collectAsState(null)
+    val locationStatus by incidentViewModel.locationStatus.collectAsState("定位未同步")
+    val currentLocation by incidentViewModel.currentLocation.collectAsState(null)
     val activeUserId = session.userId.ifBlank { deviceUserId }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) {
+        incidentViewModel.syncSystemLocation(activeUserId)
+    }
 
     if (!session.isLoggedIn) {
         LoginScreen(
@@ -248,6 +258,16 @@ fun AppRoot(
                 MainTab.Profile -> ProfileScreen(
                     session = session,
                     healthSignals = healthSignals,
+                    location = currentLocation,
+                    locationStatus = locationStatus,
+                    onSyncSystemLocation = {
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            )
+                        )
+                    },
                     onDemoLocationSelected = { label, latitude, longitude ->
                         incidentViewModel.updateDemoLocation(activeUserId, label, latitude, longitude)
                     },

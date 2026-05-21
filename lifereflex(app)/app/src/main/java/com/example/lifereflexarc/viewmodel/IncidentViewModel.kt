@@ -8,6 +8,8 @@ import com.example.lifereflexarc.data.HealthSignalProvider
 import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.data.IncidentRepository
 import com.example.lifereflexarc.data.IncidentState
+import com.example.lifereflexarc.data.LocationProvider
+import com.example.lifereflexarc.data.LocationProviderStatus
 import com.example.lifereflexarc.data.MockOppoHealthSignalProvider
 import com.example.lifereflexarc.data.UserSession
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +23,7 @@ class IncidentViewModel(
         wsBase = BuildConfig.LRA_WS_BASE,
     ),
     private val healthSignalProvider: HealthSignalProvider = MockOppoHealthSignalProvider(),
+    private val locationProvider: LocationProvider? = null,
 ) : ViewModel() {
 
     private val _incidentId = MutableStateFlow<String?>(null)
@@ -37,6 +40,10 @@ class IncidentViewModel(
     val assignedRole: StateFlow<String?> = _assignedRole.asStateFlow()
     private val _healthSignals = MutableStateFlow<HealthSignalSummary?>(null)
     val healthSignals: StateFlow<HealthSignalSummary?> = _healthSignals.asStateFlow()
+    private val _locationStatus = MutableStateFlow("定位未同步")
+    val locationStatus: StateFlow<String> = _locationStatus.asStateFlow()
+    private val _currentLocation = MutableStateFlow<GeoPoint?>(null)
+    val currentLocation: StateFlow<GeoPoint?> = _currentLocation.asStateFlow()
     private val _userId = MutableStateFlow<String?>(null)
     private val _authToken = MutableStateFlow<String?>(null)
 
@@ -191,9 +198,16 @@ class IncidentViewModel(
 
     fun registerTerminal(userId: String, session: UserSession) {
         _authToken.value = session.authToken
+        _userId.value = userId
         viewModelScope.launch {
             try {
                 val healthSignals = healthSignalProvider.readSummary(session)
+                val fallbackLocation = demoLocationFor(
+                    session.displayName,
+                    session.professionIdentity.label,
+                    session.healthCondition.label,
+                )
+                val locationResult = bestAvailableLocation(fallbackLocation)
                 _healthSignals.value = healthSignals
                 repository.registerClient(
                     authToken = session.authToken,
@@ -203,9 +217,11 @@ class IncidentViewModel(
                     healthCondition = session.healthCondition.label,
                     professionIdentity = session.professionIdentity.label,
                     profileBio = session.bio,
-                    location = demoLocationFor(session.displayName, session.professionIdentity.label, session.healthCondition.label),
+                    location = locationResult.location,
                     healthSignals = healthSignals,
                 )
+                _currentLocation.value = locationResult.location
+                _locationStatus.value = locationResult.message
                 repository.updateHealth(
                     authToken = session.authToken,
                     userId = userId,
@@ -221,16 +237,49 @@ class IncidentViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
+                val location = GeoPoint(
+                    latitude = latitude,
+                    longitude = longitude,
+                    label = label,
+                    source = "app-demo",
+                )
                 repository.updateLocation(
                     authToken = _authToken.value,
                     userId = userId,
-                    location = GeoPoint(
-                        latitude = latitude,
-                        longitude = longitude,
-                        label = label,
-                        source = "app-demo",
-                    ),
+                    location = location,
                 )
+                _currentLocation.value = location
+                _locationStatus.value = "已切换到演示位置：$label"
+            } catch (e: Exception) {
+                _error.value = e.message
+            }
+        }
+    }
+
+    fun syncSystemLocation(userId: String) {
+        viewModelScope.launch {
+            try {
+                _error.value = null
+                val session = _userId.value
+                if (session.isNullOrBlank()) {
+                    _locationStatus.value = "请先登录并注册终端"
+                    return@launch
+                }
+                val fallback = _currentLocation.value ?: GeoPoint(
+                    latitude = 39.904260,
+                    longitude = 116.407330,
+                    label = "校园中心点",
+                    floor = "1F",
+                    source = "app-demo-fallback",
+                )
+                val result = bestAvailableLocation(fallback)
+                repository.updateLocation(
+                    authToken = _authToken.value,
+                    userId = userId,
+                    location = result.location,
+                )
+                _currentLocation.value = result.location
+                _locationStatus.value = result.message
             } catch (e: Exception) {
                 _error.value = e.message
             }
@@ -242,6 +291,8 @@ class IncidentViewModel(
         _incidentId.value = null
         _assignedRole.value = null
         _healthSignals.value = null
+        _locationStatus.value = "定位未同步"
+        _currentLocation.value = null
         _userId.value = null
         _authToken.value = null
         _error.value = null
@@ -256,6 +307,19 @@ class IncidentViewModel(
             "安保" in text || "物业" in text -> GeoPoint(39.904500, 116.407620, label = "校门岗亭", floor = "1F", source = "app-demo")
             "体育" in text || "跑" in text -> GeoPoint(39.903920, 116.407020, label = "操场入口", floor = "1F", source = "app-demo")
             else -> GeoPoint(39.904260, 116.407330, label = "校园中心点", floor = "1F", source = "app-demo")
+        }
+    }
+
+    private suspend fun bestAvailableLocation(fallback: GeoPoint): com.example.lifereflexarc.data.LocationProviderResult {
+        val provider = locationProvider
+        return if (provider == null) {
+            com.example.lifereflexarc.data.LocationProviderResult(
+                location = fallback,
+                status = LocationProviderStatus.DEMO_FALLBACK,
+                message = "未接入系统定位 provider，使用演示坐标",
+            )
+        } else {
+            provider.currentLocation(fallback)
         }
     }
 }

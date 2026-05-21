@@ -87,6 +87,8 @@ LRA_MAP_DISTANCE_TIMEOUT_SEC=3
 
 当前后端已完成地图距离 provider 抽象。没有 Key 时保持 `LRA_MAP_PROVIDER=demo`，或即使设置为 `amap` 但未填写 `LRA_AMAP_SERVICE_KEY`，系统也会在 `/api/health/detail.mapProvider` 和 `/api/dispatch/meta.mapProvider` 中显示 `fallbackReason=amap_service_key_missing`，并继续使用内置坐标 + Haversine 距离完成调度演示。
 
+Android 端已预埋系统定位 provider 和演示坐标 fallback。当前不依赖高德 Android SDK Key：授权定位后使用系统最近定位，上报失败或未授权时仍可用“我的 > 位置同步”的演示备用点完成分派距离演示。拿到 Android Key 后，再把高德定位/地图 SDK 做成新的 `LocationProvider` adapter。
+
 搜索教程关键词：
 
 - 高德开放平台 Android 获取 Key SHA1 包名
@@ -244,6 +246,7 @@ AI API Key：
 | 能力 | provider 环境变量 | 真实 provider | fallback | 前端/APP 暴露内容 |
 | --- | --- | --- | --- | --- |
 | 地图/距离 | `LRA_MAP_PROVIDER` + `LRA_AMAP_SERVICE_KEY` | `amap` 已预埋 WebService 距离接口，后续可扩展 `tencent`、`baidu` | `demo` 内置坐标和后端 Haversine 距离 | `/api/health/detail.mapProvider` 和 `/api/dispatch/meta.mapProvider` 暴露 provider 状态、距离来源和 fallback 原因，不暴露服务端 Key |
+| Android 定位 | Android runtime permission + 未来 `LRA_AMAP_ANDROID_KEY` | 未来高德/腾讯/百度 Android SDK adapter | 系统最近定位 + App 演示坐标按钮 | “我的 > 位置同步”展示来源、坐标、精度和同步状态 |
 | AI 调度 | `LRA_PREFER_LOCAL_MODEL` + `LRA_SILICONFLOW_*` | 本地 OpenAI-compatible 或 SiliconFlow | 规则调度 | 展示调度来源、评分、理由、风险提示 |
 | 健康数据 | `LRA_HEALTH_PROVIDER` | OPPO Health SDK/API | mock/manual health summary | 展示“演示健康数据/OPPO 健康模拟接入”，不作临床诊断 |
 | 推送 | 未来 `LRA_PUSH_PROVIDER` | 厂商推送/极光 | 前台 WebSocket + 移动 Web 轮询 | 展示实时同步状态，不承诺锁屏必达 |
