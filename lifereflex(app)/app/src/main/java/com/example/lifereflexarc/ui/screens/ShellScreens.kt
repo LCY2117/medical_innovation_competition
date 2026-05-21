@@ -30,6 +30,7 @@ import com.example.lifereflexarc.data.DispatchRoleDecision
 import com.example.lifereflexarc.data.GeoPoint
 import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.ui.accentForRole
+import com.example.lifereflexarc.ui.dispatchSourceLabel
 import com.example.lifereflexarc.ui.components.EmptyStateCard
 import com.example.lifereflexarc.ui.components.MetricCard
 import com.example.lifereflexarc.ui.components.PressableButton
@@ -335,7 +336,7 @@ private fun DispatchRationaleCard(
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("调度依据", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                text = "来源：${incidentState.dispatchSource ?: "智能协同处理中"}",
+                text = "来源：${dispatchSourceLabel(incidentState.dispatchSource)}",
                 color = PhoneColors.GrayText,
                 fontSize = 13.sp,
             )
@@ -514,7 +515,7 @@ fun ArchiveScreen(
                     )
                     SummaryRow("终端身份", entry.roleLabel, dark = entry.isPatient)
                     SummaryRow("归档状态", entry.phaseLabel, dark = entry.isPatient)
-                    SummaryRow("任务来源", entry.dispatchSource, dark = entry.isPatient)
+                    SummaryRow("任务来源", dispatchSourceLabel(entry.dispatchSource), dark = entry.isPatient)
                     SummaryRow("处置时长", "${entry.durationSec / 60} 分 ${entry.durationSec % 60} 秒", dark = entry.isPatient)
                     if (entry.taskSummary.isNotEmpty()) {
                         Text(

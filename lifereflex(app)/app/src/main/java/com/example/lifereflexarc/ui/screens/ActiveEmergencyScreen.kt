@@ -39,6 +39,7 @@ import com.example.lifereflexarc.data.IncidentState
 import com.example.lifereflexarc.data.UserRole
 import com.example.lifereflexarc.data.UserSession
 import com.example.lifereflexarc.ui.accentForRole
+import com.example.lifereflexarc.ui.dispatchSourceLabel
 import com.example.lifereflexarc.ui.primeVoiceCue
 import com.example.lifereflexarc.ui.components.PressableButton
 import com.example.lifereflexarc.ui.formatAedStatusLabel
@@ -177,7 +178,7 @@ private fun PatientFullScreen(
         accent = PhoneColors.Red,
     ) {
         MetricTile(label = "当前阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "通知状态", value = incidentState.dispatchSource ?: "智能协同处理中")
+        MetricTile(label = "通知状态", value = dispatchSourceLabel(incidentState.dispatchSource))
         MetricTile(label = "事件耗时", value = rememberElapsedLabel(incidentState.logs.firstOrNull()?.ts))
     }
 }
@@ -221,7 +222,7 @@ private fun PrimeFullScreen(
     ) {
         MetricTile(label = "任务状态", value = roleStatusLabel(status))
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "调度来源", value = incidentState.dispatchSource ?: "规则调度")
+        MetricTile(label = "调度来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         if (voiceCue != null) {
             VoiceCueCard(message = voiceCue)
         }
@@ -506,7 +507,7 @@ private fun GuideFullScreen(
     ) {
         MetricTile(label = "任务状态", value = roleStatusLabel(status))
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "调度来源", value = incidentState.dispatchSource ?: "规则调度")
+        MetricTile(label = "调度来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         if (!handoverReady) {
             PressableButton(
                 text = "确认救护车已到达",
@@ -548,7 +549,7 @@ private fun HandoverFullScreen(
         accent = PhoneColors.Green,
     ) {
         MetricTile(label = "总耗时", value = rememberElapsedLabel(incidentState.logs.firstOrNull()?.ts))
-        MetricTile(label = "分配来源", value = incidentState.dispatchSource ?: "规则调度")
+        MetricTile(label = "分配来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         PressableButton(
             text = "确认完成救护车交接并归档",
             onClick = { incidentViewModel.actionHandoverCompleted(userId) },

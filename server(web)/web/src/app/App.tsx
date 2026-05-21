@@ -1769,12 +1769,12 @@ export default function App() {
     try {
       const res = await fetch(`${getApiBase()}/dispatch/meta`);
       if (!res.ok) {
-        throw new Error(await explainResponseError(res, '加载 AI 调度说明失败'));
+        throw new Error(await explainResponseError(res, '加载智能调度说明失败'));
       }
       const data = await res.json();
       setDispatchMeta(data as DispatchMeta);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '加载 AI 调度说明失败');
+      setErrorMessage(error instanceof Error ? error.message : '加载智能调度说明失败');
     }
   };
 
@@ -3198,7 +3198,7 @@ export default function App() {
               <div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">智能调度引擎</div>
                 <div className="text-sm text-white font-semibold mt-1">
-                  {dispatchMeta?.configured ? '云端智能分派已启用，按画像和距离生成任务单' : '当前以本地规则调度生成任务单'}
+                  {dispatchMeta?.configured ? '云端智能分派已启用，按画像和距离生成任务单' : '当前以本地规则引擎生成任务单'}
                 </div>
               </div>
               <div className={cn(
@@ -3255,7 +3255,7 @@ export default function App() {
           <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">AI 流式分派过程</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">智能调度过程</div>
                 <div className="text-sm text-white font-semibold mt-1">
                   {incidentState?.phase === 'DISPATCHING'
                     ? '正在分步分析患者与候选终端'
@@ -3345,7 +3345,7 @@ export default function App() {
               <div className="space-y-2">
                 {rationaleEntries.length === 0 && !hasRoleAssignments && (
                   <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-4 text-xs text-slate-400">
-                    {dispatchExplanationPending ? 'AI 正在生成角色选择理由，请稍候。' : '尚未触发患者端事件，选择患者端后会生成可解释结果。'}
+                    {dispatchExplanationPending ? '智能调度正在生成角色选择理由，请稍候。' : '尚未触发患者端事件，选择患者端后会生成可解释结果。'}
                   </div>
                 )}
                 {rationaleEntries.length === 0 && hasRoleAssignments && (

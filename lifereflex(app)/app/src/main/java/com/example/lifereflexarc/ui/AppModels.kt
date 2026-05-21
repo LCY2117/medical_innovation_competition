@@ -116,6 +116,14 @@ fun formatLocationSourceLabel(source: String?): String = when (source?.trim()?.l
     else -> source
 }
 
+fun dispatchSourceLabel(source: String?): String = when (source?.trim()?.lowercase()) {
+    null, "" -> "智能协同处理中"
+    "fallback" -> "规则兜底"
+    "ai", "local_model" -> "本地智能分派"
+    "siliconflow" -> "云端智能分派"
+    else -> if (source.any { it in 'A'..'Z' || it in 'a'..'z' || it == '_' }) "智能分派" else source
+}
+
 fun primeVoiceCue(incidentState: IncidentState): String? = when {
     incidentState.phase == "DISPATCHED" -> "你已被分配为核心施救者，请立即前往患者位置，开始基础复苏。"
     incidentState.roles.PRIME.status == "CPR_STARTED" || incidentState.phase == "CPR" ->
