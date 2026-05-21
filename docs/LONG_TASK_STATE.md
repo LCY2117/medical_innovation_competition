@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 27b7725
-- Last update: 2026-05-22 03:38:00 +08:00
+- HEAD: 4b0f11f
+- Last update: 2026-05-22 03:45:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -70,7 +70,9 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 45. Add backend audit log, rate limits, and Web audit panel. (done, validating)
 46. Migrate Android token/session storage to encrypted preferences with legacy migration. (done, validating)
 47. Increase Android Gradle heap for reliable APK builds after security dependency. (done, validating)
-48. Update docs and create security-hardening checkpoint. (in progress)
+48. Update docs and create security-hardening checkpoint. (done)
+49. Push security-hardening checkpoint to GitHub. (done)
+50. Record pushed security checkpoint in handoff/state. (in progress)
 
 ## Sub-Agent Ledger
 
@@ -241,6 +243,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `615566d` (`checkpoint: document provider fallbacks`) created and pushed to `origin/codex/competition-hardening`.
 - Security hardening targeted backend tests passed: audit events, health security fields, demo-admin protection, and auth rate limiting.
 - Security hardening full validation: backend full unittest discovery passed, 32 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `4b0f11f` (`checkpoint: harden demo security`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -249,7 +252,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Create and push a safe security-hardening checkpoint, leaving local DB/output/OPPO doc copy uncommitted. Then review remaining P2 map/push abstractions and formal admin/RBAC as the next independent polish.
+Record the pushed security checkpoint, leaving local DB/output/OPPO doc copy uncommitted. Then review remaining P2 map/push abstractions and formal admin/RBAC as the next independent polish.
 
 ## Resume Instructions
 

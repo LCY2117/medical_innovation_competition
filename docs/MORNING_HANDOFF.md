@@ -120,7 +120,7 @@ gradle :app:assembleDebug --no-daemon
 - `4600663`：Android 首页优先进入当前事件/自动接单，新建事件降级为演示备用。
 - `6b832e7`：记录 Android 首页 CTA 检查点已推送。
 - `f0ce716`：记录最终 P0/P1 验证结果。
-- 待提交：后端审计日志/频控、Web 审计面板、Android 加密 token 存储、Gradle 构建稳定性。
+- `4b0f11f`：后端审计日志/频控、Web 审计面板、Android 加密 token 存储、Gradle 构建稳定性，已推送。
 
 ## 你醒来后最该做的三件事
 
