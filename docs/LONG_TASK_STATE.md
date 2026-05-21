@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 19b14d1
-- Last update: 2026-05-22 06:26:25 +08:00
+- HEAD: 0a97fda
+- Last update: 2026-05-22 06:30:22 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -100,7 +100,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 75. Add pre-experiment analysis guide into ZIP evidence package. (done, pushed)
 76. Add event-specific expert feedback and signature form into ZIP evidence package. (done, pushed)
 77. Add Web command-center demo entrance share links. (done, pushed)
-78. Add facilitator run sheet into ZIP evidence package. (done, validating)
+78. Add facilitator run sheet into ZIP evidence package. (done, pushed)
+79. Continue next safe competition-hardening slice after facilitator checkpoint. (in progress)
 
 ## Sub-Agent Ledger
 
@@ -114,6 +115,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Admin/RBAC explorer (`019e4c27-d940-7411-bcad-12f6103a3b4d`): completed read-only; confirmed config-based `LRA_ADMIN_PHONES` minimal RBAC is the safest slice and noted frontend `AuthUser.privileges` type drift.
 - Web/mobile polish explorer (`019e4c27-ed2f-71e2-b975-4d47eaeac985`): completed read-only; identified a P0 mobile patient SOS delayed auto-dispatch stall, raw English/status labels in the command center, overloaded AI diagnostics, English role labels in `/mobile-demo`, and evidence wording polish.
 - Expert feedback evidence explorer (`019e4c90-6c28-7110-bbd1-05db34c07ada`): completed read-only; confirmed `expert_feedback_form.md` belongs in export generation, manifest public-review guidance, package tests, README, deployment runbook, expert template, pre-experiment protocol, product plan, whitepaper, and morning handoff.
+- Next-slice explorer (`019e4ca9-a516-7362-8b0f-57a17315eaf3`): running read-only; asked for next high-impact, low-risk competition-hardening slices that do not require secrets, production deployment, OPPO approval, or user confirmation.
 
 ## Git Baseline
 
@@ -381,6 +383,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `19b14d1` (`checkpoint: record demo entrance state`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence package now includes `facilitator_run_sheet.md`, a facilitator/observer run sheet for pre-checks, demo entrance links, T1-T6 cueing, observer notes, post-run package verification, questionnaire collection, and prohibited clinical-effectiveness wording.
 - Facilitator run sheet validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
+- Git checkpoint: `0a97fda` (`checkpoint: add facilitator run sheet`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -389,7 +392,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push the facilitator run sheet checkpoint, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

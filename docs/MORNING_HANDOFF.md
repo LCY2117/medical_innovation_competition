@@ -174,7 +174,7 @@ gradle :app:assembleDebug --no-daemon
 - `1f99b31`：预实验证据包新增 `analysis_guide.md` 数据分析说明，并同步测试与材料口径，已推送。
 - `0674344`：预实验证据包新增 `expert_feedback_form.md` 事件级专家反馈与签字表，并同步测试与材料口径，已推送。
 - `5dc86eb`：Web 总控台新增“演示入口”链接面板，已通过 Web typecheck/build 和本地 Edge 烟测，已推送。
-- 待提交：预实验证据包新增 `facilitator_run_sheet.md` 主持人/观察员跑场单，已通过后端目标测试和全量 37 项测试。
+- `0a97fda`：预实验证据包新增 `facilitator_run_sheet.md` 主持人/观察员跑场单，已通过后端目标测试和全量 37 项测试，已推送。
 
 ## 你醒来后最该做的三件事
 
