@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 5a18fc5
-- Last update: 2026-05-22 03:03:00 +08:00
+- HEAD: 449815f
+- Last update: 2026-05-22 03:08:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -49,6 +49,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 24. Push Android AED target checkpoint. (done)
 25. Add mobile Web PRIME next-step CPR/AED guidance card. (done, validating)
 26. Push mobile Web PRIME next-step checkpoint. (done)
+27. Add Android profile demo-location selector. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -138,6 +139,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android task and incident screens now show the latest six on-site timeline logs with Chinese summaries for patient SOS, dispatch, CPR, AED, ambulance, handover, and archive events.
 - Android Runner full-screen task now shows target AED name, location/floor/status, access notes, distance to AED, and AED return distance to patient using existing dispatch rationale and AED-site data.
 - Mobile Web PRIME task card now shows the next CPR/AED step: start CPR, wait for AED, AED returning, attach pads, stop touching during analysis, or resume CPR after shock.
+- Android Profile screen now includes four demo-location buttons (patient corridor, first-floor lobby, gate post, sports-field entrance) that call the existing authenticated location update path for dispatch-distance demonstrations.
 
 ## Validation Log
 
@@ -175,6 +177,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `b2c0370` (`checkpoint: record AED target push`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile Web next-step validation: `npm run typecheck` passed; `npm run build` passed.
 - Git checkpoint: `5a18fc5` (`checkpoint: guide mobile CPR next steps`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `449815f` (`checkpoint: record mobile guidance push`) created and pushed to `origin/codex/competition-hardening`.
+- Android demo-location validation: `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -183,7 +187,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue from remote checkpoint `5a18fc5` to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push Android demo-location selector, then continue to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 

@@ -30,6 +30,7 @@
 - Android 首页和事件页已接通“自动接单”，登录后可直接加入当前事件并进入任务页。
 - Android 任务页和现场总览新增“最近现场时间线”，APK 端可以直接看到患者触发、角色响应、AED 取送、交接等日志。
 - Android AED 保障者全屏任务页会显示目标 AED 名称、位置楼层、取用说明、到 AED 距离和回送患者距离。
+- Android “我的”页新增演示位置切换，可一键上报患者走廊、一层大厅、校门岗亭、操场入口，方便演示调度距离变化。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -89,6 +90,8 @@ gradle :app:assembleDebug --no-daemon
 - `6342bb7`：记录检查点已推送状态。
 - `5cc9534`：Android AED 保障者全屏任务页显示目标 AED 与回送距离。
 - `b2c0370`：记录 AED 目标卡检查点已推送。
+- `5a18fc5`：移动 Web PRIME 任务卡增加 CPR/AED 下一动作提示。
+- `449815f`：记录移动 Web 下一动作提示检查点已推送。
 
 ## 你醒来后最该做的三件事
 

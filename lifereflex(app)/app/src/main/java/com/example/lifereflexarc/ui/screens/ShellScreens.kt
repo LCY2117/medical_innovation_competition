@@ -520,6 +520,7 @@ fun ArchiveScreen(
 fun ProfileScreen(
     session: UserSession,
     healthSignals: HealthSignalSummary?,
+    onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
     onLogout: () -> Unit,
 ) {
     Column(
@@ -546,6 +547,8 @@ fun ProfileScreen(
         }
 
         HealthSignalSummaryCard(healthSignals = healthSignals)
+
+        DemoLocationCard(onDemoLocationSelected = onDemoLocationSelected)
 
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
@@ -577,6 +580,48 @@ fun ProfileScreen(
         )
     }
 }
+
+@Composable
+private fun DemoLocationCard(
+    onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+) {
+    val points = listOf(
+        DemoLocationPoint("患者走廊", "教学楼 A 座 2 层走廊", 39.904120, 116.407210),
+        DemoLocationPoint("一层大厅", "教学楼 A 座 1 层大厅", 39.904210, 116.407260),
+        DemoLocationPoint("校门岗亭", "校门岗亭", 39.904500, 116.407620),
+        DemoLocationPoint("操场入口", "操场入口", 39.903920, 116.407020),
+    )
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFF1E293B)),
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("演示位置", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "切换后会把当前终端位置同步到云端，用于网页调度台的距离与角色分派演示。",
+                color = PhoneColors.GrayText,
+                fontSize = 13.sp,
+                lineHeight = 20.sp,
+            )
+            points.forEach { point ->
+                PressableButton(
+                    text = point.title,
+                    onClick = { onDemoLocationSelected(point.label, point.latitude, point.longitude) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D4ED8), contentColor = Color.White),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+private data class DemoLocationPoint(
+    val title: String,
+    val label: String,
+    val latitude: Double,
+    val longitude: Double,
+)
 
 @Composable
 private fun IncidentQuickActionsCard(

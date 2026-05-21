@@ -248,6 +248,9 @@ fun AppRoot(
                 MainTab.Profile -> ProfileScreen(
                     session = session,
                     healthSignals = healthSignals,
+                    onDemoLocationSelected = { label, latitude, longitude ->
+                        incidentViewModel.updateDemoLocation(activeUserId, label, latitude, longitude)
+                    },
                     onLogout = {
                         incidentViewModel.disconnect()
                         sessionViewModel.signOut()
