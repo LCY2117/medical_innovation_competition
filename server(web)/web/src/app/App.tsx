@@ -288,6 +288,19 @@ interface HealthDetail {
   frontend?: { ok?: boolean };
   mapProvider?: Record<string, unknown>;
   pushProvider?: Record<string, unknown>;
+  demoReadiness?: DemoReadiness;
+}
+
+interface DemoReadiness {
+  ready?: boolean;
+  patientSelected?: boolean;
+  clientCount?: number;
+  assignedRoleCount?: number;
+  availableAedSiteCount?: number;
+  locationCoveragePercent?: number;
+  healthCoveragePercent?: number;
+  exportReady?: boolean;
+  warnings?: string[];
 }
 
 interface AdminSessionUser {
@@ -693,6 +706,10 @@ function formatTechnicalValue(value: unknown): string {
     return JSON.stringify(value);
   }
   return String(value);
+}
+
+function readinessPercent(value?: number | null): string {
+  return typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value)}%` : '--';
 }
 
 function downloadJson(filename: string, data: unknown): void {
@@ -1230,6 +1247,15 @@ export default function App() {
       : '等待患者端 SOS 后自动生成三类协同任务。';
   const mapProviderDetail = dispatchMeta?.mapProvider ?? healthDetail?.mapProvider ?? {};
   const visibleAedSites = incidentState?.aedSites?.length ? incidentState.aedSites : aedSites;
+  const demoReadiness = healthDetail?.demoReadiness;
+  const readinessWarnings = demoReadiness?.warnings ?? [];
+  const readinessItems = [
+    { label: '终端', value: `${demoReadiness?.clientCount ?? clients.length}/4`, ready: (demoReadiness?.clientCount ?? clients.length) >= 4 },
+    { label: 'AED', value: `${demoReadiness?.availableAedSiteCount ?? visibleAedSites.length}`, ready: (demoReadiness?.availableAedSiteCount ?? visibleAedSites.length) >= 1 },
+    { label: '定位', value: readinessPercent(demoReadiness?.locationCoveragePercent), ready: (demoReadiness?.locationCoveragePercent ?? 0) >= 100 },
+    { label: '健康摘要', value: readinessPercent(demoReadiness?.healthCoveragePercent), ready: (demoReadiness?.healthCoveragePercent ?? 0) >= 100 },
+    { label: '证据导出', value: demoReadiness?.exportReady ? '可用' : '待事件日志', ready: Boolean(demoReadiness?.exportReady) },
+  ];
   const cprLogTs = getLatestLogTs(incidentState, 'CPR started');
   const shockLogTs = getLatestLogTs(incidentState, 'AED shock delivered');
   const guidanceStartTs = isPrimeShockDelivered ? shockLogTs : cprLogTs;
@@ -2724,6 +2750,45 @@ export default function App() {
           </div>
           <div className="rounded-lg border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
             安全边界：当前系统用于模拟急救协同、训练复盘和医创赛预实验，不替代 120、AED 语音提示、现场专业医护判断或真实医疗诊断。
+          </div>
+          <div className={cn(
+            "rounded-xl border p-4",
+            demoReadiness?.ready
+              ? "border-emerald-700/60 bg-emerald-950/20"
+              : "border-amber-700/60 bg-amber-950/20",
+          )}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">演示准备度</div>
+                <div className="text-sm text-white font-semibold mt-1">
+                  {demoReadiness?.ready ? '已满足医创赛演示前置条件' : '仍有演示前检查项需要确认'}
+                </div>
+              </div>
+              <div className={cn(
+                "rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider",
+                demoReadiness?.ready
+                  ? "border-emerald-700/60 bg-emerald-900/50 text-emerald-100"
+                  : "border-amber-700/60 bg-amber-900/40 text-amber-100",
+              )}>
+                {demoReadiness?.ready ? '准备就绪' : `${readinessWarnings.length || 1} 项待确认`}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
+              {readinessItems.map((item) => (
+                <div key={item.label} className={cn(
+                  "rounded-lg border px-3 py-3",
+                  item.ready ? "border-emerald-800/50 bg-slate-950/30" : "border-amber-800/50 bg-slate-950/30",
+                )}>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">{item.label}</div>
+                  <div className={cn("mt-1 text-sm font-semibold", item.ready ? "text-emerald-200" : "text-amber-200")}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+            {readinessWarnings.length > 0 && (
+              <div className="mt-3 text-xs leading-5 text-amber-100">
+                {readinessWarnings.slice(0, 3).join('；')}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
             {demoFlowSteps.map((step, index) => (
