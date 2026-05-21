@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 9e48785
-- Last update: 2026-05-22 03:49:00 +08:00
+- HEAD: aa0160b
+- Last update: 2026-05-22 03:52:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -61,6 +61,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 36. Add Android local archive participant-perspective task summary. (done, validating)
 37. Push Android archive-summary checkpoint. (done)
 38. Complete deployment backup/rollback/1Panel/OpenResty runbook details. (done, validating)
+39. Push deployment runbook hardening checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -213,6 +214,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `b2b650f` (`checkpoint: summarize android archives`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `9e48785` (`checkpoint: record archive summary push`) created and pushed to `origin/codex/competition-hardening`.
 - Deployment runbook doc validation: `rg` confirmed backup, rollback, 1Panel/OpenResty checks, `/opt/lifereflex`, `.env.example`, and DB hygiene notes are present.
+- Git checkpoint: `aa0160b` (`checkpoint: harden deployment runbook`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -221,7 +223,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push deployment runbook hardening, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Continue from remote checkpoint `aa0160b` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
