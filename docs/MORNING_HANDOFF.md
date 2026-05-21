@@ -55,6 +55,7 @@
 - Web 总控台默认已降噪：首屏保留演示流程、智能分派摘要、任务单、现场拓扑和四端状态；AI 配置、调度评分、在线终端调试列表、审计和系统日志统一放入“技术详情”展开区。
 - `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
+- 移动 Web “现场/协同”页已进一步分层：默认只展示 AED 位置、队友角色、在线状态和任务状态；分派评分、理由、健康摘要和风险标记收进“分派依据与健康摘要”展开区。
 - 最新验证扫尾已通过：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -91,6 +92,8 @@ npm run build
 结果：均通过。最新构建中桌面 `App-M71lbyYK.js` 为 220.37 kB raw / 67.15 kB gzip，移动 `MobileApp-DDAEQ_T7.js` 为 34.30 kB raw / 11.09 kB gzip。
 
 浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-demo?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?demo=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
+
+移动现场页烟测：使用临时本地后端 `127.0.0.1:18087` 通过。确认“现场”页默认不展示“智能评分/风险标记”，展开“分派依据与健康摘要”后再展示健康与风险信息。
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\lifereflex(app)"
