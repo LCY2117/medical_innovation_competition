@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 1fe3190
-- Last update: 2026-05-22 06:22:50 +08:00
+- HEAD: 19b14d1
+- Last update: 2026-05-22 06:26:25 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -100,6 +100,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 75. Add pre-experiment analysis guide into ZIP evidence package. (done, pushed)
 76. Add event-specific expert feedback and signature form into ZIP evidence package. (done, pushed)
 77. Add Web command-center demo entrance share links. (done, pushed)
+78. Add facilitator run sheet into ZIP evidence package. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -377,6 +378,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Demo entrance validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DRfENPpz.js` at `226.67 kB` raw / `68.78 kB` gzip and mobile `MobileApp-BoXW44GW.js` at `36.43 kB` raw / `11.71 kB` gzip. Local Edge smoke on temporary backend `127.0.0.1:18089` passed; the smoke DB/process were removed after validation.
 - Git checkpoint: `5dc86eb` (`checkpoint: add demo entrance links`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `1fe3190` (`checkpoint: record demo entrance push`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `19b14d1` (`checkpoint: record demo entrance state`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence package now includes `facilitator_run_sheet.md`, a facilitator/observer run sheet for pre-checks, demo entrance links, T1-T6 cueing, observer notes, post-run package verification, questionnaire collection, and prohibited clinical-effectiveness wording.
+- Facilitator run sheet validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -385,7 +389,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Commit and push the facilitator run sheet checkpoint, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

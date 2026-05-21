@@ -38,6 +38,7 @@
 | 专家摘要 `expert_summary.md` |  |
 | 专家现场复核清单 `expert_review_checklist.md` |  |
 | 事件级专家反馈签字表 `expert_feedback_form.md` |  |
+| 主持人/观察员跑场单 `facilitator_run_sheet.md` |  |
 | 预实验数据分析说明 `analysis_guide.md` |  |
 | 参与者知情与安全边界简表 `participant_consent_safety_brief.md` |  |
 | 观察员补充记录表 `observer_record_form.csv` |  |

@@ -13,14 +13,14 @@
 - Web 一键初始化医创赛演示场景：患者、医生、体育生、安保、2 个 AED 点位。
 - 云端调度会结合人员画像、患者距离、AED 距离和健康风险，输出 PRIME/RUNNER/GUIDE。
 - 调度结果包含可解释理由、评分、到患者距离、到 AED 距离。
-- 预实验证据包可导出 ZIP，包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
+- 预实验证据包可导出 ZIP，包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
 - 客户端和 AED 点位已持久化到 SQLite，PM2 重启后仍能恢复。
 - Web 控制台新增“演示口令”输入，公网演示管理接口已启用口令保护。
 - Android 默认后端改为 `https://lifereflex.mddcommunity.top/` 和 `wss://lifereflex.mddcommunity.top/ws`。
 - Android 现场总览新增 AED 点位和调度依据展示。
 - OPPO 健康增强一期已形成 mock/fallback 闭环：后端、Web、移动 Web、Android 都能同步和展示健康摘要。
 - 调度评分已经纳入健康摘要，高心率、低血氧、高压力等风险会降低高强度角色分派优先级。
-- 预实验证据包已升级为 ZIP：包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
+- 预实验证据包已升级为 ZIP：包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
 - 证据包 `manifest.json` 已补充匿名化使用建议、内部复核文件边界和 SHA-256 校验说明。
 - `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
 - Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
@@ -174,6 +174,7 @@ gradle :app:assembleDebug --no-daemon
 - `1f99b31`：预实验证据包新增 `analysis_guide.md` 数据分析说明，并同步测试与材料口径，已推送。
 - `0674344`：预实验证据包新增 `expert_feedback_form.md` 事件级专家反馈与签字表，并同步测试与材料口径，已推送。
 - `5dc86eb`：Web 总控台新增“演示入口”链接面板，已通过 Web typecheck/build 和本地 Edge 烟测，已推送。
+- 待提交：预实验证据包新增 `facilitator_run_sheet.md` 主持人/观察员跑场单，已通过后端目标测试和全量 37 项测试。
 
 ## 你醒来后最该做的三件事
 
@@ -208,7 +209,7 @@ app\build\outputs\apk\debug\app-debug.apk
 5. 触发患者 `demo-patient`。
 6. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
 7. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
-8. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
+8. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
 
 ## 仍需谨慎表达
 

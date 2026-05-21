@@ -275,6 +275,7 @@ ZIP 包含：
 - `expert_summary.md`：专家快速阅读摘要。
 - `expert_review_checklist.md`：专家现场复核清单。
 - `expert_feedback_form.md`：事件级专家反馈与签字表。
+- `facilitator_run_sheet.md`：主持人/观察员跑场单。
 - `analysis_guide.md`：预实验数据分析说明。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表。
 - `observer_record_form.csv`：观察员补充记录表。
@@ -283,7 +284,7 @@ ZIP 包含：
 - `pre_experiment_round_summary.csv`：单轮汇总行，适合多轮演练合并到 Excel 做描述性统计。
 - `manifest.json`：文件清单和 SHA-256 校验。
 
-对外材料优先使用匿名化文件、专家摘要、专家复核清单、专家反馈签字表、分析说明、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
+对外材料优先使用匿名化文件、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、分析说明、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
 
 ## AI 调度说明
 

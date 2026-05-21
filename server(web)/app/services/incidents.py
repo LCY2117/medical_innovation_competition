@@ -655,6 +655,7 @@ class IncidentService:
             "expert_summary.md": self._expert_summary(export, participant_map),
             "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
             "expert_feedback_form.md": self._expert_feedback_form(export, participant_map),
+            "facilitator_run_sheet.md": self._facilitator_run_sheet(export, participant_map),
             "analysis_guide.md": self._analysis_guide(export),
             "participant_consent_safety_brief.md": self._participant_consent_safety_brief(export, participant_map),
             "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
@@ -1460,6 +1461,7 @@ class IncidentService:
                     "expert_summary.md",
                     "expert_review_checklist.md",
                     "expert_feedback_form.md",
+                    "facilitator_run_sheet.md",
                     "analysis_guide.md",
                     "participant_consent_safety_brief.md",
                     "observer_record_form.csv",
@@ -1614,6 +1616,7 @@ class IncidentService:
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
 - `expert_feedback_form.md`：事件级专家反馈与签字表，便于专家对本轮演练给出评分、意见和签字确认。
+- `facilitator_run_sheet.md`：主持人/观察员跑场单，用于按步骤完成演练、记录关键时间点和导出材料。
 - `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
@@ -1630,7 +1633,7 @@ class IncidentService:
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:
@@ -1994,6 +1997,89 @@ class IncidentService:
 日期：
 
 单位盖章（如适用）：
+"""
+
+    def _facilitator_run_sheet(
+        self,
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> str:
+        assignments = {
+            role: participant_map.get(user_id or "", user_id or "未分派")
+            for role, user_id in export.assignments.items()
+        }
+        metrics = export.metrics
+        generated_at = self._iso_timestamp(export.generatedAt)
+        patient_code = participant_map.get(export.patientUserId or "", export.patientUserId or "未指定")
+        return f"""# 生命反射弧预实验主持人跑场单
+
+事件编号：{export.incidentId}
+导出时间：{generated_at}
+事件阶段：{export.phase}
+患者代号：{patient_code}
+角色分派：核心施救={assignments.get("PRIME", "未分派")}，AED 保障={assignments.get("RUNNER", "未分派")}，环境清障={assignments.get("GUIDE", "未分派")}
+
+## 一、适用场景
+
+本跑场单给主持人、观察员或指导教师使用，用于 3-5 分钟课堂/答辩演示，或 8-16 人低成本预实验。它只服务模拟急救协同和训练复盘，不用于真实患者处置。
+
+## 二、演练前 5 分钟检查
+
+- [ ] Web 总控台可访问，演示口令或管理员账号可用。
+- [ ] 点击“初始化医创赛演示场景”，确认 4 类终端和 AED 点位出现。
+- [ ] 在“演示入口”面板复制或打开患者端、核心施救端、AED 保障端、清障接驳端和 4 端导播台链接。
+- [ ] 参与者已阅读 `participant_consent_safety_brief.md`，不做真实胸外按压、不做真实电击。
+- [ ] 观察员准备填写 `observer_record_form.csv`，参与者演练后填写 `participant_questionnaire.csv`。
+- [ ] 如专家在场，提前发放 `expert_review_checklist.md` 和 `expert_feedback_form.md`。
+
+## 三、现场口令与动作顺序
+
+| 顺序 | 主持人口令 | 系统/参与者动作 | 记录重点 |
+| --- | --- | --- | --- |
+| 1 | “演练开始，患者端进入走廊场景。” | 患者端保持当前位置，其他端待命 | 记录场景、人数和 AED 道具状态 |
+| 2 | “患者出现异常，启动 SOS。” | 患者端点击 SOS 并完成二次确认 | 记 T0：患者触发时间 |
+| 3 | “等待系统分派。” | Web 展示 AI/规则分派，三类角色收到任务 | 记 T1：分派完成时间 |
+| 4 | “核心施救者响应并前往患者。” | 核心施救端接单，到达后开始 CPR | 记 T2/T3：响应与 CPR 开始 |
+| 5 | “AED 保障者取 AED。” | AED 保障端前往点位、取到 AED、回送患者 | 记 T4/T5：AED 取到与送达 |
+| 6 | “清障接驳者疏通通道。” | 清障接驳端完成通道清理、救护车接应 | 记 T6：救护接管/交接 |
+| 7 | “完成交接，归档事件。” | Web 或移动端完成交接归档，下载证据包 | 记录包名、manifest 生成时间 |
+
+## 四、本轮系统自动指标快照
+
+| 指标 | 当前系统记录 | 观察员补充 |
+| --- | --- | --- |
+| T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} |  |
+| T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} |  |
+| T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} |  |
+| T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |  |
+| T6 触发到救护接管 | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} |  |
+| 角色完整度 | {metrics.get("roleAssignmentCompleteness", "--")} |  |
+| 定位覆盖率 | {metrics.get("locationCoveragePercent", "--")}% |  |
+| 健康摘要覆盖率 | {metrics.get("healthCoveragePercent", "--")}% |  |
+
+## 五、观察员必须补记
+
+- 是否有人看不懂任务说明或误触按钮。
+- 患者端、核心施救端、AED 保障端、清障接驳端是否能独立完成当前动作。
+- AED 点位提示是否足够明确，是否存在绕路、找不到点位或楼层信息不足。
+- 系统分派理由是否能被非技术参与者理解。
+- 安全边界提示是否清楚，是否有人误以为可替代真实 120 或 AED 语音提示。
+
+## 六、演练后 10 分钟整理
+
+1. 下载 ZIP 证据包，优先对外使用匿名化文件。
+2. 核对 `manifest.json` 生成时间和 SHA-256 文件清单。
+3. 把观察员补充内容填入 `observer_record_form.csv`。
+4. 让参与者填写 `participant_questionnaire.csv` 对应代号行。
+5. 如进行了无系统基线轮，把基线数据填入 `baseline_vs_system_comparison.csv`。
+6. 专家审阅后，在 `expert_feedback_form.md` 中填写 100-300 字意见并签字。
+
+## 七、必须避免的表述
+
+- 不写“提高抢救成功率”“改善患者预后”。
+- 不写“系统可替代 120、AED 语音提示或专业医护判断”。
+- 不把 mock/演示健康摘要描述成真实临床监测或诊断。
+- 不把小样本预实验描述成具有统计显著性的临床研究。
 """
 
     def _participant_consent_safety_brief(
