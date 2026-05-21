@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 3362496
-- Last update: 2026-05-22 05:33:27 +08:00
+- HEAD: a852318
+- Last update: 2026-05-22 05:35:29 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -92,7 +92,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 67. Localize Android CPR metronome visible English labels. (done, pushed)
 68. Run post-label/evidence-package validation sweep. (done, pushed)
 69. Align whitepaper/pre-experiment/handoff wording with latest evidence package and Chinese role labels. (done, pushed)
-70. Add pre-experiment round-summary CSV into ZIP evidence package. (done, checkpointing)
+70. Add pre-experiment round-summary CSV into ZIP evidence package. (done, pushed)
+71. Refresh README with current demo entries, validation commands, evidence package, admin auth, and provider fallback. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -344,6 +345,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `3362496` (`checkpoint: align evidence docs`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence package now includes `pre_experiment_round_summary.csv`, a single-row per-round summary with anonymized participant codes, core timing metrics, coverage metrics, route distance, and blank observer/scoring columns for Excel aggregation across multiple simulated rounds. Documentation and tests are being updated to include the new file.
 - Round-summary evidence validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed, 1 test OK; backend full unittest discovery passed, 37 tests OK.
+- Git checkpoint: `a852318` (`checkpoint: add pre-experiment round summary`) created and pushed to `origin/codex/competition-hardening`.
+- README now documents `/mobile`, `/mobile-demo`, explicit validation commands, demo/admin auth settings, ZIP evidence package contents including `pre_experiment_round_summary.csv`, Chinese role presentation, and AI/map/health/push provider fallback behavior.
+- README validation: `rg` confirmed mobile entries, evidence package, demo admin token, provider fallback, round summary, and Chinese role wording are present.
 
 ## Blockers Summary
 
@@ -352,7 +356,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Stage and push the round-summary ZIP checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Stage and push the README refresh checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

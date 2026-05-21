@@ -203,6 +203,8 @@ python -m app.cli
 构建完成后，后端会直接托管 `web/dist`：
 
 - 页面入口: `/`
+- 移动浏览器端: `/mobile`
+- 4 端协同演示台: `/mobile-demo`
 - 静态资源: `/assets/*`
 - 推荐 API: `/api/*`
 - 兼容旧 API: `/incidents*`, `/health`
@@ -211,15 +213,70 @@ python -m app.cli
 
 ## 测试
 
-```bash
-python -m unittest tests.test_server
+后端：
+
+```powershell
+cd "server(web)"
+& "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-当前测试覆盖：
+Web：
 
-- 旧接口与 `/api` 双路由兼容
-- SQLite 持久化后重启恢复当前事件
-- `/api/health/detail` 的存储与前端状态输出
+```powershell
+cd "server(web)\web"
+npm run typecheck
+npm run build
+```
+
+Android：
+
+```powershell
+cd "lifereflex(app)"
+gradle :app:assembleDebug --no-daemon
+```
+
+当前测试重点覆盖：
+
+- 旧接口与 `/api` 双路由兼容。
+- SQLite 持久化后重启恢复当前事件、终端和 AED 点位。
+- 管理口令、正式管理员账号、审计日志和频率限制。
+- 患者 SOS、自动分派、CPR/AED/交接动作和归档。
+- 地图/推送/AI provider 不可用时的 demo fallback。
+- 预实验证据包 ZIP、匿名化文件、manifest hash 和专家材料。
+
+## 医创赛演示入口
+
+- Web 总控台：`/`
+- 移动浏览器端：`/mobile`
+- 4 端协同演示台：`/mobile-demo`
+- 指定同一事件进入移动端：`/mobile?incidentId=事件编号`
+- 指定同一事件打开 4 端演示台：`/mobile-demo?incidentId=事件编号`
+
+公网演示建议在 `.env` 中设置：
+
+- `LRA_DEMO_ADMIN_TOKEN`：启用后，初始化演示场景、重置事件、更新 AED、导出数据等管理操作需要演示口令。
+- `LRA_ADMIN_PHONES`：可选正式管理员手机号白名单；白名单账号正常登录后也可调用管理接口。
+
+## 预实验证据包
+
+Web 总控台可下载 ZIP 证据包：
+
+- `GET /api/experiments/current/package`
+
+ZIP 包含：
+
+- `experiment_anonymized.json`：匿名化结构化事件。
+- `clients_anonymized.csv`：匿名化终端画像、角色、位置和健康摘要。
+- `timeline.csv`：结构化事件时间线。
+- `metrics.csv`：调度、CPR、AED、交接、覆盖率等指标。
+- `dispatch_rationale.csv`：分派评分、理由、距离和风险提示。
+- `expert_summary.md`：专家快速阅读摘要。
+- `expert_review_checklist.md`：专家现场复核清单。
+- `observer_record_form.csv`：观察员补充记录表。
+- `pre_experiment_round_summary.csv`：单轮汇总行，适合多轮演练合并到 Excel 做描述性统计。
+- `manifest.json`：文件清单和 SHA-256 校验。
+
+对外材料优先使用匿名化文件和专家/观察材料；完整 `experiment.json`、`clients.csv` 只建议内部复核。
 
 ## AI 调度说明
 
@@ -249,8 +306,11 @@ SiliconFlow 的配置文件放在：
 - `online`
 - `patientCandidate`
 - `isPatient`
+- `location`
+- `healthSignals`
+- AED 点位距离与可达性
 
-当前要求模型返回的格式固定为：
+当前内部角色码固定为：
 
 ```json
 {
@@ -260,6 +320,19 @@ SiliconFlow 的配置文件放在：
 }
 ```
 
+面向评委和参与者的界面会优先展示中文职责名：核心施救、AED 保障、环境清障。
+
 前端调度台也可以直接查看这些说明：
 
 - `GET /api/dispatch/meta`
+
+## 第三方 provider 与 fallback
+
+当前比赛版按“真实 provider + demo fallback”设计：
+
+- AI：`LRA_SILICONFLOW_API_KEY` 或本地 OpenAI-compatible 模型；不可用时走规则兜底。
+- 地图：`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；缺 Key 时走内置坐标和 Haversine。
+- 健康：`LRA_HEALTH_PROVIDER=mock` 默认使用演示健康摘要；OPPO Health 真实接入需要官方合作审批、SDK/API、隐私披露和用户授权。
+- 推送：`LRA_PUSH_PROVIDER=websocket` 默认复用 WebSocket 状态同步；厂商推送后续作为 adapter 接入。
+
+真实 Key 只写入 `.env` 或服务器环境变量，不提交到 Git。
