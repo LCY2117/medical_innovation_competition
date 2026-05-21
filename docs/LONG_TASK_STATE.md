@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 69d7cc8
-- Last update: 2026-05-22 02:50:00 +08:00
+- HEAD: f11f607
+- Last update: 2026-05-22 02:51:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -44,6 +44,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 19. Fold mobile Web manual role takeover under a demo backup control. (done, validating)
 20. Add recent on-site timeline cards to Android task and incident screens. (done, validating)
 21. Commit evidence/mobile/Android polish checkpoint. (done)
+22. Push current checkpoints to GitHub. (done)
 
 ## Sub-Agent Ledger
 
@@ -161,6 +162,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Current Web validation: `npm run typecheck` passed; `npm run build` passed.
 - Current Android validation: `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `69d7cc8` (`checkpoint: polish evidence and mobile demo`) created locally.
+- Git checkpoint: `f11f607` (`checkpoint: update long task handoff`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -169,7 +171,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Push checkpoints to `origin/codex/competition-hardening`, then continue to the next unblocked polish or validation pass.
+Continue to the next unblocked polish or validation pass from clean remote checkpoint `f11f607`, while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
