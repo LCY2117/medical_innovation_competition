@@ -158,10 +158,10 @@ private fun DispatchingFullScreen(
     CriticalScaffold(
         eyebrow = "心脏骤停警报",
         title = "心脏骤停告警已触发",
-        body = "所有在线终端已收到覆盖全屏的红色告警。云端正在结合用户画像调用 AI 分派核心施救、AED 保障和环境清障三类任务。",
+        body = "所有在线终端已收到覆盖全屏的红色告警。系统正在结合用户画像、距离和 AED 可达性生成核心施救、AED 保障和环境清障三类任务。",
         accent = PhoneColors.Red,
     ) {
-        MetricTile(label = "AI 分配倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
+        MetricTile(label = "智能分派倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
     }
 }

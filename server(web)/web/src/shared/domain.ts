@@ -241,7 +241,7 @@ export function translateHealthSource(source?: string | null): string {
     case 'oppo_health':
       return 'OPPO 健康';
     case 'mock':
-      return '模拟健康';
+      return '演示健康摘要';
     case 'manual':
       return '手动录入';
     case 'unavailable':

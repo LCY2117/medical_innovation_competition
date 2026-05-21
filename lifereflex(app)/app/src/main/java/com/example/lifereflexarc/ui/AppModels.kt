@@ -60,7 +60,7 @@ fun phaseHeadline(phase: String): String = when (phase) {
 
 fun phaseBody(phase: String): String = when (phase) {
     "CREATED" -> "系统正在等待异常确认或自动告警。"
-    "DISPATCHING" -> "患者已被网页指挥台触发，硅基流动正在根据画像和能力标签生成核心施救、AED保障、环境清障分派。"
+    "DISPATCHING" -> "患者已被网页指挥台触发，系统正在根据画像、距离和能力标签生成核心施救、AED保障、环境清障分派。"
     "DISPATCHED" -> "云端已向核心施救、AED保障、环境清障三类角色派发并行任务。"
     "CPR" -> "核心施救者已开始基础复苏循环，正在按 30:2 节律持续执行胸外按压与人工呼吸。"
     "AED_PICKED" -> "设备链路已经打通，AED 正向患者位置回送。"

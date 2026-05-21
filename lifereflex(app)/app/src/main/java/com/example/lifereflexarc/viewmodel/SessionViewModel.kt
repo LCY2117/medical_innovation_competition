@@ -422,7 +422,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             return "密码至少 4 位"
         }
         if (bio.trim().length < 8) {
-            return "个人介绍至少 8 个字，便于 AI 调度"
+            return "个人介绍至少 8 个字，便于智能调度"
         }
         return null
     }

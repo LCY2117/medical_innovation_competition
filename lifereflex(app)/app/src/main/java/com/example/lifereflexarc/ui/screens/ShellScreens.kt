@@ -296,7 +296,7 @@ private fun AedSitesCard(
             Text("AED 点位", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             if (aedSites.isEmpty()) {
                 Text(
-                    text = "当前事件还没有同步 AED 点位。请先在网页调度台初始化医创赛演示场景。",
+                    text = "当前事件还没有同步 AED 点位。请先在网页调度台初始化协同演示场景。",
                     color = PhoneColors.GrayText,
                     fontSize = 13.sp,
                     lineHeight = 20.sp,

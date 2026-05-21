@@ -24,11 +24,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.lifereflexarc.data.IncidentState
+import com.example.lifereflexarc.ui.formatDuration
 import com.example.lifereflexarc.ui.theme.PhoneColors
 import com.example.lifereflexarc.ui.theme.PhoneTokens
 
 @Composable
-fun HandoverArchiveScreen() {
+fun HandoverArchiveScreen(
+    incidentState: IncidentState,
+) {
+    val startedAt = incidentState.logs.firstOrNull()?.ts
+    val endedAt = incidentState.logs.lastOrNull()?.ts ?: startedAt
+    val durationLabel = if (startedAt != null && endedAt != null) {
+        formatDuration(((endedAt - startedAt) / 1000L).coerceAtLeast(0L))
+    } else {
+        "待生成"
+    }
+    val roleCount = listOf(
+        incidentState.roles.PRIME.userId,
+        incidentState.roles.RUNNER.userId,
+        incidentState.roles.GUIDE.userId,
+    ).count { !it.isNullOrBlank() }
+    val roleCountLabel = if (roleCount > 0) "${roleCount}类任务" else "待生成"
+    val aedSummary = when {
+        incidentState.roles.PRIME.status == "AED_SHOCK_DELIVERED" || incidentState.phase == "SHOCK_DELIVERED" -> "电击记录 1 次"
+        incidentState.roles.PRIME.status == "AED_ANALYZING" || incidentState.phase == "AED_ANALYZING" -> "AED 分析已记录"
+        incidentState.roles.RUNNER.status == "AED_DELIVERED" || incidentState.phase == "AED_DELIVERED" ||
+            incidentState.phase == "HANDOVER" || incidentState.phase == "ARCHIVED" -> "AED 已送达"
+        incidentState.roles.RUNNER.status == "AED_PICKED" || incidentState.phase == "AED_PICKED" -> "AED 已取用"
+        else -> "未记录"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,8 +105,8 @@ fun HandoverArchiveScreen() {
                     Text("📄", fontSize = 20.sp)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("NFC 触碰传输", color = PhoneColors.Navy, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text("靠近急救员终端传输日志", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
+                Text("交接摘要已生成", color = PhoneColors.Navy, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("关键处置日志已纳入事件记录，可在证据包中复核", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
             }
         }
 
@@ -93,17 +119,17 @@ fun HandoverArchiveScreen() {
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("总耗时", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
-                Text("04:35", color = PhoneColors.Navy, fontSize = PhoneTokens.Body, fontWeight = FontWeight.Bold)
+                Text(durationLabel, color = PhoneColors.Navy, fontSize = PhoneTokens.Body, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("协同人数", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
-                Text("3人", color = PhoneColors.Navy, fontSize = PhoneTokens.Body, fontWeight = FontWeight.Bold)
+                Text("协同任务", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
+                Text(roleCountLabel, color = PhoneColors.Navy, fontSize = PhoneTokens.Body, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("AED使用", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
-                Text("成功（1 次）", color = PhoneColors.Green, fontSize = PhoneTokens.Body, fontWeight = FontWeight.Bold)
+                Text("AED记录", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
+                Text(aedSummary, color = PhoneColors.Green, fontSize = PhoneTokens.Body, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -112,5 +138,19 @@ fun HandoverArchiveScreen() {
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)
 @Composable
 private fun HandoverArchivePreview() {
-    HandoverArchiveScreen()
+    HandoverArchiveScreen(
+        incidentState = IncidentState(
+            incidentId = "preview",
+            phase = "ARCHIVED",
+            roles = com.example.lifereflexarc.data.RoleStates(
+                PRIME = com.example.lifereflexarc.data.RoleState("AED_SHOCK_DELIVERED", "doctor"),
+                RUNNER = com.example.lifereflexarc.data.RoleState("AED_DELIVERED", "runner"),
+                GUIDE = com.example.lifereflexarc.data.RoleState("HANDOVER_COMPLETED", "guide"),
+            ),
+            logs = listOf(
+                com.example.lifereflexarc.data.LogEntry(0L, "Incident created"),
+                com.example.lifereflexarc.data.LogEntry(275000L, "Handover completed"),
+            ),
+        ),
+    )
 }

@@ -235,7 +235,7 @@ private fun PrimeMissionCard(
 
     when {
         status.isNullOrBlank() || status == "IDLE" -> {
-            title = "等待 AI 分配"
+            title = "等待智能分派"
             body = "当前终端尚未被分配到核心施救任务。"
             cta = null
             action = null
@@ -284,7 +284,7 @@ private fun RunnerMissionCard(
 
     when (status) {
         null, "", "IDLE" -> {
-            title = "等待 AI 分配"
+            title = "等待智能分派"
             body = "当前终端尚未被分配到 AED 保障任务。"
             cta = null
             action = null
@@ -334,7 +334,7 @@ private fun GuideMissionCard(
 
     when (status) {
         null, "", "IDLE" -> {
-            title = "等待 AI 分配"
+            title = "等待智能分派"
             body = "当前终端尚未被分配到环境清障任务。"
             cta = null
             action = null

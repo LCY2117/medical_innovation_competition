@@ -50,6 +50,45 @@ function formatElapsed(seconds: number): string {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+function formatArchiveDurationLabel(state: IncidentState | null, nowMs: number): string {
+  const startedAt = state?.logs?.[0]?.ts;
+  if (!state || !startedAt) {
+    return '待生成';
+  }
+  const lastLogTs = state.logs[state.logs.length - 1]?.ts ?? startedAt;
+  const endedAt = state.phase === 'HANDOVER' || state.phase === 'ARCHIVED' ? lastLogTs : nowMs;
+  return formatElapsed(Math.max(0, Math.floor((endedAt - startedAt) / 1000)));
+}
+
+function formatArchiveRoleCount(state: IncidentState | null): string {
+  if (!state) {
+    return '待生成';
+  }
+  const count = roleNames.filter((role) => Boolean(state.roles[role]?.userId)).length;
+  return count > 0 ? `${count}类任务` : '待生成';
+}
+
+function formatArchiveAedSummary(state: IncidentState | null): string {
+  if (!state) {
+    return '待生成';
+  }
+  const primeStatus = state.roles.PRIME?.status;
+  const runnerStatus = state.roles.RUNNER?.status;
+  if (primeStatus === 'AED_SHOCK_DELIVERED' || state.phase === 'SHOCK_DELIVERED') {
+    return '电击记录 1 次';
+  }
+  if (primeStatus === 'AED_ANALYZING' || state.phase === 'AED_ANALYZING') {
+    return 'AED 分析已记录';
+  }
+  if (runnerStatus === 'AED_DELIVERED' || state.phase === 'AED_DELIVERED' || state.phase === 'HANDOVER' || state.phase === 'ARCHIVED') {
+    return 'AED 已送达';
+  }
+  if (runnerStatus === 'AED_PICKED' || state.phase === 'AED_PICKED') {
+    return 'AED 已取用';
+  }
+  return '未记录';
+}
+
 function getResuscitationGuidance(elapsedSec: number) {
   const cycleTotal = 120;
   const cycleRemaining = cycleTotal - (elapsedSec % cycleTotal);
@@ -366,7 +405,7 @@ function translatePhaseLabel(phase?: string | null): string {
     case 'CREATED':
       return '监测中';
     case 'DISPATCHING':
-      return 'AI 分派中';
+      return '智能分派中';
     case 'DISPATCHED':
       return '任务已下发';
     case 'CPR':
@@ -385,6 +424,24 @@ function translatePhaseLabel(phase?: string | null): string {
       return '已归档';
     default:
       return phase ?? '未开始';
+  }
+}
+
+function translateDispatchSourceLabel(source?: string | null): string {
+  switch (source?.trim()) {
+    case 'fallback':
+      return '规则兜底';
+    case 'ai':
+    case 'local_model':
+      return '本地智能分派';
+    case 'siliconflow':
+      return '云端智能分派';
+    case '':
+    case undefined:
+    case null:
+      return '智能分派处理中';
+    default:
+      return /[A-Za-z_]/.test(source) ? '智能分派' : source;
   }
 }
 
@@ -541,7 +598,7 @@ function translateLogMessage(message: string, displayUser: (userId?: string | nu
   }
   match = message.match(/^(PRIME|RUNNER|GUIDE) assigned \((.+)\) via (.+)$/);
   if (match) {
-    const source = match[3] === 'fallback' ? '规则兜底' : match[3] === 'ai' ? '智能分派' : match[3];
+    const source = translateDispatchSourceLabel(match[3]);
     return `${translateRoleLabel(match[1])} 已分派给 ${displayUser(match[2])}（${source}）`;
   }
   match = message.match(/^(PRIME|RUNNER|GUIDE) joined \((.+)\)$/);
@@ -586,7 +643,7 @@ function translateLogMessage(message: string, displayUser: (userId?: string | nu
     return '智能分派已启动';
   }
   if (message === 'Demo scenario bootstrapped') {
-    return '医创赛演示场景已初始化';
+    return '协同演示场景已初始化';
   }
   if (message === 'Incident auto-triggered') {
     return '事件已自动触发';
@@ -704,6 +761,23 @@ function formatLocationLabel(location?: GeoPoint | null): string {
 function formatTechnicalValue(value: unknown): string {
   if (value === undefined || value === null || value === '') {
     return '--';
+  }
+  if (typeof value === 'string') {
+    const labels: Record<string, string> = {
+      demo: '演示距离模型',
+      amap: '高德地图服务',
+      tencent: '腾讯地图服务',
+      baidu: '百度地图服务',
+      haversine_demo: '演示直线距离',
+      amap_web_service: '高德 WebService 距离',
+      amap_service_key_missing: '高德服务 Key 未配置，已使用演示距离',
+      amap_timeout: '高德服务超时，已使用演示距离',
+      amap_distance_failed: '高德距离接口异常，已使用演示距离',
+      unsupported_provider: '地图服务暂不支持，已使用演示距离',
+      tencent_adapter_pending: '腾讯地图适配待接入，已使用演示距离',
+      baidu_adapter_pending: '百度地图适配待接入，已使用演示距离',
+    };
+    return labels[value] ?? value;
   }
   if (typeof value === 'boolean') {
     return value ? '是' : '否';
@@ -888,7 +962,7 @@ function buildDemoFlowSteps(state: IncidentState | null) {
   const definitions = [
     { title: '初始化场景', detail: '准备患者、救援者、AED 点位', complete: hasIncident, active: !hasIncident },
     { title: '患者 SOS', detail: '患者端触发告警并锁定位置', complete: dispatchStarted, active: hasIncident && !dispatchStarted },
-    { title: 'AI 分派', detail: '生成核心施救、AED 保障、环境清障任务', complete: rolesAssigned, active: dispatchStarted && !rolesAssigned },
+    { title: '智能分派', detail: '生成核心施救、AED 保障、环境清障任务', complete: rolesAssigned, active: dispatchStarted && !rolesAssigned },
     { title: '现场处置', detail: 'CPR、AED 取送、清障接车', complete: rescueStarted || handover, active: rolesAssigned && !handover },
     { title: '交接归档', detail: '导出预实验证据包', complete: archived, active: handover && !archived },
   ];
@@ -901,7 +975,7 @@ function describeClientMission(client: ClientInfo, state: IncidentState | null):
   }
   if (client.isPatient) {
     if (state.phase === 'DISPATCHING') {
-      return '已触发心脏骤停，系统正在广播红色告警并进行 AI 分派';
+      return '已触发心脏骤停，系统正在广播红色告警并进行智能分派';
     }
     if (state.phase === 'HANDOVER') {
       return '救护车已完成现场接管，进入交接阶段';
@@ -931,7 +1005,7 @@ function describeClientMission(client: ClientInfo, state: IncidentState | null):
     case 'GUIDE':
       return hasGuideCompleted(state) ? '已引导救护车到场并完成交接' : '正在疏通通道并引导救护车';
     default:
-      return state.phase === 'DISPATCHING' ? '正在等待 AI 分派结果' : '本轮未分配任务，保持待命';
+      return state.phase === 'DISPATCHING' ? '正在等待智能分派结果' : '本轮未分配任务，保持待命';
   }
 }
 
@@ -1261,6 +1335,9 @@ export default function App() {
   const actionsDisabled = !incidentState;
   const actionDisabledTitle = actionsDisabled ? '等待服务端状态同步' : undefined;
   const incidentStartTs = incidentState?.logs?.[0]?.ts ?? null;
+  const archiveDurationLabel = formatArchiveDurationLabel(incidentState, liveNowMs);
+  const archiveRoleCountLabel = formatArchiveRoleCount(incidentState);
+  const archiveAedSummaryLabel = formatArchiveAedSummary(incidentState);
   const dispatchStream = buildDispatchStream(incidentState, clients, dispatchMeta, dispatchNowMs);
   const demoFlowSteps = buildDemoFlowSteps(incidentState);
   const rationale = incidentState?.dispatchRationale ?? {};
@@ -2616,31 +2693,27 @@ export default function App() {
             </div>
             
             <div className="flex-1 p-6 flex flex-col items-center justify-center">
-               <motion.div 
-                 whileTap={{ scale: 0.95 }}
-                 className="w-full bg-white border-2 border-dashed border-indigo-300 rounded-2xl p-8 flex flex-col items-center justify-center mb-8 cursor-pointer hover:bg-indigo-50 transition-colors group"
-                 onClick={() => {}}
-               >
-                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                     <FileText size={32} className="text-indigo-600" />
-                  </div>
-                  <div className="text-slate-900 font-bold text-lg">现场交接摘要</div>
-                  <div className="text-xs text-slate-500 mt-1">已将关键处置日志整理为交接摘要</div>
-               </motion.div>
+                <div className="w-full bg-white border-2 border-dashed border-indigo-300 rounded-2xl p-8 flex flex-col items-center justify-center mb-8">
+                   <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <FileText size={32} className="text-indigo-600" />
+                   </div>
+                   <div className="text-slate-900 font-bold text-lg">现场交接摘要已生成</div>
+                   <div className="text-xs text-slate-500 mt-1">关键处置日志已进入事件记录，可在证据包中复核</div>
+                </div>
 
-               <div className="w-full space-y-3 px-2">
-                 <div className="flex justify-between text-sm py-2 border-b border-slate-100">
-                   <span className="text-slate-500">总耗时</span>
-                   <span className="font-mono font-bold text-slate-900">04:35</span>
-                 </div>
-                 <div className="flex justify-between text-sm py-2 border-b border-slate-100">
-                   <span className="text-slate-500">协同人数</span>
-                   <span className="font-mono font-bold text-slate-900">3人</span>
-                 </div>
-                 <div className="flex justify-between text-sm py-2 border-b border-slate-100">
-                   <span className="text-slate-500">AED使用</span>
-                   <span className="font-mono font-bold text-green-600 bg-green-50 px-2 rounded">成功 (1次)</span>
-                 </div>
+                <div className="w-full space-y-3 px-2">
+                  <div className="flex justify-between text-sm py-2 border-b border-slate-100">
+                    <span className="text-slate-500">总耗时</span>
+                    <span className="font-mono font-bold text-slate-900">{archiveDurationLabel}</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-2 border-b border-slate-100">
+                    <span className="text-slate-500">协同任务</span>
+                    <span className="font-mono font-bold text-slate-900">{archiveRoleCountLabel}</span>
+                  </div>
+                  <div className="flex justify-between text-sm py-2 border-b border-slate-100">
+                    <span className="text-slate-500">AED记录</span>
+                    <span className="font-mono font-bold text-green-600 bg-green-50 px-2 rounded">{archiveAedSummaryLabel}</span>
+                  </div>
                  {phase === 'summary' && (
                    <div className="flex justify-between text-sm py-2 border-b border-slate-100">
                      <span className="text-slate-500">手机端状态</span>
@@ -2898,7 +2971,7 @@ export default function App() {
              </div>
           </div>
           <div className="rounded-lg border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
-            安全边界：当前系统用于模拟急救协同、训练复盘和医创赛预实验，不替代 120、AED 语音提示、现场专业医护判断或真实医疗诊断。
+            安全边界：当前系统用于急救协同演示、训练复盘与研究验证，不替代 120、AED 语音提示、现场专业医护判断或真实医疗诊断。
           </div>
           <div className={cn(
             "rounded-xl border p-4",
@@ -2908,9 +2981,9 @@ export default function App() {
           )}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">演示准备度</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">运行准备度</div>
                 <div className="text-sm text-white font-semibold mt-1">
-                  {demoReadiness?.ready ? '已满足医创赛演示前置条件' : '仍有演示前检查项需要确认'}
+                  {demoReadiness?.ready ? '已满足本轮协同演示前置条件' : '仍有演示前检查项需要确认'}
                 </div>
               </div>
               <div className={cn(
@@ -2943,7 +3016,7 @@ export default function App() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-[10px] text-blue-300 uppercase tracking-wider font-bold">演示入口</div>
-                <div className="text-sm text-white font-semibold mt-1">把这些链接发给手机或评委浏览器即可进入指定终端</div>
+                <div className="text-sm text-white font-semibold mt-1">把这些链接发给手机或观察端即可进入指定终端</div>
                 <div className="mt-1 text-xs text-slate-400">
                   {incidentId ? `已绑定当前事件 ${incidentId.slice(0, 8)}，刷新或新开标签页不会丢失事件。` : '等待事件编号，同步后会自动带上 incidentId。'}
                 </div>
@@ -3035,7 +3108,7 @@ export default function App() {
               className="min-h-12 rounded-lg border border-red-500/60 bg-red-950/40 px-4 py-3 text-left hover:bg-red-950/70 transition-colors"
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Siren size={16} className="text-red-300" /> 初始化医创赛演示场景
+                <Siren size={16} className="text-red-300" /> 初始化协同演示场景
               </div>
               <div className="text-xs text-slate-400 mt-1">自动生成患者、医生、AED 保障、环境清障和 AED 点位。</div>
             </button>
@@ -3044,9 +3117,9 @@ export default function App() {
               className="min-h-12 rounded-lg border border-slate-700 bg-slate-800/70 px-4 py-3 text-left hover:bg-slate-800 transition-colors"
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <Download size={16} className="text-blue-300" /> 导出预实验证据包
+                <Download size={16} className="text-blue-300" /> 导出事件证据包
               </div>
-              <div className="text-xs text-slate-400 mt-1">下载 JSON、CSV 表格和说明文件，便于 Excel 统计与专家反馈归档。</div>
+              <div className="text-xs text-slate-400 mt-1">下载 JSON、CSV 表格和说明文件，便于复盘统计与交接留存。</div>
             </button>
           </div>
           {wsError && (
@@ -3109,7 +3182,7 @@ export default function App() {
               <div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">AI 调度引擎</div>
                 <div className="text-sm text-white font-semibold mt-1">
-                  {dispatchMeta?.configured ? '已接入硅基流动，按画像进行智能分派' : '未配置硅基流动，当前以本地规则兜底'}
+                  {dispatchMeta?.configured ? '云端智能分派已启用，按画像和距离生成任务单' : '当前以本地规则调度生成任务单'}
                 </div>
               </div>
               <div className={cn(
@@ -3121,12 +3194,12 @@ export default function App() {
             </div>
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
               <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider">配置文件</div>
-                <div className="text-xs text-slate-200 mt-1 break-all">{dispatchMeta?.configFile ?? 'server（云端服务）/.env'}</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">运行配置</div>
+                <div className="text-xs text-slate-200 mt-1 break-all">{dispatchMeta?.configFile ? '服务端运行配置' : '未返回配置状态'}</div>
               </div>
               <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider">分派耗时</div>
-                <div className="text-xs text-slate-200 mt-1">{dispatchMeta?.dispatchDelaySec ?? 3} 秒</div>
+                <div className="text-xs text-slate-200 mt-1">{dispatchMeta?.dispatchDelaySec !== undefined ? `${dispatchMeta.dispatchDelaySec} 秒` : '--'}</div>
               </div>
               <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider">模型</div>
@@ -3157,7 +3230,7 @@ export default function App() {
                 <div className="mt-1 break-all text-slate-200">{formatTechnicalValue(mapProviderDetail.distanceSource)}</div>
               </div>
               <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider">回退原因</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">距离计算状态</div>
                 <div className="mt-1 break-all text-slate-200">{formatTechnicalValue(mapProviderDetail.fallbackReason)}</div>
               </div>
             </div>
@@ -3225,7 +3298,7 @@ export default function App() {
               <div className="space-y-2">
                 {visibleAedSites.length === 0 && (
                   <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-4 text-xs text-slate-400">
-                    暂无 AED 点位，点击“演示场景”可自动生成模拟点位。
+                    暂无 AED 点位，点击“初始化协同演示场景”可生成演示点位。
                   </div>
                 )}
                 {visibleAedSites.map((site) => (

@@ -199,7 +199,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
                     PhoneScreen.GuideTask -> GuideTaskScreen(
                         onAmbulanceArrived = { viewModel.actionAmbulanceArrived(userId) }
                     )
-                    PhoneScreen.HandoverArchive -> HandoverArchiveScreen()
+                    PhoneScreen.HandoverArchive -> HandoverArchiveScreen(incidentState = incidentState!!)
                 }
             }
         }

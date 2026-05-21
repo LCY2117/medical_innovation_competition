@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 2605c33
-- Last update: 2026-05-22 07:03:01 +08:00
+- HEAD: 0d0e02d
+- Last update: 2026-05-22 07:14:23 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -106,7 +106,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 81. Add ZIP evidence-package review index for expert/judge review. (done, pushed)
 82. Improve mobile Web archived-flow evidence package permission UX. (done, pushed)
 83. Run latest backend/Web/Android validation sweep and record handoff. (done, pushed)
-84. Polish Android visible location floor/source and AED status labels. (done, checkpointing)
+84. Polish Android visible location floor/source and AED status labels. (done, pushed)
+85. Harden archive/evidence summary copy and remove visible fake metrics. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -407,6 +408,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `2605c33` (`checkpoint: record latest validation sweep`) created and pushed to `origin/codex/competition-hardening`.
 - Android visible label polish in progress: added shared UI formatters for floor labels, AED status, and location source, replacing visible `1F/2F`, `AVAILABLE`, and `app-demo-fallback` style strings with Chinese labels in Android incident/AED/profile screens.
 - Android visible label validation: `gradle :app:assembleDebug --no-daemon` passed in `lifereflex(app)`; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `0d0e02d` (`checkpoint: polish android location labels`) created and pushed to `origin/codex/competition-hardening`.
+- Archive/evidence summary copy hardening: Web phone-preview archive summary now derives total duration, task count, and AED record from the incident logs/roles instead of fixed `04:35`, `3人`, and `成功`; removed empty clickable handover-summary affordance; Android `HandoverArchiveScreen` now receives `IncidentState`, computes the same summary from logs/roles, and replaces the unsupported NFC-transfer promise with a reviewable handover-summary message; phone routing now sends `HANDOVER`/`ARCHIVED` to the archive screen for all roles.
+- Visible wording cleanup: changed remaining judge-facing `AI 分派/AI 分配`, `硅基流动`, `医创赛演示`, `评委浏览器`, simulated AED/health wording, and raw map fallback labels to more cautious Chinese product language. `/mobile-demo` now includes “归档并下载证据包” as the final guided step.
+- Archive copy validation: `rg` found no remaining high-risk visible strings among `04:35`, `3人`, `成功 (1次)`, `NFC 触碰`, `等待 AI`, `AI 分派`, `AI 分配`, `调用 AI`, `硅基流动`, `server（云端服务）/.env`, `医创赛演示`, `评委浏览器`, `自动生成模拟点位`, and `模拟健康` in the checked Web/Android UI files.
+- Archive copy validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App--36xguvV.js`, mobile `MobileApp-C2UVJLdb.js`, and stage `MobileDemoStage-BlmPj_Gp.js`; Android `gradle :app:assembleDebug --no-daemon` passed with existing non-blocking `android.overridePathCheck=true`, `SosState` safe-call, and AndroidX Security deprecation warnings; backend full unittest discovery passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -415,7 +421,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Android visible location/AED label polish slice, then continue archive/evidence summary copy hardening. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the archive/evidence summary copy hardening slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

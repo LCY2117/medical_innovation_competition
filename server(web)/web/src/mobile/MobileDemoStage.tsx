@@ -10,10 +10,11 @@ const demoFrames = [
 
 const runbookSteps = [
   '患者端启动 SOS',
-  '等待 AI 分派',
+  '等待智能分派',
   '核心施救开始 CPR',
   'AED 保障取送设备',
   '清障接驳完成交接',
+  '归档并下载证据包',
 ];
 
 function MobileDemoStage() {
