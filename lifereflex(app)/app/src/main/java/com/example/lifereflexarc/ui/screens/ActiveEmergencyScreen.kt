@@ -156,7 +156,7 @@ private fun DispatchingFullScreen(
     CriticalScaffold(
         eyebrow = "心脏骤停警报",
         title = "心脏骤停告警已触发",
-        body = "所有在线终端已收到覆盖全屏的红色告警。云端正在结合用户画像调用 AI 进行 PRIME、RUNNER、GUIDE 三类任务分配。",
+        body = "所有在线终端已收到覆盖全屏的红色告警。云端正在结合用户画像调用 AI 分派核心施救、AED 保障和环境清障三类任务。",
         accent = PhoneColors.Red,
     ) {
         MetricTile(label = "AI 分配倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
@@ -405,8 +405,8 @@ private fun RunnerFullScreen(
             else -> "你被分配为 AED 保障者"
         },
         body = when (status) {
-            "AED_PICKED" -> "沿最短路径回返患者位置，与 PRIME 汇合。"
-            "AED_DELIVERED" -> "设备已送达现场，提醒 PRIME 贴附电极片并按 AED 语音提示分析与除颤。"
+            "AED_PICKED" -> "沿最短路径回返患者位置，与核心施救者汇合。"
+            "AED_DELIVERED" -> "设备已送达现场，提醒核心施救者贴附电极片并按 AED 语音提示分析与除颤。"
             else -> "立即前往最近 AED 点位，取到设备后第一时间返回现场。"
         },
         accent = accentForRole(UserRole.RUNNER),

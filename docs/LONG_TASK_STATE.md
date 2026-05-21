@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: de3107e
-- Last update: 2026-05-22 05:22:06 +08:00
+- HEAD: b885b96
+- Last update: 2026-05-22 05:24:03 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -87,7 +87,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 62. Surface demo readiness checklist in Web command center. (done, pushed)
 63. Add expert review checklist and observer record form into ZIP evidence package. (done, pushed)
 64. Remove visible PRIME/RUNNER/GUIDE auxiliary labels from mobile demo entry and 4-terminal stage captions. (done, pushed)
-65. Add mobile Web archived-flow evidence package download entry. (done, validating)
+65. Add mobile Web archived-flow evidence package download entry. (done, pushed)
+66. Localize remaining Android emergency-screen role-code wording. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -326,6 +327,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `de3107e` (`checkpoint: polish mobile role labels`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile Web archive summary now includes a protected “下载预实验证据包” action using the existing admin token/Bearer auth path, plus guidance to enter the demo token or admin account if permissions are missing.
 - Mobile archive package validation: `npm run typecheck` passed; `npm run build` passed with mobile `MobileApp-DTIoJNCQ.js` at `36.43 kB` raw / `11.71 kB` gzip.
+- Git checkpoint: `b885b96` (`checkpoint: add mobile evidence package download`) created and pushed to `origin/codex/competition-hardening`.
+- Android emergency full-screen wording now describes “核心施救、AED 保障、环境清障” instead of visible PRIME/RUNNER/GUIDE codes during dispatching and AED return/delivery guidance.
+- Android wording validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -334,7 +338,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Stage and push the mobile archive evidence-package download checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Stage and push the Android emergency wording checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
