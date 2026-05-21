@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a8104ca
-- Last update: 2026-05-22 02:37:41 +08:00
+- HEAD: 69d7cc8
+- Last update: 2026-05-22 02:50:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -39,6 +39,11 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 14. Add input boundary validation for location, health summaries, and AED status. (done, validating)
 15. Update morning handoff with OPPO phase 1, evidence package, demo guidance, validation, and latest checkpoints. (done, checkpointing)
 16. Localize health-risk tags and remove mock/fallback wording from user-facing health cards. (done, checkpointing)
+17. Align pre-experiment, deployment, expert feedback, product plan, and whitepaper docs to the ZIP evidence package. (done, validating)
+18. Add manifest privacy guidance and verification metadata for evidence packages. (done, validating)
+19. Fold mobile Web manual role takeover under a demo backup control. (done, validating)
+20. Add recent on-site timeline cards to Android task and incident screens. (done, validating)
+21. Commit evidence/mobile/Android polish checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -122,6 +127,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Backend schemas now reject invalid latitude/longitude, negative accuracy, out-of-range health values, and unsupported AED status while normalizing valid AED status values.
 - `docs/MORNING_HANDOFF.md` is updated with latest checkpoints, validation status, demo script, and evidence-package guidance.
 - Web, mobile Web, and Android now present health-risk tags in Chinese, such as 心率偏快、血氧偏低、压力偏高, and Android frames OPPO health data as a demo health-data integration instead of raw mock/fallback text.
+- Pre-experiment protocol, deployment runbook, expert feedback template, product optimization plan, and technical landing whitepaper now consistently describe the ZIP evidence package rather than a JSON-only export.
+- Evidence package `manifest.json` now includes package type, anonymized-file guidance, internal-review-only file guidance, and SHA-256 verification metadata.
+- Mobile Web keeps manual PRIME/RUNNER/GUIDE role takeover available only under a collapsed “演示备用” control, so the default task path supports the AI dispatch story.
+- Android task and incident screens now show the latest six on-site timeline logs with Chinese summaries for patient SOS, dispatch, CPR, AED, ambulance, handover, and archive events.
 
 ## Validation Log
 
@@ -147,6 +156,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Input validation targeted tests: `.\.venv\Scripts\python.exe -m unittest tests.test_server.ServerTestCase.test_input_validation_rejects_invalid_location_health_and_aed_status tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export tests.test_server.ServerTestCase.test_client_location_and_aed_site_can_be_updated -v` passed, 3 tests OK.
 - Backend full tests after input validation: `.\.venv\Scripts\python.exe -m unittest discover -s tests -v` passed, 30 tests OK.
 - Health presentation validation: Web `npm run typecheck` passed, Web `npm run build` passed, Android `gradle :app:assembleDebug --no-daemon` passed.
+- Evidence manifest targeted validation: `.\.venv\Scripts\python.exe -m unittest tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export -v` passed.
+- Current full backend validation: `.\.venv\Scripts\python.exe -m unittest discover -s tests -v` passed, 30 tests OK.
+- Current Web validation: `npm run typecheck` passed; `npm run build` passed.
+- Current Android validation: `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `69d7cc8` (`checkpoint: polish evidence and mobile demo`) created locally.
 
 ## Blockers Summary
 
@@ -155,7 +169,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint health-presentation polish, then continue to the next unblocked polish or validation pass.
+Push checkpoints to `origin/codex/competition-hardening`, then continue to the next unblocked polish or validation pass.
 
 ## Resume Instructions
 

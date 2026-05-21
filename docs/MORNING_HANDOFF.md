@@ -13,7 +13,7 @@
 - Web 一键初始化医创赛演示场景：患者、医生、体育生、安保、2 个 AED 点位。
 - 云端调度会结合人员画像、患者距离、AED 距离和健康风险，输出 PRIME/RUNNER/GUIDE。
 - 调度结果包含可解释理由、评分、到患者距离、到 AED 距离。
-- 实验数据可导出 JSON，包含时间线、指标、终端画像、AED 点位、调度依据。
+- 预实验证据包可导出 ZIP，包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要和 manifest 校验信息。
 - 客户端和 AED 点位已持久化到 SQLite，PM2 重启后仍能恢复。
 - Web 控制台新增“演示口令”输入，公网演示管理接口已启用口令保护。
 - Android 默认后端改为 `https://lifereflex.mddcommunity.top/` 和 `wss://lifereflex.mddcommunity.top/ws`。
@@ -21,10 +21,13 @@
 - OPPO 健康增强一期已形成 mock/fallback 闭环：后端、Web、移动 Web、Android 都能同步和展示健康摘要。
 - 调度评分已经纳入健康摘要，高心率、低血氧、高压力等风险会降低高强度角色分派优先级。
 - 预实验证据包已升级为 ZIP：包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要和 manifest 校验信息。
+- 证据包 `manifest.json` 已补充匿名化使用建议、内部复核文件边界和 SHA-256 校验说明。
 - `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
 - Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
 - 移动 Web 患者 SOS 增加二次确认，第一次点击只进入确认态，避免误触发。
+- 移动 Web 任务页默认优先“自动接单”，PRIME/RUNNER/GUIDE 手动抢接折叠为“演示备用”，减少绕过 AI 分派叙事的误操作。
 - Android 首页和事件页已接通“自动接单”，登录后可直接加入当前事件并进入任务页。
+- Android 任务页和现场总览新增“最近现场时间线”，APK 端可以直接看到患者触发、角色响应、AED 取送、交接等日志。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -78,6 +81,9 @@ gradle :app:assembleDebug --no-daemon
 - `befc1f7`：增加 Web 总控台流程条和 4 端演示台导播脚本。
 - `9272fdb`：移动 Web SOS 增加二次确认。
 - `48106e9`：增加实验输入边界校验。
+- `a8104ca`：更新早晨交接与演示脚本。
+- `d33d038`：健康风险标签本地化，用户界面不再暴露 mock/fallback 工程词。
+- `69d7cc8`：补齐证据包文档口径、manifest 隐私/校验说明、移动 Web 备用手动接单折叠、Android 最近现场时间线。
 
 ## 你醒来后最该做的三件事
 
