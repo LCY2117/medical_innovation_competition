@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: e8e23b8
-- Last update: 2026-05-22 03:13:00 +08:00
+- HEAD: 71b9834
+- Last update: 2026-05-22 03:17:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -52,6 +52,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 27. Add Android profile demo-location selector. (done, validating)
 28. Push Android demo-location checkpoint. (done)
 29. Run post-demo-polish validation sweep. (done)
+30. Add expert-review screenshot checklist and 3-5 minute demo script. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -142,6 +143,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android Runner full-screen task now shows target AED name, location/floor/status, access notes, distance to AED, and AED return distance to patient using existing dispatch rationale and AED-site data.
 - Mobile Web PRIME task card now shows the next CPR/AED step: start CPR, wait for AED, AED returning, attach pads, stop touching during analysis, or resume CPR after shock.
 - Android Profile screen now includes four demo-location buttons (patient corridor, first-floor lobby, gate post, sports-field entrance) that call the existing authenticated location update path for dispatch-distance demonstrations.
+- Pre-experiment protocol now includes an S01-S08 screenshot checklist and a timed 3-5 minute expert/PPT demo script.
+- Expert feedback template now explicitly asks experts to review mobile Web, screenshot checklist, and demo script materials.
 
 ## Validation Log
 
@@ -184,6 +187,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `261b05d` (`checkpoint: add android demo locations`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `e8e23b8` (`checkpoint: record demo locations push`) created and pushed to `origin/codex/competition-hardening`.
 - Post-polish validation sweep: backend targeted evidence/export test passed; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `71b9834` (`checkpoint: record validation sweep`) created and pushed to `origin/codex/competition-hardening`.
+- Expert materials doc validation: `rg` confirmed screenshot checklist, demo script, ZIP evidence package, and manifest wording are present; no JSON-only export wording reintroduced in touched docs.
 
 ## Blockers Summary
 
@@ -192,7 +197,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit the post-polish validation record, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push expert-material checklist updates, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
