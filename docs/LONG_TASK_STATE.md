@@ -5,7 +5,7 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 77a6a99
+- HEAD: 548ed8f
 - Last update: 2026-05-22 04:58:41 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
@@ -84,6 +84,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 59. Run Android debug APK validation sweep. (done, pushed)
 60. Reduce Web command-center first-screen technical overload and preserve mobile incident deep links. (done, pushed)
 61. Simplify mobile scene/cooperation page technical details. (done, pushed)
+62. Surface demo readiness checklist in Web command center. (done, pushed)
 
 ## Sub-Agent Ledger
 
@@ -308,6 +309,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Mobile Web scene/cooperation page now keeps AED location, teammate role, online state, and task status visible by default; dispatch score, rationale, health summaries, and risk tags are under “分派依据与健康摘要”.
 - Mobile scene detail validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-CJY-P70v.js` at `35.08 kB` raw / `11.20 kB` gzip. Browser smoke on temporary local backend `127.0.0.1:18087` confirmed collapsed scene hides “智能评分/风险标记” and expanded details reveal health/risk information. Temporary backend and temp DB were stopped/removed.
 - Git checkpoint: `77a6a99` (`checkpoint: simplify mobile scene details`) created and pushed to `origin/codex/competition-hardening`.
+- Web command center now surfaces `/api/health/detail.demoReadiness` as an “演示准备度” checklist covering terminal count, AED availability, location coverage, health-summary coverage, and evidence-export readiness.
+- Demo readiness validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-WEFAl1C8.js` at `222.46 kB` raw / `67.65 kB` gzip. Browser smoke on temporary local backend `127.0.0.1:18088` confirmed the readiness card and five checklist labels render, with initialized demo status “准备就绪”. Temporary backend and temp DB were stopped/removed.
+- Git checkpoint: `548ed8f` (`checkpoint: show demo readiness`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `a648ad8` (`checkpoint: polish demo visible labels`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
