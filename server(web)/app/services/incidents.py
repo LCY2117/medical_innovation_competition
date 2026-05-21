@@ -683,6 +683,10 @@ class IncidentService:
                 self._participant_questionnaire_rows(export, participant_map),
                 self._participant_questionnaire_fields(),
             ),
+            "baseline_vs_system_comparison.csv": self._csv_text(
+                self._baseline_vs_system_comparison_rows(export),
+                self._baseline_vs_system_comparison_fields(),
+            ),
             "pre_experiment_round_summary.csv": self._csv_text(
                 self._pre_experiment_round_summary_rows(export),
                 self._pre_experiment_round_summary_fields(),
@@ -1107,6 +1111,39 @@ class IncidentService:
         ]
 
     @staticmethod
+    def _baseline_vs_system_comparison_fields() -> list[str]:
+        metrics = [
+            "dispatchSeconds",
+            "cprStartSeconds",
+            "aedPickupSeconds",
+            "aedDeliverySeconds",
+            "ambulanceArriveSeconds",
+        ]
+        scores = [
+            "roleAssignmentClarityScore",
+            "taskInstructionClarityScore",
+            "stressOperabilityScore",
+            "dispatchReasonablenessScore",
+            "aedPromptUsefulnessScore",
+        ]
+        fields = [
+            "comparisonId",
+            "scenarioId",
+            "scenarioLocation",
+            "participantGroup",
+            "baselineRoundId",
+            "systemRoundId",
+            "baselineIncidentId",
+            "systemIncidentId",
+        ]
+        for metric in metrics:
+            fields.extend([f"baseline{metric[0].upper()}{metric[1:]}", f"system{metric[0].upper()}{metric[1:]}", f"{metric}Delta", f"{metric}ChangePercent"])
+        for score in scores:
+            fields.extend([f"baseline{score[0].upper()}{score[1:]}", f"system{score[0].upper()}{score[1:]}", f"{score}Delta"])
+        fields.append("analysisNotes")
+        return fields
+
+    @staticmethod
     def _pre_experiment_round_summary_fields() -> list[str]:
         return [
             "roundId",
@@ -1174,6 +1211,57 @@ class IncidentService:
                 "dispatchReasonablenessScore": "",
                 "aedPromptUsefulnessScore": "",
                 "notes": "",
+            }
+        ]
+
+    def _baseline_vs_system_comparison_rows(self, export: ExperimentExportResponse) -> list[dict]:
+        metrics = export.metrics
+        return [
+            {
+                "comparisonId": "C001",
+                "scenarioId": "S001",
+                "scenarioLocation": "",
+                "participantGroup": "",
+                "baselineRoundId": "",
+                "systemRoundId": "R001",
+                "baselineIncidentId": "",
+                "systemIncidentId": export.incidentId,
+                "baselineDispatchSeconds": "",
+                "systemDispatchSeconds": metrics.get("dispatchSeconds"),
+                "dispatchSecondsDelta": "",
+                "dispatchSecondsChangePercent": "",
+                "baselineCprStartSeconds": "",
+                "systemCprStartSeconds": metrics.get("cprStartSeconds"),
+                "cprStartSecondsDelta": "",
+                "cprStartSecondsChangePercent": "",
+                "baselineAedPickupSeconds": "",
+                "systemAedPickupSeconds": metrics.get("aedPickupSeconds"),
+                "aedPickupSecondsDelta": "",
+                "aedPickupSecondsChangePercent": "",
+                "baselineAedDeliverySeconds": "",
+                "systemAedDeliverySeconds": metrics.get("aedDeliverySeconds"),
+                "aedDeliverySecondsDelta": "",
+                "aedDeliverySecondsChangePercent": "",
+                "baselineAmbulanceArriveSeconds": "",
+                "systemAmbulanceArriveSeconds": metrics.get("ambulanceArriveSeconds"),
+                "ambulanceArriveSecondsDelta": "",
+                "ambulanceArriveSecondsChangePercent": "",
+                "baselineRoleAssignmentClarityScore": "",
+                "systemRoleAssignmentClarityScore": "",
+                "roleAssignmentClarityScoreDelta": "",
+                "baselineTaskInstructionClarityScore": "",
+                "systemTaskInstructionClarityScore": "",
+                "taskInstructionClarityScoreDelta": "",
+                "baselineStressOperabilityScore": "",
+                "systemStressOperabilityScore": "",
+                "stressOperabilityScoreDelta": "",
+                "baselineDispatchReasonablenessScore": "",
+                "systemDispatchReasonablenessScore": "",
+                "dispatchReasonablenessScoreDelta": "",
+                "baselineAedPromptUsefulnessScore": "",
+                "systemAedPromptUsefulnessScore": "",
+                "aedPromptUsefulnessScoreDelta": "",
+                "analysisNotes": "填写无系统基线轮数据后在 Excel 中计算差值；时间差值为负数表示系统轮更快。主观评分需结合参与者问卷和观察员记录补填。",
             }
         ]
 
@@ -1372,6 +1460,7 @@ class IncidentService:
                     "participant_consent_safety_brief.md",
                     "observer_record_form.csv",
                     "participant_questionnaire.csv",
+                    "baseline_vs_system_comparison.csv",
                     "pre_experiment_round_summary.csv",
                 ],
                 "internalReviewOnly": ["experiment.json", "clients.csv"],
@@ -1529,12 +1618,13 @@ class IncidentService:
 - `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
 - `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
 - `participant_questionnaire.csv`：参与者主观问卷表，用于记录可理解性、协同减负、移动端提示和安全边界评分。
+- `baseline_vs_system_comparison.csv`：无系统基线轮与系统轮对照分析模板，用于计算 T1-T6 差值、百分比变化和主观评分差异。
 - `pre_experiment_round_summary.csv`：单轮预实验汇总行，便于把多轮 ZIP 的核心指标合并到 Excel 做描述性统计。
 - `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:

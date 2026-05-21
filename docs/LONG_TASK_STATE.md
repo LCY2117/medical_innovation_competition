@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: e4fca63
-- Last update: 2026-05-22 05:50:10 +08:00
+- HEAD: 92a5a77
+- Last update: 2026-05-22 05:55:19 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -96,6 +96,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 71. Refresh README with current demo entries, validation commands, evidence package, admin auth, and provider fallback. (done, pushed)
 72. Record README checkpoint and resume state after context handoff. (done, pushed)
 73. Add participant consent/safety brief and questionnaire into ZIP evidence package. (done, pushed)
+74. Add baseline-vs-system comparison CSV template into ZIP evidence package. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -356,6 +357,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence package now includes `participant_consent_safety_brief.md` for pre-round safety/consent briefing and `participant_questionnaire.csv` for post-round participant scores. README, pre-experiment protocol, deployment runbook, expert feedback template, product plan, whitepaper, and morning handoff are updated to list these materials.
 - Evidence participant-material validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
 - Git checkpoint: `e4fca63` (`checkpoint: add participant evidence forms`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `92a5a77` (`checkpoint: record participant evidence push`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence package now includes `baseline_vs_system_comparison.csv`, a no-system baseline vs LifeReflexArc system-round comparison template with system-round T1-T6 values prefilled and baseline/delta/score fields left for observer or Excel completion. Documentation and tests are updated to include the new public review file.
+- Baseline comparison validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -364,7 +368,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue the next safe competition-hardening slice. Candidate: add a baseline-vs-system comparison template for pre-experiment analysis, or refresh outdated handoff validation wording. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Stage, commit, and push the baseline comparison evidence checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
