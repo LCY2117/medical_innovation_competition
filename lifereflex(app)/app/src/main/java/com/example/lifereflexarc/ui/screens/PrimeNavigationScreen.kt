@@ -29,7 +29,11 @@ import com.example.lifereflexarc.ui.theme.PhoneColors
 import com.example.lifereflexarc.ui.theme.PhoneTokens
 
 @Composable
-fun PrimeNavigationScreen(onArrived: () -> Unit) {
+fun PrimeNavigationScreen(
+    distanceToPatientMeters: Double? = null,
+    onArrived: () -> Unit,
+) {
+    val distanceLabel = formatNavigationDistance(distanceToPatientMeters)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,21 +67,50 @@ fun PrimeNavigationScreen(onArrived: () -> Unit) {
                 }
             }
             Spacer(modifier = Modifier.height(18.dp))
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text("15", color = PhoneColors.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("m", color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
+            if (distanceLabel != null) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(distanceLabel.value, color = PhoneColors.White, fontSize = 52.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(distanceLabel.unit, color = PhoneColors.GrayText, fontSize = PhoneTokens.Body)
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("预计到患者距离", color = PhoneColors.GrayText, fontSize = PhoneTokens.Caption)
+            } else {
+                Text("前往患者位置", color = PhoneColors.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("暂无精确距离，请按现场指引快速抵达", color = PhoneColors.GrayText, fontSize = PhoneTokens.Caption)
             }
             Spacer(modifier = Modifier.height(6.dp))
-            Text("AHEAD", color = PhoneColors.GreenSoft, fontWeight = FontWeight.Bold)
+            Text("保持前进", color = PhoneColors.GreenSoft, fontWeight = FontWeight.Bold)
         }
 
         PressableButton(
-            text = "我已到达 (Start CPR)",
+            text = "我已到达，开始基础复苏",
             onClick = onArrived,
             colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = PhoneColors.Green)
         )
     }
+}
+
+private data class NavigationDistanceLabel(
+    val value: String,
+    val unit: String,
+)
+
+private fun formatNavigationDistance(distanceMeters: Double?): NavigationDistanceLabel? {
+    if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters < 0) {
+        return null
+    }
+    if (distanceMeters >= 1000) {
+        return NavigationDistanceLabel(
+            value = "%.1f".format(distanceMeters / 1000),
+            unit = "km",
+        )
+    }
+    return NavigationDistanceLabel(
+        value = distanceMeters.toInt().coerceAtLeast(1).toString(),
+        unit = "m",
+    )
 }
 
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)

@@ -62,6 +62,7 @@
 - 移动 Web 归档页新增“下载预实验证据包”按钮，沿用正式管理员或演示口令权限；权限不足时提示先到 Web 总控台输入口令或登录管理员。
 - Android 全屏急救态进一步弱化 PRIME/RUNNER/GUIDE 辅助代号，调度中、AED 回送和送达提示均改为中文职责表述。
 - Android CPR 节律辅助页已将可见英文标题改为中文，减少评委演示时的语言割裂。
+- Android 核心施救导航页已移除 `AHEAD`、`Start CPR` 和固定 `15 m` 占位距离；现在优先显示调度距离，没有精确距离时提示按现场指引前往患者位置。
 - 最新完整三端验证扫尾为 `b02c634`：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过；Web 产物为 `App-OIunfMkh.js`、`MobileApp-DTIoJNCQ.js`。后续证据包材料增量已通过后端目标测试和全量 37 项测试。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 

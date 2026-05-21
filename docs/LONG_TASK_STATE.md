@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 637e9f6
-- Last update: 2026-05-22 06:39:38 +08:00
+- HEAD: f775954
+- Last update: 2026-05-22 06:42:36 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -101,7 +101,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 76. Add event-specific expert feedback and signature form into ZIP evidence package. (done, pushed)
 77. Add Web command-center demo entrance share links. (done, pushed)
 78. Add facilitator run sheet into ZIP evidence package. (done, pushed)
-79. Add reliable Web command-center opener for four mobile terminal tabs. (done, validating)
+79. Add reliable Web command-center opener for four mobile terminal tabs. (done, pushed)
+80. Polish Android PRIME navigation visible language and placeholder distance. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -388,6 +389,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Web command-center demo entrance work in progress: added an “打开4个手机端” action that synchronously preopens the patient, core-rescuer, AED-runner, and guide mobile terminal tabs, then navigates each to the current incident-linked URL; if a browser blocks some tabs, it copies the four terminal links as fallback.
 - Web 4-mobile opener validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-S9VqVZaB.js`, mobile `MobileApp-DQI2rm0L.js`, and stage `MobileDemoStage-D4SVbmOo.js`.
 - Browser smoke on temporary local backend `127.0.0.1:18090` with temp DB and demo token `LCY`: command center rendered “打开4个手机端” and incident-linked mobile URLs. The in-app browser blocked all four popups, and the new fallback message appeared with copied four-terminal links. Temporary process and smoke DB/logs were removed.
+- Git checkpoint: `f775954` (`checkpoint: improve mobile demo opener`) created and pushed to `origin/codex/competition-hardening`.
+- Android PRIME navigation polish in progress: removed visible `AHEAD`, `Start CPR`, and hardcoded `15 m`; the screen now shows Chinese labels and uses dispatch distance when available, otherwise shows a cautious no-precise-distance instruction.
+- Android PRIME navigation validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning and a non-blocking `SosState` safe-call warning remain.
 
 ## Blockers Summary
 
@@ -396,7 +400,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Web 4-mobile opener slice, then continue with the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the Android PRIME navigation polish slice, then continue with the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

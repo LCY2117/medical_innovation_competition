@@ -179,6 +179,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
                         onJoin = { viewModel.joinPrime(userId) }
                     )
                     PhoneScreen.PrimeNavigation -> PrimeNavigationScreen(
+                        distanceToPatientMeters = incidentState!!.dispatchRationale["PRIME"]?.distanceToPatientMeters,
                         onArrived = { viewModel.actionCprStarted(userId) }
                     )
                     PhoneScreen.CprMetronome -> CprMetronomeScreen(
