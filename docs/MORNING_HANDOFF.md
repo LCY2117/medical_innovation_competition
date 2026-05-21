@@ -18,6 +18,14 @@
 - Web 控制台新增“演示口令”输入，公网演示管理接口已启用口令保护。
 - Android 默认后端改为 `https://lifereflex.mddcommunity.top/` 和 `wss://lifereflex.mddcommunity.top/ws`。
 - Android 现场总览新增 AED 点位和调度依据展示。
+- OPPO 健康增强一期已形成 mock/fallback 闭环：后端、Web、移动 Web、Android 都能同步和展示健康摘要。
+- 调度评分已经纳入健康摘要，高心率、低血氧、高压力等风险会降低高强度角色分派优先级。
+- 预实验证据包已升级为 ZIP：包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要和 manifest 校验信息。
+- `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
+- Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
+- 移动 Web 患者 SOS 增加二次确认，第一次点击只进入确认态，避免误触发。
+- Android 首页和事件页已接通“自动接单”，登录后可直接加入当前事件并进入任务页。
+- 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -28,7 +36,7 @@
   - PRIME：`demo-doctor`
   - RUNNER：`demo-runner`
   - GUIDE：`demo-guide`
-- `GET /api/experiments/current/export` 正常导出，当前演示导出为 `DISPATCHED`，9 条时间线。
+- `GET /api/experiments/current/export` 正常导出；ZIP 证据包可通过 `/api/experiments/current/package` 下载。
 - PM2 重启后再次读取客户端、AED、导出数据均正常。
 - 线上前端构建产物包含“演示口令”、`X-Demo-Admin-Token`、演示场景和导出控件。
 - 远端 `.env` 已设置 `LRA_DEMO_ADMIN_TOKEN`，当前演示口令为 `LCY`；不带口令访问 `/api/demo/bootstrap` 会返回 403。
@@ -40,7 +48,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest tests.test_server tests.test_link_mechanism
 ```
 
-结果：22 项通过。
+结果：30 项通过。
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)\web"
@@ -62,6 +70,14 @@ gradle :app:assembleDebug --no-daemon
 ```
 
 结果：通过，APK 大小约 12 MB，使用 Android debug 签名。
+
+## 本轮新增检查点
+
+- `7c2bcac`：强化预实验证据包，加入匿名化导出、专家摘要、manifest hash、结构化 timeline 和历史事件角色修正。
+- `2752c24`：接通 Android 自动接单入口。
+- `befc1f7`：增加 Web 总控台流程条和 4 端演示台导播脚本。
+- `9272fdb`：移动 Web SOS 增加二次确认。
+- `48106e9`：增加实验输入边界校验。
 
 ## 你醒来后最该做的三件事
 
@@ -94,8 +110,8 @@ app\build\outputs\apk\debug\app-debug.apk
 3. 展示 4 类终端画像和 AED 点位。
 4. 触发患者 `demo-patient`。
 5. 展示 PRIME/RUNNER/GUIDE 的分派过程和理由。
-6. 用 Web 或 Android 完成 CPR、AED 取送、救护车到达、交接动作。
-7. 点击“导出数据”，把 JSON 作为低成本预实验记录。
+6. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
+7. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv` 和 `expert_summary.md`。
 
 ## 仍需谨慎表达
 
