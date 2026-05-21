@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a635129
-- Last update: 2026-05-22 04:18:29 +08:00
+- HEAD: 337496d
+- Last update: 2026-05-22 04:27:27 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -77,7 +77,9 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 52. Add Android native location provider with system-location and demo fallback. (done, pushed)
 53. Add backend notification provider with WebSocket fallback. (done, pushed)
 54. Add backend formal admin account minimal RBAC. (done, pushed)
-55. Explore remaining demo UX polish. (in progress)
+55. Align frontend admin user type. (done, pushed)
+56. Fix mobile patient SOS delayed auto-dispatch and wire Web command center admin login. (done, checkpointing)
+57. Explore remaining demo UX polish. (in progress)
 
 ## Sub-Agent Ledger
 
@@ -89,7 +91,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Android APK explorer (`019e4bb7-c511-78f2-af54-44692d632c16`): completed read-only; recommended wiring auto-join, adding timeline visibility, Chinese health presentation, demo location switching, and AED/CPR status cards.
 - P2 location/push explorer (`019e4c10-ef42-7dc1-b9ce-76e6d76fa2fc`): completed read-only; recommended Android native location provider prewiring first, then backend notification provider with WebSocket fallback.
 - Admin/RBAC explorer (`019e4c27-d940-7411-bcad-12f6103a3b4d`): completed read-only; confirmed config-based `LRA_ADMIN_PHONES` minimal RBAC is the safest slice and noted frontend `AuthUser.privileges` type drift.
-- Web/mobile polish explorer (`019e4c27-ed2f-71e2-b975-4d47eaeac985`): running read-only; scope is low-risk competition/demo UX improvements.
+- Web/mobile polish explorer (`019e4c27-ed2f-71e2-b975-4d47eaeac985`): completed read-only; identified a P0 mobile patient SOS delayed auto-dispatch stall, raw English/status labels in the command center, overloaded AI diagnostics, English role labels in `/mobile-demo`, and evidence wording polish.
 
 ## Git Baseline
 
@@ -190,6 +192,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint `5855cf4` (`checkpoint: add notification provider fallback`) was pushed to `origin/codex/competition-hardening`.
 - Backend minimal RBAC now supports `LRA_ADMIN_PHONES`: matching registered users receive `privileges=["admin"]` from `/auth/me`, and admin APIs accept either formal admin Bearer tokens or legacy demo admin tokens. If only admin phones are configured, anonymous admin APIs stay closed.
 - Git checkpoint `a635129` (`checkpoint: add admin account rbac`) was pushed to `origin/codex/competition-hardening`.
+- Git checkpoint `337496d` (`checkpoint: align admin user type`) was pushed to `origin/codex/competition-hardening`.
+- Mobile patient SOS delayed auto-dispatch no longer self-cancels the task that calls `designate_patient`; a positive-delay regression test now covers the exact `/mobile?demo=patient` failure mode.
+- Web command center now exposes optional formal admin login when `LRA_ADMIN_PHONES` is configured, uses the admin Bearer token for management APIs and dashboard-simulated role actions, and keeps the old demo admin token as a fallback.
 
 ## Validation Log
 
@@ -272,6 +277,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - RBAC Web validation: `npm run typecheck` passed; `npm run build` passed.
 - Git checkpoint: `a635129` (`checkpoint: add admin account rbac`) created and pushed to `origin/codex/competition-hardening`.
 - Frontend RBAC type alignment validation: `npm run typecheck` passed after adding `AuthUser.privileges` to shared Web types.
+- Git checkpoint: `337496d` (`checkpoint: align admin user type`) created and pushed to `origin/codex/competition-hardening`.
+- Patient SOS delayed-dispatch targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_patient_sos_with_dispatch_delay_completes_auto_dispatch -v` passed, 1 test OK.
+- Admin UI/backend targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_patient_sos_with_dispatch_delay_completes_auto_dispatch tests.test_server.ServerTestCase.test_configured_admin_account_can_manage_demo -v` passed, 2 tests OK.
+- Current full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK.
+- Current Web validation: `npm run typecheck` passed; first `npm run build` attempt used an invalid path and did not run; rerun from `server(web)\web` passed with dashboard chunk `214.23 kB` raw / `65.60 kB` gzip.
 
 ## Blockers Summary
 
@@ -280,7 +290,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit the small frontend `AuthUser.privileges` type alignment, then use the Web/mobile polish explorer findings for a low-risk demo UX polish item.
+Checkpoint the patient SOS delayed-dispatch fix and Web command-center admin login without committing DB/output/OPPO doc copy. Then continue with visible text/localization polish from the Web/mobile explorer findings.
 
 ## Resume Instructions
 

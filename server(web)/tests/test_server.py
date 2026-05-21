@@ -809,6 +809,71 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["roles"]["RUNNER"]["status"], "ASSIGNED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "ASSIGNED")
 
+    def test_patient_sos_with_dispatch_delay_completes_auto_dispatch(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=1,
+            dispatch_delay_sec=1,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+        )
+        with TestClient(create_app(settings)) as client:
+            incident_id = client.get("/api/incidents/current").json()["incidentId"]
+            patient_token = ""
+
+            for payload in [
+                self._register_payload("延迟患者", "13800138201", "社区", "存在心脏骤停风险", "患者侧", "用于正延迟自动分派测试"),
+                self._register_payload("延迟医生", "13800138202", "医院", "身体状态一般", "医生 / 专业急救人员", "用于正延迟自动分派测试"),
+                self._register_payload("延迟跑者", "13800138203", "校园", "身体素质良好", "有一定急救常识", "用于正延迟自动分派测试"),
+                self._register_payload("延迟引导员", "13800138204", "物业", "身体状态一般", "安保 / 物业", "用于正延迟自动分派测试"),
+            ]:
+                auth = client.post("/api/auth/register", json=payload)
+                self.assertEqual(auth.status_code, 200)
+                auth_payload = auth.json()
+                token = auth_payload["token"]
+                user_id = auth_payload["user"]["userId"]
+                if payload["displayName"] == "延迟患者":
+                    patient_token = token
+                registered = client.post(
+                    "/api/clients/register",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={
+                        "userId": user_id,
+                        "displayName": payload["displayName"],
+                        "organization": payload["organization"],
+                        "healthCondition": payload["healthCondition"],
+                        "professionIdentity": payload["professionIdentity"],
+                        "profileBio": payload["profileBio"],
+                        "deviceType": "MOBILE_WEB",
+                    },
+                )
+                self.assertEqual(registered.status_code, 200)
+
+            started = client.post(
+                f"/api/incidents/{incident_id}/patient_sos_start",
+                headers={"Authorization": f"Bearer {patient_token}"},
+            )
+
+            current = {}
+            for _ in range(20):
+                current = client.get("/api/incidents/current").json()
+                if current["phase"] == "DISPATCHED":
+                    break
+                import time
+
+                time.sleep(0.2)
+
+        self.assertEqual(started.status_code, 200)
+        self.assertEqual(current["phase"], "DISPATCHED")
+        self.assertEqual(current["roles"]["PRIME"]["status"], "ASSIGNED")
+        self.assertEqual(current["roles"]["RUNNER"]["status"], "ASSIGNED")
+        self.assertEqual(current["roles"]["GUIDE"]["status"], "ASSIGNED")
+
     def test_patient_designation_runs_dispatch_in_worker_thread(self) -> None:
         with self._client() as client:
             client.post("/api/demo/bootstrap")
@@ -1188,6 +1253,11 @@ class ServerTestCase(unittest.TestCase):
             admin_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {admin_token}"})
             denied = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {user_token}"})
             bootstrapped = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {admin_token}"})
+            role_join = client.post(
+                f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"role": "PRIME", "userId": "dashboard-prime"},
+            )
             audit_log = client.get("/api/audit/events?limit=20", headers={"Authorization": f"Bearer {admin_token}"})
             health = client.get("/api/health/detail")
 
@@ -1196,6 +1266,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("admin", admin_me.json()["user"]["privileges"])
         self.assertEqual(denied.status_code, 403)
         self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(role_join.status_code, 200)
         self.assertEqual(audit_log.status_code, 200)
         event_types = {event["eventType"] for event in audit_log.json()["events"]}
         self.assertIn("admin_user_denied", event_types)

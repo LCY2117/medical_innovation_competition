@@ -49,6 +49,8 @@
 - Android 原生定位 provider 已预埋：无需第三方 Key 即可走系统最近定位 + 演示坐标 fallback，后续高德 Android SDK 可作为 adapter 接入。
 - 后端通知 provider 已抽象：比赛版默认 `LRA_PUSH_PROVIDER=websocket`，未来 `jpush`/`vendor` provider 未接入时会显示 pending 并回退 WebSocket。
 - 后端最小 RBAC 已预埋：`LRA_ADMIN_PHONES` 可配置正式管理员手机号白名单，白名单用户登录后 `/auth/me` 返回 `admin` 权限，管理接口接受 Bearer token 或旧演示口令。
+- 移动端患者 SOS 正延迟分派已修复：`/mobile?demo=patient` 等待倒计时后不会再卡在 `DISPATCHING`，会继续完成角色分派。
+- Web 总控台在服务器配置 `LRA_ADMIN_PHONES` 后会显示正式管理员登录入口，管理请求优先使用 Bearer token，演示口令仍可作为备用。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -132,7 +134,8 @@ gradle :app:assembleDebug --no-daemon
 - `f30be6d`：Android 系统定位 provider 与位置同步 UI，已推送。
 - `5855cf4`：后端通知 provider 与 WebSocket fallback，已推送。
 - `a635129`：后端正式管理员账号最小 RBAC，已推送。
-- 待本轮提交：前端共享类型补齐 `AuthUser.privileges`。
+- `337496d`：前端共享类型补齐 `AuthUser.privileges`，已推送。
+- 待本轮提交：患者 SOS 正延迟修复与 Web 总控台管理员登录。
 
 ## 你醒来后最该做的三件事
 

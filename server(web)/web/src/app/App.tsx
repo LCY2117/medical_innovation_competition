@@ -27,7 +27,9 @@ import {
   Lock,
   Unlock,
   ShieldCheck,
-  HeartPulse
+  HeartPulse,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -277,7 +279,24 @@ interface DispatchMeta {
 
 interface HealthDetail {
   demoAdminAuthEnabled?: boolean;
+  auth?: {
+    adminAccountAuthEnabled?: boolean;
+    adminPhoneCount?: number;
+  };
   frontend?: { ok?: boolean };
+}
+
+interface AdminSessionUser {
+  userId: string;
+  displayName: string;
+  phone: string;
+  privileges?: string[];
+}
+
+interface AdminSession {
+  token: string;
+  user: AdminSessionUser;
+  tokenExpiresAt?: number | null;
 }
 
 interface AuditEvent {
@@ -406,6 +425,20 @@ function getStoredDemoAdminToken(): string {
   return window.localStorage.getItem('lra_demo_admin_token') ?? '';
 }
 
+const ADMIN_SESSION_KEY = 'lra_admin_session';
+
+function getStoredAdminSession(): AdminSession | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(ADMIN_SESSION_KEY);
+    return raw ? (JSON.parse(raw) as AdminSession) : null;
+  } catch {
+    return null;
+  }
+}
+
 function getStoredThemeMode(): ThemeMode {
   if (typeof window === 'undefined') {
     return 'dark';
@@ -420,18 +453,25 @@ function getStoredThemeMode(): ThemeMode {
   return 'dark';
 }
 
-function buildDemoAdminHeaders(token: string, extra?: HeadersInit): HeadersInit {
+function buildAdminHeaders(demoToken: string, adminToken: string | null | undefined, extra?: HeadersInit): HeadersInit {
   const headers = new Headers(extra);
-  const trimmed = token.trim();
-  if (trimmed) {
-    headers.set('X-Demo-Admin-Token', trimmed);
+  const trimmedAdminToken = adminToken?.trim();
+  if (trimmedAdminToken) {
+    headers.set('Authorization', `Bearer ${trimmedAdminToken}`);
+  }
+  const trimmedDemoToken = demoToken.trim();
+  if (trimmedDemoToken) {
+    headers.set('X-Demo-Admin-Token', trimmedDemoToken);
   }
   return headers;
 }
 
 function explainStatusError(status: number, fallback: string): string {
+  if (status === 401) {
+    return `${fallback}：请先登录管理员账号`;
+  }
   if (status === 403) {
-    return `${fallback}：需要演示管理员口令`;
+    return `${fallback}：需要管理员账号或演示口令`;
   }
   return `${fallback}（${status}）`;
 }
@@ -920,6 +960,10 @@ export default function App() {
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [showAuditPanel, setShowAuditPanel] = useState(false);
   const [demoAdminToken, setDemoAdminToken] = useState(getStoredDemoAdminToken);
+  const [adminSession, setAdminSession] = useState<AdminSession | null>(getStoredAdminSession);
+  const [adminPhone, setAdminPhone] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminLoginBusy, setAdminLoginBusy] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredThemeMode);
   const [lastClientRefreshTs, setLastClientRefreshTs] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
@@ -995,11 +1039,17 @@ export default function App() {
   const guidanceStartTs = isPrimeShockDelivered ? shockLogTs : cprLogTs;
   const guidanceElapsedSec = guidanceStartTs ? Math.max(0, Math.floor((liveNowMs - guidanceStartTs) / 1000)) : 0;
   const resuscitationGuidance = getResuscitationGuidance(guidanceElapsedSec);
-  const demoAdminRequired = Boolean(healthDetail?.demoAdminAuthEnabled);
-  const demoAdminReady = !demoAdminRequired || demoAdminToken.trim().length > 0;
-  const demoAdminStatusLabel = demoAdminRequired
-    ? demoAdminReady ? '口令已填' : '需要口令'
-    : '本地免口令';
+  const adminAccountEnabled = Boolean(healthDetail?.auth?.adminAccountAuthEnabled);
+  const adminSessionReady = Boolean(adminSession?.token && adminSession.user.privileges?.includes('admin'));
+  const demoAdminRequired = Boolean(healthDetail?.demoAdminAuthEnabled || adminAccountEnabled);
+  const demoAdminReady = !demoAdminRequired || adminSessionReady || demoAdminToken.trim().length > 0;
+  const demoAdminStatusLabel = adminSessionReady
+    ? '账号已登录'
+    : demoAdminToken.trim()
+      ? '口令已填'
+      : demoAdminRequired
+        ? '需要权限'
+        : '本地免口令';
 
   const getActorId = (role: 'PRIME' | 'RUNNER' | 'GUIDE'): string => {
     const serverUserId = incidentState?.roles?.[role]?.userId;
@@ -1037,6 +1087,17 @@ export default function App() {
     }
   }, [demoAdminToken]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (adminSession?.token) {
+      window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(adminSession));
+    } else {
+      window.localStorage.removeItem(ADMIN_SESSION_KEY);
+    }
+  }, [adminSession]);
+
   const loadHealthDetail = async () => {
     try {
       const res = await fetch(`${getApiBase()}/health/detail`);
@@ -1049,6 +1110,34 @@ export default function App() {
       setHealthDetail(null);
     }
   };
+
+  const verifyStoredAdminSession = async () => {
+    if (!adminSession?.token) {
+      return;
+    }
+    try {
+      const res = await fetch(`${getApiBase()}/auth/me`, {
+        headers: { Authorization: `Bearer ${adminSession.token}` },
+      });
+      if (!res.ok) {
+        setAdminSession(null);
+        return;
+      }
+      const data = await res.json();
+      const nextSession = {
+        token: adminSession.token,
+        user: data.user as AdminSessionUser,
+        tokenExpiresAt: data.tokenExpiresAt ?? null,
+      };
+      setAdminSession(nextSession);
+    } catch {
+      setAdminSession(null);
+    }
+  };
+
+  useEffect(() => {
+    verifyStoredAdminSession();
+  }, []);
 
   useEffect(() => {
     if (!stickLogsToBottom) {
@@ -1185,12 +1274,61 @@ export default function App() {
     };
   }, [incidentId]);
 
+  const loginAdminAccount = async () => {
+    const phone = adminPhone.trim();
+    const password = adminPassword;
+    if (!phone || !password) {
+      setErrorMessage('请输入管理员手机号和密码');
+      return;
+    }
+    try {
+      setAdminLoginBusy(true);
+      setErrorMessage(null);
+      const res = await fetch(`${getApiBase()}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+      if (!res.ok) {
+        throw new Error(await explainResponseError(res, '管理员登录失败'));
+      }
+      const data = await res.json();
+      const user = data.user as AdminSessionUser;
+      if (!user.privileges?.includes('admin')) {
+        throw new Error('管理员登录失败：该账号不在管理员白名单');
+      }
+      setAdminSession({ token: data.token, user, tokenExpiresAt: data.tokenExpiresAt ?? null });
+      setAdminPassword('');
+    } catch (error) {
+      setAdminSession(null);
+      setErrorMessage(error instanceof Error ? error.message : '管理员登录失败');
+    } finally {
+      setAdminLoginBusy(false);
+    }
+  };
+
+  const logoutAdminAccount = async () => {
+    const token = adminSession?.token;
+    setAdminSession(null);
+    if (!token) {
+      return;
+    }
+    try {
+      await fetch(`${getApiBase()}/auth/logout`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      // Local logout still succeeds even if the server token was already expired.
+    }
+  };
+
   const createIncident = async () => {
     try {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '创建事件失败'));
@@ -1279,7 +1417,7 @@ export default function App() {
     try {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/audit/events?limit=30`, {
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '加载审计日志失败'));
@@ -1297,7 +1435,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/demo/bootstrap`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '初始化演示场景失败'));
@@ -1337,7 +1475,7 @@ export default function App() {
     try {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/experiments/current/export`, {
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '导出实验数据失败'));
@@ -1353,7 +1491,7 @@ export default function App() {
     try {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/experiments/current/package`, {
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '导出预实验证据包失败'));
@@ -1378,7 +1516,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current/reset`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '重置事件失败'));
@@ -1398,7 +1536,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current/designate_patient`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken, { 'Content-Type': 'application/json' }),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ patientUserId }),
       });
       if (!res.ok) {
@@ -1428,7 +1566,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/join`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken, { 'Content-Type': 'application/json' }),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ role, userId: getActorId(role) }),
       });
       if (!res.ok) {
@@ -1447,7 +1585,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/actions`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken, { 'Content-Type': 'application/json' }),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ action, userId: getActionActorId(action) }),
       });
       if (!res.ok) {
@@ -1466,7 +1604,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/trigger`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '触发事件失败'));
@@ -1484,7 +1622,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/sos_start`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '启动 SOS 失败'));
@@ -1502,7 +1640,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/sos_cancel`, {
         method: 'POST',
-        headers: buildDemoAdminHeaders(demoAdminToken),
+        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '取消 SOS 失败'));
@@ -2180,6 +2318,58 @@ export default function App() {
         </div>
 
           <div className="flex flex-wrap items-center justify-end gap-3">
+            {adminAccountEnabled && (
+              <div className="h-9 flex items-center gap-2 rounded-lg border border-slate-700 bg-black/30 px-3">
+                <ShieldCheck size={14} className={adminSessionReady ? "text-emerald-300" : "text-slate-400"} />
+                {adminSessionReady ? (
+                  <>
+                    <span className="max-w-28 truncate text-xs font-semibold text-emerald-200" title={adminSession?.user.displayName}>
+                      {adminSession?.user.displayName}
+                    </span>
+                    <button
+                      onClick={logoutAdminAccount}
+                      className="text-slate-400 hover:text-slate-100"
+                      title="退出管理员账号"
+                    >
+                      <LogOut size={14} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      value={adminPhone}
+                      onChange={(event) => setAdminPhone(event.target.value)}
+                      inputMode="tel"
+                      autoComplete="username"
+                      placeholder="管理员手机号"
+                      className="w-28 bg-transparent text-xs text-slate-200 outline-none placeholder:text-slate-500"
+                      title="服务器配置 LRA_ADMIN_PHONES 后，可用白名单手机号登录管理"
+                    />
+                    <input
+                      value={adminPassword}
+                      onChange={(event) => setAdminPassword(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          loginAdminAccount();
+                        }
+                      }}
+                      type="password"
+                      autoComplete="current-password"
+                      placeholder="密码"
+                      className="w-20 bg-transparent text-xs text-slate-200 outline-none placeholder:text-slate-500"
+                    />
+                    <button
+                      onClick={loginAdminAccount}
+                      disabled={adminLoginBusy}
+                      className="text-slate-300 hover:text-white disabled:opacity-50"
+                      title="登录正式管理员账号"
+                    >
+                      <LogIn size={14} />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             <button
               onClick={() => setThemeMode((current) => current === 'dark' ? 'light' : 'dark')}
               className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-700 bg-black/30 text-slate-200 hover:bg-slate-800 transition-colors"
@@ -2196,7 +2386,7 @@ export default function App() {
                 autoComplete="off"
                 placeholder="演示口令"
                 className="w-28 bg-transparent text-xs text-slate-200 outline-none placeholder:text-slate-500"
-                title="服务器启用演示管理员口令后，用于初始化、触发、重置和导出"
+                title="服务器启用演示管理员口令后，用于初始化、触发、重置和导出；正式管理员账号也可替代口令"
               />
             </div>
             <div
@@ -2206,7 +2396,7 @@ export default function App() {
                   ? "border-emerald-700/60 bg-emerald-950/40 text-emerald-300"
                   : "border-amber-700/60 bg-amber-950/40 text-amber-300"
               )}
-              title="读取 /api/health/detail 后判断公网演示是否启用管理员口令"
+              title="读取 /api/health/detail 后判断是否需要正式管理员账号或演示口令"
             >
               {demoAdminReady ? <Unlock size={14} /> : <Lock size={14} />}
               {demoAdminStatusLabel}

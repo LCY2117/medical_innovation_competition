@@ -223,7 +223,12 @@ class IncidentService:
         self._persist()
         return site
 
-    async def designate_patient(self, patient_user_id: str, source_label: str = "dashboard") -> DispatchResponse:
+    async def designate_patient(
+        self,
+        patient_user_id: str,
+        source_label: str = "dashboard",
+        cancel_sos_timer: bool = True,
+    ) -> DispatchResponse:
         state = self.get_current_incident()
         now = self._now_ms()
         if patient_user_id not in self.clients:
@@ -242,9 +247,10 @@ class IncidentService:
         state.logs.append(IncidentLogEntry(ts=now, msg="AI dispatching started"))
         self._touch_client(patient_user_id)
 
-        task = self.sos_tasks.get(state.incidentId)
-        if task and not task.done():
-            task.cancel()
+        if cancel_sos_timer:
+            task = self.sos_tasks.get(state.incidentId)
+            if task and not task.done():
+                task.cancel()
 
         self._persist()
         await self._broadcast_state_async(state.incidentId)
@@ -372,7 +378,7 @@ class IncidentService:
         if self.sos_duration_sec <= 0:
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"Patient SOS confirmed ({patient_user_id})"))
             self._persist()
-            dispatch = await self.designate_patient(patient_user_id, source_label="patient SOS")
+            dispatch = await self.designate_patient(patient_user_id, source_label="patient SOS", cancel_sos_timer=False)
             return MutationResponse(incidentId=dispatch.incidentId, phase=self.incidents[dispatch.incidentId].phase)
         self.sos_tasks[incident_id] = asyncio.create_task(
             self._auto_designate_after(incident_id, patient_user_id, start_ts)
@@ -708,7 +714,11 @@ class IncidentService:
                         IncidentLogEntry(ts=self._now_ms(), msg="Patient SOS confirmed after restart")
                     )
                     self._persist()
-                    await self.designate_patient(state.patientUserId, source_label="patient SOS after restart")
+                    await self.designate_patient(
+                        state.patientUserId,
+                        source_label="patient SOS after restart",
+                        cancel_sos_timer=False,
+                    )
                 else:
                     state.phase = "DISPATCHED"
                     state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="Incident auto-triggered after restart"))
@@ -924,7 +934,7 @@ class IncidentService:
 
         state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"Patient SOS confirmed ({patient_user_id})"))
         self._persist()
-        await self.designate_patient(patient_user_id, source_label="patient SOS")
+        await self.designate_patient(patient_user_id, source_label="patient SOS", cancel_sos_timer=False)
 
     @staticmethod
     def _incident_payload(state: IncidentState) -> dict:

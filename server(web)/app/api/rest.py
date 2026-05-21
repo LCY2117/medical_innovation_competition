@@ -159,6 +159,8 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         if is_demo_admin_authorized(x_demo_admin_token):
             return
         user = auth_service.require_user(authorization)
+        if auth_service.is_admin_user(user):
+            return
         if user.user_id != user_id:
             audit(
                 request,
