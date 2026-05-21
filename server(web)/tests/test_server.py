@@ -139,10 +139,30 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["auth"]["tokenTtlSec"], self.settings.auth_token_ttl_sec)
         self.assertTrue(payload["features"]["experimentZipPackage"])
         self.assertEqual(payload["healthProvider"]["mode"], "mock")
+        self.assertFalse(payload["frontend"]["indexReady"])
         self.assertFalse(payload["frontend"]["assetsReady"])
+        self.assertEqual(payload["frontend"]["assetCount"], 0)
+        self.assertFalse(payload["frontend"]["mobileChunkReady"])
+        self.assertFalse(payload["frontend"]["desktopChunkReady"])
         self.assertFalse(payload["demoAdminAuthEnabled"])
         self.assertFalse(payload["demoReadiness"]["ready"])
         self.assertIn("尚未创建当前事件", payload["demoReadiness"]["warnings"])
+
+        self.settings.web_dist_dir.mkdir(parents=True, exist_ok=True)
+        (self.settings.web_dist_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+        assets_dir = self.settings.web_dist_dir / "assets"
+        assets_dir.mkdir()
+        (assets_dir / "MobileApp-test.js").write_text("console.log('mobile')", encoding="utf-8")
+        (assets_dir / "App-test.js").write_text("console.log('app')", encoding="utf-8")
+        with self._client() as client:
+            ready_response = client.get("/api/health/detail")
+        ready_payload = ready_response.json()
+        self.assertTrue(ready_payload["frontend"]["ok"])
+        self.assertTrue(ready_payload["frontend"]["indexReady"])
+        self.assertTrue(ready_payload["frontend"]["assetsReady"])
+        self.assertEqual(ready_payload["frontend"]["assetCount"], 2)
+        self.assertTrue(ready_payload["frontend"]["mobileChunkReady"])
+        self.assertTrue(ready_payload["frontend"]["desktopChunkReady"])
 
     def test_health_detail_reports_demo_readiness_after_bootstrap(self) -> None:
         with self._client() as client:

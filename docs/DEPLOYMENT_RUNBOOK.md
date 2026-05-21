@@ -181,7 +181,7 @@ curl -fsS http://127.0.0.1:8029/api/health/detail
 | 项目 | 验收方式 |
 | --- | --- |
 | Web 首页可访问 | 打开 `https://lifereflex.mddcommunity.top/` |
-| API 健康检查 | `curl https://lifereflex.mddcommunity.top/api/health/detail` |
+| API 健康检查 | `curl https://lifereflex.mddcommunity.top/api/health/detail`，确认 `frontend.indexReady`、`frontend.mobileChunkReady`、`frontend.desktopChunkReady`、DB、WebSocket、认证和 `demoReadiness` |
 | WebSocket | Web 调度台显示“实时同步” |
 | 演示场景 | 点击“初始化医创赛演示场景”后出现 4 个终端和 AED 点位 |
 | 调度解释 | 触发患者后出现三类角色评分和理由 |

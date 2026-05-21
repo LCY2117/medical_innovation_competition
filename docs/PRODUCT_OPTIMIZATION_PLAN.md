@@ -78,7 +78,7 @@ Acceptance:
 
 ## P1: Deployment And Operations
 
-- [ ] 健康检查暴露版本、前端构建状态、DB、WebSocket、认证状态。
+- [x] 健康检查暴露版本、前端构建状态、DB、WebSocket、认证状态，并检查 mobile/desktop chunk 是否存在。
 - [ ] 部署文档补充回滚、备份、1Panel/OpenResty 检查命令。
 - [ ] `.env.example` 覆盖 token TTL、地图 provider、第三方占位配置。
 - [ ] 服务器上项目默认在 `/opt`，保持 1Panel 可管理。

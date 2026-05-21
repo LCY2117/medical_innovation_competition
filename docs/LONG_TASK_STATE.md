@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: fb8d3e2
-- Last update: 2026-05-22 03:19:00 +08:00
+- HEAD: 4aa7317
+- Last update: 2026-05-22 03:25:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -54,6 +54,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 29. Run post-demo-polish validation sweep. (done)
 30. Add expert-review screenshot checklist and 3-5 minute demo script. (done, validating)
 31. Push expert-material checklist checkpoint. (done)
+32. Expand `/api/health/detail` frontend build diagnostics. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -146,6 +147,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android Profile screen now includes four demo-location buttons (patient corridor, first-floor lobby, gate post, sports-field entrance) that call the existing authenticated location update path for dispatch-distance demonstrations.
 - Pre-experiment protocol now includes an S01-S08 screenshot checklist and a timed 3-5 minute expert/PPT demo script.
 - Expert feedback template now explicitly asks experts to review mobile Web, screenshot checklist, and demo script materials.
+- `/api/health/detail` frontend diagnostics now report index readiness, index mtime, asset count, latest asset mtime, mobile chunk readiness, and desktop chunk readiness.
 
 ## Validation Log
 
@@ -191,6 +193,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `71b9834` (`checkpoint: record validation sweep`) created and pushed to `origin/codex/competition-hardening`.
 - Expert materials doc validation: `rg` confirmed screenshot checklist, demo script, ZIP evidence package, and manifest wording are present; no JSON-only export wording reintroduced in touched docs.
 - Git checkpoint: `fb8d3e2` (`checkpoint: add expert demo checklist`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `4aa7317` (`checkpoint: record expert checklist push`) created and pushed to `origin/codex/competition-hardening`.
+- Health detail frontend diagnostics validation: targeted health-detail test passed; backend full unittest discovery passed, 30 tests OK.
 
 ## Blockers Summary
 
@@ -199,7 +203,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue from remote checkpoint `fb8d3e2` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push health-detail frontend diagnostics, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 

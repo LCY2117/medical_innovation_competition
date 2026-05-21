@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import Response
 
 from app.core.config import Settings
-from app.core.frontend import frontend_ready
+from app.core.frontend import frontend_health
 from app.models.schemas import (
     ActionReq,
     AedSiteListResponse,
@@ -76,13 +76,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     @router.get("/health/detail", response_model=HealthDetailResponse)
     async def health_detail() -> HealthDetailResponse:
         details = service.health()
-        details["frontend"] = {
-            "ok": frontend_ready(settings),
-            "webDistDir": str(settings.web_dist_dir),
-            "indexHtml": str(settings.web_dist_dir / "index.html"),
-            "assetsDir": str(settings.web_dist_dir / "assets"),
-            "assetsReady": (settings.web_dist_dir / "assets").is_dir(),
-        }
+        details["frontend"] = frontend_health(settings)
         details["version"] = "competition-hardening"
         details["auth"] = {
             "tokenTtlSec": settings.auth_token_ttl_sec,

@@ -32,6 +32,7 @@
 - Android AED 保障者全屏任务页会显示目标 AED 名称、位置楼层、取用说明、到 AED 距离和回送患者距离。
 - Android “我的”页新增演示位置切换，可一键上报患者走廊、一层大厅、校门岗亭、操场入口，方便演示调度距离变化。
 - 预实验方案已补 S01-S08 系统截图清单和 3-5 分钟专家/PPT 演示脚本。
+- `/api/health/detail` 可检查前端构建产物：index、assets 数量、mobile chunk、desktop chunk、最新资源时间。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -96,6 +97,8 @@ gradle :app:assembleDebug --no-daemon
 - `261b05d`：Android “我的”页加入演示位置切换。
 - `e8e23b8`：记录演示位置检查点已推送。
 - `71b9834`：记录本轮轻量验证结果。
+- `fb8d3e2`：补充专家截图清单和 3-5 分钟演示脚本。
+- `4aa7317`：记录专家材料检查点已推送。
 
 ## 你醒来后最该做的三件事
 

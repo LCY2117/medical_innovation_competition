@@ -13,6 +13,25 @@ def frontend_ready(settings: Settings) -> bool:
     return _index_file(settings).is_file()
 
 
+def frontend_health(settings: Settings) -> dict:
+    index_file = _index_file(settings)
+    assets_dir = settings.web_dist_dir / "assets"
+    asset_files = sorted(path for path in assets_dir.glob("*") if path.is_file()) if assets_dir.is_dir() else []
+    return {
+        "ok": index_file.is_file(),
+        "webDistDir": str(settings.web_dist_dir),
+        "indexHtml": str(index_file),
+        "indexReady": index_file.is_file(),
+        "indexMtime": int(index_file.stat().st_mtime) if index_file.is_file() else None,
+        "assetsDir": str(assets_dir),
+        "assetsReady": assets_dir.is_dir(),
+        "assetCount": len(asset_files),
+        "latestAssetMtime": int(max((path.stat().st_mtime for path in asset_files), default=0)) or None,
+        "mobileChunkReady": any(path.name.startswith("MobileApp-") for path in asset_files),
+        "desktopChunkReady": any(path.name.startswith("App-") for path in asset_files),
+    }
+
+
 def mount_frontend(app: FastAPI, settings: Settings) -> None:
     assets_dir = settings.web_dist_dir / "assets"
     if assets_dir.is_dir():
