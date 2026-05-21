@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 3e8b2ca
-- Last update: 2026-05-22 05:38:10 +08:00
+- HEAD: 3432d11
+- Last update: 2026-05-22 05:47:46 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -94,7 +94,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 69. Align whitepaper/pre-experiment/handoff wording with latest evidence package and Chinese role labels. (done, pushed)
 70. Add pre-experiment round-summary CSV into ZIP evidence package. (done, pushed)
 71. Refresh README with current demo entries, validation commands, evidence package, admin auth, and provider fallback. (done, pushed)
-72. Record README checkpoint and resume state after context handoff. (done, checkpointing)
+72. Record README checkpoint and resume state after context handoff. (done, pushed)
+73. Add participant consent/safety brief and questionnaire into ZIP evidence package. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -351,6 +352,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - README validation: `rg` confirmed mobile entries, evidence package, demo admin token, provider fallback, round summary, and Chinese role wording are present.
 - Git checkpoint: `3e8b2ca` (`checkpoint: refresh project README`) created and pushed to `origin/codex/competition-hardening`.
 - Context handoff resumed at `3e8b2ca`; state and morning handoff are being corrected so future work starts from the actual pushed README checkpoint.
+- Git checkpoint: `3432d11` (`checkpoint: record README handoff`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence package now includes `participant_consent_safety_brief.md` for pre-round safety/consent briefing and `participant_questionnaire.csv` for post-round participant scores. README, pre-experiment protocol, deployment runbook, expert feedback template, product plan, whitepaper, and morning handoff are updated to list these materials.
+- Evidence participant-material validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -359,7 +363,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push this state-only handoff correction, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Stage, commit, and push the participant evidence-material checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

@@ -654,6 +654,7 @@ class IncidentService:
             "README.md": self._experiment_readme(export),
             "expert_summary.md": self._expert_summary(export, participant_map),
             "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
+            "participant_consent_safety_brief.md": self._participant_consent_safety_brief(export, participant_map),
             "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "experiment_anonymized.json": json.dumps(anonymized_payload, ensure_ascii=False, indent=2),
             "metrics.csv": self._csv_text(
@@ -677,6 +678,10 @@ class IncidentService:
             "observer_record_form.csv": self._csv_text(
                 self._observer_record_rows(export),
                 self._observer_record_fields(),
+            ),
+            "participant_questionnaire.csv": self._csv_text(
+                self._participant_questionnaire_rows(export, participant_map),
+                self._participant_questionnaire_fields(),
             ),
             "pre_experiment_round_summary.csv": self._csv_text(
                 self._pre_experiment_round_summary_rows(export),
@@ -1089,6 +1094,19 @@ class IncidentService:
         return ["roundId", "incidentId", "item", "systemValue", "observerValue", "score1to5", "notes"]
 
     @staticmethod
+    def _participant_questionnaire_fields() -> list[str]:
+        return [
+            "roundId",
+            "incidentId",
+            "participantCode",
+            "assignedTask",
+            "questionId",
+            "question",
+            "score1to5",
+            "notes",
+        ]
+
+    @staticmethod
     def _pre_experiment_round_summary_fields() -> list[str]:
         return [
             "roundId",
@@ -1192,6 +1210,39 @@ class IncidentService:
             }
             for item, system_value, observer_value in rows
         ]
+
+    def _participant_questionnaire_rows(
+        self,
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> list[dict]:
+        assigned_tasks = self._participant_assigned_tasks(export)
+        questions = [
+            ("Q01", "我能快速理解自己在本轮演练中的任务。"),
+            ("Q02", "系统降低了多人协同和现场沟通的混乱感。"),
+            ("Q03", "移动端或 App 的当前动作提示足够清楚。"),
+            ("Q04", "AED 点位、取送或 CPR/AED 下一步提示对演练有帮助。"),
+            ("Q05", "系统的安全边界提示清楚，没有让我误以为它能替代真实急救。"),
+            ("Q06", "我愿意在后续急救培训或模拟演练中继续使用该系统。"),
+        ]
+        rows: list[dict] = []
+        for client in sorted(export.clients, key=lambda item: participant_map.get(item.userId, item.userId)):
+            participant_code = participant_map.get(client.userId, client.userId)
+            assigned_task = assigned_tasks.get(client.userId, "待命/观察")
+            for question_id, question in questions:
+                rows.append(
+                    {
+                        "roundId": "R001",
+                        "incidentId": export.incidentId,
+                        "participantCode": participant_code,
+                        "assignedTask": assigned_task,
+                        "questionId": question_id,
+                        "question": question,
+                        "score1to5": "",
+                        "notes": "",
+                    }
+                )
+        return rows
 
     def _timeline_export_rows(self, timeline: list[IncidentLogEntry]) -> list[dict]:
         start_ts = timeline[0].ts if timeline else None
@@ -1318,7 +1369,9 @@ class IncidentService:
                     "dispatch_rationale.csv",
                     "expert_summary.md",
                     "expert_review_checklist.md",
+                    "participant_consent_safety_brief.md",
                     "observer_record_form.csv",
+                    "participant_questionnaire.csv",
                     "pre_experiment_round_summary.csv",
                 ],
                 "internalReviewOnly": ["experiment.json", "clients.csv"],
@@ -1467,6 +1520,7 @@ class IncidentService:
 - `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
+- `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
 - `clients.csv`：参与终端画像、位置、角色和 OPPO/mock 健康摘要。
 - `clients_anonymized.csv`：匿名化参与者表，隐藏 userId、姓名、组织和个人简介。
@@ -1474,12 +1528,13 @@ class IncidentService:
 - `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
 - `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
 - `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
+- `participant_questionnaire.csv`：参与者主观问卷表，用于记录可理解性、协同减负、移动端提示和安全边界评分。
 - `pre_experiment_round_summary.csv`：单轮预实验汇总行，便于把多轮 ZIP 的核心指标合并到 Excel 做描述性统计。
 - `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`observer_record_form.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:
@@ -1496,6 +1551,20 @@ class IncidentService:
             if client.userId not in aliases:
                 aliases[client.userId] = f"C{len(aliases) + 1:03d}"
         return aliases
+
+    def _participant_assigned_tasks(self, export: ExperimentExportResponse) -> dict[str, str]:
+        tasks: dict[str, str] = {}
+        if export.patientUserId:
+            tasks[export.patientUserId] = "患者模拟/触发端"
+        role_tasks = {
+            "PRIME": "核心施救",
+            "RUNNER": "AED 保障",
+            "GUIDE": "环境清障/救护接应",
+        }
+        for role, user_id in export.assignments.items():
+            if user_id:
+                tasks[user_id] = role_tasks.get(role, role)
+        return tasks
 
     @staticmethod
     def _replace_participant_ids(value: object, participant_map: dict[str, str]) -> object:
@@ -1647,6 +1716,54 @@ class IncidentService:
 ## 五、安全边界
 
 本系统为模拟急救协同、训练复盘和预实验验证工具。它不替代拨打 120、AED 语音提示、专业医护判断，也不用于真实医疗诊断或疗效证明。
+"""
+
+    def _participant_consent_safety_brief(
+        self,
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> str:
+        generated_at = self._iso_timestamp(export.generatedAt)
+        assigned_tasks = self._participant_assigned_tasks(export)
+        participant_rows = []
+        for client in sorted(export.clients, key=lambda item: participant_map.get(item.userId, item.userId)):
+            participant_code = participant_map.get(client.userId, client.userId)
+            participant_rows.append(
+                f"| {participant_code} | {assigned_tasks.get(client.userId, '待命/观察')} |  |  |"
+            )
+        participant_table = "\n".join(participant_rows) if participant_rows else "|  |  |  |  |"
+        return f"""# 生命反射弧参与者知情与安全边界简表
+
+事件编号：{export.incidentId}
+导出时间：{generated_at}
+
+## 一、演练目的
+
+本轮演练用于医创赛低成本预实验，目标是观察“生命反射弧”在模拟心脏骤停场景下对多人协同分工、AED 取送、CPR/AED 流程提示和数据留痕的支持效果。演练结果仅用于学生创新竞赛、产品迭代和专家反馈准备。
+
+## 二、安全边界
+
+- 本演练不纳入真实患者，不用于真实医疗诊断、治疗或疗效评价。
+- 不在真人身上进行真实胸外按压，不进行真实电击；如使用 AED，仅使用训练机、模型或空盒道具。
+- 系统提示不能替代拨打 120、AED 语音提示、专业医护判断或正式急救培训。
+- 参与者可随时暂停或退出，不影响后续学习、评价或团队关系。
+- 如出现身体不适、焦虑、眩晕、跌倒风险或现场安全问题，应立即停止演练。
+
+## 三、数据与隐私
+
+- 对外和专家材料优先使用匿名化文件，参与者以 P001、R001、S001 等代号出现。
+- 不把手机号、真实姓名、学校/单位身份、精确个人轨迹或未经授权的照片放入公开 PPT。
+- 健康摘要若为演示数据或 mock 来源，只能表述为模拟数据，不得表述为真实健康监测或临床诊断。
+
+## 四、参与者确认记录
+
+| 参与者代号 | 本轮任务 | 已阅读安全边界 | 签名/确认 |
+| --- | --- | --- | --- |
+{participant_table}
+
+## 五、演练后反馈
+
+演练结束后，请配合填写 `participant_questionnaire.csv` 中对应自己代号的问卷行；观察员另行填写 `observer_record_form.csv`，专家可对照 `expert_review_checklist.md` 复核。
 """
 
     def _assigned_role_for(self, user_id: str) -> str | None:

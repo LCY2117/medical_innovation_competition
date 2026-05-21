@@ -37,7 +37,9 @@
 | 匿名化预实验 JSON / CSV |  |
 | 专家摘要 `expert_summary.md` |  |
 | 专家现场复核清单 `expert_review_checklist.md` |  |
+| 参与者知情与安全边界简表 `participant_consent_safety_brief.md` |  |
 | 观察员补充记录表 `observer_record_form.csv` |  |
+| 参与者主观问卷表 `participant_questionnaire.csv` |  |
 | 单轮预实验汇总表 `pre_experiment_round_summary.csv` |  |
 | 证据包 `manifest.json` 校验清单 |  |
 | AI 分派解释与规则兜底说明 |  |
