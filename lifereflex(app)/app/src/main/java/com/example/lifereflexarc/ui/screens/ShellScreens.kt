@@ -331,21 +331,24 @@ private fun HealthSignalSummaryCard(
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("OPPO 健康增强", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                text = healthSignals?.note
-                    ?: "真实 OPPO 健康授权完成前，系统使用 mock/fallback 摘要维持医创赛演示闭环。",
+                text = if (healthSignals == null) {
+                    "真实 OPPO 健康授权完成前，系统使用演示健康摘要维持医创赛闭环。"
+                } else {
+                    "当前为 OPPO 健康模拟接入摘要，用于演示调度如何参考健康风险。"
+                },
                 color = PhoneColors.GrayText,
                 fontSize = 13.sp,
                 lineHeight = 20.sp,
             )
             SummaryRow("数据来源", translateHealthSource(healthSignals?.source), dark = true)
-            SummaryRow("授权状态", healthSignals?.authorizationStatus ?: "not_connected", dark = true)
+            SummaryRow("授权状态", translateHealthAuthorization(healthSignals?.authorizationStatus), dark = true)
             SummaryRow("心率", healthSignals?.heartRateBpm?.let { "$it bpm" } ?: "--", dark = true)
             SummaryRow("血氧", healthSignals?.bloodOxygenPercent?.let { "${it.toInt()}%" } ?: "--", dark = true)
             SummaryRow("压力", healthSignals?.pressureScore?.toString() ?: "--", dark = true)
             val riskTags = healthSignals?.riskTags.orEmpty()
             if (riskTags.isNotEmpty()) {
                 Text(
-                    text = "风险标记：${riskTags.joinToString("、")}",
+                    text = "风险标记：${riskTags.joinToString("、") { translateHealthRiskTag(it) }}",
                     color = PhoneColors.RedSoft,
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
@@ -357,9 +360,25 @@ private fun HealthSignalSummaryCard(
 
 private fun translateHealthSource(source: String?): String = when (source) {
     "oppo", "oppo_health" -> "OPPO 健康"
-    "mock" -> "模拟健康"
+    "mock" -> "演示健康数据"
     "manual" -> "手动录入"
     else -> "健康数据未接入"
+}
+
+private fun translateHealthAuthorization(status: String?): String = when (status) {
+    "authorized" -> "已授权"
+    "not_connected", null -> "未接入"
+    "denied" -> "未授权"
+    else -> status
+}
+
+private fun translateHealthRiskTag(tag: String): String = when (tag) {
+    "tachycardia" -> "心率偏快"
+    "bradycardia" -> "心率偏慢"
+    "low_spo2" -> "血氧偏低"
+    "high_pressure" -> "压力偏高"
+    "limited_mobility" -> "行动能力受限"
+    else -> tag
 }
 
 @Composable

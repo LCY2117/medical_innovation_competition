@@ -251,6 +251,27 @@ export function translateHealthSource(source?: string | null): string {
   }
 }
 
+export function translateHealthRiskTag(tag: string): string {
+  switch (tag) {
+    case 'tachycardia':
+      return '心率偏快';
+    case 'bradycardia':
+      return '心率偏慢';
+    case 'low_spo2':
+      return '血氧偏低';
+    case 'high_pressure':
+      return '压力偏高';
+    case 'limited_mobility':
+      return '行动能力受限';
+    default:
+      return tag;
+  }
+}
+
+export function formatHealthRiskTags(tags?: string[] | null): string {
+  return (tags ?? []).map(translateHealthRiskTag).join('、');
+}
+
 export function formatHealthSignalSummary(summary?: HealthSignalSummary | null): string {
   if (!summary) {
     return '健康数据未接入';

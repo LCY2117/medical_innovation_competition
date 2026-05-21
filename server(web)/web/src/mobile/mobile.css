@@ -564,6 +564,10 @@ button:disabled {
   font-size: 0.76rem !important;
 }
 
+.mobile-health-copy.warning {
+  color: var(--mobile-danger-text) !important;
+}
+
 .mobile-incident-card {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

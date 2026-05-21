@@ -40,6 +40,7 @@ import {
 import {
   findUserRole,
   formatDistanceLabel,
+  formatHealthRiskTags,
   formatHealthSignalSummary,
   formatLocationLabel,
   formatTimeLabel,
@@ -1253,6 +1254,11 @@ function MobileApp() {
                 <p className="mobile-health-copy">
                   {translateHealthSource(client.healthSignals?.source)} · {formatHealthSignalSummary(client.healthSignals)}
                 </p>
+                {Boolean(client.healthSignals?.riskTags?.length) && (
+                  <p className="mobile-health-copy warning">
+                    风险标记：{formatHealthRiskTags(client.healthSignals?.riskTags)}
+                  </p>
+                )}
               </div>
             </div>
           ))}

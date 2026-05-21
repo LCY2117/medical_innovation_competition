@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { formatHealthSignalSummary, mergeIncidentState, roleNames, translateHealthSource } from '@/shared/domain';
+import { formatHealthRiskTags, formatHealthSignalSummary, mergeIncidentState, roleNames, translateHealthSource } from '@/shared/domain';
 import type { HealthSignalSummary, IncidentState as SharedIncidentState } from '@/shared/types';
 
 // Utility for Tailwind classes
@@ -2743,7 +2743,7 @@ export default function App() {
                     </div>
                     {Boolean(client.healthSignals?.riskTags?.length) && (
                       <div className="mt-2 text-amber-300">
-                        风险标记：{client.healthSignals?.riskTags?.join('、')}
+                        风险标记：{formatHealthRiskTags(client.healthSignals?.riskTags)}
                       </div>
                     )}
                   </div>
