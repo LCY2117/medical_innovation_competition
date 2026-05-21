@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7e39ee3
-- Last update: 2026-05-22 03:42:00 +08:00
+- HEAD: b2b650f
+- Last update: 2026-05-22 03:45:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -59,6 +59,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 34. Add Web/mobile medical disclaimer and data-use boundary copy. (done, validating)
 35. Push Web/mobile safety-boundary checkpoint. (done)
 36. Add Android local archive participant-perspective task summary. (done, validating)
+37. Push Android archive-summary checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -207,6 +208,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `95b4e88` (`checkpoint: add safety boundary copy`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `7e39ee3` (`checkpoint: record safety copy push`) created and pushed to `origin/codex/competition-hardening`.
 - Android archive-summary validation: `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `b2b650f` (`checkpoint: summarize android archives`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -215,7 +217,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push Android archive-summary polish, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Continue from remote checkpoint `b2b650f` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
