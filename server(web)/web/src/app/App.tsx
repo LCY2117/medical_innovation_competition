@@ -2258,6 +2258,9 @@ export default function App() {
           <div className="text-xs text-slate-500">
             任务状态: 核心施救={translateRoleStatus(incidentState?.roles?.PRIME?.status)} | AED 保障={translateRoleStatus(incidentState?.roles?.RUNNER?.status)} | 环境清障={translateRoleStatus(incidentState?.roles?.GUIDE?.status)}
           </div>
+          <div className="rounded-lg border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
+            安全边界：当前系统用于模拟急救协同、训练复盘和医创赛预实验，不替代 120、AED 语音提示、现场专业医护判断或真实医疗诊断。
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
             {demoFlowSteps.map((step, index) => (
               <div

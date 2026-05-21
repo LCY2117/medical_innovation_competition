@@ -113,6 +113,13 @@
   line-height: 1.6;
 }
 
+.mobile-hero .mobile-safety-copy {
+  border-left: 3px solid var(--mobile-warn);
+  padding-left: 10px;
+  color: var(--mobile-ink);
+  font-size: 0.82rem;
+}
+
 .mobile-app-mark,
 .mobile-user-avatar {
   display: inline-flex;

@@ -579,6 +579,7 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
         <p className="mobile-kicker">生命反射弧移动端</p>
         <h1>浏览器应急端</h1>
         <p>无需安装应用，手机浏览器即可登录、接入事件、触发 SOS、执行急救任务。</p>
+        <p className="mobile-safety-copy">仅用于模拟演练和训练复盘，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。</p>
       </section>
 
       <section className="mobile-panel" id="top">
@@ -1365,7 +1366,7 @@ function MobileApp() {
         <section className="mobile-panel mobile-summary">
           <CheckCircle2 size={26} />
           <h2>本次演练已归档</h2>
-          <p>事件日志、角色响应和 AED 取送信息已经进入实验导出数据，可用于预实验记录。</p>
+          <p>事件日志、角色响应和 AED 取送信息已经进入预实验证据包。对外展示请优先使用匿名化文件，本系统不宣称真实临床疗效。</p>
         </section>
       )}
     </main>

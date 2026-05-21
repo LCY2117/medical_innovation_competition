@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: af96cae
-- Last update: 2026-05-22 03:28:00 +08:00
+- HEAD: 3526ca0
+- Last update: 2026-05-22 03:33:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -56,6 +56,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 31. Push expert-material checklist checkpoint. (done)
 32. Expand `/api/health/detail` frontend build diagnostics. (done, validating)
 33. Push frontend health diagnostics checkpoint. (done)
+34. Add Web/mobile medical disclaimer and data-use boundary copy. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -149,6 +150,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Pre-experiment protocol now includes an S01-S08 screenshot checklist and a timed 3-5 minute expert/PPT demo script.
 - Expert feedback template now explicitly asks experts to review mobile Web, screenshot checklist, and demo script materials.
 - `/api/health/detail` frontend diagnostics now report index readiness, index mtime, asset count, latest asset mtime, mobile chunk readiness, and desktop chunk readiness.
+- Web dashboard and mobile Web now show concise safety-boundary copy: simulation/training/pre-experiment only, not a substitute for 120, AED voice prompts, professional medical judgment, or real diagnosis. Mobile archive copy now points users to anonymized evidence package materials.
 
 ## Validation Log
 
@@ -197,6 +199,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `4aa7317` (`checkpoint: record expert checklist push`) created and pushed to `origin/codex/competition-hardening`.
 - Health detail frontend diagnostics validation: targeted health-detail test passed; backend full unittest discovery passed, 30 tests OK.
 - Git checkpoint: `af96cae` (`checkpoint: expand frontend health diagnostics`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `3526ca0` (`checkpoint: record health diagnostics push`) created and pushed to `origin/codex/competition-hardening`.
+- Web disclaimer validation: `npm run typecheck` passed; `npm run build` passed.
 
 ## Blockers Summary
 
@@ -205,7 +209,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue from remote checkpoint `af96cae` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push Web/mobile disclaimer polish, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
