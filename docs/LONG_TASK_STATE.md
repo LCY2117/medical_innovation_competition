@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 4e08911
-- Last update: 2026-05-22 05:25:19 +08:00
+- HEAD: 7b8392b
+- Last update: 2026-05-22 05:27:05 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -89,7 +89,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 64. Remove visible PRIME/RUNNER/GUIDE auxiliary labels from mobile demo entry and 4-terminal stage captions. (done, pushed)
 65. Add mobile Web archived-flow evidence package download entry. (done, pushed)
 66. Localize remaining Android emergency-screen role-code wording. (done, pushed)
-67. Localize Android CPR metronome visible English labels. (done, validating)
+67. Localize Android CPR metronome visible English labels. (done, pushed)
+68. Run post-label/evidence-package validation sweep. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -333,6 +334,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android wording validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 - Git checkpoint: `4e08911` (`checkpoint: polish android emergency wording`) created and pushed to `origin/codex/competition-hardening`.
 - Android CPR metronome visible English labels changed to Chinese: “CPR 节律辅助” and “语音辅助已启用”.
+- Android CPR label validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `7b8392b` (`checkpoint: localize android cpr labels`) created and pushed to `origin/codex/competition-hardening`.
+- Post-label/evidence-package validation sweep: backend `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-OIunfMkh.js` at `222.46 kB` raw / `67.65 kB` gzip and mobile `MobileApp-DTIoJNCQ.js` at `36.43 kB` raw / `11.71 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -341,7 +345,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Validate, stage, and push the Android CPR metronome label checkpoint, then continue another safe competition-hardening slice or run a broader validation sweep. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Commit and push the validation-sweep record, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
