@@ -17,7 +17,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     store = SqliteIncidentStore(db_path=settings.db_path)
     auth_store = SqliteAuthStore(db_path=settings.db_path)
-    auth_service = AuthService(store=auth_store, token_ttl_sec=settings.auth_token_ttl_sec)
+    auth_service = AuthService(
+        store=auth_store,
+        token_ttl_sec=settings.auth_token_ttl_sec,
+        admin_phones=settings.admin_phones,
+    )
     service = IncidentService(
         store=store,
         sos_duration_sec=settings.sos_duration_sec,

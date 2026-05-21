@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: f30be6d
-- Last update: 2026-05-22 04:07:05 +08:00
+- HEAD: 5855cf4
+- Last update: 2026-05-22 04:17:11 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -75,7 +75,9 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 50. Record pushed security checkpoint in handoff/state. (done)
 51. Add backend map/spatial provider abstraction with AMap WebService fallback. (done, pushed)
 52. Add Android native location provider with system-location and demo fallback. (done, pushed)
-53. Add backend notification provider with WebSocket fallback. (done, checkpointing)
+53. Add backend notification provider with WebSocket fallback. (done, pushed)
+54. Add backend formal admin account minimal RBAC. (done, checkpointing)
+55. Explore remaining demo UX polish. (in progress)
 
 ## Sub-Agent Ledger
 
@@ -86,6 +88,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Backend evidence explorer (`019e4bb7-b138-7263-abf1-99c38ba0bfa5`): completed read-only; recommended target-incident export roles, ZIP manifest, richer metrics, structured timeline, demo readiness, and input constraints.
 - Android APK explorer (`019e4bb7-c511-78f2-af54-44692d632c16`): completed read-only; recommended wiring auto-join, adding timeline visibility, Chinese health presentation, demo location switching, and AED/CPR status cards.
 - P2 location/push explorer (`019e4c10-ef42-7dc1-b9ce-76e6d76fa2fc`): completed read-only; recommended Android native location provider prewiring first, then backend notification provider with WebSocket fallback.
+- Admin/RBAC explorer (`019e4c27-d940-7411-bcad-12f6103a3b4d`): running read-only; scope is backend auth/admin/security minimal RBAC slice.
+- Web/mobile polish explorer (`019e4c27-ed2f-71e2-b975-4d47eaeac985`): running read-only; scope is low-risk competition/demo UX improvements.
 
 ## Git Baseline
 
@@ -183,6 +187,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Backend map distances now flow through `SpatialProvider`: default demo/Haversine distance, AMap WebService distance when `LRA_MAP_PROVIDER=amap` and `LRA_AMAP_SERVICE_KEY` is configured, and structured fallback metadata in health/detail and dispatch/meta.
 - Android location now flows through a `LocationProvider`: app startup/terminal registration and the Profile location card can use system last-known location when runtime permission is granted; missing permission, disabled provider, or no recent location falls back to demo coordinates.
 - Backend notifications now flow through `NotificationProvider`: default WebSocket state sync, future `jpush`/`vendor` placeholder values report adapter-pending fallback in `/api/health/detail.pushProvider`.
+- Git checkpoint `5855cf4` (`checkpoint: add notification provider fallback`) was pushed to `origin/codex/competition-hardening`.
+- Backend minimal RBAC now supports `LRA_ADMIN_PHONES`: matching registered users receive `privileges=["admin"]` from `/auth/me`, and admin APIs accept either formal admin Bearer tokens or legacy demo admin tokens. If only admin phones are configured, anonymous admin APIs stay closed.
 
 ## Validation Log
 
@@ -259,6 +265,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `f30be6d` (`checkpoint: add android location provider`) created and pushed to `origin/codex/competition-hardening`.
 - Notification provider targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_push_provider_placeholder_falls_back_to_websocket tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export -v` passed, 3 tests OK.
 - Notification provider full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 34 tests OK.
+- Git checkpoint: `5855cf4` (`checkpoint: add notification provider fallback`) created and pushed to `origin/codex/competition-hardening`.
+- RBAC targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_demo_admin_token_protects_public_demo_mutations tests.test_server.ServerTestCase.test_configured_admin_account_can_manage_demo tests.test_server.ServerTestCase.test_admin_phones_without_demo_token_keep_admin_apis_closed tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state -v` passed, 4 tests OK.
+- RBAC full backend validation: first run exposed an audit event naming regression; after preserving `demo_admin_denied`, `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 36 tests OK.
+- RBAC Web validation: `npm run typecheck` passed; `npm run build` passed.
 
 ## Blockers Summary
 
@@ -267,7 +277,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit/push the notification provider checkpoint excluding local DB/output/OPPO doc copy. After that, continue with formal admin/RBAC or demo UX polish if time remains.
+Checkpoint the formal admin/RBAC slice without committing DB/output/OPPO doc copy. After that, use explorer findings for a low-risk demo UX polish item.
 
 ## Resume Instructions
 

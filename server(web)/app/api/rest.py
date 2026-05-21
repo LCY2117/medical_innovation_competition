@@ -115,20 +115,38 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         except Exception:
             pass
 
-    def require_demo_admin(request: Request, x_demo_admin_token: str | None = Header(default=None)) -> None:
-        rate_limit(request, "admin", settings.rate_limit_admin_per_minute)
+    def is_demo_admin_authorized(x_demo_admin_token: str | None) -> bool:
         if not settings.demo_admin_token:
-            return
-        if is_demo_admin_authorized(request, x_demo_admin_token):
-            return
-        audit(request, "demo_admin_denied", "anonymous", outcome="denied")
-        raise HTTPException(status_code=403, detail="缺少有效演示管理员口令")
-
-    def is_demo_admin_authorized(request: Request, x_demo_admin_token: str | None) -> bool:
-        if not settings.demo_admin_token:
-            return True
+            return False
         header_token = (x_demo_admin_token or "").strip()
         return bool(header_token) and hmac.compare_digest(header_token, settings.demo_admin_token)
+
+    def require_admin(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
+    ) -> str:
+        rate_limit(request, "admin", settings.rate_limit_admin_per_minute)
+        if is_demo_admin_authorized(x_demo_admin_token):
+            return "demo_admin"
+        if authorization:
+            try:
+                user = auth_service.require_admin_user(authorization)
+            except HTTPException as exc:
+                audit(
+                    request,
+                    "admin_user_denied",
+                    "user",
+                    outcome="denied",
+                    metadata={"statusCode": exc.status_code},
+                )
+                raise
+            return user.user_id
+        if settings.demo_admin_token or settings.admin_phones:
+            denied_event = "demo_admin_denied" if settings.demo_admin_token else "admin_denied"
+            audit(request, denied_event, "anonymous", outcome="denied")
+            raise HTTPException(status_code=403, detail="缺少有效管理员权限")
+        return "open_demo_admin"
 
     def require_actor_when_public_demo_is_protected(
         user_id: str,
@@ -138,7 +156,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     ) -> None:
         if not settings.demo_admin_token:
             return
-        if is_demo_admin_authorized(request, x_demo_admin_token):
+        if is_demo_admin_authorized(x_demo_admin_token):
             return
         user = auth_service.require_user(authorization)
         if user.user_id != user_id:
@@ -165,6 +183,8 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         details["auth"] = {
             "tokenTtlSec": settings.auth_token_ttl_sec,
             "demoAdminAuthEnabled": settings.demo_admin_token is not None,
+            "adminAccountAuthEnabled": bool(settings.admin_phones),
+            "adminPhoneCount": len(settings.admin_phones),
         }
         details["features"] = {
             "experimentJsonExport": True,
@@ -184,14 +204,16 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             "rateLimitAuthPerMinute": settings.rate_limit_auth_per_minute,
             "rateLimitAdminPerMinute": settings.rate_limit_admin_per_minute,
             "rateLimitActorPerMinute": settings.rate_limit_actor_per_minute,
+            "adminAccountAuthEnabled": bool(settings.admin_phones),
+            "adminPhoneCount": len(settings.admin_phones),
         }
         details["demoAdminAuthEnabled"] = settings.demo_admin_token is not None
         return HealthDetailResponse(**details)
 
     @router.post("/incidents", response_model=CreateIncidentResponse)
-    async def create_incident(request: Request, admin: None = Depends(require_demo_admin)) -> CreateIncidentResponse:
+    async def create_incident(request: Request, admin: str = Depends(require_admin)) -> CreateIncidentResponse:
         response = service.create_incident()
-        audit(request, "incident_created", "demo_admin", target_type="incident", target_id=response.incidentId)
+        audit(request, "incident_created", "admin", actor_id=admin, target_type="incident", target_id=response.incidentId)
         return response
 
     @router.post("/auth/register", response_model=AuthResponse)
@@ -345,7 +367,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def upsert_aed_site(
         req: AedSiteUpsertReq,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> AedSiteListResponse:
         site = service.upsert_aed_site(
             site_id=req.siteId,
@@ -357,7 +379,8 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         audit(
             request,
             "aed_site_upserted",
-            "demo_admin",
+            "admin",
+            actor_id=admin,
             target_type="aed_site",
             target_id=site.siteId,
             metadata={"status": site.status, "hasAccessNotes": bool(site.accessNotes)},
@@ -373,18 +396,19 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         return service.get_current_incident()
 
     @router.post("/incidents/current/reset", response_model=MutationResponse)
-    async def reset_current_incident(request: Request, admin: None = Depends(require_demo_admin)) -> MutationResponse:
+    async def reset_current_incident(request: Request, admin: str = Depends(require_admin)) -> MutationResponse:
         response = await service.reset_current_incident()
-        audit(request, "incident_reset", "demo_admin", target_type="incident", target_id=response.incidentId)
+        audit(request, "incident_reset", "admin", actor_id=admin, target_type="incident", target_id=response.incidentId)
         return response
 
     @router.post("/demo/bootstrap", response_model=DemoBootstrapResponse)
-    async def demo_bootstrap(request: Request, admin: None = Depends(require_demo_admin)) -> DemoBootstrapResponse:
+    async def demo_bootstrap(request: Request, admin: str = Depends(require_admin)) -> DemoBootstrapResponse:
         response = await service.bootstrap_demo()
         audit(
             request,
             "demo_bootstrapped",
-            "demo_admin",
+            "admin",
+            actor_id=admin,
             target_type="incident",
             target_id=response.incidentId,
             metadata={"clients": len(response.clients), "aedSites": len(response.aedSites)},
@@ -392,18 +416,19 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         return response
 
     @router.get("/experiments/current/export", response_model=ExperimentExportResponse)
-    async def export_current_experiment(request: Request, admin: None = Depends(require_demo_admin)) -> ExperimentExportResponse:
+    async def export_current_experiment(request: Request, admin: str = Depends(require_admin)) -> ExperimentExportResponse:
         response = service.export_experiment()
-        audit(request, "experiment_exported", "demo_admin", target_type="incident", target_id=response.incidentId)
+        audit(request, "experiment_exported", "admin", actor_id=admin, target_type="incident", target_id=response.incidentId)
         return response
 
     @router.get("/experiments/current/package")
-    async def export_current_experiment_package(request: Request, admin: None = Depends(require_demo_admin)) -> Response:
+    async def export_current_experiment_package(request: Request, admin: str = Depends(require_admin)) -> Response:
         filename, content = service.export_experiment_package()
         audit(
             request,
             "experiment_package_exported",
-            "demo_admin",
+            "admin",
+            actor_id=admin,
             target_type="incident",
             target_id=service.get_current_incident().incidentId,
             metadata={"bytes": len(content)},
@@ -418,23 +443,24 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def export_experiment(
         incident_id: str,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> ExperimentExportResponse:
         response = service.export_experiment(incident_id)
-        audit(request, "experiment_exported", "demo_admin", target_type="incident", target_id=response.incidentId)
+        audit(request, "experiment_exported", "admin", actor_id=admin, target_type="incident", target_id=response.incidentId)
         return response
 
     @router.get("/experiments/{incident_id}/package")
     async def export_experiment_package(
         incident_id: str,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> Response:
         filename, content = service.export_experiment_package(incident_id)
         audit(
             request,
             "experiment_package_exported",
-            "demo_admin",
+            "admin",
+            actor_id=admin,
             target_type="incident",
             target_id=incident_id,
             metadata={"bytes": len(content)},
@@ -449,13 +475,14 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def designate_patient(
         req: DispatchReq,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> DispatchResponse:
         response = await service.designate_patient(req.patientUserId)
         audit(
             request,
             "patient_designated",
-            "demo_admin",
+            "admin",
+            actor_id=admin,
             target_type="incident",
             target_id=response.incidentId,
             metadata={"patientUserId": response.patientUserId, "source": response.source},
@@ -535,20 +562,20 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def sos_start(
         incident_id: str,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> MutationResponse:
         response = await service.sos_start(incident_id)
-        audit(request, "sos_started", "demo_admin", target_type="incident", target_id=incident_id)
+        audit(request, "sos_started", "admin", actor_id=admin, target_type="incident", target_id=incident_id)
         return response
 
     @router.post("/incidents/{incident_id}/sos_cancel", response_model=MutationResponse)
     async def sos_cancel(
         incident_id: str,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> MutationResponse:
         response = await service.sos_cancel(incident_id)
-        audit(request, "sos_cancelled", "demo_admin", target_type="incident", target_id=incident_id)
+        audit(request, "sos_cancelled", "admin", actor_id=admin, target_type="incident", target_id=incident_id)
         return response
 
     @router.post("/incidents/{incident_id}/patient_sos_start", response_model=MutationResponse)
@@ -579,20 +606,20 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def trigger_incident(
         incident_id: str,
         request: Request,
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> MutationResponse:
         response = await service.trigger_incident(incident_id)
-        audit(request, "incident_triggered", "demo_admin", target_type="incident", target_id=incident_id)
+        audit(request, "incident_triggered", "admin", actor_id=admin, target_type="incident", target_id=incident_id)
         return response
 
     @router.get("/audit/events", response_model=AuditLogResponse)
     async def list_audit_events(
         request: Request,
         limit: int = Query(default=100, ge=1, le=500),
-        admin: None = Depends(require_demo_admin),
+        admin: str = Depends(require_admin),
     ) -> AuditLogResponse:
         events = service.list_audit_events(limit)
-        audit(request, "audit_events_viewed", "demo_admin", target_type="audit_log", metadata={"limit": limit})
+        audit(request, "audit_events_viewed", "admin", actor_id=admin, target_type="audit_log", metadata={"limit": limit})
         return AuditLogResponse(events=events)
 
     return router

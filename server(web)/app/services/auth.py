@@ -52,9 +52,15 @@ class AuthService:
         },
     }
 
-    def __init__(self, store: SqliteAuthStore, token_ttl_sec: int = 604800) -> None:
+    def __init__(
+        self,
+        store: SqliteAuthStore,
+        token_ttl_sec: int = 604800,
+        admin_phones: tuple[str, ...] = (),
+    ) -> None:
         self.store = store
         self.token_ttl_sec = token_ttl_sec
+        self.admin_phones = tuple(self._normalize_phone(phone) for phone in admin_phones if self._normalize_phone(phone))
 
     def register(
         self,
@@ -135,6 +141,15 @@ class AuthService:
         token = self._extract_token(authorization)
         return self._require_user_by_token(token)
 
+    def require_admin_user(self, authorization: str | None) -> UserRecord:
+        user = self.require_user(authorization)
+        if not self.is_admin_user(user):
+            raise HTTPException(status_code=403, detail="当前账号没有管理员权限")
+        return user
+
+    def is_admin_user(self, user: UserRecord) -> bool:
+        return bool(self.admin_phones) and self._normalize_phone(user.phone) in self.admin_phones
+
     @staticmethod
     def _normalize_phone(phone: str) -> str:
         return "".join(ch for ch in phone if ch.isdigit())
@@ -206,8 +221,7 @@ class AuthService:
             raise HTTPException(status_code=401, detail="缺少有效登录凭证")
         return token
 
-    @staticmethod
-    def _to_auth_user(user: UserRecord) -> AuthUser:
+    def _to_auth_user(self, user: UserRecord) -> AuthUser:
         return AuthUser(
             userId=user.user_id,
             displayName=user.display_name,
@@ -217,6 +231,7 @@ class AuthService:
             professionIdentity=user.profession_identity,
             profileBio=user.profile_bio,
             credentialStatus=user.credential_status,
+            privileges=["admin"] if self.is_admin_user(user) else [],
         )
 
     @staticmethod

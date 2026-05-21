@@ -56,6 +56,7 @@ class AuthUser(BaseModel):
     professionIdentity: str
     profileBio: str
     credentialStatus: str
+    privileges: list[str] = Field(default_factory=list)
 
 
 class AuthResponse(BaseModel):

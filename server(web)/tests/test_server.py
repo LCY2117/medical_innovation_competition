@@ -56,6 +56,23 @@ class ServerTestCase(unittest.TestCase):
         )
         return TestClient(create_app(settings))
 
+    def _client_with_admin_phones(self, *phones: str) -> TestClient:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            demo_admin_token="test-demo-admin",
+            admin_phones=tuple(phones),
+        )
+        return TestClient(create_app(settings))
+
     def _client_with_expired_auth_tokens(self) -> TestClient:
         settings = Settings(
             app_name=self.settings.app_name,
@@ -1138,6 +1155,87 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(allowed_join.status_code, 200)
         self.assertEqual(allowed_action.status_code, 200)
         self.assertEqual(allowed_export.status_code, 200)
+
+    def test_configured_admin_account_can_manage_demo(self) -> None:
+        admin_phone = "13800130001"
+        user_phone = "13800130002"
+        with self._client_with_admin_phones(admin_phone) as client:
+            admin_register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    "管理员",
+                    admin_phone,
+                    "医创赛团队",
+                    "身体状态良好",
+                    "项目负责人",
+                    "负责演示管理和数据导出",
+                ),
+            )
+            user_register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    "普通成员",
+                    user_phone,
+                    "医创赛团队",
+                    "身体状态良好",
+                    "志愿者",
+                    "只参与手机端现场演示",
+                ),
+            )
+
+            admin_token = admin_register.json()["token"]
+            user_token = user_register.json()["token"]
+            admin_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {admin_token}"})
+            denied = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {user_token}"})
+            bootstrapped = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {admin_token}"})
+            audit_log = client.get("/api/audit/events?limit=20", headers={"Authorization": f"Bearer {admin_token}"})
+            health = client.get("/api/health/detail")
+
+        self.assertEqual(admin_register.status_code, 200)
+        self.assertEqual(user_register.status_code, 200)
+        self.assertIn("admin", admin_me.json()["user"]["privileges"])
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(audit_log.status_code, 200)
+        event_types = {event["eventType"] for event in audit_log.json()["events"]}
+        self.assertIn("admin_user_denied", event_types)
+        self.assertIn("demo_bootstrapped", event_types)
+        self.assertTrue(health.json()["auth"]["adminAccountAuthEnabled"])
+        self.assertEqual(health.json()["auth"]["adminPhoneCount"], 1)
+
+    def test_admin_phones_without_demo_token_keep_admin_apis_closed(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            admin_phones=("13800130003",),
+        )
+        with TestClient(create_app(settings)) as client:
+            open_bootstrap = client.post("/api/demo/bootstrap")
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    "正式管理员",
+                    "13800130003",
+                    "医创赛团队",
+                    "身体状态良好",
+                    "项目负责人",
+                    "负责系统管理和预实验导出",
+                ),
+            )
+            token = register.json()["token"]
+            admin_bootstrap = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {token}"})
+
+        self.assertEqual(open_bootstrap.status_code, 403)
+        self.assertEqual(register.status_code, 200)
+        self.assertEqual(admin_bootstrap.status_code, 200)
 
     def test_audit_events_capture_sensitive_demo_and_actor_actions(self) -> None:
         token = "test-demo-admin"

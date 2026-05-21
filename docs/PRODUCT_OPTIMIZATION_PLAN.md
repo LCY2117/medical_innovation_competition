@@ -103,7 +103,7 @@ Acceptance:
 
 ## P2: Security And Compliance Hardening
 
-- [ ] 管理后台改为正式管理员账号或最小化 RBAC。
+- [x] 管理后台改为正式管理员账号或最小化 RBAC。
 - [x] Token 存储从普通 SharedPreferences 迁移到加密存储。
 - [x] 请求频率限制、审计日志、敏感操作保护。
 - [x] 用户数据匿名化导出，预实验记录不暴露手机号。
@@ -117,8 +117,9 @@ Acceptance:
 Implementation notes:
 
 - Android 使用 AndroidX Security 的 `EncryptedSharedPreferences` 存储 session/token，并将旧版 `lra_session` 明文登录态迁移到 `lra_session_secure`；若个别设备 Keystore 不可用，则不落盘 token，重启后要求重新登录。
+- 后端新增最小 RBAC：`LRA_ADMIN_PHONES` 配置正式管理员手机号白名单，白名单用户通过普通登录获得 Bearer token，`/auth/me` 返回 `privileges=["admin"]`，管理接口接受管理员 token 或旧版 `X-Demo-Admin-Token`。只配置白名单不配置演示口令时，未登录的管理接口仍保持关闭。
 - 后端新增 SQLite 审计表，记录登录、demo 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
-- `/api/audit/events` 由演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
+- `/api/audit/events` 由正式管理员 token 或演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
 - 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
 - 预实验证据包包含匿名化 JSON/CSV、专家摘要和 manifest 校验，外部材料默认使用匿名化文件。
 - 后端新增 `SpatialProvider`，统一调度评分、调度解释、AED 最近点和预实验指标中的距离计算；默认 `demo` 使用内置坐标 + Haversine，配置 `LRA_MAP_PROVIDER=amap` 且填入 `LRA_AMAP_SERVICE_KEY` 后会优先调用高德 WebService 距离接口，失败或缺 Key 时结构化回退到 demo 距离。
@@ -127,7 +128,7 @@ Implementation notes:
 
 Validation:
 
-- Backend unittest discovery: 33 tests OK.
+- Backend unittest discovery: 36 tests OK after RBAC slice.
 - Web typecheck/build: passed.
 - Android debug APK build: passed after increasing Gradle heap for AndroidX Security + Compose builds.
 

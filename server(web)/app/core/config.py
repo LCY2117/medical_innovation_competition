@@ -38,6 +38,15 @@ def _parse_csv(value: str | None, default: list[str]) -> list[str]:
     return parsed or default
 
 
+def _parse_phone_csv(value: str | None) -> tuple[str, ...]:
+    phones = []
+    for item in _parse_csv(value, default=[]):
+        normalized = "".join(ch for ch in item if ch.isdigit())
+        if normalized:
+            phones.append(normalized)
+    return tuple(dict.fromkeys(phones))
+
+
 def _resolve_path(value: str | None, default: Path) -> Path:
     if not value:
         return default
@@ -70,6 +79,7 @@ class Settings:
     local_model_timeout_sec: int = 30
     prefer_local_model: bool = True
     demo_admin_token: str | None = None
+    admin_phones: tuple[str, ...] = ()
     auth_token_ttl_sec: int = 604800
     health_provider: str = "mock"
     map_provider: str = "demo"
@@ -118,6 +128,7 @@ def get_settings() -> Settings:
         local_model_timeout_sec=int(os.getenv("LRA_LOCAL_MODEL_TIMEOUT_SEC", "30")),
         prefer_local_model=_parse_bool(os.getenv("LRA_PREFER_LOCAL_MODEL"), default=True),
         demo_admin_token=(os.getenv("LRA_DEMO_ADMIN_TOKEN") or "").strip() or None,
+        admin_phones=_parse_phone_csv(os.getenv("LRA_ADMIN_PHONES")),
         auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
         health_provider=os.getenv("LRA_HEALTH_PROVIDER", "mock").strip() or "mock",
         map_provider=os.getenv("LRA_MAP_PROVIDER", "demo").strip() or "demo",
