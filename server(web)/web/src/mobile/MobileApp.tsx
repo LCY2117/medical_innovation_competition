@@ -703,6 +703,7 @@ function MobileApp() {
   const [activeView, setActiveView] = useState<MobileView>('home');
   const [sosConfirming, setSosConfirming] = useState(false);
   const [showManualJoin, setShowManualJoin] = useState(false);
+  const [showSceneDetails, setShowSceneDetails] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
 
@@ -1314,19 +1315,6 @@ function MobileApp() {
         ) : (
           <div className="mobile-empty-state compact">暂无 AED 点位，可在 Web 调度台初始化演示场景。</div>
         )}
-        {activeRole && incident?.dispatchRationale?.[activeRole] && (
-          <div className="mobile-rationale">
-            <div>
-              <span>智能评分</span>
-              <strong>{incident.dispatchRationale[activeRole].score.toFixed(1)}</strong>
-            </div>
-            <div>
-              <span>距患者</span>
-              <strong>{formatDistanceLabel(incident.dispatchRationale[activeRole].distanceToPatientMeters)}</strong>
-            </div>
-            <p>{incident.dispatchRationale[activeRole].reasons.join('；') || '基于画像、距离和任务适配度分派。'}</p>
-          </div>
-        )}
       </section>
 
       <section className="mobile-panel">
@@ -1344,20 +1332,59 @@ function MobileApp() {
               <div>
                 <strong>{client.displayName}</strong>
                 <p>{client.isPatient ? '患者端' : translateRoleLabel(client.assignedRole)} · {formatLocationLabel(client.location)}</p>
-                <p className="mobile-health-copy">
-                  {translateHealthSource(client.healthSignals?.source)} · {formatHealthSignalSummary(client.healthSignals)}
-                </p>
-                {Boolean(client.healthSignals?.riskTags?.length) && (
-                  <p className="mobile-health-copy warning">
-                    风险标记：{formatHealthRiskTags(client.healthSignals?.riskTags)}
-                  </p>
-                )}
+                <p className="mobile-health-copy">{client.online ? '保持在线' : '等待重连'} · {translateRoleStatus(client.assignedRole ? incident?.roles?.[client.assignedRole]?.status : null)}</p>
               </div>
             </div>
           ))}
           {clients.length === 0 && <div className="mobile-empty-state compact">暂无在线终端。</div>}
           {clients.length > visibleClients.length && (
             <div className="mobile-empty-state compact">另有 {clients.length - visibleClients.length} 台终端在线，可在 Web 调度台查看完整列表。</div>
+          )}
+        </div>
+        <div className="mobile-manual-join">
+          <button
+            type="button"
+            className="mobile-manual-toggle"
+            onClick={() => setShowSceneDetails((visible) => !visible)}
+            aria-expanded={showSceneDetails}
+          >
+            <span>分派依据与健康摘要</span>
+            <ChevronDown size={16} />
+          </button>
+          {showSceneDetails && (
+            <div className="mobile-scene-details">
+              {activeRole && incident?.dispatchRationale?.[activeRole] && (
+                <div className="mobile-rationale">
+                  <div>
+                    <span>智能评分</span>
+                    <strong>{incident.dispatchRationale[activeRole].score.toFixed(1)}</strong>
+                  </div>
+                  <div>
+                    <span>距患者</span>
+                    <strong>{formatDistanceLabel(incident.dispatchRationale[activeRole].distanceToPatientMeters)}</strong>
+                  </div>
+                  <p>{incident.dispatchRationale[activeRole].reasons.join('；') || '基于画像、距离和任务适配度分派。'}</p>
+                </div>
+              )}
+              <div className="mobile-team-list">
+                {visibleClients.map((client) => (
+                  <div key={`${client.userId}-health`}>
+                    <span className={client.healthSignals ? 'online' : ''} />
+                    <div>
+                      <strong>{client.displayName}</strong>
+                      <p className="mobile-health-copy">
+                        {translateHealthSource(client.healthSignals?.source)} · {formatHealthSignalSummary(client.healthSignals)}
+                      </p>
+                      {Boolean(client.healthSignals?.riskTags?.length) && (
+                        <p className="mobile-health-copy warning">
+                          风险标记：{formatHealthRiskTags(client.healthSignals?.riskTags)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </section>
