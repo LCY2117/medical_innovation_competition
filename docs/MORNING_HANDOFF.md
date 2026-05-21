@@ -169,6 +169,7 @@ gradle :app:assembleDebug --no-daemon
 - `92a5a77`：记录参与者材料 checkpoint 已推送。
 - `be93e14`：预实验证据包新增 `baseline_vs_system_comparison.csv` 基线-系统对照分析模板，并同步测试与材料口径，已推送。
 - `1f99b31`：预实验证据包新增 `analysis_guide.md` 数据分析说明，并同步测试与材料口径，已推送。
+- `0674344`：预实验证据包新增 `expert_feedback_form.md` 事件级专家反馈与签字表，并同步测试与材料口径，已推送。
 
 ## 你醒来后最该做的三件事
 

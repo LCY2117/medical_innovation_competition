@@ -2,11 +2,11 @@
 
 ## Current Status
 
-- Status: validating
+- Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 6b3c123
-- Last update: 2026-05-22 06:04:10 +08:00
+- HEAD: 0674344
+- Last update: 2026-05-22 06:09:20 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -98,7 +98,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 73. Add participant consent/safety brief and questionnaire into ZIP evidence package. (done, pushed)
 74. Add baseline-vs-system comparison CSV template into ZIP evidence package. (done, pushed)
 75. Add pre-experiment analysis guide into ZIP evidence package. (done, pushed)
-76. Add event-specific expert feedback and signature form into ZIP evidence package. (done, validating)
+76. Add event-specific expert feedback and signature form into ZIP evidence package. (done, pushed)
 
 ## Sub-Agent Ledger
 
@@ -369,6 +369,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `1f99b31` (`checkpoint: add experiment analysis guide`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `6b3c123` (`checkpoint: record analysis guide push`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence package now includes `expert_feedback_form.md`, an event-specific expert feedback and signature form with incident metadata, anonymized role assignment, T1-T6 metric snapshot, review-material checklist, 1-5 rating table, open feedback sections, 100-300 word expert opinion area, and safety/legal wording. Tests and docs are updated to list it as a public/expert-review file.
+- Expert feedback form validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
+- Git checkpoint: `0674344` (`checkpoint: add expert feedback form`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -377,7 +379,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Run targeted evidence package validation and full backend tests for `expert_feedback_form.md`, then commit and push a coherent checkpoint. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
