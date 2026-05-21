@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 71b9834
-- Last update: 2026-05-22 03:17:00 +08:00
+- HEAD: fb8d3e2
+- Last update: 2026-05-22 03:19:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -53,6 +53,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 28. Push Android demo-location checkpoint. (done)
 29. Run post-demo-polish validation sweep. (done)
 30. Add expert-review screenshot checklist and 3-5 minute demo script. (done, validating)
+31. Push expert-material checklist checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -189,6 +190,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Post-polish validation sweep: backend targeted evidence/export test passed; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `71b9834` (`checkpoint: record validation sweep`) created and pushed to `origin/codex/competition-hardening`.
 - Expert materials doc validation: `rg` confirmed screenshot checklist, demo script, ZIP evidence package, and manifest wording are present; no JSON-only export wording reintroduced in touched docs.
+- Git checkpoint: `fb8d3e2` (`checkpoint: add expert demo checklist`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -197,7 +199,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push expert-material checklist updates, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Continue from remote checkpoint `fb8d3e2` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
