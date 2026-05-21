@@ -5,7 +5,7 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 36b818b
+- HEAD: 203b4e8
 - Last update: 2026-05-22 04:58:41 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
@@ -82,7 +82,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 57. Localize visible Web command-center and `/mobile-demo` demo labels. (done, pushed)
 58. Run final post-polish validation sweep. (done, pushed)
 59. Run Android debug APK validation sweep. (done, pushed)
-60. Reduce Web command-center first-screen technical overload and preserve mobile incident deep links. (done, validating)
+60. Reduce Web command-center first-screen technical overload and preserve mobile incident deep links. (done, pushed)
 
 ## Sub-Agent Ledger
 
@@ -303,6 +303,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `36b818b` (`checkpoint: record android validation`) created and pushed to `origin/codex/competition-hardening`.
 - Web presentation polish validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-M71lbyYK.js` at `220.37 kB` raw / `67.15 kB` gzip and mobile `MobileApp-DDAEQ_T7.js` at `34.30 kB` raw / `11.09 kB` gzip.
 - Browser smoke on temporary local backend `127.0.0.1:18086` passed using temp DB and demo token `LCY`: dashboard defaults to collapsed technical details, technical details expand to AI/log diagnostics, `/mobile-demo?incidentId=...` propagated the same incident into all four iframes, and `/mobile?demo=patient&slot=smoke2&incidentId=...` retained the incident link with the SOS action panel above the profile card. Temporary backend and temp DB were stopped/removed.
+- Git checkpoint: `203b4e8` (`checkpoint: polish demo presentation links`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `a648ad8` (`checkpoint: polish demo visible labels`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
@@ -312,7 +313,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push the Web/mobile presentation-polish checkpoint, excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Continue the next safe competition-hardening slice: either further mobile task simplification, evidence wording polish, or Android/Web parity checks. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
