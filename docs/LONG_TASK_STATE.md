@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: be93e14
-- Last update: 2026-05-22 06:00:01 +08:00
+- HEAD: 1f99b31
+- Last update: 2026-05-22 06:01:18 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -97,7 +97,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 72. Record README checkpoint and resume state after context handoff. (done, pushed)
 73. Add participant consent/safety brief and questionnaire into ZIP evidence package. (done, pushed)
 74. Add baseline-vs-system comparison CSV template into ZIP evidence package. (done, pushed)
-75. Add pre-experiment analysis guide into ZIP evidence package. (done, validating)
+75. Add pre-experiment analysis guide into ZIP evidence package. (done, pushed)
 
 ## Sub-Agent Ledger
 
@@ -364,6 +364,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `be93e14` (`checkpoint: add baseline comparison evidence`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence package now includes `analysis_guide.md`, a concise guide for reading T1-T6, questionnaire scores, baseline-vs-system deltas, PPT-safe conclusions, and prohibited clinical-effectiveness claims. Documentation and tests are updated to include the new public review file.
 - Analysis guide validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed; backend full unittest discovery passed, 37 tests OK.
+- Git checkpoint: `1f99b31` (`checkpoint: add experiment analysis guide`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -372,7 +373,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Stage, commit, and push the analysis-guide evidence checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Commit and push this state-only handoff correction, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
