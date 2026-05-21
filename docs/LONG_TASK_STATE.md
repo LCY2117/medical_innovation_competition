@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b2c0370
-- Last update: 2026-05-22 03:01:00 +08:00
+- HEAD: 5a18fc5
+- Last update: 2026-05-22 03:03:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -48,6 +48,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 23. Add Android Runner full-screen AED target card. (done, validating)
 24. Push Android AED target checkpoint. (done)
 25. Add mobile Web PRIME next-step CPR/AED guidance card. (done, validating)
+26. Push mobile Web PRIME next-step checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -173,6 +174,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `5cc9534` (`checkpoint: show android AED target`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `b2c0370` (`checkpoint: record AED target push`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile Web next-step validation: `npm run typecheck` passed; `npm run build` passed.
+- Git checkpoint: `5a18fc5` (`checkpoint: guide mobile CPR next steps`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -181,7 +183,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push mobile Web next-step guidance, then continue to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
+Continue from remote checkpoint `5a18fc5` to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
