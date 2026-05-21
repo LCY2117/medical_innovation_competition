@@ -37,6 +37,7 @@ import {
   registerClient,
   updateClientHealth,
   updateClientLocation,
+  getStoredDemoAdminToken,
   type RegisterForm,
 } from '@/shared/api';
 import {
@@ -81,6 +82,7 @@ const TAB_SESSION_KEY = 'lra_mobile_tab_session';
 const INCIDENT_KEY = 'lra_mobile_incident_id';
 const LOCATION_KEY = 'lra_mobile_location';
 const MOBILE_THEME_KEY = 'lra_mobile_theme';
+const DEMO_ADMIN_TOKEN_KEY = 'lra_demo_admin_token';
 
 const demoPersonas: Array<{
   key: DemoPersona;
@@ -705,6 +707,7 @@ function MobileApp() {
   const [sosConfirming, setSosConfirming] = useState(false);
   const [showManualJoin, setShowManualJoin] = useState(false);
   const [showSceneDetails, setShowSceneDetails] = useState(false);
+  const [demoAdminToken, setDemoAdminToken] = useState(getStoredDemoAdminToken);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
 
@@ -724,6 +727,18 @@ function MobileApp() {
       ? Math.max(0, (incident.sos.durationSec ?? 0) - elapsedSec)
       : null;
   const cprGuidance = getResuscitationGuidance(Math.floor(now / 1000));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const trimmed = demoAdminToken.trim();
+    if (trimmed) {
+      window.localStorage.setItem(DEMO_ADMIN_TOKEN_KEY, trimmed);
+    } else {
+      window.localStorage.removeItem(DEMO_ADMIN_TOKEN_KEY);
+    }
+  }, [demoAdminToken]);
 
   const toggleTheme = () => {
     setTheme((current) => {
@@ -1072,7 +1087,7 @@ function MobileApp() {
   async function downloadArchivePackage() {
     await runAction(
       'package',
-      () => downloadExperimentPackage(session?.token),
+      () => downloadExperimentPackage(session?.token, demoAdminToken),
       '预实验证据包已开始下载。',
     );
   }
@@ -1426,10 +1441,19 @@ function MobileApp() {
           <CheckCircle2 size={26} />
           <h2>本次演练已归档</h2>
           <p>事件日志、角色响应和 AED 取送信息已经进入预实验证据包。对外展示请优先使用匿名化文件、专家复核清单和观察员记录表，本系统不宣称真实临床疗效。</p>
+          <label className="mobile-token-field">
+            <span>演示口令</span>
+            <input
+              value={demoAdminToken}
+              onChange={(event) => setDemoAdminToken(event.target.value)}
+              placeholder="如 LCY"
+              autoComplete="off"
+            />
+          </label>
           <button className="mobile-primary-button mobile-summary-action" onClick={downloadArchivePackage} disabled={busyAction === 'package'}>
             {busyAction === 'package' ? '下载中...' : '下载预实验证据包'}
           </button>
-          <p className="mobile-summary-note">如提示权限不足，请先在 Web 总控台输入演示口令或使用管理员账号登录。</p>
+          <p className="mobile-summary-note">手机端会保存该口令并与 Web 总控台共享；若你已用正式管理员账号登录，也可直接下载。</p>
         </section>
       )}
     </main>

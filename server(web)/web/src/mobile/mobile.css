@@ -861,6 +861,17 @@ button:disabled {
   margin-top: 12px;
 }
 
+.mobile-token-field {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.mobile-token-field input {
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
 .mobile-summary-note {
   margin: 8px 0 0;
   color: var(--mobile-muted);
