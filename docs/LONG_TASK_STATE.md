@@ -6,7 +6,7 @@
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
 - HEAD: a8bf982
-- Last update: 2026-05-22 02:52:00 +08:00
+- Last update: 2026-05-22 03:10:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -30,6 +30,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 5. Validate and create a Git backup/checkpoint if safe. (in progress)
 6. Continue competition hardening after checkpoint: improve pre-experiment export/evidence package. (done, checkpointing)
 7. Improve deployment/operations observability through richer health detail. (done, checkpointing)
+8. Feed OPPO/mock health summaries into dispatch scoring and rationale. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -112,6 +113,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence package backend/Web validation: backend full tests passed, Web typecheck passed, Web build passed.
 - Git checkpoint: `64dc256` (`checkpoint: add experiment evidence package`) created and pushed to `origin/codex/competition-hardening`.
 - Health detail validation: backend full tests passed after adding version/auth/features/healthProvider diagnostics.
+- Git checkpoint: `c27a34f` (`checkpoint: expand health diagnostics`) created and pushed to `origin/codex/competition-hardening`.
+- Dispatch health-scoring validation: backend full tests passed, 27 tests OK.
 
 ## Blockers Summary
 
@@ -120,7 +123,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Create and push observability checkpoint, then continue with the next unblocked product hardening task.
+Create and push dispatch-health checkpoint, then continue with the next unblocked product hardening task.
 
 ## Resume Instructions
 

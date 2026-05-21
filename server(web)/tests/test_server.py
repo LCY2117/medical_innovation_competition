@@ -332,6 +332,103 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(current_after_repeat_payload["phase"], "DISPATCHED")
             self.assertEqual(current_after_repeat_payload["dispatchRationale"]["PRIME"]["userId"], user_ids["张医生"])
 
+    def test_health_risk_summary_deprioritizes_high_intensity_roles(self) -> None:
+        with self._client() as client:
+            registrations = [
+                self._register_payload(
+                    display_name="模拟患者",
+                    phone="13800138201",
+                    organization="社区",
+                    health_condition="存在心脏骤停风险",
+                    profession_identity="患者侧",
+                    profile_bio="心血管病史，需要重点监护",
+                ),
+                self._register_payload(
+                    display_name="风险跑者",
+                    phone="13800138202",
+                    organization="大学校园",
+                    health_condition="身体素质良好",
+                    profession_identity="有一定急救常识",
+                    profile_bio="体育生，跑得快，熟悉校园路线，可快速取送 AED",
+                ),
+                self._register_payload(
+                    display_name="稳健跑者",
+                    phone="13800138203",
+                    organization="大学校园",
+                    health_condition="身体素质良好",
+                    profession_identity="有一定急救常识",
+                    profile_bio="熟悉校园路线，可快速取送 AED",
+                ),
+                self._register_payload(
+                    display_name="张医生",
+                    phone="13800138204",
+                    organization="市医院急救科",
+                    health_condition="身体状态一般",
+                    profession_identity="医生 / 专业急救人员",
+                    profile_bio="急救科医生，熟悉 CPR 和 AED 处置",
+                ),
+                self._register_payload(
+                    display_name="安保老王",
+                    phone="13800138205",
+                    organization="校园安保",
+                    health_condition="身体状态一般",
+                    profession_identity="安保 / 物业 / 场地协调人员",
+                    profile_bio="熟悉通道和救护车接驳",
+                ),
+            ]
+            sessions = {}
+            for payload in registrations:
+                auth = client.post("/api/auth/register", json=payload)
+                self.assertEqual(auth.status_code, 200)
+                auth_payload = auth.json()
+                user_id = auth_payload["user"]["userId"]
+                token = auth_payload["token"]
+                sessions[payload["displayName"]] = (user_id, token)
+                register_terminal = client.post(
+                    "/api/clients/register",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={
+                        "userId": user_id,
+                        "displayName": payload["displayName"],
+                        "organization": payload["organization"],
+                        "healthCondition": payload["healthCondition"],
+                        "professionIdentity": payload["professionIdentity"],
+                        "profileBio": payload["profileBio"],
+                        "deviceType": "MOBILE_WEB",
+                    },
+                )
+                self.assertEqual(register_terminal.status_code, 200)
+
+            risky_user_id, risky_token = sessions["风险跑者"]
+            health_update = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {risky_token}"},
+                json={
+                    "userId": risky_user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "authorized",
+                        "heartRateBpm": 132,
+                        "bloodOxygenPercent": 91,
+                        "pressureScore": 85,
+                        "riskTags": ["tachycardia", "low_spo2", "high_pressure"],
+                    },
+                },
+            )
+            self.assertEqual(health_update.status_code, 200)
+
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": sessions["模拟患者"][0]},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            payload = dispatch.json()
+            meta = client.get("/api/dispatch/meta").json()
+
+        self.assertEqual(payload["assignments"]["RUNNER"], sessions["稳健跑者"][0])
+        self.assertNotEqual(payload["assignments"]["RUNNER"], risky_user_id)
+        self.assertIn("healthSignals", meta["candidateFields"])
+
     def test_demo_bootstrap_aed_dispatch_and_export(self) -> None:
         with self._client() as client:
             bootstrapped = client.post("/api/demo/bootstrap")

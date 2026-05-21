@@ -28,6 +28,7 @@ CANDIDATE_FIELDS = [
     "patientCandidate",
     "isPatient",
     "location",
+    "healthSignals",
     "distanceToPatientMeters",
     "nearestAedDistanceMeters",
 ]
@@ -39,10 +40,10 @@ RESPONSE_FORMAT = {
 SYSTEM_PROMPT = (
     "你是院前急救协同系统的调度大脑。"
     "请根据患者画像、候选协助者画像、候选者位置和 AED 点位，在 PRIME、RUNNER、GUIDE 三类任务中各选择一个最合适的人。"
-    "PRIME 优先专业急救能力、临场施救能力和距离患者较近；"
-    "RUNNER 优先靠近 AED、体能速度、行动半径和执行力；"
+    "PRIME 优先专业急救能力、临场施救能力、距离患者较近和健康摘要稳定；"
+    "RUNNER 优先靠近 AED、体能速度、行动半径、执行力和健康摘要稳定；"
     "GUIDE 优先物业、安保、组织协调和现场通道能力。"
-    "不要把高风险患者或明显身体受限的人分配到高强度任务。"
+    "不要把高风险患者、低血氧、高心率、高压力或明显身体受限的人分配到高强度任务。"
     "只返回紧凑 JSON，格式必须是 "
     "{\"PRIME\":\"userId或null\",\"RUNNER\":\"userId或null\",\"GUIDE\":\"userId或null\"}。"
 )
@@ -357,9 +358,12 @@ class DispatchPlanner:
         guide_markers = ("安保", "物业", "保安", "协调", "交通", "电梯", "场地", "通道")
         route_markers = ("熟悉", "校园", "社区", "路线", "楼栋", "点位")
         trained_markers = ("培训", "系统培训", "常识", "救护")
+        health_risk_score = self._health_risk_score(client)
 
         if any(marker in text for marker in high_risk_markers):
             score -= 12 if role in {"PRIME", "RUNNER"} else 3
+        if health_risk_score:
+            score -= health_risk_score if role in {"PRIME", "RUNNER"} else max(1, health_risk_score // 3)
 
         distance_to_patient = self._distance_meters(client.location, patient.location if patient else None)
         nearest_aed = self._nearest_aed(client.location, list(aed_sites or []))
@@ -447,6 +451,9 @@ class DispatchPlanner:
 
         if any(marker in text for marker in ("心脏", "冠心病", "骤停风险", "体能受限", "高风险")):
             warnings.append("健康画像提示风险，避免承担高强度任务")
+        health_summary = self._health_summary_note(client)
+        if health_summary:
+            warnings.append(health_summary)
         if client.isPatient:
             warnings.append("当前为患者端，不应被分配救援任务")
 
@@ -500,6 +507,44 @@ class DispatchPlanner:
             "patientCandidate": client.patientCandidate,
             "isPatient": client.isPatient,
             "location": client.location.model_dump(mode="json") if client.location else None,
+            "healthSignals": client.healthSignals.model_dump(mode="json") if client.healthSignals else None,
             "distanceToPatientMeters": self._distance_meters(client.location, patient_location),
             "nearestAedDistanceMeters": nearest[1] if nearest else None,
         }
+
+    @staticmethod
+    def _health_risk_score(client: ClientInfo) -> int:
+        summary = client.healthSignals
+        if summary is None:
+            return 0
+        score = 0
+        tags = {tag.lower() for tag in summary.riskTags}
+        if tags.intersection({"tachycardia", "bradycardia", "low_spo2", "high_pressure", "limited_mobility"}):
+            score += 8
+        if summary.heartRateBpm is not None and (summary.heartRateBpm >= 120 or summary.heartRateBpm <= 45):
+            score += 6
+        if summary.bloodOxygenPercent is not None and summary.bloodOxygenPercent < 94:
+            score += 8
+        if summary.pressureScore is not None and summary.pressureScore >= 75:
+            score += 5
+        if (summary.activityLevel or "").lower() == "low":
+            score += 2
+        return score
+
+    @staticmethod
+    def _health_summary_note(client: ClientInfo) -> str | None:
+        summary = client.healthSignals
+        if summary is None:
+            return None
+        warnings: list[str] = []
+        if summary.heartRateBpm is not None and (summary.heartRateBpm >= 120 or summary.heartRateBpm <= 45):
+            warnings.append(f"心率 {summary.heartRateBpm} bpm")
+        if summary.bloodOxygenPercent is not None and summary.bloodOxygenPercent < 94:
+            warnings.append(f"血氧 {summary.bloodOxygenPercent}%")
+        if summary.pressureScore is not None and summary.pressureScore >= 75:
+            warnings.append(f"压力 {summary.pressureScore}")
+        if summary.riskTags:
+            warnings.append(f"健康标记 {'、'.join(summary.riskTags)}")
+        if not warnings:
+            return None
+        return f"健康摘要提示风险（{summary.source}）：{'；'.join(warnings)}，不宜承担高强度任务"
