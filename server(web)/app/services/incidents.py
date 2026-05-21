@@ -654,6 +654,7 @@ class IncidentService:
             "README.md": self._experiment_readme(export),
             "expert_summary.md": self._expert_summary(export, participant_map),
             "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
+            "expert_feedback_form.md": self._expert_feedback_form(export, participant_map),
             "analysis_guide.md": self._analysis_guide(export),
             "participant_consent_safety_brief.md": self._participant_consent_safety_brief(export, participant_map),
             "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
@@ -1458,6 +1459,7 @@ class IncidentService:
                     "dispatch_rationale.csv",
                     "expert_summary.md",
                     "expert_review_checklist.md",
+                    "expert_feedback_form.md",
                     "analysis_guide.md",
                     "participant_consent_safety_brief.md",
                     "observer_record_form.csv",
@@ -1611,6 +1613,7 @@ class IncidentService:
 - `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
+- `expert_feedback_form.md`：事件级专家反馈与签字表，便于专家对本轮演练给出评分、意见和签字确认。
 - `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
@@ -1627,7 +1630,7 @@ class IncidentService:
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:
@@ -1873,6 +1876,124 @@ class IncidentService:
 ## 五、安全边界
 
 本系统为模拟急救协同、训练复盘和预实验验证工具。它不替代拨打 120、AED 语音提示、专业医护判断，也不用于真实医疗诊断或疗效证明。
+"""
+
+    def _expert_feedback_form(
+        self,
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> str:
+        assignments = {
+            role: participant_map.get(user_id or "", user_id or "未分派")
+            for role, user_id in export.assignments.items()
+        }
+        metrics = export.metrics
+        generated_at = self._iso_timestamp(export.generatedAt)
+        return f"""# 生命反射弧事件级专家反馈与签字表
+
+事件编号：{export.incidentId}
+导出时间：{generated_at}
+事件阶段：{export.phase}
+患者代号：{participant_map.get(export.patientUserId or "", export.patientUserId or "未指定")}
+角色分派：核心施救={assignments.get("PRIME", "未分派")}，AED 保障={assignments.get("RUNNER", "未分派")}，环境清障={assignments.get("GUIDE", "未分派")}
+
+## 一、专家基本信息
+
+| 项目 | 填写 |
+| --- | --- |
+| 姓名 |  |
+| 单位 / 科室 |  |
+| 职称 / 职务 |  |
+| 专业方向 |  |
+| 联系方式（可选） |  |
+| 审阅日期 |  |
+
+## 二、本轮演练关键记录
+
+| 指标 | 系统记录 | 专家备注 |
+| --- | --- | --- |
+| T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} |  |
+| T2 触发到核心施救响应 | 需结合 `timeline.csv` 补算 |  |
+| T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} |  |
+| T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} |  |
+| T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |  |
+| T6 触发到救护接管 | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} |  |
+| 角色完整度 | {metrics.get("roleAssignmentCompleteness", "--")} |  |
+| 定位覆盖率 | {metrics.get("locationCoveragePercent", "--")}% |  |
+| 健康摘要覆盖率 | {metrics.get("healthCoveragePercent", "--")}% |  |
+
+## 三、审阅材料确认
+
+- [ ] Web 调度台或录屏。
+- [ ] 移动 Web / Android 任务页演示。
+- [ ] `experiment_anonymized.json` 与 `clients_anonymized.csv`。
+- [ ] `timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`。
+- [ ] `expert_summary.md` 与 `expert_review_checklist.md`。
+- [ ] `analysis_guide.md`、`observer_record_form.csv`、`participant_questionnaire.csv`。
+- [ ] `baseline_vs_system_comparison.csv` 与 `pre_experiment_round_summary.csv`。
+- [ ] `manifest.json` 文件清单、SHA-256 校验与匿名化使用建议。
+
+## 四、专家评分
+
+评分：1 分为很不认可，5 分为非常认可。
+
+| 评价项 | 1 | 2 | 3 | 4 | 5 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 医学应用场景明确，聚焦公共场所疑似心脏骤停协同问题 |  |  |  |  |  |  |
+| CPR/AED/救护接应提示适合训练或演练场景 |  |  |  |  |  |  |
+| 核心施救、AED 保障、环境清障的角色分工合理 |  |  |  |  |  |  |
+| AI/规则分派解释能体现能力、距离、AED 和风险因素 |  |  |  |  |  |  |
+| 移动端任务提示在紧张情境下可读、可执行 |  |  |  |  |  |  |
+| 证据包可支持低成本预实验记录、匿名化审阅和后续统计 |  |  |  |  |  |  |
+| 安全边界、免责说明和数据使用边界清楚 |  |  |  |  |  |  |
+| 具备进一步用于校园/社区急救演练试点的潜力 |  |  |  |  |  |  |
+
+## 五、开放反馈
+
+### 5.1 医学流程合理性
+
+请指出本轮流程在 CPR、AED 取送、AED 分析/除颤提示、救护接应或交接环节中需要修正的地方。
+
+反馈：
+
+
+### 5.2 AI 分派与协同价值
+
+请评价系统分派是否有助于降低多人现场混乱，并指出人员选择、距离判断、AED 点位选择或健康风险处理上的不足。
+
+反馈：
+
+
+### 5.3 界面与演练可用性
+
+请评价 Web 总控台、移动 Web、Android App 在模拟急救情境中的可理解性、信息负载和误触风险。
+
+反馈：
+
+
+### 5.4 数据与预实验设计
+
+请评价本轮导出的时间线、指标、问卷、观察员记录和基线对照表是否足以支撑医创赛预实验材料。
+
+反馈：
+
+
+## 六、100-300 字专家意见摘要
+
+可用于项目申报材料或 PPT 中的专家意见摘录。建议围绕医学场景价值、流程可行性、AI 协同创新点、安全边界和后续改进方向书写。
+
+专家意见：
+
+
+## 七、安全与合规声明
+
+本人知悉本反馈基于模拟心脏骤停演练、系统演示和预实验材料审阅，仅用于学生创新竞赛、训练复盘和产品迭代参考。本表不构成真实临床疗效证明、医疗器械注册证明、急救培训资质证明，也不替代拨打 120、AED 语音提示或专业医护判断。
+
+专家签字：
+
+日期：
+
+单位盖章（如适用）：
 """
 
     def _participant_consent_safety_brief(
