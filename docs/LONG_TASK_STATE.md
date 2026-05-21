@@ -2,11 +2,11 @@
 
 ## Current Status
 
-- Status: running
+- Status: validating
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 87e199d
-- Last update: 2026-05-22 07:46:36 +08:00
+- HEAD: 17e999f
+- Last update: 2026-05-22 07:56:12 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -112,7 +112,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 87. Add mobile archived-flow next actions. (done, pushed)
 88. Polish Web phone-preview inert actions and Android visible task wording. (done, pushed)
 89. Normalize dispatch-source labels across Web and Android. (done, pushed)
-90. Add mobile PWA offline fallback and event context strip. (done, checkpointing)
+90. Add mobile PWA offline fallback and event context strip. (done, pushed)
+91. Add ZIP evidence-package data dictionary and sync public review docs. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -442,6 +443,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Visible action/wording validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-vYbqPRcR.js` at `229.50 kB` raw / `69.59 kB` gzip and mobile `MobileApp-BhrtJOWA.js` at `38.10 kB` raw / `12.22 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with the existing non-blocking `android.overridePathCheck=true` warning. Targeted visible-string scan found no remaining `onClick={() => {}}`, `Golden Rescue Time`, `Analyze`, `Detecting`, `现场任务已转入 HANDOVER`, hardcoded guide task ID, or raw role-status summary rows in checked UI files.
 - Dispatch-source label validation: Android `gradle :app:assembleDebug --no-daemon` passed; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-CBug2GXj.js` at `229.51 kB` raw / `69.58 kB` gzip and mobile `MobileApp-OoG1rKgg.js` at `38.10 kB` raw / `12.22 kB` gzip. Targeted visible-string scan found no remaining `加载 AI 调度说明失败`, `AI 流式分派过程`, `AI 正在生成角色选择理由`, `规则/AI 处理中`, `规则调度`, raw archive `entry.dispatchSource`, or raw active `incidentState.dispatchSource` display in checked UI files.
 - Mobile PWA validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-D6grxFFA.js` at `38.76 kB` raw / `12.42 kB` gzip and CSS `MobileApp-BtgHt77P.css` at `15.83 kB` raw / `3.57 kB` gzip. Local Vite preview on `127.0.0.1:18093` returned 200 for `/mobile` and `/offline.html`; browser smoke confirmed `/offline.html` shows `移动端暂时离线` and `重新连接`, and `/mobile` shows `浏览器应急端`, `演示模式直达`, and `进入移动端`. Temporary preview process and logs were stopped/removed.
+- Git checkpoint: `17e999f` (`checkpoint: add mobile pwa fallback`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence package data dictionary slice ready to checkpoint: ZIP generation now includes `data_dictionary.md`, manifest public/expert-review guidance lists it, and backend package tests assert presence, content, manifest privacy guidance, and hash manifest membership.
+- Documentation sync ready to checkpoint: README, deployment runbook, expert feedback template, pre-experiment protocol, product optimization plan, technical whitepaper, and morning handoff now list `data_dictionary.md` alongside analysis guide and public review artifacts.
+- Evidence data dictionary validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed, 1 test OK; backend full unittest discovery passed, 37 tests OK after documentation sync.
 
 ## Blockers Summary
 
@@ -450,7 +455,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the mobile PWA offline/context slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Run pre-commit checks for the data-dictionary evidence slice, stage only related files, commit/push it, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
