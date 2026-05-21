@@ -79,6 +79,26 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         details["frontend"] = {
             "ok": frontend_ready(settings),
             "webDistDir": str(settings.web_dist_dir),
+            "indexHtml": str(settings.web_dist_dir / "index.html"),
+            "assetsDir": str(settings.web_dist_dir / "assets"),
+            "assetsReady": (settings.web_dist_dir / "assets").is_dir(),
+        }
+        details["version"] = "competition-hardening"
+        details["auth"] = {
+            "tokenTtlSec": settings.auth_token_ttl_sec,
+            "demoAdminAuthEnabled": settings.demo_admin_token is not None,
+        }
+        details["features"] = {
+            "experimentJsonExport": True,
+            "experimentZipPackage": True,
+            "mobileWeb": True,
+            "androidMockHealthSync": True,
+            "oppoHealthRealSdk": False,
+        }
+        details["healthProvider"] = {
+            "mode": settings.health_provider,
+            "mockFallbackEnabled": True,
+            "realOppoBlockedByApproval": settings.health_provider.lower() != "mock",
         }
         details["demoAdminAuthEnabled"] = settings.demo_admin_token is not None
         return HealthDetailResponse(**details)

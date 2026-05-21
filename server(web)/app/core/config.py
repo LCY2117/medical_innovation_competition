@@ -71,6 +71,7 @@ class Settings:
     prefer_local_model: bool = True
     demo_admin_token: str | None = None
     auth_token_ttl_sec: int = 604800
+    health_provider: str = "mock"
 
 
 @lru_cache(maxsize=1)
@@ -107,4 +108,5 @@ def get_settings() -> Settings:
         prefer_local_model=_parse_bool(os.getenv("LRA_PREFER_LOCAL_MODEL"), default=True),
         demo_admin_token=(os.getenv("LRA_DEMO_ADMIN_TOKEN") or "").strip() or None,
         auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
+        health_provider=os.getenv("LRA_HEALTH_PROVIDER", "mock").strip() or "mock",
     )

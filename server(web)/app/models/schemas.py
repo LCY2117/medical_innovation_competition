@@ -165,8 +165,12 @@ class HealthResponse(BaseModel):
 
 class HealthDetailResponse(BaseModel):
     ok: bool
+    version: str | None = None
     storage: dict
     frontend: dict
+    auth: dict = {}
+    features: dict = {}
+    healthProvider: dict = {}
     currentIncidentId: str | None = None
     loadedIncidents: int
     registeredClients: int = 0

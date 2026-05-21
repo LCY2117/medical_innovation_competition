@@ -134,6 +134,10 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["registeredClients"], 0)
         self.assertEqual(payload["registeredAedSites"], 0)
         self.assertIn("dispatch", payload)
+        self.assertEqual(payload["auth"]["tokenTtlSec"], self.settings.auth_token_ttl_sec)
+        self.assertTrue(payload["features"]["experimentZipPackage"])
+        self.assertEqual(payload["healthProvider"]["mode"], "mock")
+        self.assertFalse(payload["frontend"]["assetsReady"])
         self.assertFalse(payload["demoAdminAuthEnabled"])
 
     def test_dispatch_meta_is_serializable(self) -> None:

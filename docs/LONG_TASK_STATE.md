@@ -6,7 +6,7 @@
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
 - HEAD: a8bf982
-- Last update: 2026-05-22 02:36:00 +08:00
+- Last update: 2026-05-22 02:52:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -29,6 +29,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 4. Try real SDK dependency/authorization only if non-blocked. (blocked by approval/secrets/user authorization; documented prep only)
 5. Validate and create a Git backup/checkpoint if safe. (in progress)
 6. Continue competition hardening after checkpoint: improve pre-experiment export/evidence package. (done, checkpointing)
+7. Improve deployment/operations observability through richer health detail. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -109,6 +110,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android debug APK: `gradle :app:assembleDebug --no-daemon` passed after removing the new Kotlin warning.
 - Git checkpoint: `9fb32ed` (`checkpoint: add OPPO health demo loop`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence package backend/Web validation: backend full tests passed, Web typecheck passed, Web build passed.
+- Git checkpoint: `64dc256` (`checkpoint: add experiment evidence package`) created and pushed to `origin/codex/competition-hardening`.
+- Health detail validation: backend full tests passed after adding version/auth/features/healthProvider diagnostics.
 
 ## Blockers Summary
 
@@ -117,7 +120,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Create and push a focused evidence-package checkpoint, then continue with the next unblocked product hardening task.
+Create and push observability checkpoint, then continue with the next unblocked product hardening task.
 
 ## Resume Instructions
 
