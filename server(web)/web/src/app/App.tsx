@@ -1339,6 +1339,8 @@ export default function App() {
       url: buildDemoUrl('/mobile', { demo: entry.key, slot: entry.key }),
     })),
   ];
+  const mobileTerminalLinks = demoShareLinks.filter((link) => link.key !== 'stage');
+  const mobileTerminalShareText = mobileTerminalLinks.map((link) => `${link.label}：${link.url}`).join('\n');
   const demoShareText = demoShareLinks.map((link) => `${link.label}：${link.url}`).join('\n');
 
   const getActorId = (role: 'PRIME' | 'RUNNER' | 'GUIDE'): string => {
@@ -1987,11 +1989,51 @@ export default function App() {
     setErrorMessage(null);
   };
 
-  const copyDemoLink = async (key: string, text: string) => {
+  const openAllMobileTerminals = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const preopened = mobileTerminalLinks.map((link) => ({
+      link,
+      windowRef: window.open('about:blank', `lifereflex-${link.key}-${incidentId ?? 'current'}`),
+    }));
+    const opened = preopened.filter((entry) => Boolean(entry.windowRef));
+    opened.forEach(({ link, windowRef }) => {
+      if (!windowRef) {
+        return;
+      }
+      try {
+        windowRef.location.href = link.url;
+        windowRef.focus();
+      } catch {
+        // A browser extension or popup policy may still block navigation after the window was created.
+      }
+    });
+    if (opened.length !== mobileTerminalLinks.length) {
+      const copied = await copyDemoLink('mobile-all', mobileTerminalShareText);
+      setErrorMessage(
+        copied
+          ? `浏览器只允许打开 ${opened.length}/${mobileTerminalLinks.length} 个手机端，已复制四端链接，请手动粘贴到新标签页。`
+          : `浏览器只允许打开 ${opened.length}/${mobileTerminalLinks.length} 个手机端，且剪贴板复制失败，请使用下方单个复制按钮。`,
+      );
+      return;
+    }
+    setErrorMessage(null);
+    setCopiedLinkKey('mobile-all');
+    if (copyLinkTimeoutRef.current) {
+      window.clearTimeout(copyLinkTimeoutRef.current);
+    }
+    copyLinkTimeoutRef.current = window.setTimeout(() => {
+      setCopiedLinkKey(null);
+      copyLinkTimeoutRef.current = null;
+    }, 1600);
+  };
+
+  const copyDemoLink = async (key: string, text: string): Promise<boolean> => {
     const ok = await copyTextToClipboard(text);
     if (!ok) {
       setErrorMessage('复制失败，请手动复制演示入口链接。');
-      return;
+      return false;
     }
     setErrorMessage(null);
     setCopiedLinkKey(key);
@@ -2002,6 +2044,7 @@ export default function App() {
       setCopiedLinkKey(null);
       copyLinkTimeoutRef.current = null;
     }, 1600);
+    return true;
   };
 
   // --- Sub-View Renderers ---
@@ -2905,13 +2948,22 @@ export default function App() {
                   {incidentId ? `已绑定当前事件 ${incidentId.slice(0, 8)}，刷新或新开标签页不会丢失事件。` : '等待事件编号，同步后会自动带上 incidentId。'}
                 </div>
               </div>
-              <button
-                onClick={() => copyDemoLink('all', demoShareText)}
-                className="h-9 rounded-lg border border-blue-700/70 bg-blue-900/40 px-3 text-[10px] font-bold uppercase tracking-wider text-blue-100 hover:bg-blue-900/70 transition-colors flex items-center gap-2"
-                title="复制四端导播台和各移动端入口"
-              >
-                <Copy size={14} /> {copiedLinkKey === 'all' ? '已复制' : '复制全部'}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={openAllMobileTerminals}
+                  className="h-9 rounded-lg border border-blue-600/80 bg-blue-600/20 px-3 text-[10px] font-bold uppercase tracking-wider text-blue-50 hover:bg-blue-600/35 transition-colors flex items-center gap-2"
+                  title="同步打开患者端、核心施救端、AED 保障端和清障接驳端"
+                >
+                  <Smartphone size={14} /> {copiedLinkKey === 'mobile-all' ? '已打开' : '打开4个手机端'}
+                </button>
+                <button
+                  onClick={() => copyDemoLink('all', demoShareText)}
+                  className="h-9 rounded-lg border border-blue-700/70 bg-blue-900/40 px-3 text-[10px] font-bold uppercase tracking-wider text-blue-100 hover:bg-blue-900/70 transition-colors flex items-center gap-2"
+                  title="复制四端导播台和各移动端入口"
+                >
+                  <Copy size={14} /> {copiedLinkKey === 'all' ? '已复制' : '复制全部'}
+                </button>
+              </div>
             </div>
             <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2">
               {demoShareLinks.map((link) => (
