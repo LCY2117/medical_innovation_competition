@@ -38,6 +38,7 @@
 | 专家摘要 `expert_summary.md` |  |
 | 专家现场复核清单 `expert_review_checklist.md` |  |
 | 观察员补充记录表 `observer_record_form.csv` |  |
+| 单轮预实验汇总表 `pre_experiment_round_summary.csv` |  |
 | 证据包 `manifest.json` 校验清单 |  |
 | AI 分派解释与规则兜底说明 |  |
 

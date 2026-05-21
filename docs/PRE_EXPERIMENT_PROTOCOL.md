@@ -167,7 +167,7 @@
 - 每轮关键时间点折线图或条形图。
 - 使用系统前后 T1-T6 的均值、中位数和范围。
 - 参与者问卷均值和典型反馈。
-- 系统导出的预实验证据包摘要：优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md` 和 `observer_record_form.csv`。
+- 系统导出的预实验证据包摘要：优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`observer_record_form.csv` 和 `pre_experiment_round_summary.csv`。
 - 调度解释案例：展示为什么某人被分配为核心施救、AED 保障、环境清障。
 
 统计原则：
@@ -183,7 +183,7 @@
 - 系统访问地址和测试账号。
 - 3-5 分钟演示视频或现场演示脚本。
 - 预实验流程图。
-- 预实验证据包 ZIP 样例，含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、观察员记录表和 `manifest.json` 校验清单。
+- 预实验证据包 ZIP 样例，含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、观察员记录表、单轮汇总表和 `manifest.json` 校验清单。
 - 对外展示和专家审阅优先使用匿名化文件，避免暴露真实账号、手机号、设备编号或个人身份信息。
 - 调度解释截图。
 - 专家反馈表。
@@ -208,7 +208,7 @@
 3. 40 秒：患者端触发 SOS，说明系统进入智能分派，结合人员画像、位置、AED 距离和健康风险生成核心施救、AED 保障、环境清障三类任务。
 4. 60 秒：展示移动 Web 或 Android 端执行任务。PRIME 开始 CPR，RUNNER 取送 AED，GUIDE 接应救护车。
 5. 40 秒：展示调度解释、现场时间线和 AED/CPR 下一动作提示，强调 AI 是辅助分派与解释，不替代 120 或专业医护。
-6. 30 秒：完成交接归档，下载预实验证据包，展示匿名化数据、指标 CSV、专家摘要、专家复核清单、观察员记录表和 manifest 校验。
+6. 30 秒：完成交接归档，下载预实验证据包，展示匿名化数据、指标 CSV、专家摘要、专家复核清单、观察员记录表、单轮汇总表和 manifest 校验。
 
 希望专家重点评价：
 

@@ -318,7 +318,8 @@ ZIP 包当前包含：
 - `expert_summary.md`：给专家/指导教师快速审阅的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖演示材料、关键指标、医学流程、AI 分派和安全边界。
 - `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
+- `pre_experiment_round_summary.csv`：单轮预实验汇总行，适合多轮演练合并到 Excel 做描述性统计。
 - `README.md`：证据包使用说明。
 - `manifest.json`：文件清单、SHA256 校验、生成时间和事件编号。
 
-对外材料默认使用匿名化文件、专家复核清单和观察员记录表。完整 `experiment.json` 只用于内部复核，不应直接发给专家或放入公开 PPT。
+对外材料默认使用匿名化文件、专家复核清单、观察员记录表和单轮汇总表。完整 `experiment.json` 只用于内部复核，不应直接发给专家或放入公开 PPT。

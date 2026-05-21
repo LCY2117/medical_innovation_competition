@@ -678,6 +678,10 @@ class IncidentService:
                 self._observer_record_rows(export),
                 self._observer_record_fields(),
             ),
+            "pre_experiment_round_summary.csv": self._csv_text(
+                self._pre_experiment_round_summary_rows(export),
+                self._pre_experiment_round_summary_fields(),
+            ),
         }
         files["manifest.json"] = self._package_manifest(export, files)
         archive = io.BytesIO()
@@ -1084,6 +1088,77 @@ class IncidentService:
     def _observer_record_fields() -> list[str]:
         return ["roundId", "incidentId", "item", "systemValue", "observerValue", "score1to5", "notes"]
 
+    @staticmethod
+    def _pre_experiment_round_summary_fields() -> list[str]:
+        return [
+            "roundId",
+            "incidentId",
+            "generatedAtIso",
+            "phase",
+            "patientCode",
+            "primeCode",
+            "runnerCode",
+            "guideCode",
+            "dispatchSource",
+            "dispatchSeconds",
+            "cprStartSeconds",
+            "aedPickupSeconds",
+            "aedDeliverySeconds",
+            "ambulanceArriveSeconds",
+            "participantCount",
+            "aedSiteCount",
+            "availableAedSiteCount",
+            "roleAssignmentCompleteness",
+            "locationCoveragePercent",
+            "healthCoveragePercent",
+            "runnerRouteMeters",
+            "observerName",
+            "scenarioLocation",
+            "roleAssignmentClarityScore",
+            "taskInstructionClarityScore",
+            "stressOperabilityScore",
+            "dispatchReasonablenessScore",
+            "aedPromptUsefulnessScore",
+            "notes",
+        ]
+
+    def _pre_experiment_round_summary_rows(self, export: ExperimentExportResponse) -> list[dict]:
+        participant_map = self._participant_aliases(export)
+        metrics = export.metrics
+        return [
+            {
+                "roundId": "R001",
+                "incidentId": export.incidentId,
+                "generatedAtIso": self._iso_timestamp(export.generatedAt),
+                "phase": export.phase,
+                "patientCode": participant_map.get(export.patientUserId or "", export.patientUserId or ""),
+                "primeCode": participant_map.get(export.assignments.get("PRIME") or "", export.assignments.get("PRIME") or ""),
+                "runnerCode": participant_map.get(export.assignments.get("RUNNER") or "", export.assignments.get("RUNNER") or ""),
+                "guideCode": participant_map.get(export.assignments.get("GUIDE") or "", export.assignments.get("GUIDE") or ""),
+                "dispatchSource": export.dispatchSource or "",
+                "dispatchSeconds": metrics.get("dispatchSeconds"),
+                "cprStartSeconds": metrics.get("cprStartSeconds"),
+                "aedPickupSeconds": metrics.get("aedPickupSeconds"),
+                "aedDeliverySeconds": metrics.get("aedDeliverySeconds"),
+                "ambulanceArriveSeconds": metrics.get("ambulanceArriveSeconds"),
+                "participantCount": metrics.get("participantCount"),
+                "aedSiteCount": metrics.get("aedSiteCount"),
+                "availableAedSiteCount": metrics.get("availableAedSiteCount"),
+                "roleAssignmentCompleteness": metrics.get("roleAssignmentCompleteness"),
+                "locationCoveragePercent": metrics.get("locationCoveragePercent"),
+                "healthCoveragePercent": metrics.get("healthCoveragePercent"),
+                "runnerRouteMeters": metrics.get("runnerRouteMeters"),
+                "observerName": "",
+                "scenarioLocation": "",
+                "roleAssignmentClarityScore": "",
+                "taskInstructionClarityScore": "",
+                "stressOperabilityScore": "",
+                "dispatchReasonablenessScore": "",
+                "aedPromptUsefulnessScore": "",
+                "notes": "",
+            }
+        ]
+
     def _observer_record_rows(self, export: ExperimentExportResponse) -> list[dict]:
         metrics = export.metrics
         rows = [
@@ -1244,6 +1319,7 @@ class IncidentService:
                     "expert_summary.md",
                     "expert_review_checklist.md",
                     "observer_record_form.csv",
+                    "pre_experiment_round_summary.csv",
                 ],
                 "internalReviewOnly": ["experiment.json", "clients.csv"],
                 "note": "Use anonymized files for PPT, expert feedback, and externally shared materials.",
@@ -1398,11 +1474,12 @@ class IncidentService:
 - `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
 - `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
 - `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
+- `pre_experiment_round_summary.csv`：单轮预实验汇总行，便于把多轮 ZIP 的核心指标合并到 Excel 做描述性统计。
 - `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv` 和 `expert_summary.md`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`observer_record_form.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:

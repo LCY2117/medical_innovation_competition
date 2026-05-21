@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b02c634
-- Last update: 2026-05-22 05:28:40 +08:00
+- HEAD: 3362496
+- Last update: 2026-05-22 05:33:27 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -91,7 +91,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 66. Localize remaining Android emergency-screen role-code wording. (done, pushed)
 67. Localize Android CPR metronome visible English labels. (done, pushed)
 68. Run post-label/evidence-package validation sweep. (done, pushed)
-69. Align whitepaper/pre-experiment/handoff wording with latest evidence package and Chinese role labels. (done, validating)
+69. Align whitepaper/pre-experiment/handoff wording with latest evidence package and Chinese role labels. (done, pushed)
+70. Add pre-experiment round-summary CSV into ZIP evidence package. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -340,6 +341,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Post-label/evidence-package validation sweep: backend `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-OIunfMkh.js` at `222.46 kB` raw / `67.65 kB` gzip and mobile `MobileApp-DTIoJNCQ.js` at `36.43 kB` raw / `11.71 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `b02c634` (`checkpoint: record validation sweep`) created and pushed to `origin/codex/competition-hardening`.
 - Whitepaper, pre-experiment protocol, and morning handoff are being aligned so the exported evidence package consistently mentions expert review checklist and observer record form, and presenter-facing role wording uses Chinese task names.
+- Git checkpoint: `3362496` (`checkpoint: align evidence docs`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence package now includes `pre_experiment_round_summary.csv`, a single-row per-round summary with anonymized participant codes, core timing metrics, coverage metrics, route distance, and blank observer/scoring columns for Excel aggregation across multiple simulated rounds. Documentation and tests are being updated to include the new file.
+- Round-summary evidence validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed, 1 test OK; backend full unittest discovery passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -348,7 +352,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Validate docs wording with `rg`, then stage and push the document-alignment checkpoint. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Stage and push the round-summary ZIP checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
