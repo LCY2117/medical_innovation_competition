@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 4116432
-- Last update: 2026-05-22 06:57:18 +08:00
+- HEAD: 2605c33
+- Last update: 2026-05-22 07:03:01 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -105,7 +105,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 80. Polish Android PRIME navigation visible language and placeholder distance. (done, pushed)
 81. Add ZIP evidence-package review index for expert/judge review. (done, pushed)
 82. Improve mobile Web archived-flow evidence package permission UX. (done, pushed)
-83. Run latest backend/Web/Android validation sweep and record handoff. (done, checkpointing)
+83. Run latest backend/Web/Android validation sweep and record handoff. (done, pushed)
+84. Polish Android visible location floor/source and AED status labels. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -403,6 +404,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Mobile Web archive permission validation: `npm run typecheck` passed; `npm run build` passed with mobile `MobileApp-BiCFGvZL.js`. Browser smoke on temporary local backend `127.0.0.1:18091` with temp DB and demo token `LCY` created an archived incident and confirmed `/mobile?demo=guide&incidentId=...` shows “演示口令” plus “下载预实验证据包”. Temporary process and smoke DB/logs were removed.
 - Git checkpoint: `35768d6` (`checkpoint: improve mobile evidence download auth`) created and pushed to `origin/codex/competition-hardening`.
 - Latest validation sweep: backend `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DAHq5Wl1.js`, mobile `MobileApp-BiCFGvZL.js`, and stage `MobileDemoStage-DKdt3ZAL.js`; Android `gradle :app:assembleDebug --no-daemon` passed. Existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `2605c33` (`checkpoint: record latest validation sweep`) created and pushed to `origin/codex/competition-hardening`.
+- Android visible label polish in progress: added shared UI formatters for floor labels, AED status, and location source, replacing visible `1F/2F`, `AVAILABLE`, and `app-demo-fallback` style strings with Chinese labels in Android incident/AED/profile screens.
+- Android visible label validation: `gradle :app:assembleDebug --no-daemon` passed in `lifereflex(app)`; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -411,7 +415,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the validation/handoff state, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the Android visible location/AED label polish slice, then continue archive/evidence summary copy hardening. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

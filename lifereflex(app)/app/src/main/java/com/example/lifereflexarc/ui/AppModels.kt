@@ -86,6 +86,36 @@ fun roleStatusLabel(status: String?): String = when (status) {
     else -> "未识别状态"
 }
 
+fun formatFloorLabel(floor: String?): String? = when (floor?.trim()?.uppercase()) {
+    null, "" -> null
+    "B1" -> "地下一层"
+    "B2" -> "地下二层"
+    "1F", "F1" -> "一层"
+    "2F", "F2" -> "二层"
+    "3F", "F3" -> "三层"
+    "4F", "F4" -> "四层"
+    else -> floor
+}
+
+fun formatAedStatusLabel(status: String?): String? = when (status?.trim()?.uppercase()) {
+    null, "" -> null
+    "AVAILABLE" -> "可用"
+    "MAINTENANCE" -> "维护中"
+    "UNAVAILABLE" -> "不可用"
+    else -> status
+}
+
+fun formatLocationSourceLabel(source: String?): String = when (source?.trim()?.lowercase()) {
+    null, "" -> "--"
+    "app-demo", "app-demo-fallback", "mobile-demo" -> "演示位置"
+    "manual" -> "手动录入"
+    "android-gps" -> "系统 GPS 定位"
+    "android-network" -> "系统网络定位"
+    "android-passive" -> "系统被动定位"
+    "android-system" -> "系统定位"
+    else -> source
+}
+
 fun primeVoiceCue(incidentState: IncidentState): String? = when {
     incidentState.phase == "DISPATCHED" -> "你已被分配为核心施救者，请立即前往患者位置，开始基础复苏。"
     incidentState.roles.PRIME.status == "CPR_STARTED" || incidentState.phase == "CPR" ->

@@ -41,6 +41,8 @@ import com.example.lifereflexarc.data.UserSession
 import com.example.lifereflexarc.ui.accentForRole
 import com.example.lifereflexarc.ui.primeVoiceCue
 import com.example.lifereflexarc.ui.components.PressableButton
+import com.example.lifereflexarc.ui.formatAedStatusLabel
+import com.example.lifereflexarc.ui.formatFloorLabel
 import com.example.lifereflexarc.ui.phaseTitle
 import com.example.lifereflexarc.ui.roleStatusLabel
 import com.example.lifereflexarc.ui.rememberCountdownValue
@@ -465,7 +467,11 @@ private fun AedTargetCard(
             }
             Text(targetAed.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text(
-                text = listOfNotNull(targetAed.location.label, targetAed.location.floor, targetAed.status)
+                text = listOfNotNull(
+                    targetAed.location.label,
+                    formatFloorLabel(targetAed.location.floor),
+                    formatAedStatusLabel(targetAed.status),
+                )
                     .joinToString(" · "),
                 color = Color(0xFFE2E8F0),
                 fontSize = 13.sp,

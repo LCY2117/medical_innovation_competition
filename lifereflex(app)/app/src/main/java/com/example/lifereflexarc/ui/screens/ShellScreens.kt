@@ -35,6 +35,9 @@ import com.example.lifereflexarc.ui.components.MetricCard
 import com.example.lifereflexarc.ui.components.PressableButton
 import com.example.lifereflexarc.ui.components.SectionTitle
 import com.example.lifereflexarc.ui.components.SummaryRow
+import com.example.lifereflexarc.ui.formatAedStatusLabel
+import com.example.lifereflexarc.ui.formatFloorLabel
+import com.example.lifereflexarc.ui.formatLocationSourceLabel
 import com.example.lifereflexarc.ui.theme.PhoneColors
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
 import java.text.SimpleDateFormat
@@ -302,7 +305,11 @@ private fun AedSitesCard(
                 aedSites.forEach { site ->
                     SummaryRow(
                         label = site.name,
-                        value = listOfNotNull(site.location.label, site.location.floor, site.status)
+                        value = listOfNotNull(
+                            site.location.label,
+                            formatFloorLabel(site.location.floor),
+                            formatAedStatusLabel(site.status),
+                        )
                             .joinToString(" · "),
                         dark = true,
                     )
@@ -633,7 +640,7 @@ private fun DemoLocationCard(
                 lineHeight = 20.sp,
             )
             SummaryRow("当前位置", location?.label ?: "未同步", dark = true)
-            SummaryRow("坐标来源", location?.source ?: "--", dark = true)
+            SummaryRow("坐标来源", formatLocationSourceLabel(location?.source), dark = true)
             SummaryRow("经纬度", location?.let { formatCoordinate(it) } ?: "--", dark = true)
             SummaryRow("精度", location?.accuracyMeters?.let { "${it.toInt()} m" } ?: "--", dark = true)
             PressableButton(
