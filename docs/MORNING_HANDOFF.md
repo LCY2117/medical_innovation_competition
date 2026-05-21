@@ -131,7 +131,8 @@ gradle :app:assembleDebug --no-daemon
 - `1259394`：地图距离 provider 抽象与高德 WebService 预埋，已推送。
 - `f30be6d`：Android 系统定位 provider 与位置同步 UI，已推送。
 - `5855cf4`：后端通知 provider 与 WebSocket fallback，已推送。
-- 待本轮提交：后端正式管理员账号最小 RBAC。
+- `a635129`：后端正式管理员账号最小 RBAC，已推送。
+- 待本轮提交：前端共享类型补齐 `AuthUser.privileges`。
 
 ## 你醒来后最该做的三件事
 

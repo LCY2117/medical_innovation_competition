@@ -109,6 +109,7 @@ export interface AuthUser {
   professionIdentity: string;
   profileBio: string;
   credentialStatus: string;
+  privileges?: string[];
 }
 
 export interface AuthResponse {
