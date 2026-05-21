@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a852318
-- Last update: 2026-05-22 05:35:29 +08:00
+- HEAD: 3e8b2ca
+- Last update: 2026-05-22 05:38:10 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -93,7 +93,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 68. Run post-label/evidence-package validation sweep. (done, pushed)
 69. Align whitepaper/pre-experiment/handoff wording with latest evidence package and Chinese role labels. (done, pushed)
 70. Add pre-experiment round-summary CSV into ZIP evidence package. (done, pushed)
-71. Refresh README with current demo entries, validation commands, evidence package, admin auth, and provider fallback. (done, validating)
+71. Refresh README with current demo entries, validation commands, evidence package, admin auth, and provider fallback. (done, pushed)
+72. Record README checkpoint and resume state after context handoff. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -348,6 +349,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `a852318` (`checkpoint: add pre-experiment round summary`) created and pushed to `origin/codex/competition-hardening`.
 - README now documents `/mobile`, `/mobile-demo`, explicit validation commands, demo/admin auth settings, ZIP evidence package contents including `pre_experiment_round_summary.csv`, Chinese role presentation, and AI/map/health/push provider fallback behavior.
 - README validation: `rg` confirmed mobile entries, evidence package, demo admin token, provider fallback, round summary, and Chinese role wording are present.
+- Git checkpoint: `3e8b2ca` (`checkpoint: refresh project README`) created and pushed to `origin/codex/competition-hardening`.
+- Context handoff resumed at `3e8b2ca`; state and morning handoff are being corrected so future work starts from the actual pushed README checkpoint.
 
 ## Blockers Summary
 
@@ -356,7 +359,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Stage and push the README refresh checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Commit and push this state-only handoff correction, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

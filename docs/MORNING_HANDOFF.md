@@ -163,7 +163,7 @@ gradle :app:assembleDebug --no-daemon
 - `7b8392b`：Android CPR 节律辅助页可见英文标题中文化，已推送。
 - `b02c634`：记录后端/Web/Android 最新验证扫尾结果，已推送。
 - `a852318`：预实验证据包新增 `pre_experiment_round_summary.csv` 单轮汇总表，方便多轮模拟合并统计，已推送。
-- 待提交：README 补齐当前演示入口、验证命令、证据包、管理员口令和 provider fallback 说明。
+- `3e8b2ca`：README 补齐当前演示入口、验证命令、证据包、管理员口令和 provider fallback 说明，已推送。
 
 ## 你醒来后最该做的三件事
 
