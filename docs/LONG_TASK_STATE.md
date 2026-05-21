@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: f11f607
-- Last update: 2026-05-22 02:51:00 +08:00
+- HEAD: 6342bb7
+- Last update: 2026-05-22 02:55:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -45,6 +45,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 20. Add recent on-site timeline cards to Android task and incident screens. (done, validating)
 21. Commit evidence/mobile/Android polish checkpoint. (done)
 22. Push current checkpoints to GitHub. (done)
+23. Add Android Runner full-screen AED target card. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -132,6 +133,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence package `manifest.json` now includes package type, anonymized-file guidance, internal-review-only file guidance, and SHA-256 verification metadata.
 - Mobile Web keeps manual PRIME/RUNNER/GUIDE role takeover available only under a collapsed “演示备用” control, so the default task path supports the AI dispatch story.
 - Android task and incident screens now show the latest six on-site timeline logs with Chinese summaries for patient SOS, dispatch, CPR, AED, ambulance, handover, and archive events.
+- Android Runner full-screen task now shows target AED name, location/floor/status, access notes, distance to AED, and AED return distance to patient using existing dispatch rationale and AED-site data.
 
 ## Validation Log
 
@@ -163,6 +165,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Current Android validation: `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `69d7cc8` (`checkpoint: polish evidence and mobile demo`) created locally.
 - Git checkpoint: `f11f607` (`checkpoint: update long task handoff`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `6342bb7` (`checkpoint: record pushed state`) created and pushed to `origin/codex/competition-hardening`.
+- Android AED target validation: `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -171,7 +175,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue to the next unblocked polish or validation pass from clean remote checkpoint `f11f607`, while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push Android AED target polish, then continue to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 

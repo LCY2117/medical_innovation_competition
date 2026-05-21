@@ -28,6 +28,7 @@
 - 移动 Web 任务页默认优先“自动接单”，PRIME/RUNNER/GUIDE 手动抢接折叠为“演示备用”，减少绕过 AI 分派叙事的误操作。
 - Android 首页和事件页已接通“自动接单”，登录后可直接加入当前事件并进入任务页。
 - Android 任务页和现场总览新增“最近现场时间线”，APK 端可以直接看到患者触发、角色响应、AED 取送、交接等日志。
+- Android AED 保障者全屏任务页会显示目标 AED 名称、位置楼层、取用说明、到 AED 距离和回送患者距离。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -84,6 +85,7 @@ gradle :app:assembleDebug --no-daemon
 - `a8104ca`：更新早晨交接与演示脚本。
 - `d33d038`：健康风险标签本地化，用户界面不再暴露 mock/fallback 工程词。
 - `69d7cc8`：补齐证据包文档口径、manifest 隐私/校验说明、移动 Web 备用手动接单折叠、Android 最近现场时间线。
+- `6342bb7`：记录检查点已推送状态。
 
 ## 你醒来后最该做的三件事
 

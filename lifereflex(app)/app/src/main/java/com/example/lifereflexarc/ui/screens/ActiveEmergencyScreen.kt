@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.lifereflexarc.data.AedSite
 import com.example.lifereflexarc.data.IncidentState
 import com.example.lifereflexarc.data.UserRole
 import com.example.lifereflexarc.data.UserSession
@@ -130,8 +131,8 @@ private fun PrimeVoicePrompt(
         }
         tts = engine
         onDispose {
-            engine?.stop()
-            engine?.shutdown()
+            engine.stop()
+            engine.shutdown()
             tts = null
         }
     }
@@ -390,6 +391,12 @@ private fun RunnerFullScreen(
     incidentViewModel: IncidentViewModel,
 ) {
     val status = incidentState.roles.RUNNER.status
+    val runnerDecision = incidentState.dispatchRationale["RUNNER"]
+    val targetAed = remember(incidentState.aedSites, runnerDecision?.nearestAedSiteId) {
+        incidentState.aedSites.firstOrNull { it.siteId == runnerDecision?.nearestAedSiteId }
+            ?: incidentState.aedSites.firstOrNull { it.status == "AVAILABLE" }
+            ?: incidentState.aedSites.firstOrNull()
+    }
     CriticalScaffold(
         eyebrow = "AED 保障任务",
         title = when (status) {
@@ -406,6 +413,11 @@ private fun RunnerFullScreen(
     ) {
         MetricTile(label = "任务状态", value = roleStatusLabel(status))
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
+        AedTargetCard(
+            targetAed = targetAed,
+            distanceToAedMeters = runnerDecision?.distanceToAedMeters,
+            aedToPatientMeters = runnerDecision?.aedToPatientMeters,
+        )
         when (status) {
             "AED_PICKED" -> PressableButton(
                 text = "确认 AED 已送达",
@@ -420,6 +432,50 @@ private fun RunnerFullScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Blue, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+@Composable
+private fun AedTargetCard(
+    targetAed: AedSite?,
+    distanceToAedMeters: Double?,
+    aedToPatientMeters: Double?,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0B1E3A)),
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1D4ED8)),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("目标 AED", color = Color(0xFF93C5FD), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            if (targetAed == null) {
+                Text(
+                    text = "当前事件尚未同步 AED 点位，请按现场指挥或最近标识取用设备。",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+                return@Column
+            }
+            Text(targetAed.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = listOfNotNull(targetAed.location.label, targetAed.location.floor, targetAed.status)
+                    .joinToString(" · "),
+                color = Color(0xFFE2E8F0),
+                fontSize = 13.sp,
+                lineHeight = 20.sp,
+            )
+            if (targetAed.accessNotes.isNotBlank()) {
+                Text(targetAed.accessNotes, color = PhoneColors.GrayText, fontSize = 12.sp, lineHeight = 18.sp)
+            }
+            MetricTile(label = "你到 AED", value = formatMeters(distanceToAedMeters))
+            MetricTile(label = "AED 回送患者", value = formatMeters(aedToPatientMeters))
         }
     }
 }
@@ -595,4 +651,15 @@ private fun dispatchStartTs(incidentState: IncidentState): Long? {
         entry.msg.contains("Patient designated", ignoreCase = true) ||
             entry.msg.contains("AI dispatching", ignoreCase = true)
     }?.ts ?: incidentState.logs.lastOrNull()?.ts
+}
+
+private fun formatMeters(value: Double?): String {
+    if (value == null) {
+        return "待计算"
+    }
+    return if (value >= 1000) {
+        String.format(Locale.CHINA, "%.1f km", value / 1000)
+    } else {
+        "${value.toInt()} m"
+    }
 }
