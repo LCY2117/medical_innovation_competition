@@ -370,7 +370,8 @@
 .mobile-role-grid button,
 .mobile-primary-button,
 .mobile-danger-button,
-.mobile-ghost-button {
+.mobile-ghost-button,
+.mobile-summary-link {
   min-height: 42px;
   border: 0;
   border-radius: 8px;
@@ -378,6 +379,7 @@
   font: inherit;
   letter-spacing: 0;
   touch-action: manipulation;
+  text-decoration: none;
 }
 
 .mobile-segment button {
@@ -402,7 +404,8 @@
 .mobile-presets button,
 .mobile-small-button,
 .mobile-role-grid button,
-.mobile-ghost-button {
+.mobile-ghost-button,
+.mobile-summary-link {
   border: 1px solid var(--mobile-border);
   background: var(--mobile-surface);
 }
@@ -859,6 +862,24 @@ button:disabled {
 
 .mobile-summary-action {
   margin-top: 12px;
+}
+
+.mobile-summary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mobile-summary-actions button,
+.mobile-summary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  font-weight: 760;
 }
 
 .mobile-token-field {

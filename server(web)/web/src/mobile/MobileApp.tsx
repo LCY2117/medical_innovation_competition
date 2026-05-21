@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
+  Copy,
+  ExternalLink,
   HeartPulse,
   LogOut,
   MapPin,
@@ -183,6 +185,35 @@ function tabLocationKey(): string {
   return `${LOCATION_KEY}_${readDemoSlotFromUrl()}`;
 }
 
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return false;
+  }
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Continue with the textarea fallback below.
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', 'true');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } finally {
+    textarea.remove();
+  }
+  return copied;
+}
+
 function demoLocationFor(persona?: DemoPersona | null): GeoPoint {
   return demoPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
 }
@@ -320,6 +351,9 @@ function saveSession(session: StoredSession | null): void {
 }
 
 function roleAction(role: RoleName, state: IncidentState | null): { label: string; action: string; disabled?: boolean; hint: string } {
+  if (state?.phase === 'ARCHIVED') {
+    return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
+  }
   if (role === 'PRIME') {
     if (!state || !isRoleJoined(state.roles.PRIME?.status)) {
       return { label: '响应核心施救', action: 'JOIN', hint: '确认接单后立即前往患者位置' };
@@ -1092,6 +1126,23 @@ function MobileApp() {
     );
   }
 
+  async function copyArchiveLink() {
+    if (!incident) {
+      return;
+    }
+    const url = new URL('/mobile', window.location.origin);
+    url.searchParams.set('incidentId', incident.incidentId);
+    if (session.demoPersona) {
+      url.searchParams.set('demo', session.demoPersona);
+      url.searchParams.set('slot', session.demoPersona);
+    }
+    const copied = await copyTextToClipboard(url.toString());
+    setNotice({
+      kind: copied ? 'ok' : 'error',
+      text: copied ? '本轮移动端链接已复制。' : '复制失败，请从地址栏手动复制链接。',
+    });
+  }
+
   if (booting) {
     return (
       <main className="mobile-shell mobile-loading">
@@ -1453,6 +1504,16 @@ function MobileApp() {
           <button className="mobile-primary-button mobile-summary-action" onClick={downloadArchivePackage} disabled={busyAction === 'package'}>
             {busyAction === 'package' ? '下载中...' : '下载事件证据包'}
           </button>
+          <div className="mobile-summary-actions">
+            <button className="mobile-ghost-button" type="button" onClick={copyArchiveLink}>
+              <Copy size={16} />
+              复制本轮链接
+            </button>
+            <a className="mobile-summary-link" href="/">
+              <ExternalLink size={16} />
+              返回总控台
+            </a>
+          </div>
           <p className="mobile-summary-note">手机端会保存该口令并与 Web 总控台共享；若你已用正式管理员账号登录，也可直接下载。</p>
         </section>
       )}

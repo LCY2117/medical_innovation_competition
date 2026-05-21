@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 1493e5c
-- Last update: 2026-05-22 07:20:00 +08:00
+- HEAD: fdaf060
+- Last update: 2026-05-22 07:27:07 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -108,7 +108,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 83. Run latest backend/Web/Android validation sweep and record handoff. (done, pushed)
 84. Polish Android visible location floor/source and AED status labels. (done, pushed)
 85. Harden archive/evidence summary copy and remove visible fake metrics. (done, pushed)
-86. Polish mobile visible demo/evidence/health copy. (done, checkpointing)
+86. Polish mobile visible demo/evidence/health copy. (done, pushed)
+87. Add mobile archived-flow next actions. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -418,6 +419,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Mobile visible copy polish: changed mobile/default location, organization, safety copy, archive package messages, Web title/tooltip labels, and Android health-card explanation from more internal “模拟/预实验/OPPO” wording to `协同演示现场`, `事件证据包`, and `健康摘要` style language while retaining safety boundaries.
 - Mobile visible copy validation: `rg` found no remaining target visible strings among `医创赛模拟现场`, `模拟社区`, `本次模拟流程`, `手动/模拟点位`, `预实验证据包`, `OPPO 健康摘要`, `模拟演练`, `模拟接入`, `模拟点位`, `模拟健康`, `mock fallback`, and `AI 调度引擎` in the checked Web/mobile/Android UI files.
 - Mobile visible copy validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-B4okz-ZB.js`, mobile `MobileApp-CQYLGBPK.js`, stage `MobileDemoStage-B2oMgsLu.js`, and shared domain `domain-0m1nEXxg.js`; Android `gradle :app:assembleDebug --no-daemon` passed with existing non-blocking `android.overridePathCheck=true` warning.
+- Git checkpoint: `fdaf060` (`checkpoint: polish visible demo copy`) created and pushed to `origin/codex/competition-hardening`.
+- Mobile archived-flow next actions: archived mobile summary now offers `下载事件证据包`, `复制本轮链接`, and `返回总控台`; archived role action state now shows `已完成归档` instead of prompting the guide/responder to respond again after the event is archived.
+- Mobile archived-flow validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-YRz2tLyc.js` and CSS `MobileApp-MGToxcyi.css`. Browser smoke on temporary local backend `127.0.0.1:18092` with temp DB and demo token `LCY` created an archived incident, confirmed the mobile archive page renders `下载事件证据包`, `复制本轮链接`, `返回总控台`, and no longer shows the old `响应清障接驳` action in archived state. Temporary backend/frontend processes and smoke DB files were stopped/removed.
 
 ## Blockers Summary
 
@@ -426,7 +430,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the mobile visible copy polish slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the mobile archived-flow next-actions slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
