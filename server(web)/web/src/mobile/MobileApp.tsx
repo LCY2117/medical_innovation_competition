@@ -646,6 +646,7 @@ function MobileApp() {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [activeView, setActiveView] = useState<MobileView>('home');
+  const [sosConfirming, setSosConfirming] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
 
@@ -828,6 +829,12 @@ function MobileApp() {
   }, []);
 
   useEffect(() => {
+    if (!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING') {
+      setSosConfirming(false);
+    }
+  }, [incident?.incidentId, incident?.phase, incident?.sos?.status]);
+
+  useEffect(() => {
     return () => {
       wsRef.current?.close();
       if (reconnectRef.current) {
@@ -927,6 +934,12 @@ function MobileApp() {
     if (!incident || !session) {
       return;
     }
+    if (!sosConfirming) {
+      setSosConfirming(true);
+      setNotice({ kind: 'info', text: '再次点击确认启动 SOS。' });
+      return;
+    }
+    setSosConfirming(false);
     await runAction(
       'sos',
       async () => patientSosStart(incident.incidentId, session.token),
@@ -938,6 +951,7 @@ function MobileApp() {
     if (!incident || !session) {
       return;
     }
+    setSosConfirming(false);
     await runAction('sosCancel', async () => patientSosCancel(incident.incidentId, session.token), 'SOS 已取消。');
   }
 
@@ -1086,11 +1100,11 @@ function MobileApp() {
               </div>
               <div className="mobile-emergency-actions">
                 <button
-                  className="mobile-danger-button"
+                  className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
                   onClick={handlePatientSos}
                   disabled={!incident || incident.phase !== 'CREATED' || busyAction === 'sos'}
                 >
-                  {busyAction === 'sos' ? '启动中...' : '启动 SOS'}
+                  {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
                 </button>
                 <button
                   className="mobile-ghost-button"

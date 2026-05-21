@@ -439,6 +439,10 @@
   color: #ffffff;
 }
 
+.mobile-danger-button.confirming {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.24);
+}
+
 .mobile-ghost-button {
   width: 100%;
   color: var(--mobile-danger-text);

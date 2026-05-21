@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 2752c24
-- Last update: 2026-05-22 02:25:06 +08:00
+- HEAD: befc1f7
+- Last update: 2026-05-22 02:28:40 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -35,6 +35,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 10. Strengthen pre-experiment evidence integrity: anonymized package, manifest hashes, structured timeline, richer metrics, historical export correctness, and demo readiness. (done, validating)
 11. Wire Android app auto-join entry into the current AppRoot flow. (done, checkpointing)
 12. Add Web command-center flow stepper and 4-terminal demo-stage runbook. (done, checkpointing)
+13. Add mobile Web SOS two-step confirmation to reduce accidental emergency triggering. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -114,6 +115,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android Home and Incident tabs now expose the existing auto-join flow, passing the logged-in token and routing the user to Tasks after auto-join.
 - Web dashboard now shows a five-step competition demo flow: scenario bootstrap, patient SOS, AI dispatch, field response, and handover/export.
 - `/mobile-demo` now shows a compact runbook above the four terminal frames so a presenter can follow the correct sequence without separate notes.
+- Mobile Web patient SOS now requires a second confirmation click before calling the backend start endpoint.
 
 ## Validation Log
 
@@ -135,6 +137,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android auto-join validation: `gradle :app:assembleDebug --no-daemon` passed.
 - Web demo guidance validation: `npm run typecheck` passed; `npm run build` passed.
 - Browser smoke: temporary backend on `127.0.0.1:18082` opened dashboard and `/mobile-demo`; confirmed dashboard flow labels, evidence-package entry, runbook labels, and 4 iframe panels. Temporary service stopped.
+- Mobile SOS confirmation validation: `npm run typecheck` passed; `npm run build` passed; browser smoke on `127.0.0.1:18083/mobile?demo=patient` confirmed first click only shows confirmation while backend remains `CREATED`/`MONITORING`. Temporary service stopped.
 
 ## Blockers Summary
 
@@ -143,7 +146,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Web demo guidance, then continue to the next unblocked polish or validation pass.
+Checkpoint mobile SOS confirmation, then continue to the next unblocked polish or validation pass.
 
 ## Resume Instructions
 
