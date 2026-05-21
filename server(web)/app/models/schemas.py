@@ -1,23 +1,26 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+AED_STATUS_VALUES = {"AVAILABLE", "MAINTENANCE", "UNAVAILABLE"}
 
 
 class GeoPoint(BaseModel):
-    latitude: float
-    longitude: float
-    accuracyMeters: float | None = None
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    accuracyMeters: float | None = Field(default=None, ge=0, le=50_000)
     label: str | None = None
     floor: str | None = None
     source: str = "manual"
-    updatedTs: int | None = None
+    updatedTs: int | None = Field(default=None, ge=0)
 
 
 class HealthSignalSummary(BaseModel):
     source: str = "unavailable"
     authorizationStatus: str = "not_connected"
     provider: str = "OPPO_HEALTH"
-    heartRateBpm: int | None = None
-    bloodOxygenPercent: float | None = None
-    pressureScore: int | None = None
+    heartRateBpm: int | None = Field(default=None, ge=20, le=240)
+    bloodOxygenPercent: float | None = Field(default=None, ge=0, le=100)
+    pressureScore: int | None = Field(default=None, ge=0, le=100)
     activityLevel: str | None = None
     sleepQuality: str | None = None
     riskTags: list[str] = Field(default_factory=list)
@@ -137,6 +140,14 @@ class AedSite(BaseModel):
     accessNotes: str = ""
     lastCheckedTs: int | None = None
 
+    @field_validator("status")
+    @classmethod
+    def normalize_status(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if normalized not in AED_STATUS_VALUES:
+            raise ValueError(f"status must be one of {sorted(AED_STATUS_VALUES)}")
+        return normalized
+
 
 class AedSiteUpsertReq(BaseModel):
     siteId: str | None = None
@@ -144,6 +155,14 @@ class AedSiteUpsertReq(BaseModel):
     location: GeoPoint
     status: str = "AVAILABLE"
     accessNotes: str = ""
+
+    @field_validator("status")
+    @classmethod
+    def normalize_status(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if normalized not in AED_STATUS_VALUES:
+            raise ValueError(f"status must be one of {sorted(AED_STATUS_VALUES)}")
+        return normalized
 
 
 class AedSiteListResponse(BaseModel):

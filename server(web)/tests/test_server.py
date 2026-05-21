@@ -763,6 +763,88 @@ class ServerTestCase(unittest.TestCase):
             clients = client.get("/api/clients").json()["clients"]
             self.assertEqual(clients[0]["location"]["label"], "测试点位")
 
+    def test_input_validation_rejects_invalid_location_health_and_aed_status(self) -> None:
+        with self._client() as client:
+            auth = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="边界测试",
+                    phone="13800138666",
+                    organization="测试组织",
+                    health_condition="身体状态一般",
+                    profession_identity="急救志愿者",
+                    profile_bio="用于输入边界校验",
+                ),
+            )
+            self.assertEqual(auth.status_code, 200)
+            auth_payload = auth.json()
+            user_id = auth_payload["user"]["userId"]
+            token = auth_payload["token"]
+            registered = client.post(
+                "/api/clients/register",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "displayName": "边界测试",
+                    "organization": "测试组织",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "急救志愿者",
+                    "profileBio": "用于输入边界校验",
+                    "deviceType": "MOBILE_WEB",
+                },
+            )
+            bad_location = client.post(
+                "/api/clients/location",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "location": {
+                        "latitude": 120,
+                        "longitude": 116.4,
+                        "accuracyMeters": -1,
+                    },
+                },
+            )
+            bad_health = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "authorized",
+                        "heartRateBpm": 300,
+                        "bloodOxygenPercent": 101,
+                        "pressureScore": -2,
+                    },
+                },
+            )
+            bad_aed = client.post(
+                "/api/aed-sites",
+                json={
+                    "siteId": "bad-aed",
+                    "name": "异常 AED",
+                    "location": {"latitude": 39.9, "longitude": 116.4},
+                    "status": "BROKEN",
+                },
+            )
+            normalized_aed = client.post(
+                "/api/aed-sites",
+                json={
+                    "siteId": "maint-aed",
+                    "name": "维护中 AED",
+                    "location": {"latitude": 39.9, "longitude": 116.4},
+                    "status": "maintenance",
+                },
+            )
+
+        self.assertEqual(registered.status_code, 200)
+        self.assertEqual(bad_location.status_code, 422)
+        self.assertEqual(bad_health.status_code, 422)
+        self.assertEqual(bad_aed.status_code, 422)
+        self.assertEqual(normalized_aed.status_code, 200)
+        self.assertEqual(normalized_aed.json()["aedSites"][0]["status"], "MAINTENANCE")
+
     def test_client_location_requires_matching_auth_token(self) -> None:
         with self._client() as client:
             auth = client.post(
