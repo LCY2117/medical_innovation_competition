@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import {
   autoJoinCurrent,
+  downloadExperimentPackage,
   fetchAedSites,
   fetchClients,
   fetchCurrentIncident,
@@ -1068,6 +1069,14 @@ function MobileApp() {
     );
   }
 
+  async function downloadArchivePackage() {
+    await runAction(
+      'package',
+      () => downloadExperimentPackage(session?.token),
+      '预实验证据包已开始下载。',
+    );
+  }
+
   if (booting) {
     return (
       <main className="mobile-shell mobile-loading">
@@ -1416,7 +1425,11 @@ function MobileApp() {
         <section className="mobile-panel mobile-summary">
           <CheckCircle2 size={26} />
           <h2>本次演练已归档</h2>
-          <p>事件日志、角色响应和 AED 取送信息已经进入预实验证据包。对外展示请优先使用匿名化文件，本系统不宣称真实临床疗效。</p>
+          <p>事件日志、角色响应和 AED 取送信息已经进入预实验证据包。对外展示请优先使用匿名化文件、专家复核清单和观察员记录表，本系统不宣称真实临床疗效。</p>
+          <button className="mobile-primary-button mobile-summary-action" onClick={downloadArchivePackage} disabled={busyAction === 'package'}>
+            {busyAction === 'package' ? '下载中...' : '下载预实验证据包'}
+          </button>
+          <p className="mobile-summary-note">如提示权限不足，请先在 Web 总控台输入演示口令或使用管理员账号登录。</p>
         </section>
       )}
     </main>

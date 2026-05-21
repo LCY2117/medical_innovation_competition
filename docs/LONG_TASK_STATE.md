@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 169a615
-- Last update: 2026-05-22 05:18:41 +08:00
+- HEAD: de3107e
+- Last update: 2026-05-22 05:22:06 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -86,7 +86,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 61. Simplify mobile scene/cooperation page technical details. (done, pushed)
 62. Surface demo readiness checklist in Web command center. (done, pushed)
 63. Add expert review checklist and observer record form into ZIP evidence package. (done, pushed)
-64. Remove visible PRIME/RUNNER/GUIDE auxiliary labels from mobile demo entry and 4-terminal stage captions. (done, validating)
+64. Remove visible PRIME/RUNNER/GUIDE auxiliary labels from mobile demo entry and 4-terminal stage captions. (done, pushed)
+65. Add mobile Web archived-flow evidence package download entry. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -322,6 +323,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `169a615` (`checkpoint: add expert evidence forms`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile demo visible-label polish: `/mobile` demo persona titles now use Chinese terminal names, and `/mobile-demo` four-frame captions describe duties rather than PRIME/RUNNER/GUIDE auxiliary codes.
 - Mobile label validation: `npm run typecheck` passed; `npm run build` passed with mobile `MobileApp-DMzu6r2C.js` at `35.11 kB` raw / `11.20 kB` gzip and `MobileDemoStage-DmDdV0Yl.js` at `2.59 kB` raw / `1.20 kB` gzip.
+- Git checkpoint: `de3107e` (`checkpoint: polish mobile role labels`) created and pushed to `origin/codex/competition-hardening`.
+- Mobile Web archive summary now includes a protected “下载预实验证据包” action using the existing admin token/Bearer auth path, plus guidance to enter the demo token or admin account if permissions are missing.
+- Mobile archive package validation: `npm run typecheck` passed; `npm run build` passed with mobile `MobileApp-DTIoJNCQ.js` at `36.43 kB` raw / `11.71 kB` gzip.
 
 ## Blockers Summary
 
@@ -330,7 +334,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Stage and push the mobile visible-label polish checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Stage and push the mobile archive evidence-package download checkpoint, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

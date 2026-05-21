@@ -857,6 +857,17 @@ button:disabled {
   text-align: center;
 }
 
+.mobile-summary-action {
+  margin-top: 12px;
+}
+
+.mobile-summary-note {
+  margin: 8px 0 0;
+  color: var(--mobile-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .mobile-bottom-hint {
   display: flex;
   align-items: center;

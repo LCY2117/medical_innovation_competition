@@ -272,3 +272,30 @@ export async function patientSosCancel(incidentId: string, token: string): Promi
 export function openIncidentSocket(incidentId: string): WebSocket {
   return new WebSocket(`${getWsBase()}?incidentId=${encodeURIComponent(incidentId)}`);
 }
+
+export async function downloadExperimentPackage(
+  token?: string | null,
+  demoAdminToken = getStoredDemoAdminToken(),
+): Promise<void> {
+  if (typeof window === 'undefined') {
+    throw new Error('下载预实验证据包失败：当前环境不支持浏览器下载');
+  }
+  const headers = buildDemoAdminHeaders(demoAdminToken, buildAuthHeaders(token));
+  const response = await fetch(`${getApiBase()}/experiments/current/package`, { headers });
+  if (!response.ok) {
+    throw new Error(await explainResponseError(response, '下载预实验证据包失败'));
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/)?.[1];
+  const plain = disposition.match(/filename="?([^";]+)"?/)?.[1];
+  const filename = encoded ? decodeURIComponent(encoded) : plain || 'lifereflex-experiment-current.zip';
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
