@@ -37,6 +37,7 @@
 | 匿名化预实验 JSON / CSV |  |
 | 专家摘要 `expert_summary.md` |  |
 | 专家现场复核清单 `expert_review_checklist.md` |  |
+| 预实验数据分析说明 `analysis_guide.md` |  |
 | 参与者知情与安全边界简表 `participant_consent_safety_brief.md` |  |
 | 观察员补充记录表 `observer_record_form.csv` |  |
 | 参与者主观问卷表 `participant_questionnaire.csv` |  |

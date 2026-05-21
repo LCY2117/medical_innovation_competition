@@ -67,7 +67,7 @@ Acceptance:
 
 - [x] 实验导出增加 CSV 友好结构和稳定 JSON schema。
 - [x] 每次事件归档包含时间线、角色响应耗时、AED 取送耗时、交接耗时。
-- [x] Web 增加“预实验记录包”下载入口：事件 JSON、匿名化 JSON/CSV、说明、专家摘要、专家复核清单、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验清单。
+- [x] Web 增加“预实验记录包”下载入口：事件 JSON、匿名化 JSON/CSV、说明、专家摘要、专家复核清单、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验清单。
 - [x] Android 本地归档可展示参与者视角的任务总结。
 - [x] 补充专家反馈模板中的证据包审阅材料、系统截图清单、参与者问卷、安全边界简表和 3-5 分钟演示脚本。
 
@@ -121,7 +121,7 @@ Implementation notes:
 - 后端新增 SQLite 审计表，记录登录、demo 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
 - `/api/audit/events` 由正式管理员 token 或演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
 - 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
-- 预实验证据包包含匿名化 JSON/CSV、专家摘要、专家复核清单、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验，外部材料默认使用匿名化文件。
+- 预实验证据包包含匿名化 JSON/CSV、专家摘要、专家复核清单、数据分析说明、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验，外部材料默认使用匿名化文件。
 - 后端新增 `SpatialProvider`，统一调度评分、调度解释、AED 最近点和预实验指标中的距离计算；默认 `demo` 使用内置坐标 + Haversine，配置 `LRA_MAP_PROVIDER=amap` 且填入 `LRA_AMAP_SERVICE_KEY` 后会优先调用高德 WebService 距离接口，失败或缺 Key 时结构化回退到 demo 距离。
 - Android 新增 `LocationProvider` 抽象和系统定位 provider：注册终端与“我的”页同步位置时优先使用系统最近定位，未授权、定位关闭或无最近定位时自动回退演示坐标；高德/腾讯 Android SDK 后续可作为 adapter 替换 provider，不影响 UI 和上报链路。
 - 后端新增 `NotificationProvider` 抽象，当前 `LRA_PUSH_PROVIDER=websocket` 使用既有 WebSocket 状态同步作为比赛版实时通知；若设置 `jpush`/`vendor` 等未来 provider，会在 `/api/health/detail.pushProvider` 明确显示 adapter pending 并自动回退 WebSocket，不阻塞演示。

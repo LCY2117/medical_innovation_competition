@@ -654,6 +654,7 @@ class IncidentService:
             "README.md": self._experiment_readme(export),
             "expert_summary.md": self._expert_summary(export, participant_map),
             "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
+            "analysis_guide.md": self._analysis_guide(export),
             "participant_consent_safety_brief.md": self._participant_consent_safety_brief(export, participant_map),
             "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "experiment_anonymized.json": json.dumps(anonymized_payload, ensure_ascii=False, indent=2),
@@ -1457,6 +1458,7 @@ class IncidentService:
                     "dispatch_rationale.csv",
                     "expert_summary.md",
                     "expert_review_checklist.md",
+                    "analysis_guide.md",
                     "participant_consent_safety_brief.md",
                     "observer_record_form.csv",
                     "participant_questionnaire.csv",
@@ -1609,6 +1611,7 @@ class IncidentService:
 - `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
+- `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
 - `clients.csv`：参与终端画像、位置、角色和 OPPO/mock 健康摘要。
@@ -1624,7 +1627,7 @@ class IncidentService:
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _participant_aliases(self, export: ExperimentExportResponse) -> dict[str, str]:
@@ -1748,6 +1751,70 @@ class IncidentService:
 ## 数据使用边界
 
 本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。OPPO 健康数据若来源为 `mock`，仅代表演示闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
+"""
+
+    def _analysis_guide(self, export: ExperimentExportResponse) -> str:
+        metrics = export.metrics
+        return f"""# 生命反射弧预实验数据分析说明
+
+事件编号：{export.incidentId}
+生成时间：{self._iso_timestamp(export.generatedAt)}
+
+## 一、先读哪些文件
+
+建议按以下顺序整理材料：
+
+1. `pre_experiment_round_summary.csv`：每轮系统演练的核心指标汇总。
+2. `baseline_vs_system_comparison.csv`：把无系统基线轮与系统轮配对，计算差值和百分比变化。
+3. `participant_questionnaire.csv`：参与者主观评分，建议按题号计算均值、中位数和典型反馈。
+4. `observer_record_form.csv`：观察员补充记录，用于解释系统日志无法覆盖的迟疑、误触和沟通问题。
+5. `timeline.csv` 与 `metrics.csv`：复核关键时间点和系统自动指标。
+6. `dispatch_rationale.csv`：挑选 1-2 个角色分派案例，说明 AI/规则如何结合能力、距离、AED 与健康风险。
+
+## 二、T1-T6 指标解释
+
+| 指标 | 当前系统轮记录 | 建议解释 |
+| --- | --- | --- |
+| T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} | 越短表示系统越快完成并行任务组织 |
+| T2 触发到核心施救响应 | 由 `timeline.csv` 与角色加入记录补算 | 用于观察施救者是否能及时接单 |
+| T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} | 反映核心施救动作启动速度 |
+| T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} | 反映 AED 保障者找到并取出 AED 的速度 |
+| T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} | 反映 AED 取送链路总效率 |
+| T6 触发到救护接管 | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} | 反映环境清障、接应和交接流程 |
+
+## 三、基线轮与系统轮对照
+
+`baseline_vs_system_comparison.csv` 已填入系统轮事件编号和系统轮 T1/T3/T4/T5/T6 数据。请把无系统基线轮观察到的时间和主观评分补入 baseline 列，再用 Excel 计算：
+
+- `delta = system - baseline`
+- `changePercent = (system - baseline) / baseline * 100`
+
+解释时可以写“系统轮较基线轮在某指标上缩短/延长 X 秒”。样本量较小时，不建议写显著性结论。
+
+## 四、主观评分整理
+
+`participant_questionnaire.csv` 中 1-5 分题建议按题号计算：
+
+- 平均分和中位数。
+- 最高/最低题项。
+- 典型开放反馈 2-3 条。
+
+可以把评分归为三类：任务可理解性、协同减负、急救提示/安全边界。
+
+## 五、可用于 PPT 的谨慎表述
+
+推荐写法：
+
+- “在模拟心脏骤停场景中，系统能够生成结构化时间线和可解释分派结果。”
+- “预实验用于验证流程可行性、任务可理解性和专家接受度。”
+- “初步记录提示系统有助于把 CPR、AED 取送、环境清障从串行口头协调转为并行任务协同。”
+
+避免写法：
+
+- “提高抢救成功率。”
+- “改善患者预后。”
+- “系统可替代 120、AED 语音提示或专业医护判断。”
+- “模拟健康摘要等同真实健康监测数据。”
 """
 
     def _expert_review_checklist(

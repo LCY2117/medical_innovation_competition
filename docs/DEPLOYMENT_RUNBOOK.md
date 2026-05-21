@@ -317,6 +317,7 @@ ZIP 包当前包含：
 - `dispatch_rationale.csv`：每个角色的分派对象、评分因素和解释。
 - `expert_summary.md`：给专家/指导教师快速审阅的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖演示材料、关键指标、医学流程、AI 分派和安全边界。
+- `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明、签名或口头确认记录。
 - `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
 - `participant_questionnaire.csv`：参与者主观问卷表，用于收集任务理解、协同减负、移动端提示和安全边界评分。
@@ -325,4 +326,4 @@ ZIP 包当前包含：
 - `README.md`：证据包使用说明。
 - `manifest.json`：文件清单、SHA256 校验、生成时间和事件编号。
 
-对外材料默认使用匿名化文件、专家复核清单、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表。完整 `experiment.json` 只用于内部复核，不应直接发给专家或放入公开 PPT。
+对外材料默认使用匿名化文件、专家复核清单、分析说明、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表。完整 `experiment.json` 只用于内部复核，不应直接发给专家或放入公开 PPT。
