@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 4aa7317
-- Last update: 2026-05-22 03:25:00 +08:00
+- HEAD: af96cae
+- Last update: 2026-05-22 03:28:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -55,6 +55,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 30. Add expert-review screenshot checklist and 3-5 minute demo script. (done, validating)
 31. Push expert-material checklist checkpoint. (done)
 32. Expand `/api/health/detail` frontend build diagnostics. (done, validating)
+33. Push frontend health diagnostics checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -195,6 +196,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `fb8d3e2` (`checkpoint: add expert demo checklist`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `4aa7317` (`checkpoint: record expert checklist push`) created and pushed to `origin/codex/competition-hardening`.
 - Health detail frontend diagnostics validation: targeted health-detail test passed; backend full unittest discovery passed, 30 tests OK.
+- Git checkpoint: `af96cae` (`checkpoint: expand frontend health diagnostics`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -203,7 +205,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push health-detail frontend diagnostics, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Continue from remote checkpoint `af96cae` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
