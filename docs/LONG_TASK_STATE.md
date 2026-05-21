@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 629889d
-- Last update: 2026-05-22 07:41:19 +08:00
+- HEAD: 87e199d
+- Last update: 2026-05-22 07:46:36 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -111,7 +111,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 86. Polish mobile visible demo/evidence/health copy. (done, pushed)
 87. Add mobile archived-flow next actions. (done, pushed)
 88. Polish Web phone-preview inert actions and Android visible task wording. (done, pushed)
-89. Normalize dispatch-source labels across Web and Android. (done, checkpointing)
+89. Normalize dispatch-source labels across Web and Android. (done, pushed)
+90. Add mobile PWA offline fallback and event context strip. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -176,6 +177,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `server(web)/web/src/app/App.tsx`
 - `server(web)/web/src/mobile/MobileApp.tsx`
 - `server(web)/web/src/mobile/mobile.css`
+- `server(web)/web/public/mobile-sw.js`
+- `server(web)/web/public/offline.html`
 - `lifereflex(app)/app/src/main/AndroidManifest.xml`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/IncidentModels.kt`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/HealthSignalProvider.kt`
@@ -248,6 +251,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android visible wording now avoids raw `HANDOVER`, hardcoded guide task IDs, and raw role status codes in summary rows; AI-facing user copy is framed as 云端智能协同 where visible to participants.
 - Dispatch source labels are now normalized in Android active, overview, and archive screens, so provider values such as `fallback`, `ai`, `local_model`, and `siliconflow` do not appear directly to participants.
 - Web command-center dispatch copy now says 智能调度/本地规则引擎 instead of exposed AI/debug phrasing in visible loading and technical-detail panels.
+- Mobile Web now shows a compact event context strip with the current event short ID and sync state, making phone-browser terminals easier to verify during a multi-device demo.
+- Mobile PWA service worker now caches an offline fallback page and serves it for `/mobile` when the network is unavailable instead of returning a blank/error response.
 
 ## Validation Log
 
@@ -436,6 +441,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Mobile archived-flow validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-YRz2tLyc.js` and CSS `MobileApp-MGToxcyi.css`. Browser smoke on temporary local backend `127.0.0.1:18092` with temp DB and demo token `LCY` created an archived incident, confirmed the mobile archive page renders `下载事件证据包`, `复制本轮链接`, `返回总控台`, and no longer shows the old `响应清障接驳` action in archived state. Temporary backend/frontend processes and smoke DB files were stopped/removed.
 - Visible action/wording validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-vYbqPRcR.js` at `229.50 kB` raw / `69.59 kB` gzip and mobile `MobileApp-BhrtJOWA.js` at `38.10 kB` raw / `12.22 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with the existing non-blocking `android.overridePathCheck=true` warning. Targeted visible-string scan found no remaining `onClick={() => {}}`, `Golden Rescue Time`, `Analyze`, `Detecting`, `现场任务已转入 HANDOVER`, hardcoded guide task ID, or raw role-status summary rows in checked UI files.
 - Dispatch-source label validation: Android `gradle :app:assembleDebug --no-daemon` passed; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-CBug2GXj.js` at `229.51 kB` raw / `69.58 kB` gzip and mobile `MobileApp-OoG1rKgg.js` at `38.10 kB` raw / `12.22 kB` gzip. Targeted visible-string scan found no remaining `加载 AI 调度说明失败`, `AI 流式分派过程`, `AI 正在生成角色选择理由`, `规则/AI 处理中`, `规则调度`, raw archive `entry.dispatchSource`, or raw active `incidentState.dispatchSource` display in checked UI files.
+- Mobile PWA validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-D6grxFFA.js` at `38.76 kB` raw / `12.42 kB` gzip and CSS `MobileApp-BtgHt77P.css` at `15.83 kB` raw / `3.57 kB` gzip. Local Vite preview on `127.0.0.1:18093` returned 200 for `/mobile` and `/offline.html`; browser smoke confirmed `/offline.html` shows `移动端暂时离线` and `重新连接`, and `/mobile` shows `浏览器应急端`, `演示模式直达`, and `进入移动端`. Temporary preview process and logs were stopped/removed.
 
 ## Blockers Summary
 
@@ -444,7 +450,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the dispatch-source label slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the mobile PWA offline/context slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

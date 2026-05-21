@@ -239,6 +239,29 @@
   box-shadow: 0 6px 18px rgba(21, 38, 44, 0.05);
 }
 
+.mobile-context-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-muted);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.mobile-context-strip span {
+  min-width: 0;
+}
+
+.mobile-context-strip span:first-of-type {
+  color: var(--mobile-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
 .mobile-status-strip div {
   display: inline-flex;
   align-items: center;

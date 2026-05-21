@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
+  BadgeInfo,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -1161,6 +1162,7 @@ function MobileApp() {
   const action = activeRole ? roleAction(activeRole, incident) : null;
   const primeStep = activeRole === 'PRIME' ? primeNextStep(incident) : null;
   const visibleClients = clients.slice(0, 5);
+  const incidentShortId = incident?.incidentId ? incident.incidentId.slice(0, 8) : null;
   const viewTabs: Array<{ key: MobileView; label: string; icon: React.ReactNode }> = [
     { key: 'home', label: '总览', icon: <Activity size={18} /> },
     { key: 'mission', label: '任务', icon: <Radio size={18} /> },
@@ -1192,6 +1194,14 @@ function MobileApp() {
         </div>
         <strong>{incident ? translatePhaseLabel(incident.phase) : '未接入事件'}</strong>
       </section>
+
+      {incident && (
+        <section className="mobile-context-strip" aria-label="当前事件状态">
+          <BadgeInfo size={15} />
+          <span>事件 {incidentShortId}</span>
+          <span>{syncStatus === 'live' ? '实时同步中' : syncStatus === 'reconnecting' ? '正在恢复连接' : '最近状态已保留'}</span>
+        </section>
+      )}
 
       {notice && <div className={`mobile-notice ${notice.kind}`}>{notice.text}</div>}
 
