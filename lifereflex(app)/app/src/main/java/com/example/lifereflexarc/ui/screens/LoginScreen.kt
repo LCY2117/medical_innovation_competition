@@ -97,7 +97,7 @@ fun LoginScreen(
                     Text("账号入口", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text(
                         text = if (authMode == AuthMode.Register) {
-                            "注册时提交真实账号信息和急救画像，后续 Web 触发后由 AI 自动分配任务。"
+                            "注册时提交真实账号信息和急救画像，后续由云端智能协同自动分配任务。"
                         } else {
                             "登录使用服务端真实账号，不再只是本地假会话。"
                         },
@@ -138,7 +138,7 @@ fun LoginScreen(
                     if (authMode == AuthMode.Register) {
                         Text("默认画像", color = Color.White, fontWeight = FontWeight.SemiBold)
                         Text(
-                            text = "这里只填写画像，不直接决定 AED / CPR / 清障角色。具体任务会在患者触发后由 AI 再分配。",
+                            text = "这里只填写画像，不直接决定 AED / CPR / 清障角色。具体任务会在患者触发后由云端智能协同再分配。",
                             color = PhoneColors.GrayText,
                             fontSize = 12.sp,
                             lineHeight = 18.sp,

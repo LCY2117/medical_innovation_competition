@@ -43,7 +43,7 @@ fun GuideTaskScreen(onAmbulanceArrived: () -> Unit) {
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Text("🛡  环境清障任务", color = PhoneColors.Black, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("任务 ID: #CLR-8823", color = Color(0xFF7C2D12), fontSize = PhoneTokens.Body)
+                Text("现场通道保障", color = Color(0xFF7C2D12), fontSize = PhoneTokens.Body)
             }
             Spacer(modifier = Modifier.height(26.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {

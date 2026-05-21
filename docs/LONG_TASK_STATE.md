@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: fdaf060
-- Last update: 2026-05-22 07:27:07 +08:00
+- HEAD: e1fe48e
+- Last update: 2026-05-22 07:36:17 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -109,7 +109,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 84. Polish Android visible location floor/source and AED status labels. (done, pushed)
 85. Harden archive/evidence summary copy and remove visible fake metrics. (done, pushed)
 86. Polish mobile visible demo/evidence/health copy. (done, pushed)
-87. Add mobile archived-flow next actions. (done, checkpointing)
+87. Add mobile archived-flow next actions. (done, pushed)
+88. Polish Web phone-preview inert actions and Android visible task wording. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -180,6 +181,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/IncidentRepository.kt`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/viewmodel/IncidentViewModel.kt`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/AppRoot.kt`
+- `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/screens/ActiveEmergencyScreen.kt`
+- `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/screens/GuideTaskScreen.kt`
+- `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/screens/LoginScreen.kt`
+- `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/screens/MissionPanels.kt`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/screens/ShellScreens.kt`
 
 ## Last Completed Step
@@ -236,6 +241,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `/mobile` no longer strips `incidentId` from deep links; `/mobile-demo?incidentId=...` passes the same target incident into all four demo iframes, and the mobile service worker cache was bumped to avoid the old redirect behavior.
 - Mobile Web home now prioritizes SOS/current action before the user profile card, reducing emergency-state first-screen load.
 - Mobile demo-stage and mobile login entry visible labels are now fully Chinese-first: “生命反射弧”, “演示模式”, “患者端”, with PRIME/RUNNER/GUIDE only kept as auxiliary role codes.
+- Mobile archived-flow next actions checkpoint `e1fe48e` is pushed; archived mobile summary now has evidence package download, link copy, and console return actions.
+- Web phone-preview inert buttons are now visibly disabled with explanatory tooltips, and archived command-center phone actions are disabled instead of remaining actionable.
+- Android visible wording now avoids raw `HANDOVER`, hardcoded guide task IDs, and raw role status codes in summary rows; AI-facing user copy is framed as 云端智能协同 where visible to participants.
 
 ## Validation Log
 
@@ -422,6 +430,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `fdaf060` (`checkpoint: polish visible demo copy`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile archived-flow next actions: archived mobile summary now offers `下载事件证据包`, `复制本轮链接`, and `返回总控台`; archived role action state now shows `已完成归档` instead of prompting the guide/responder to respond again after the event is archived.
 - Mobile archived-flow validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-YRz2tLyc.js` and CSS `MobileApp-MGToxcyi.css`. Browser smoke on temporary local backend `127.0.0.1:18092` with temp DB and demo token `LCY` created an archived incident, confirmed the mobile archive page renders `下载事件证据包`, `复制本轮链接`, `返回总控台`, and no longer shows the old `响应清障接驳` action in archived state. Temporary backend/frontend processes and smoke DB files were stopped/removed.
+- Visible action/wording validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-vYbqPRcR.js` at `229.50 kB` raw / `69.59 kB` gzip and mobile `MobileApp-BhrtJOWA.js` at `38.10 kB` raw / `12.22 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with the existing non-blocking `android.overridePathCheck=true` warning. Targeted visible-string scan found no remaining `onClick={() => {}}`, `Golden Rescue Time`, `Analyze`, `Detecting`, `现场任务已转入 HANDOVER`, hardcoded guide task ID, or raw role-status summary rows in checked UI files.
 
 ## Blockers Summary
 
@@ -430,7 +439,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the mobile archived-flow next-actions slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the visible action/wording slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

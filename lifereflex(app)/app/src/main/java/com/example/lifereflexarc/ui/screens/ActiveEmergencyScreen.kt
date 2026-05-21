@@ -161,7 +161,7 @@ private fun DispatchingFullScreen(
         body = "所有在线终端已收到覆盖全屏的红色告警。系统正在结合用户画像、距离和 AED 可达性生成核心施救、AED 保障和环境清障三类任务。",
         accent = PhoneColors.Red,
     ) {
-        MetricTile(label = "智能分派倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
+        MetricTile(label = "任务生成倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
     }
 }
@@ -177,7 +177,7 @@ private fun PatientFullScreen(
         accent = PhoneColors.Red,
     ) {
         MetricTile(label = "当前阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "已通知分配", value = incidentState.dispatchSource ?: "规则/AI 处理中")
+        MetricTile(label = "通知状态", value = incidentState.dispatchSource ?: "智能协同处理中")
         MetricTile(label = "事件耗时", value = rememberElapsedLabel(incidentState.logs.firstOrNull()?.ts))
     }
 }

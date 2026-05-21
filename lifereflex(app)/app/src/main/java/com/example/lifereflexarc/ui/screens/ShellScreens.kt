@@ -38,6 +38,7 @@ import com.example.lifereflexarc.ui.components.SummaryRow
 import com.example.lifereflexarc.ui.formatAedStatusLabel
 import com.example.lifereflexarc.ui.formatFloorLabel
 import com.example.lifereflexarc.ui.formatLocationSourceLabel
+import com.example.lifereflexarc.ui.roleStatusLabel
 import com.example.lifereflexarc.ui.theme.PhoneColors
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
 import java.text.SimpleDateFormat
@@ -213,9 +214,9 @@ fun IncidentScreen(
             ) {
                 Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("现场协同", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    SummaryRow("核心施救", incidentState.roles.PRIME.status ?: "待命", dark = true)
-                    SummaryRow("AED保障", incidentState.roles.RUNNER.status ?: "待命", dark = true)
-                    SummaryRow("环境清障", incidentState.roles.GUIDE.status ?: "待命", dark = true)
+                    SummaryRow("核心施救", roleStatusLabel(incidentState.roles.PRIME.status), dark = true)
+                    SummaryRow("AED保障", roleStatusLabel(incidentState.roles.RUNNER.status), dark = true)
+                    SummaryRow("环境清障", roleStatusLabel(incidentState.roles.GUIDE.status), dark = true)
                 }
             }
         }
@@ -334,7 +335,7 @@ private fun DispatchRationaleCard(
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("调度依据", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                text = "来源：${incidentState.dispatchSource ?: "规则/AI 处理中"}",
+                text = "来源：${incidentState.dispatchSource ?: "智能协同处理中"}",
                 color = PhoneColors.GrayText,
                 fontSize = 13.sp,
             )
@@ -458,7 +459,7 @@ private fun translateTimelineMessage(message: String): String {
     val normalized = message.lowercase(Locale.ROOT)
     return when {
         normalized.contains("patient designated") -> "患者端已被标记，现场协同链路开始启动"
-        normalized.contains("ai dispatching") -> "AI 正在生成核心施救、AED 保障与清障分派"
+        normalized.contains("ai dispatching") -> "智能协同正在生成核心施救、AED 保障与清障分派"
         normalized.contains("dispatch") || normalized.contains("assigned") -> "云端已完成角色分派，任务同步到各终端"
         normalized.contains("sos") && normalized.contains("cancel") -> "患者已取消 SOS 告警"
         normalized.contains("sos") || normalized.contains("alert") -> "患者端触发 SOS 告警"

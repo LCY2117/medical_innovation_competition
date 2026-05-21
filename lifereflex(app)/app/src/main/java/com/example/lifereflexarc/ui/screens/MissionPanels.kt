@@ -366,8 +366,8 @@ private fun GuideMissionCard(
 @Composable
 private fun DispatchingMissionCard() {
     EmptyStateCard(
-        title = "AI 正在生成任务分配",
-        body = "患者终端已经被网页指挥台触发。所有在线终端会先收到全屏红色告警，约 3 秒后进入各自专属任务页。",
+        title = "智能协同正在生成任务",
+        body = "患者终端已经触发告警。所有在线终端会先收到全屏红色告警，约 3 秒后进入各自专属任务页。",
     )
 }
 
@@ -383,7 +383,7 @@ private fun ObserverMissionCard() {
 private fun HandoverMissionCard() {
     EmptyStateCard(
         title = "进入交接阶段",
-        body = "现场任务已转入 HANDOVER，可前往归档页查看汇总与后续交接。",
+        body = "现场任务已进入救护车接管阶段，可前往归档页查看汇总与后续交接记录。",
     )
 }
 

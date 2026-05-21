@@ -160,6 +160,10 @@ function isShockDelivered(state?: IncidentState | null): boolean {
   return state?.roles?.PRIME?.status === 'AED_SHOCK_DELIVERED' || state?.phase === 'SHOCK_DELIVERED';
 }
 
+function isIncidentArchived(state?: IncidentState | null): boolean {
+  return state?.phase === 'ARCHIVED';
+}
+
 function mapServerPhaseToScenarioPhase(state?: IncidentState | null): ScenarioPhase {
   if (!state) {
     return 'intro';
@@ -1332,8 +1336,13 @@ export default function App() {
   const primeJoined = isRoleJoined(incidentState?.roles?.PRIME?.status);
   const runnerJoined = isRoleJoined(incidentState?.roles?.RUNNER?.status);
   const guideJoined = isRoleJoined(incidentState?.roles?.GUIDE?.status);
-  const actionsDisabled = !incidentState;
-  const actionDisabledTitle = actionsDisabled ? '等待服务端状态同步' : undefined;
+  const archivedIncident = isIncidentArchived(incidentState);
+  const actionsDisabled = !incidentState || archivedIncident;
+  const actionDisabledTitle = !incidentState
+    ? '等待服务端状态同步'
+    : archivedIncident
+      ? '本轮事件已归档'
+      : undefined;
   const incidentStartTs = incidentState?.logs?.[0]?.ts ?? null;
   const archiveDurationLabel = formatArchiveDurationLabel(incidentState, liveNowMs);
   const archiveRoleCountLabel = formatArchiveRoleCount(incidentState);
@@ -2230,8 +2239,8 @@ export default function App() {
 
                 {/* Golden Timer */}
                 <div className="flex-1 flex flex-col items-center justify-center p-6 -mt-8 z-20">
-                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl w-full text-center mb-8">
-                       <div className="text-xs text-slate-500 uppercase tracking-widest mb-2 font-bold">Golden Rescue Time</div>
+                     <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl w-full text-center mb-8">
+                        <div className="text-xs text-slate-500 mb-2 font-bold">黄金急救时间</div>
                        <div className="text-6xl font-bold font-mono text-yellow-500 flex items-center justify-center">
                           3:30
                        </div>
@@ -2240,11 +2249,13 @@ export default function App() {
 
                    {/* Action Buttons */}
                    <div className="flex gap-4 w-full">
-                      <button 
-                        className="flex-1 py-4 rounded-2xl border border-slate-600 text-slate-400 font-bold hover:bg-slate-900 transition-colors"
-                        onClick={() => {}}
-                      >
-                        无法前往
+                       <button
+                         type="button"
+                         disabled
+                         title="演示版暂不记录拒绝响应"
+                         className="flex-1 py-4 rounded-2xl border border-slate-600 text-slate-400 font-bold hover:bg-slate-900 transition-colors"
+                       >
+                         无法前往
                       </button>
                       <button 
                         onClick={() => joinIncident('PRIME')}
@@ -2352,7 +2363,7 @@ export default function App() {
                   <div className="w-36 h-36 rounded-full border-[10px] border-amber-400/60 flex items-center justify-center animate-pulse">
                     <div className="text-center">
                       <div className="text-4xl font-bold font-mono text-amber-300">AED</div>
-                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500 mt-2">Analyze</div>
+                      <div className="text-xs tracking-[0.3em] text-amber-500 mt-2">分析中</div>
                     </div>
                   </div>
                   <div className="text-slate-400 text-sm leading-7">
@@ -2396,8 +2407,8 @@ export default function App() {
             ) : (
               // 2b. CPR Tunnel Vision (Existing)
                <div className="flex-1 flex flex-col relative overflow-hidden bg-black">
-                <div className="absolute top-4 left-4 text-[10px] text-green-500 font-mono border border-green-500/30 px-2 py-1 rounded bg-green-900/10">
-                   HR: -- (Detecting)
+                  <div className="absolute top-4 left-4 text-[10px] text-green-500 font-mono border border-green-500/30 px-2 py-1 rounded bg-green-900/10">
+                    心率：等待同步
                 </div>
                 
                 <div className="flex-1 flex flex-col items-center justify-center space-y-8 z-10">
@@ -2451,9 +2462,14 @@ export default function App() {
                          <span className="w-2 h-2 rounded-full bg-red-500 mb-1"></span>
                          当前复苏阶段
                       </button>
-                      <button onClick={() => {}} className="bg-slate-800 hover:bg-slate-700 py-3 rounded-lg text-xs font-medium border border-slate-700 flex flex-col items-center justify-center gap-1">
-                         <Users size={12} className="mb-1 text-blue-400"/>
-                         提醒轮换按压
+                       <button
+                         type="button"
+                         disabled
+                         title="演示版暂不记录轮换提醒"
+                         className="bg-slate-800 py-3 rounded-lg text-xs font-medium border border-slate-700 flex flex-col items-center justify-center gap-1 opacity-70"
+                       >
+                          <Users size={12} className="mb-1 text-blue-400"/>
+                          提醒轮换按压
                       </button>
                    </div>
                  </div>
@@ -2578,7 +2594,7 @@ export default function App() {
          <div className="flex flex-col h-full bg-slate-900 text-white">
             <div className="bg-yellow-500 p-6 pt-8 text-black rounded-b-3xl shadow-lg z-10">
               <h2 className="font-bold text-lg flex items-center"><Shield className="mr-2"/> 环境清障任务</h2>
-              <p className="text-xs text-yellow-900/70 mt-1">任务 ID: #CLR-8823</p>
+              <p className="text-xs text-yellow-900/70 mt-1">现场通道保障</p>
             </div>
             
             <div className="flex-1 flex flex-col p-6 space-y-8">
