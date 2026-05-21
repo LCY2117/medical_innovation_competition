@@ -54,6 +54,7 @@
 - Web 总控台与 `/mobile-demo` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
 - Web 总控台默认已降噪：首屏保留演示流程、智能分派摘要、任务单、现场拓扑和四端状态；AI 配置、调度评分、在线终端调试列表、审计和系统日志统一放入“技术详情”展开区。
 - Web 总控台新增“演示准备度”检查卡：终端数量、AED 可用性、定位覆盖、健康摘要覆盖、证据导出状态会直接显示在首屏，便于正式展示前快速排雷。
+- Web 总控台新增“演示入口”面板：可复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接；初始化演示场景后自动绑定当前 `incidentId`，方便发给队友手机或评委浏览器。
 - `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
 - 移动 Web “现场/协同”页已进一步分层：默认只展示 AED 位置、队友角色、在线状态和任务状态；分派评分、理由、健康摘要和风险标记收进“分派依据与健康摘要”展开区。
@@ -94,13 +95,15 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最近完整 Web 构建产物为桌面 `App-OIunfMkh.js`、移动 `MobileApp-DTIoJNCQ.js`；后续证据包材料增量未改前端代码。
+结果：均通过。最新 Web 演示入口增量构建产物为桌面 `App-DRfENPpz.js`、移动 `MobileApp-BoXW44GW.js`；证据包材料增量本身未改前端代码。
 
 浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-demo?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?demo=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
 
 移动现场页烟测：使用临时本地后端 `127.0.0.1:18087` 通过。确认“现场”页默认不展示“智能评分/风险标记”，展开“分派依据与健康摘要”后再展示健康与风险信息。
 
 演示准备度烟测：使用临时本地后端 `127.0.0.1:18088` 通过。确认 Web 总控台显示“演示准备度”、终端/AED/定位/健康摘要/证据导出五项检查，初始化演示后状态为“准备就绪”。
+
+演示入口烟测：使用临时本地后端 `127.0.0.1:18089`、临时 SQLite DB、演示口令 `LCY` 和本机 Edge 通过。确认 Web 总控台显示“演示入口”、复制全部按钮反馈“已复制”，4 端导播台和四个移动端链接均带同一个 `incidentId`。
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\lifereflex(app)"
@@ -170,6 +173,7 @@ gradle :app:assembleDebug --no-daemon
 - `be93e14`：预实验证据包新增 `baseline_vs_system_comparison.csv` 基线-系统对照分析模板，并同步测试与材料口径，已推送。
 - `1f99b31`：预实验证据包新增 `analysis_guide.md` 数据分析说明，并同步测试与材料口径，已推送。
 - `0674344`：预实验证据包新增 `expert_feedback_form.md` 事件级专家反馈与签字表，并同步测试与材料口径，已推送。
+- `5dc86eb`：Web 总控台新增“演示入口”链接面板，已通过 Web typecheck/build 和本地 Edge 烟测，已推送。
 
 ## 你醒来后最该做的三件事
 
@@ -199,11 +203,12 @@ app\build\outputs\apk\debug\app-debug.apk
 
 1. 打开 `https://lifereflex.mddcommunity.top/`。
 2. 点击“演示场景”或“初始化医创赛演示场景”。
-3. 展示 4 类终端画像和 AED 点位。
-4. 触发患者 `demo-patient`。
-5. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
-6. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
-7. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
+3. 在“演示入口”面板复制或打开患者端、核心施救端、AED 保障端、清障接驳端和 4 端导播台链接。
+4. 展示 4 类终端画像和 AED 点位。
+5. 触发患者 `demo-patient`。
+6. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
+7. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
+8. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`analysis_guide.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
 
 ## 仍需谨慎表达
 
