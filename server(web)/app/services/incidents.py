@@ -5,7 +5,6 @@ import csv
 import hashlib
 import io
 import json
-import math
 import random
 import re
 import time
@@ -35,6 +34,7 @@ from app.models.schemas import (
     SosState,
 )
 from app.services.dispatch_ai import DispatchPlanner
+from app.services.spatial import SpatialProvider
 from app.storage.sqlite_store import SqliteIncidentStore
 
 
@@ -58,6 +58,9 @@ class IncidentService:
         local_model_name: str = "Qwen/Qwen2.5-7B-Instruct",
         local_model_timeout_sec: int = 30,
         prefer_local_model: bool = True,
+        map_provider: str = "demo",
+        amap_service_key: str | None = None,
+        map_distance_timeout_sec: int = 3,
     ) -> None:
         self.store = store
         self.sos_duration_sec = sos_duration_sec
@@ -69,6 +72,11 @@ class IncidentService:
         self.current_incident_id: str | None = snapshot.current_incident_id
         self.clients: Dict[str, ClientInfo] = snapshot.clients
         self.aed_sites: Dict[str, AedSite] = snapshot.aed_sites
+        self.spatial_provider = SpatialProvider(
+            provider=map_provider,
+            amap_service_key=amap_service_key,
+            timeout_sec=map_distance_timeout_sec,
+        )
         self.dispatch_planner = DispatchPlanner(
             api_key=siliconflow_api_key,
             model=siliconflow_model,
@@ -78,6 +86,7 @@ class IncidentService:
             local_model=local_model_name,
             local_timeout_sec=local_model_timeout_sec,
             prefer_local=prefer_local_model,
+            spatial_provider=self.spatial_provider,
         )
 
     def create_incident(self) -> CreateIncidentResponse:
@@ -730,6 +739,7 @@ class IncidentService:
             "activeWebSockets": sum(len(connections) for connections in self.ws_connections.values()),
             "activeSosTimers": sum(1 for task in self.sos_tasks.values() if not task.done()),
             "dispatch": dispatch_info,
+            "mapProvider": self.spatial_provider.explain(),
             "demoReadiness": self._demo_readiness(),
         }
 
@@ -743,7 +753,11 @@ class IncidentService:
             "LRA_SILICONFLOW_MODEL",
             "LRA_SILICONFLOW_BASE_URL",
             "LRA_SILICONFLOW_TIMEOUT_SEC",
+            "LRA_MAP_PROVIDER",
+            "LRA_AMAP_SERVICE_KEY",
+            "LRA_MAP_DISTANCE_TIMEOUT_SEC",
         ]
+        explanation["mapProvider"] = self.spatial_provider.explain()
         return explanation
 
     def _demo_readiness(self) -> dict:
@@ -925,17 +939,8 @@ class IncidentService:
             return None
         return datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat()
 
-    @staticmethod
-    def _distance_meters(a: GeoPoint | None, b: GeoPoint | None) -> float | None:
-        if a is None or b is None:
-            return None
-        radius = 6_371_000
-        lat1 = math.radians(a.latitude)
-        lat2 = math.radians(b.latitude)
-        delta_lat = math.radians(b.latitude - a.latitude)
-        delta_lon = math.radians(b.longitude - a.longitude)
-        hav = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
-        return 2 * radius * math.asin(math.sqrt(hav))
+    def _distance_meters(self, a: GeoPoint | None, b: GeoPoint | None) -> float | None:
+        return self.spatial_provider.distance_meters(a, b).meters
 
     def _nearest_aed(self, origin: GeoPoint | None, aed_sites: list[AedSite]) -> NearestAedResult | None:
         if origin is None:

@@ -72,6 +72,11 @@ class Settings:
     demo_admin_token: str | None = None
     auth_token_ttl_sec: int = 604800
     health_provider: str = "mock"
+    map_provider: str = "demo"
+    amap_web_key: str | None = None
+    amap_web_security_js_code: str | None = None
+    amap_service_key: str | None = None
+    map_distance_timeout_sec: int = 3
     audit_log_enabled: bool = True
     rate_limit_enabled: bool = True
     rate_limit_auth_per_minute: int = 20
@@ -114,6 +119,11 @@ def get_settings() -> Settings:
         demo_admin_token=(os.getenv("LRA_DEMO_ADMIN_TOKEN") or "").strip() or None,
         auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
         health_provider=os.getenv("LRA_HEALTH_PROVIDER", "mock").strip() or "mock",
+        map_provider=os.getenv("LRA_MAP_PROVIDER", "demo").strip() or "demo",
+        amap_web_key=(os.getenv("LRA_AMAP_WEB_KEY") or "").strip() or None,
+        amap_web_security_js_code=(os.getenv("LRA_AMAP_WEB_SECURITY_JS_CODE") or "").strip() or None,
+        amap_service_key=(os.getenv("LRA_AMAP_SERVICE_KEY") or "").strip() or None,
+        map_distance_timeout_sec=int(os.getenv("LRA_MAP_DISTANCE_TIMEOUT_SEC", "3")),
         audit_log_enabled=_parse_bool(os.getenv("LRA_AUDIT_LOG_ENABLED"), default=True),
         rate_limit_enabled=_parse_bool(os.getenv("LRA_RATE_LIMIT_ENABLED"), default=True),
         rate_limit_auth_per_minute=int(os.getenv("LRA_RATE_LIMIT_AUTH_PER_MINUTE", "20")),

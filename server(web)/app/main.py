@@ -30,6 +30,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         local_model_name=settings.local_model_name,
         local_model_timeout_sec=settings.local_model_timeout_sec,
         prefer_local_model=settings.prefer_local_model,
+        map_provider=settings.map_provider,
+        amap_service_key=settings.amap_service_key,
+        map_distance_timeout_sec=settings.map_distance_timeout_sec,
     )
 
     @asynccontextmanager

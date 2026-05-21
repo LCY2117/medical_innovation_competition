@@ -91,7 +91,7 @@ Acceptance:
 
 ## P2: Third-Party Integration Readiness
 
-- [ ] 地图 provider 抽象：高德/腾讯/百度/纯 demo 坐标。
+- [x] 地图 provider 抽象：高德/腾讯/百度/纯 demo 坐标。
 - [ ] Android 定位权限、手动定位、地图 SDK 接入点预留。
 - [ ] 推送 provider 抽象：极光/厂商推送/本地 WebSocket fallback。
 - [x] AI provider 抽象：本地模型、硅基流动、OpenAI-compatible API。
@@ -121,10 +121,11 @@ Implementation notes:
 - `/api/audit/events` 由演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
 - 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
 - 预实验证据包包含匿名化 JSON/CSV、专家摘要和 manifest 校验，外部材料默认使用匿名化文件。
+- 后端新增 `SpatialProvider`，统一调度评分、调度解释、AED 最近点和预实验指标中的距离计算；默认 `demo` 使用内置坐标 + Haversine，配置 `LRA_MAP_PROVIDER=amap` 且填入 `LRA_AMAP_SERVICE_KEY` 后会优先调用高德 WebService 距离接口，失败或缺 Key 时结构化回退到 demo 距离。
 
 Validation:
 
-- Backend unittest discovery: 32 tests OK.
+- Backend unittest discovery: 33 tests OK.
 - Web typecheck/build: passed.
 - Android debug APK build: passed after increasing Gradle heap for AndroidX Security + Compose builds.
 

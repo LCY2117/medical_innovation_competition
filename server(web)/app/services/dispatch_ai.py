@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import json
-import math
 import re
 from dataclasses import dataclass
 from typing import Iterable
 from urllib import error, request
 
 from app.models.schemas import AedSite, ClientInfo, DispatchRoleDecision, GeoPoint
+from app.services.spatial import SpatialProvider
 
 
 ROLE_ORDER = ("PRIME", "RUNNER", "GUIDE")
@@ -59,6 +59,11 @@ class DispatchPlanner:
     local_model: str = "default"
     local_timeout_sec: int = 30
     prefer_local: bool = True
+    spatial_provider: SpatialProvider | None = None
+
+    def __post_init__(self) -> None:
+        if self.spatial_provider is None:
+            self.spatial_provider = SpatialProvider()
 
     def assign_roles(
         self,
@@ -124,6 +129,7 @@ class DispatchPlanner:
             "selectionRules": dict(SELECTION_RULES),
             "responseFormat": dict(RESPONSE_FORMAT),
             "systemPrompt": SYSTEM_PROMPT,
+            "mapProvider": self.spatial_provider.explain() if self.spatial_provider else {},
         }
 
         try:
@@ -461,17 +467,8 @@ class DispatchPlanner:
             reasons.append("综合在线状态和基础画像完成兜底分配")
         return reasons, warnings
 
-    @staticmethod
-    def _distance_meters(a: GeoPoint | None, b: GeoPoint | None) -> float | None:
-        if a is None or b is None:
-            return None
-        radius = 6_371_000
-        lat1 = math.radians(a.latitude)
-        lat2 = math.radians(b.latitude)
-        delta_lat = math.radians(b.latitude - a.latitude)
-        delta_lon = math.radians(b.longitude - a.longitude)
-        hav = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
-        return 2 * radius * math.asin(math.sqrt(hav))
+    def _distance_meters(self, a: GeoPoint | None, b: GeoPoint | None) -> float | None:
+        return self.spatial_provider.distance_meters(a, b).meters if self.spatial_provider else None
 
     def _nearest_aed(self, origin: GeoPoint | None, aed_sites: list[AedSite]) -> tuple[AedSite, float] | None:
         if origin is None:

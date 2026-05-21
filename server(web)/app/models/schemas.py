@@ -190,6 +190,7 @@ class HealthDetailResponse(BaseModel):
     auth: dict = {}
     features: dict = {}
     healthProvider: dict = {}
+    mapProvider: dict = {}
     demoReadiness: dict = {}
     currentIncidentId: str | None = None
     loadedIncidents: int
@@ -323,3 +324,4 @@ class DispatchExplainResponse(BaseModel):
     selectionRules: dict[str, str]
     responseFormat: dict[str, str]
     systemPrompt: str
+    mapProvider: dict = {}

@@ -82,7 +82,10 @@ LRA_MAP_PROVIDER=amap
 LRA_AMAP_WEB_KEY=
 LRA_AMAP_WEB_SECURITY_JS_CODE=
 LRA_AMAP_SERVICE_KEY=
+LRA_MAP_DISTANCE_TIMEOUT_SEC=3
 ```
+
+当前后端已完成地图距离 provider 抽象。没有 Key 时保持 `LRA_MAP_PROVIDER=demo`，或即使设置为 `amap` 但未填写 `LRA_AMAP_SERVICE_KEY`，系统也会在 `/api/health/detail.mapProvider` 和 `/api/dispatch/meta.mapProvider` 中显示 `fallbackReason=amap_service_key_missing`，并继续使用内置坐标 + Haversine 距离完成调度演示。
 
 搜索教程关键词：
 
@@ -240,7 +243,7 @@ AI API Key：
 
 | 能力 | provider 环境变量 | 真实 provider | fallback | 前端/APP 暴露内容 |
 | --- | --- | --- | --- | --- |
-| 地图/距离 | `LRA_MAP_PROVIDER` | `amap`、后续可扩展 `tencent`、`baidu` | `demo` 内置坐标和后端 Haversine 距离 | 仅展示点位、距离、路线提示，不暴露服务端 Key |
+| 地图/距离 | `LRA_MAP_PROVIDER` + `LRA_AMAP_SERVICE_KEY` | `amap` 已预埋 WebService 距离接口，后续可扩展 `tencent`、`baidu` | `demo` 内置坐标和后端 Haversine 距离 | `/api/health/detail.mapProvider` 和 `/api/dispatch/meta.mapProvider` 暴露 provider 状态、距离来源和 fallback 原因，不暴露服务端 Key |
 | AI 调度 | `LRA_PREFER_LOCAL_MODEL` + `LRA_SILICONFLOW_*` | 本地 OpenAI-compatible 或 SiliconFlow | 规则调度 | 展示调度来源、评分、理由、风险提示 |
 | 健康数据 | `LRA_HEALTH_PROVIDER` | OPPO Health SDK/API | mock/manual health summary | 展示“演示健康数据/OPPO 健康模拟接入”，不作临床诊断 |
 | 推送 | 未来 `LRA_PUSH_PROVIDER` | 厂商推送/极光 | 前台 WebSocket + 移动 Web 轮询 | 展示实时同步状态，不承诺锁屏必达 |

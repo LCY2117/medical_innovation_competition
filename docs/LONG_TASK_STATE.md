@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 4b0f11f
-- Last update: 2026-05-22 03:45:00 +08:00
+- HEAD: b07bb63
+- Last update: 2026-05-22 03:50:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -72,7 +72,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 47. Increase Android Gradle heap for reliable APK builds after security dependency. (done, validating)
 48. Update docs and create security-hardening checkpoint. (done)
 49. Push security-hardening checkpoint to GitHub. (done)
-50. Record pushed security checkpoint in handoff/state. (in progress)
+50. Record pushed security checkpoint in handoff/state. (done)
+51. Add backend map/spatial provider abstraction with AMap WebService fallback. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -82,6 +83,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Web/mobile UI explorer (`019e4bb7-9d4e-7372-9536-5ab5537730b1`): completed read-only; recommended demo stepper, mobile demo script, SOS confirm, task fallback folding, and next-action cards.
 - Backend evidence explorer (`019e4bb7-b138-7263-abf1-99c38ba0bfa5`): completed read-only; recommended target-incident export roles, ZIP manifest, richer metrics, structured timeline, demo readiness, and input constraints.
 - Android APK explorer (`019e4bb7-c511-78f2-af54-44692d632c16`): completed read-only; recommended wiring auto-join, adding timeline visibility, Chinese health presentation, demo location switching, and AED/CPR status cards.
+- P2 location/push explorer (`019e4c10-ef42-7dc1-b9ce-76e6d76fa2fc`): completed read-only; recommended Android native location provider prewiring first, then backend notification provider with WebSocket fallback.
 
 ## Git Baseline
 
@@ -176,6 +178,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Web dashboard now includes an “审计” control that loads recent login/demo/export/role/action audit events with actor, target, outcome, and request hash.
 - Android session/token storage now uses AndroidX Security encrypted preferences with migration from legacy `lra_session`; if secure storage is unavailable, token persistence is disabled rather than falling back to plaintext.
 - Android Gradle JVM args now use a larger heap/metaspace to avoid GC thrashing after adding AndroidX Security.
+- Backend map distances now flow through `SpatialProvider`: default demo/Haversine distance, AMap WebService distance when `LRA_MAP_PROVIDER=amap` and `LRA_AMAP_SERVICE_KEY` is configured, and structured fallback metadata in health/detail and dispatch/meta.
 
 ## Validation Log
 
@@ -244,6 +247,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Security hardening targeted backend tests passed: audit events, health security fields, demo-admin protection, and auth rate limiting.
 - Security hardening full validation: backend full unittest discovery passed, 32 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed; Android `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `4b0f11f` (`checkpoint: harden demo security`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `b07bb63` (`checkpoint: record security hardening push`) created and pushed to `origin/codex/competition-hardening`.
+- Map provider targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_dispatch_meta_is_serializable tests.test_server.ServerTestCase.test_amap_distance_provider_falls_back_without_service_key tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export -v` passed, 4 tests OK.
+- Map provider full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 33 tests OK.
 
 ## Blockers Summary
 
@@ -252,7 +258,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Record the pushed security checkpoint, leaving local DB/output/OPPO doc copy uncommitted. Then review remaining P2 map/push abstractions and formal admin/RBAC as the next independent polish.
+Commit/push the map provider checkpoint excluding local DB/output/OPPO doc copy. After that, consider Android native location prewiring as the next independent P2 polish.
 
 ## Resume Instructions
 

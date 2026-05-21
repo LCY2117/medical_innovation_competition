@@ -36,6 +36,8 @@ LRA_RATE_LIMIT_AUTH_PER_MINUTE=20
 LRA_RATE_LIMIT_ADMIN_PER_MINUTE=60
 LRA_RATE_LIMIT_ACTOR_PER_MINUTE=120
 LRA_MAP_PROVIDER=demo
+LRA_AMAP_SERVICE_KEY=
+LRA_MAP_DISTANCE_TIMEOUT_SEC=3
 LRA_SILICONFLOW_API_KEY=
 ```
 
@@ -60,7 +62,10 @@ LRA_MAP_PROVIDER=amap
 LRA_AMAP_WEB_KEY=
 LRA_AMAP_WEB_SECURITY_JS_CODE=
 LRA_AMAP_SERVICE_KEY=
+LRA_MAP_DISTANCE_TIMEOUT_SEC=3
 ```
+
+后端距离 provider 已接入健康检查和调度解释。配置高德服务端 Key 后，调度评分、AED 最近点和预实验 `runnerRouteMeters` 会优先使用高德 WebService 距离；接口失败、超时或未配置 Key 时会自动回退到 demo/Haversine 距离，并在 `/api/health/detail.mapProvider` 中显示 fallback 原因。
 
 ## 3. 本地构建验证
 
@@ -233,6 +238,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | WebSocket | Web 调度台显示“实时同步” |
 | 演示场景 | 点击“初始化医创赛演示场景”后出现 4 个终端和 AED 点位 |
 | 调度解释 | 触发患者后出现三类角色评分和理由 |
+| 地图距离 provider | `health.detail.mapProvider` 显示 `mode`、`distanceSource`、`configured` 和 fallback 原因；未配置 Key 时仍可完整演示 |
 | 数据导出 | 点击“证据包”或“导出预实验证据包”获得 ZIP，包内含 JSON、CSV、专家摘要和 manifest 校验信息 |
 | 公网演示保护 | 配置 `LRA_DEMO_ADMIN_TOKEN` 后，未带口令的管理接口返回 403 |
 | 审计日志 | Web 总控台点击“审计”可看到最近登录、演示、导出和现场动作；无口令读取返回 403 |

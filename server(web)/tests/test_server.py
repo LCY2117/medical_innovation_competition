@@ -155,6 +155,8 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["auth"]["tokenTtlSec"], self.settings.auth_token_ttl_sec)
         self.assertTrue(payload["features"]["experimentZipPackage"])
         self.assertEqual(payload["healthProvider"]["mode"], "mock")
+        self.assertEqual(payload["mapProvider"]["mode"], "demo")
+        self.assertEqual(payload["mapProvider"]["distanceSource"], "haversine_demo")
         self.assertEqual(payload["storage"]["auditEventCount"], 0)
         self.assertTrue(payload["security"]["auditLogEnabled"])
         self.assertTrue(payload["security"]["rateLimitEnabled"])
@@ -211,6 +213,37 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("provider", payload)
         self.assertIn("dispatchDelaySec", payload)
         self.assertIn("systemPrompt", payload)
+        self.assertEqual(payload["mapProvider"]["mode"], "demo")
+        self.assertIn("LRA_MAP_PROVIDER", payload["envKeys"])
+
+    def test_amap_distance_provider_falls_back_without_service_key(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            map_provider="amap",
+            amap_service_key=None,
+        )
+        with TestClient(create_app(settings)) as client:
+            health = client.get("/api/health/detail")
+            meta = client.get("/api/dispatch/meta")
+
+        self.assertEqual(health.status_code, 200)
+        provider = health.json()["mapProvider"]
+        self.assertEqual(provider["requestedProvider"], "amap")
+        self.assertEqual(provider["mode"], "amap")
+        self.assertFalse(provider["configured"])
+        self.assertEqual(provider["fallbackReason"], "amap_service_key_missing")
+        self.assertEqual(provider["distanceSource"], "haversine_demo")
+        self.assertEqual(meta.status_code, 200)
+        self.assertEqual(meta.json()["mapProvider"]["fallbackReason"], "amap_service_key_missing")
 
     def test_auth_register_and_login(self) -> None:
         with self._client() as client:

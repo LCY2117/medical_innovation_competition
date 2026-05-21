@@ -44,6 +44,7 @@
 - Web 总控台新增“审计”按钮，可用演示口令查看最近操作留痕，适合作为比赛答辩中的安全合规截图。
 - Android session/token 已从普通 SharedPreferences 迁移到 AndroidX Security 加密存储，并兼容旧明文登录态迁移；若设备安全存储不可用，不再把 token 落盘。
 - Android Gradle JVM 堆已提高到 2GB，避免新增安全依赖后 Windows 构建出现 GC thrashing。
+- 后端地图距离 provider 已抽象：默认 demo/Haversine，`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；健康检查和调度元数据会显示 provider、距离来源和 fallback 原因。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -66,7 +67,9 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest tests.test_server tests.test_link_mechanism
 ```
 
-结果：32 项通过。
+结果：33 项通过。
+
+地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)\web"
@@ -121,6 +124,7 @@ gradle :app:assembleDebug --no-daemon
 - `6b832e7`：记录 Android 首页 CTA 检查点已推送。
 - `f0ce716`：记录最终 P0/P1 验证结果。
 - `4b0f11f`：后端审计日志/频控、Web 审计面板、Android 加密 token 存储、Gradle 构建稳定性，已推送。
+- 待本轮提交：地图距离 provider 抽象与高德 WebService 预埋。
 
 ## 你醒来后最该做的三件事
 
