@@ -292,12 +292,13 @@ Git 注意事项：
 
 1. 打开 Web 调度台。
 2. 点击“初始化医创赛演示场景”。
-3. 展示患者、医生、体育生、安保和 AED 点位。
-4. 选择患者端触发心脏骤停模拟。
-5. 展示 AI/规则分派过程和调度解释。
-6. 在 Android App 或 Web 端完成 CPR、AED、接应动作。
-7. 点击“导出预实验证据包”，展示 `timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json` 和 `expert_summary.md`。
-8. 总结：系统价值是缩短协同组织链路、明确角色任务、记录演练数据，不直接宣称临床疗效。
+3. 在“演示入口”面板复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接，确认链接均绑定当前事件编号。
+4. 展示患者、医生、体育生、安保和 AED 点位。
+5. 选择患者端触发心脏骤停模拟。
+6. 展示 AI/规则分派过程和调度解释。
+7. 在 Android App 或 Web 端完成 CPR、AED、接应动作。
+8. 点击“导出预实验证据包”，展示 `timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json`、`expert_summary.md` 和 `expert_feedback_form.md`。
+9. 总结：系统价值是缩短协同组织链路、明确角色任务、记录演练数据，不直接宣称临床疗效。
 
 ## 9. 预实验证据包说明
 

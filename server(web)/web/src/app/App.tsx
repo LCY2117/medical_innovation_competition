@@ -14,10 +14,12 @@ import {
   Users,
   Radio,
   FileText,
+  Copy,
   ChevronDown,
   ChevronRight,
   RotateCcw,
   Download,
+  ExternalLink,
   Navigation,
   X,
   ArrowUp,
@@ -611,6 +613,13 @@ function getStoredDemoAdminToken(): string {
 
 const ADMIN_SESSION_KEY = 'lra_admin_session';
 
+const mobileDemoEntries = [
+  { key: 'patient', label: '患者端', caption: '触发 SOS' },
+  { key: 'prime', label: '核心施救', caption: 'CPR 与 AED 分析' },
+  { key: 'runner', label: 'AED 保障', caption: '取送设备' },
+  { key: 'guide', label: '清障接驳', caption: '通道与救护车接应' },
+] as const;
+
 function getStoredAdminSession(): AdminSession | null {
   if (typeof window === 'undefined') {
     return null;
@@ -725,6 +734,35 @@ function downloadJson(filename: string, data: unknown): void {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return false;
+  }
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Fall back to a temporary textarea below.
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', 'true');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } finally {
+    textarea.remove();
+  }
+  return copied;
 }
 
 async function downloadResponseBlob(response: Response, fallbackFilename: string): Promise<void> {
@@ -1170,6 +1208,7 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [adminLoginBusy, setAdminLoginBusy] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredThemeMode);
+  const [copiedLinkKey, setCopiedLinkKey] = useState<string | null>(null);
   const [lastClientRefreshTs, setLastClientRefreshTs] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [liveNowMs, setLiveNowMs] = useState(Date.now());
@@ -1178,6 +1217,7 @@ export default function App() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const copyLinkTimeoutRef = useRef<number | null>(null);
   const manualCloseRef = useRef(false);
 
   const [activeRole, setActiveRole] = useState<RoleType>('doctor');
@@ -1270,8 +1310,36 @@ export default function App() {
     : demoAdminToken.trim()
       ? '口令已填'
       : demoAdminRequired
-        ? '需要权限'
-        : '本地免口令';
+      ? '需要权限'
+      : '本地免口令';
+  const buildDemoUrl = (path: '/mobile' | '/mobile-demo', params?: Record<string, string>): string => {
+    if (typeof window === 'undefined') {
+      return path;
+    }
+    const url = new URL(path, window.location.origin);
+    if (incidentId) {
+      url.searchParams.set('incidentId', incidentId);
+    }
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      if (value) {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+  const demoShareLinks = [
+    {
+      key: 'stage',
+      label: '4端导播台',
+      caption: '一屏预览患者与三类任务端',
+      url: buildDemoUrl('/mobile-demo'),
+    },
+    ...mobileDemoEntries.map((entry) => ({
+      ...entry,
+      url: buildDemoUrl('/mobile', { demo: entry.key, slot: entry.key }),
+    })),
+  ];
+  const demoShareText = demoShareLinks.map((link) => `${link.label}：${link.url}`).join('\n');
 
   const getActorId = (role: 'PRIME' | 'RUNNER' | 'GUIDE'): string => {
     const serverUserId = incidentState?.roles?.[role]?.userId;
@@ -1897,6 +1965,44 @@ export default function App() {
   useEffect(() => {
     setStickLogsToBottom(true);
   }, [incidentId]);
+
+  useEffect(() => {
+    return () => {
+      if (copyLinkTimeoutRef.current) {
+        window.clearTimeout(copyLinkTimeoutRef.current);
+        copyLinkTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const openDemoLink = (url: string, key: string) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const opened = window.open(url, key === 'stage' ? 'lifereflex-mobile-demo-stage' : '_blank');
+    if (!opened) {
+      setErrorMessage('浏览器拦截了演示入口，请允许本站弹出窗口后重试。');
+      return;
+    }
+    setErrorMessage(null);
+  };
+
+  const copyDemoLink = async (key: string, text: string) => {
+    const ok = await copyTextToClipboard(text);
+    if (!ok) {
+      setErrorMessage('复制失败，请手动复制演示入口链接。');
+      return;
+    }
+    setErrorMessage(null);
+    setCopiedLinkKey(key);
+    if (copyLinkTimeoutRef.current) {
+      window.clearTimeout(copyLinkTimeoutRef.current);
+    }
+    copyLinkTimeoutRef.current = window.setTimeout(() => {
+      setCopiedLinkKey(null);
+      copyLinkTimeoutRef.current = null;
+    }, 1600);
+  };
 
   // --- Sub-View Renderers ---
 
@@ -2789,6 +2895,55 @@ export default function App() {
                 {readinessWarnings.slice(0, 3).join('；')}
               </div>
             )}
+          </div>
+          <div className="rounded-xl border border-blue-800/50 bg-blue-950/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] text-blue-300 uppercase tracking-wider font-bold">演示入口</div>
+                <div className="text-sm text-white font-semibold mt-1">把这些链接发给手机或评委浏览器即可进入指定终端</div>
+                <div className="mt-1 text-xs text-slate-400">
+                  {incidentId ? `已绑定当前事件 ${incidentId.slice(0, 8)}，刷新或新开标签页不会丢失事件。` : '等待事件编号，同步后会自动带上 incidentId。'}
+                </div>
+              </div>
+              <button
+                onClick={() => copyDemoLink('all', demoShareText)}
+                className="h-9 rounded-lg border border-blue-700/70 bg-blue-900/40 px-3 text-[10px] font-bold uppercase tracking-wider text-blue-100 hover:bg-blue-900/70 transition-colors flex items-center gap-2"
+                title="复制四端导播台和各移动端入口"
+              >
+                <Copy size={14} /> {copiedLinkKey === 'all' ? '已复制' : '复制全部'}
+              </button>
+            </div>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2">
+              {demoShareLinks.map((link) => (
+                <div key={link.key} className="rounded-lg border border-blue-900/60 bg-slate-950/35 px-3 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-white truncate">{link.label}</div>
+                      <div className="mt-1 text-[10px] leading-4 text-slate-400">{link.caption}</div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => copyDemoLink(link.key, link.url)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white"
+                        title={`复制${link.label}链接`}
+                      >
+                        {copiedLinkKey === link.key ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                      </button>
+                      <button
+                        onClick={() => openDemoLink(link.url, link.key)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white"
+                        title={`打开${link.label}`}
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2 truncate rounded bg-black/20 px-2 py-1.5 font-mono text-[10px] text-slate-500" title={link.url}>
+                    {link.url}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
             {demoFlowSteps.map((step, index) => (

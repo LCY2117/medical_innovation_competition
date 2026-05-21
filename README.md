@@ -252,6 +252,8 @@ gradle :app:assembleDebug --no-daemon
 - 指定同一事件进入移动端：`/mobile?incidentId=事件编号`
 - 指定同一事件打开 4 端演示台：`/mobile-demo?incidentId=事件编号`
 
+Web 总控台首屏现在提供“演示入口”面板，可一键复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接；初始化演示场景后，这些链接会自动绑定当前 `incidentId`，方便现场发给队友手机或评委浏览器。
+
 公网演示建议在 `.env` 中设置：
 
 - `LRA_DEMO_ADMIN_TOKEN`：启用后，初始化演示场景、重置事件、更新 AED、导出数据等管理操作需要演示口令。
