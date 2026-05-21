@@ -12,6 +12,20 @@ export interface GeoPoint {
   updatedTs?: number | null;
 }
 
+export interface HealthSignalSummary {
+  source: string;
+  authorizationStatus: string;
+  provider?: string;
+  heartRateBpm?: number | null;
+  bloodOxygenPercent?: number | null;
+  pressureScore?: number | null;
+  activityLevel?: string | null;
+  sleepQuality?: string | null;
+  riskTags?: string[];
+  updatedTs?: number | null;
+  note?: string | null;
+}
+
 export interface AedSite {
   siteId: string;
   name: string;
@@ -63,6 +77,7 @@ export interface ClientInfo {
   patientCandidate?: boolean;
   isPatient?: boolean;
   location?: GeoPoint | null;
+  healthSignals?: HealthSignalSummary | null;
 }
 
 export interface DispatchMeta {

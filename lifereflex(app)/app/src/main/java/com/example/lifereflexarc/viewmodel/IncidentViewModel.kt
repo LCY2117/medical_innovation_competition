@@ -3,8 +3,12 @@ package com.example.lifereflexarc.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lifereflexarc.BuildConfig
+import com.example.lifereflexarc.data.GeoPoint
+import com.example.lifereflexarc.data.HealthSignalProvider
+import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.data.IncidentRepository
 import com.example.lifereflexarc.data.IncidentState
+import com.example.lifereflexarc.data.MockOppoHealthSignalProvider
 import com.example.lifereflexarc.data.UserSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +20,7 @@ class IncidentViewModel(
         apiBase = BuildConfig.LRA_API_BASE,
         wsBase = BuildConfig.LRA_WS_BASE,
     ),
+    private val healthSignalProvider: HealthSignalProvider = MockOppoHealthSignalProvider(),
 ) : ViewModel() {
 
     private val _incidentId = MutableStateFlow<String?>(null)
@@ -30,7 +35,10 @@ class IncidentViewModel(
     val connecting: StateFlow<Boolean> = _connecting.asStateFlow()
     private val _assignedRole = MutableStateFlow<String?>(null)
     val assignedRole: StateFlow<String?> = _assignedRole.asStateFlow()
+    private val _healthSignals = MutableStateFlow<HealthSignalSummary?>(null)
+    val healthSignals: StateFlow<HealthSignalSummary?> = _healthSignals.asStateFlow()
     private val _userId = MutableStateFlow<String?>(null)
+    private val _authToken = MutableStateFlow<String?>(null)
 
     init {
         viewModelScope.launch {
@@ -42,7 +50,7 @@ class IncidentViewModel(
         }
     }
 
-    fun connectCurrent(userId: String, autoJoin: Boolean = false) {
+    fun connectCurrent(userId: String, authToken: String? = _authToken.value, autoJoin: Boolean = false) {
         if (_connecting.value) {
             return
         }
@@ -51,10 +59,13 @@ class IncidentViewModel(
                 _connecting.value = true
                 _error.value = null
                 _userId.value = userId
+                if (!authToken.isNullOrBlank()) {
+                    _authToken.value = authToken
+                }
                 val current = repository.getCurrentIncident()
                 _incidentId.value = current.incidentId
                 if (autoJoin) {
-                    val join = repository.joinCurrentAuto(userId)
+                    val join = repository.joinCurrentAuto(_authToken.value, userId)
                     _assignedRole.value = join.role
                 } else {
                     _assignedRole.value = null
@@ -111,7 +122,7 @@ class IncidentViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
-                repository.join(id, role, userId)
+                repository.join(_authToken.value, id, role, userId)
             } catch (e: Exception) {
                 _error.value = e.message
             }
@@ -131,7 +142,7 @@ class IncidentViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
-                repository.action(id, action, userId)
+                repository.action(_authToken.value, id, action, userId)
             } catch (e: Exception) {
                 _error.value = e.message
             }
@@ -179,8 +190,11 @@ class IncidentViewModel(
     }
 
     fun registerTerminal(userId: String, session: UserSession) {
+        _authToken.value = session.authToken
         viewModelScope.launch {
             try {
+                val healthSignals = healthSignalProvider.readSummary(session)
+                _healthSignals.value = healthSignals
                 repository.registerClient(
                     authToken = session.authToken,
                     userId = userId,
@@ -189,6 +203,33 @@ class IncidentViewModel(
                     healthCondition = session.healthCondition.label,
                     professionIdentity = session.professionIdentity.label,
                     profileBio = session.bio,
+                    location = demoLocationFor(session.displayName, session.professionIdentity.label, session.healthCondition.label),
+                    healthSignals = healthSignals,
+                )
+                repository.updateHealth(
+                    authToken = session.authToken,
+                    userId = userId,
+                    healthSignals = healthSignals,
+                )
+            } catch (e: Exception) {
+                _error.value = e.message
+            }
+        }
+    }
+
+    fun updateDemoLocation(userId: String, label: String, latitude: Double, longitude: Double) {
+        viewModelScope.launch {
+            try {
+                _error.value = null
+                repository.updateLocation(
+                    authToken = _authToken.value,
+                    userId = userId,
+                    location = GeoPoint(
+                        latitude = latitude,
+                        longitude = longitude,
+                        label = label,
+                        source = "app-demo",
+                    ),
                 )
             } catch (e: Exception) {
                 _error.value = e.message
@@ -200,8 +241,21 @@ class IncidentViewModel(
         repository.clearLocalState()
         _incidentId.value = null
         _assignedRole.value = null
+        _healthSignals.value = null
         _userId.value = null
+        _authToken.value = null
         _error.value = null
         _connecting.value = false
+    }
+
+    private fun demoLocationFor(displayName: String, professionIdentity: String, healthCondition: String): GeoPoint {
+        val text = "$displayName $professionIdentity $healthCondition"
+        return when {
+            "心脏" in text || "患者" in text -> GeoPoint(39.904120, 116.407210, label = "教学楼 A 座 2 层走廊", floor = "2F", source = "app-demo")
+            "医生" in text || "医护" in text -> GeoPoint(39.904210, 116.407260, label = "教学楼 A 座 1 层大厅", floor = "1F", source = "app-demo")
+            "安保" in text || "物业" in text -> GeoPoint(39.904500, 116.407620, label = "校门岗亭", floor = "1F", source = "app-demo")
+            "体育" in text || "跑" in text -> GeoPoint(39.903920, 116.407020, label = "操场入口", floor = "1F", source = "app-demo")
+            else -> GeoPoint(39.904260, 116.407330, label = "校园中心点", floor = "1F", source = "app-demo")
+        }
     }
 }

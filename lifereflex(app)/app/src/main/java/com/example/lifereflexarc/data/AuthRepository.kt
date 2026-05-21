@@ -55,4 +55,12 @@ class AuthRepository(
     ): AuthResponse {
         return apiService.login(AuthLoginRequest(phone = phone, password = password))
     }
+
+    suspend fun me(authToken: String): AuthMeResponse {
+        return apiService.me("Bearer $authToken")
+    }
+
+    suspend fun logout(authToken: String) {
+        apiService.logout("Bearer $authToken")
+    }
 }

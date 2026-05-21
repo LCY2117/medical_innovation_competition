@@ -534,6 +534,32 @@ button:disabled {
   line-height: 1.5;
 }
 
+.mobile-health-line {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-ink);
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
+.mobile-health-line span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-health-copy {
+  color: var(--mobile-soft) !important;
+  font-size: 0.76rem !important;
+}
+
 .mobile-incident-card {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

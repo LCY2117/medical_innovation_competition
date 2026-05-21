@@ -17,6 +17,16 @@ interface ApiService {
         @Body body: AuthLoginRequest,
     ): AuthResponse
 
+    @GET("/auth/me")
+    suspend fun me(
+        @Header("Authorization") authorization: String?,
+    ): AuthMeResponse
+
+    @POST("/auth/logout")
+    suspend fun logout(
+        @Header("Authorization") authorization: String?,
+    ): SimpleOkResponse
+
     @POST("/incidents")
     suspend fun createIncident(): CreateIncidentResponse
 
@@ -24,6 +34,18 @@ interface ApiService {
     suspend fun registerClient(
         @Header("Authorization") authorization: String?,
         @Body body: ClientRegisterRequest,
+    )
+
+    @POST("/clients/location")
+    suspend fun updateClientLocation(
+        @Header("Authorization") authorization: String?,
+        @Body body: ClientLocationUpdateRequest,
+    )
+
+    @POST("/clients/health")
+    suspend fun updateClientHealth(
+        @Header("Authorization") authorization: String?,
+        @Body body: ClientHealthUpdateRequest,
     )
 
     @GET("/incidents/current")
@@ -36,17 +58,20 @@ interface ApiService {
 
     @POST("/incidents/current/join_auto")
     suspend fun joinCurrentAuto(
+        @Header("Authorization") authorization: String?,
         @Body body: AutoJoinRequest,
     ): AutoJoinResponse
 
     @POST("/incidents/{id}/join")
     suspend fun joinIncident(
+        @Header("Authorization") authorization: String?,
         @Path("id") incidentId: String,
         @Body body: JoinRequest,
     )
 
     @POST("/incidents/{id}/actions")
     suspend fun postAction(
+        @Header("Authorization") authorization: String?,
         @Path("id") incidentId: String,
         @Body body: ActionRequest,
     )

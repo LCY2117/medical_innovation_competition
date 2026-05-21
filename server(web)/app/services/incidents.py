@@ -17,6 +17,7 @@ from app.models.schemas import (
     DispatchResponse,
     ExperimentExportResponse,
     GeoPoint,
+    HealthSignalSummary,
     IncidentLogEntry,
     IncidentState,
     MutationResponse,
@@ -86,7 +87,9 @@ class IncidentService:
         profile_bio: str,
         device_type: str = "ANDROID",
         location: GeoPoint | None = None,
+        health_signals: HealthSignalSummary | None = None,
     ) -> ClientInfo:
+        previous = self.clients.get(user_id)
         client = ClientInfo(
             userId=user_id,
             displayName=display_name,
@@ -101,6 +104,7 @@ class IncidentService:
             patientCandidate=self._is_patient_candidate(health_condition, profile_bio),
             isPatient=self._is_patient(user_id),
             location=location,
+            healthSignals=health_signals or (previous.healthSignals if previous else None),
         )
         self.clients[user_id] = client
         self._persist()
@@ -118,6 +122,18 @@ class IncidentService:
         self._persist()
         return updated
 
+    def update_client_health(self, user_id: str, health_signals: HealthSignalSummary) -> ClientInfo:
+        client = self.clients.get(user_id)
+        if client is None:
+            raise HTTPException(status_code=404, detail="Client not registered")
+        updated_signals = health_signals.model_copy(update={"updatedTs": health_signals.updatedTs or self._now_ms()})
+        updated = client.model_copy(
+            update={"healthSignals": updated_signals, "lastSeenTs": self._now_ms(), "online": True}
+        )
+        self.clients[user_id] = updated
+        self._persist()
+        return updated
+
     def list_clients(self) -> list[ClientInfo]:
         clients: list[ClientInfo] = []
         for user_id, client in self.clients.items():
@@ -129,6 +145,7 @@ class IncidentService:
                         "patientCandidate": self._is_patient_candidate(client.healthCondition, client.profileBio),
                         "isPatient": self._is_patient(user_id),
                         "location": client.location,
+                        "healthSignals": client.healthSignals,
                     }
                 )
             )
@@ -498,10 +515,57 @@ class IncidentService:
             "aed2": GeoPoint(latitude=39.904560, longitude=116.407700, label="校门值班室 AED 箱", floor="1F", source="demo"),
         }
 
-        self.register_client("demo-patient", "冠心病患者", "模拟社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"])
-        self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"])
-        self.register_client("demo-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", demo_locations["runner"])
-        self.register_client("demo-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", demo_locations["guide"])
+        demo_health = {
+            "patient": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="authorized",
+                heartRateBpm=118,
+                bloodOxygenPercent=92,
+                pressureScore=82,
+                activityLevel="low",
+                sleepQuality="poor",
+                riskTags=["tachycardia", "low_spo2", "high_pressure"],
+                note="OPPO Health mock: simulated high-risk patient baseline",
+            ),
+            "doctor": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="authorized",
+                heartRateBpm=76,
+                bloodOxygenPercent=98,
+                pressureScore=35,
+                activityLevel="normal",
+                sleepQuality="good",
+                riskTags=[],
+                note="OPPO Health mock: stable professional rescuer",
+            ),
+            "runner": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="authorized",
+                heartRateBpm=84,
+                bloodOxygenPercent=99,
+                pressureScore=28,
+                activityLevel="high",
+                sleepQuality="good",
+                riskTags=[],
+                note="OPPO Health mock: high mobility responder",
+            ),
+            "guide": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="authorized",
+                heartRateBpm=80,
+                bloodOxygenPercent=97,
+                pressureScore=44,
+                activityLevel="normal",
+                sleepQuality="fair",
+                riskTags=[],
+                note="OPPO Health mock: steady guide responder",
+            ),
+        }
+
+        self.register_client("demo-patient", "冠心病患者", "模拟社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"], demo_health["patient"])
+        self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"], demo_health["doctor"])
+        self.register_client("demo-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", demo_locations["runner"], demo_health["runner"])
+        self.register_client("demo-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
         self.upsert_aed_site("二楼服务台 AED", demo_locations["aed1"], access_notes="教学楼 A 座服务台左侧红色 AED 箱", site_id="demo-aed-1")
         self.upsert_aed_site("校门值班室 AED", demo_locations["aed2"], access_notes="校门岗亭内，安保可协助取用", site_id="demo-aed-2")
 

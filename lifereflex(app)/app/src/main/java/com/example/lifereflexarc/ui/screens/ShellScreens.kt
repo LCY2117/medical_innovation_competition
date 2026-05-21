@@ -23,6 +23,9 @@ import com.example.lifereflexarc.data.IncidentState
 import com.example.lifereflexarc.data.IncidentArchiveEntry
 import com.example.lifereflexarc.data.UserRole
 import com.example.lifereflexarc.data.UserSession
+import com.example.lifereflexarc.data.AedSite
+import com.example.lifereflexarc.data.DispatchRoleDecision
+import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.ui.accentForRole
 import com.example.lifereflexarc.ui.components.EmptyStateCard
 import com.example.lifereflexarc.ui.components.MetricCard
@@ -38,6 +41,7 @@ fun CommandHomeScreen(
     incidentState: IncidentState?,
     connected: Boolean,
     assignedRole: UserRole?,
+    healthSignals: HealthSignalSummary?,
     onCreateIncident: () -> Unit,
     onOpenCurrent: () -> Unit,
     onAutoJoinCurrent: (() -> Unit)?,
@@ -92,6 +96,8 @@ fun CommandHomeScreen(
                 modifier = Modifier.weight(1f),
             )
         }
+
+        HealthSignalSummaryCard(healthSignals = healthSignals)
 
         SectionTitle("快速入口")
         IncidentQuickActionsCard(
@@ -151,6 +157,7 @@ fun IncidentScreen(
     session: UserSession,
     incidentState: IncidentState?,
     assignedRole: UserRole?,
+    healthSignals: HealthSignalSummary?,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
     onCreateIncident: () -> Unit,
@@ -180,6 +187,7 @@ fun IncidentScreen(
         }
 
         IncidentHeaderCard(incidentState = incidentState, assignedRole = assignedRole ?: UserRole.PATIENT)
+        HealthSignalSummaryCard(healthSignals = healthSignals)
         MissionPanel(
             session = session,
             incidentState = incidentState,
@@ -201,7 +209,157 @@ fun IncidentScreen(
                 }
             }
         }
+        AedSitesCard(aedSites = incidentState.aedSites)
+        DispatchRationaleCard(incidentState = incidentState)
     }
+}
+
+@Composable
+private fun AedSitesCard(
+    aedSites: List<AedSite>,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFF1E293B)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("AED 点位", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            if (aedSites.isEmpty()) {
+                Text(
+                    text = "当前事件还没有同步 AED 点位。请先在网页调度台初始化医创赛演示场景。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+            } else {
+                aedSites.forEach { site ->
+                    SummaryRow(
+                        label = site.name,
+                        value = listOfNotNull(site.location.label, site.location.floor, site.status)
+                            .joinToString(" · "),
+                        dark = true,
+                    )
+                    if (site.accessNotes.isNotBlank()) {
+                        Text(site.accessNotes, color = PhoneColors.GrayText, fontSize = 12.sp, lineHeight = 18.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DispatchRationaleCard(
+    incidentState: IncidentState,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFF1E293B)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("调度依据", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "来源：${incidentState.dispatchSource ?: "规则/AI 处理中"}",
+                color = PhoneColors.GrayText,
+                fontSize = 13.sp,
+            )
+            if (incidentState.dispatchRationale.isEmpty()) {
+                Text(
+                    text = "触发患者后，云端会把角色评分、距离和选择理由同步到这里。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+            } else {
+                DispatchDecisionRow("核心施救", incidentState.dispatchRationale["PRIME"], PhoneColors.Red)
+                DispatchDecisionRow("AED 保障", incidentState.dispatchRationale["RUNNER"], PhoneColors.Blue)
+                DispatchDecisionRow("环境清障", incidentState.dispatchRationale["GUIDE"], PhoneColors.Yellow)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DispatchDecisionRow(
+    roleLabel: String,
+    decision: DispatchRoleDecision?,
+    accent: Color,
+) {
+    if (decision == null) {
+        SummaryRow(roleLabel, "待分派", dark = true)
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(roleLabel, color = accent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        SummaryRow("候选终端", decision.userId ?: "未分配", dark = true)
+        SummaryRow("综合评分", decision.score.toInt().toString(), dark = true)
+        SummaryRow("到患者", formatMeters(decision.distanceToPatientMeters), dark = true)
+        if (decision.distanceToAedMeters != null) {
+            SummaryRow("到 AED", formatMeters(decision.distanceToAedMeters), dark = true)
+        }
+        decision.reasons.take(3).forEach { reason ->
+            Text("· $reason", color = Color(0xFFE2E8F0), fontSize = 12.sp, lineHeight = 18.sp)
+        }
+        decision.warnings.take(2).forEach { warning ->
+            Text("风险：$warning", color = PhoneColors.RedSoft, fontSize = 12.sp, lineHeight = 18.sp)
+        }
+    }
+}
+
+private fun formatMeters(value: Double?): String {
+    if (value == null) {
+        return "--"
+    }
+    return if (value >= 1000.0) {
+        "%.2f km".format(value / 1000.0)
+    } else {
+        "${value.toInt()} m"
+    }
+}
+
+@Composable
+private fun HealthSignalSummaryCard(
+    healthSignals: HealthSignalSummary?,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+        border = BorderStroke(1.dp, Color(0xFF1E293B)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("OPPO 健康增强", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = healthSignals?.note
+                    ?: "真实 OPPO 健康授权完成前，系统使用 mock/fallback 摘要维持医创赛演示闭环。",
+                color = PhoneColors.GrayText,
+                fontSize = 13.sp,
+                lineHeight = 20.sp,
+            )
+            SummaryRow("数据来源", translateHealthSource(healthSignals?.source), dark = true)
+            SummaryRow("授权状态", healthSignals?.authorizationStatus ?: "not_connected", dark = true)
+            SummaryRow("心率", healthSignals?.heartRateBpm?.let { "$it bpm" } ?: "--", dark = true)
+            SummaryRow("血氧", healthSignals?.bloodOxygenPercent?.let { "${it.toInt()}%" } ?: "--", dark = true)
+            SummaryRow("压力", healthSignals?.pressureScore?.toString() ?: "--", dark = true)
+            val riskTags = healthSignals?.riskTags.orEmpty()
+            if (riskTags.isNotEmpty()) {
+                Text(
+                    text = "风险标记：${riskTags.joinToString("、")}",
+                    color = PhoneColors.RedSoft,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                )
+            }
+        }
+    }
+}
+
+private fun translateHealthSource(source: String?): String = when (source) {
+    "oppo", "oppo_health" -> "OPPO 健康"
+    "mock" -> "模拟健康"
+    "manual" -> "手动录入"
+    else -> "健康数据未接入"
 }
 
 @Composable
@@ -256,6 +414,7 @@ fun ArchiveScreen(
 @Composable
 fun ProfileScreen(
     session: UserSession,
+    healthSignals: HealthSignalSummary?,
     onLogout: () -> Unit,
 ) {
     Column(
@@ -280,6 +439,8 @@ fun ProfileScreen(
                 SummaryRow("个人画像", session.profileSummary, dark = true)
             }
         }
+
+        HealthSignalSummaryCard(healthSignals = healthSignals)
 
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),

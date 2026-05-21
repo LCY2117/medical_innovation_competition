@@ -356,6 +356,9 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(exported["assignments"]["RUNNER"], "demo-runner")
             self.assertIn("dispatchSeconds", exported["metrics"])
             self.assertTrue(exported["timeline"])
+            patient = next(item for item in exported["clients"] if item["userId"] == "demo-patient")
+            self.assertEqual(patient["healthSignals"]["source"], "mock")
+            self.assertIn("low_spo2", patient["healthSignals"]["riskTags"])
 
     def test_demo_clients_and_aed_sites_persist_across_app_recreation(self) -> None:
         with self._client() as client:
@@ -600,6 +603,94 @@ class ServerTestCase(unittest.TestCase):
 
         self.assertEqual(no_auth.status_code, 401)
         self.assertEqual(wrong_user.status_code, 403)
+
+    def test_client_health_signals_can_be_updated_and_exported(self) -> None:
+        with self._client() as client:
+            auth = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="健康终端",
+                    phone="13800138011",
+                    organization="测试组织",
+                    health_condition="身体状态一般",
+                    profession_identity="急救志愿者",
+                    profile_bio="用于 OPPO 健康 mock/fallback 测试",
+                ),
+            )
+            self.assertEqual(auth.status_code, 200)
+            auth_payload = auth.json()
+            user_id = auth_payload["user"]["userId"]
+            token = auth_payload["token"]
+            registered = client.post(
+                "/api/clients/register",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "displayName": "健康终端",
+                    "organization": "测试组织",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "急救志愿者",
+                    "profileBio": "用于 OPPO 健康 mock/fallback 测试",
+                    "deviceType": "ANDROID",
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "authorized",
+                        "heartRateBpm": 82,
+                        "bloodOxygenPercent": 98,
+                        "pressureScore": 30,
+                        "riskTags": [],
+                        "note": "initial mock snapshot",
+                    },
+                },
+            )
+            self.assertEqual(registered.status_code, 200)
+
+            updated = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "manual",
+                        "authorizationStatus": "authorized",
+                        "heartRateBpm": 126,
+                        "bloodOxygenPercent": 91,
+                        "pressureScore": 78,
+                        "activityLevel": "low",
+                        "sleepQuality": "poor",
+                        "riskTags": ["tachycardia", "low_spo2"],
+                        "note": "manual fallback snapshot",
+                    },
+                },
+            )
+            self.assertEqual(updated.status_code, 200)
+
+            no_auth = client.post(
+                "/api/clients/health",
+                json={
+                    "userId": user_id,
+                    "healthSignals": {"source": "mock", "authorizationStatus": "authorized"},
+                },
+            )
+            wrong_user = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": "other-user",
+                    "healthSignals": {"source": "mock", "authorizationStatus": "authorized"},
+                },
+            )
+            clients = client.get("/api/clients").json()["clients"]
+            export = client.get("/api/experiments/current/export").json()
+
+        self.assertEqual(no_auth.status_code, 401)
+        self.assertEqual(wrong_user.status_code, 403)
+        health = next(item for item in clients if item["userId"] == user_id)["healthSignals"]
+        self.assertEqual(health["source"], "manual")
+        self.assertEqual(health["heartRateBpm"], 126)
+        self.assertIsInstance(health["updatedTs"], int)
+        exported_health = next(item for item in export["clients"] if item["userId"] == user_id)["healthSignals"]
+        self.assertEqual(exported_health["riskTags"], ["tachycardia", "low_spo2"])
 
     def test_demo_admin_token_protects_public_demo_mutations(self) -> None:
         token = "test-demo-admin"

@@ -25,12 +25,13 @@ import {
   Moon,
   Sun,
   Lock,
-  Unlock
+  Unlock,
+  HeartPulse
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { mergeIncidentState, roleNames } from '@/shared/domain';
-import type { IncidentState as SharedIncidentState } from '@/shared/types';
+import { formatHealthSignalSummary, mergeIncidentState, roleNames, translateHealthSource } from '@/shared/domain';
+import type { HealthSignalSummary, IncidentState as SharedIncidentState } from '@/shared/types';
 
 // Utility for Tailwind classes
 function cn(...inputs: ClassValue[]) {
@@ -255,6 +256,7 @@ interface ClientInfo {
   patientCandidate?: boolean;
   isPatient?: boolean;
   location?: GeoPoint | null;
+  healthSignals?: HealthSignalSummary | null;
 }
 
 interface DispatchMeta {
@@ -583,6 +585,25 @@ function describeClientMission(client: ClientInfo, state: IncidentState | null):
     default:
       return state.phase === 'DISPATCHING' ? '正在等待 AI 分派结果' : '本轮未分配任务，保持待命';
   }
+}
+
+function HealthSignalBadge({ summary }: { summary?: HealthSignalSummary | null }) {
+  const riskCount = summary?.riskTags?.length ?? 0;
+  return (
+    <div
+      className={cn(
+        "mt-2 inline-flex max-w-full items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[10px]",
+        summary
+          ? riskCount > 0
+            ? "border-amber-500/50 bg-amber-500/10 text-amber-200"
+            : "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+          : "border-slate-700 bg-slate-900/70 text-slate-500",
+      )}
+    >
+      <HeartPulse size={13} className="shrink-0" />
+      <span className="truncate">{formatHealthSignalSummary(summary)}</span>
+    </div>
+  );
 }
 
 // --- Components ---
@@ -2435,6 +2456,7 @@ export default function App() {
                     <div className="text-[10px] text-slate-500 mt-1 truncate">
                       位置：{formatLocationLabel(client.location)}
                     </div>
+                    <HealthSignalBadge summary={client.healthSignals} />
                   </div>
                   <button
                     onClick={() => designatePatient(client.userId)}
@@ -2592,6 +2614,31 @@ export default function App() {
                   <div className="rounded-xl bg-black/20 px-3 py-3">
                     <div className="text-slate-500">最近上线</div>
                     <div className="text-slate-100 mt-1">{formatTimeLabel(client.lastSeenTs)}</div>
+                  </div>
+                  <div className="rounded-xl bg-black/20 px-3 py-3 col-span-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-slate-500">OPPO 健康摘要</div>
+                      <span className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                        client.healthSignals?.source === 'mock'
+                          ? "bg-amber-500/15 text-amber-300"
+                          : client.healthSignals
+                            ? "bg-emerald-500/15 text-emerald-300"
+                            : "bg-slate-700 text-slate-400"
+                      )}>
+                        {translateHealthSource(client.healthSignals?.source)}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-slate-100">
+                      <span>{client.healthSignals?.heartRateBpm ? `${client.healthSignals.heartRateBpm} bpm` : '心率 --'}</span>
+                      <span>{client.healthSignals?.bloodOxygenPercent ? `${client.healthSignals.bloodOxygenPercent}% SpO2` : '血氧 --'}</span>
+                      <span>{client.healthSignals?.pressureScore !== undefined && client.healthSignals?.pressureScore !== null ? `压力 ${client.healthSignals.pressureScore}` : '压力 --'}</span>
+                    </div>
+                    {Boolean(client.healthSignals?.riskTags?.length) && (
+                      <div className="mt-2 text-amber-300">
+                        风险标记：{client.healthSignals?.riskTags?.join('、')}
+                      </div>
+                    )}
                   </div>
                 </div>
 

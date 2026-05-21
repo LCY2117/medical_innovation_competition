@@ -15,6 +15,7 @@ from app.models.schemas import (
     AuthRegisterReq,
     AutoJoinReq,
     AutoJoinResponse,
+    ClientHealthUpdateReq,
     ClientListResponse,
     ClientLocationUpdateReq,
     ClientRegisterReq,
@@ -129,6 +130,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             user.profile_bio,
             req.deviceType,
             req.location,
+            req.healthSignals,
         )
         return ClientRegisterResponse(userId=user.user_id)
 
@@ -145,6 +147,17 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         if req.userId != user.user_id:
             raise HTTPException(status_code=403, detail="终端 userId 与登录账号不一致")
         client = service.update_client_location(req.userId, req.location)
+        return ClientRegisterResponse(userId=client.userId)
+
+    @router.post("/clients/health", response_model=ClientRegisterResponse)
+    async def update_client_health(
+        req: ClientHealthUpdateReq,
+        authorization: str | None = Header(default=None),
+    ) -> ClientRegisterResponse:
+        user = auth_service.require_user(authorization)
+        if req.userId != user.user_id:
+            raise HTTPException(status_code=403, detail="终端 userId 与登录账号不一致")
+        client = service.update_client_health(req.userId, req.healthSignals)
         return ClientRegisterResponse(userId=client.userId)
 
     @router.get("/aed-sites", response_model=AedSiteListResponse)

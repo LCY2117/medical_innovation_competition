@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GeoPoint(BaseModel):
@@ -9,6 +9,20 @@ class GeoPoint(BaseModel):
     floor: str | None = None
     source: str = "manual"
     updatedTs: int | None = None
+
+
+class HealthSignalSummary(BaseModel):
+    source: str = "unavailable"
+    authorizationStatus: str = "not_connected"
+    provider: str = "OPPO_HEALTH"
+    heartRateBpm: int | None = None
+    bloodOxygenPercent: float | None = None
+    pressureScore: int | None = None
+    activityLevel: str | None = None
+    sleepQuality: str | None = None
+    riskTags: list[str] = Field(default_factory=list)
+    updatedTs: int | None = None
+    note: str | None = None
 
 
 class AuthRegisterReq(BaseModel):
@@ -81,6 +95,7 @@ class ClientRegisterReq(BaseModel):
     profileBio: str
     deviceType: str = "ANDROID"
     location: GeoPoint | None = None
+    healthSignals: HealthSignalSummary | None = None
 
 
 class ClientInfo(BaseModel):
@@ -97,6 +112,7 @@ class ClientInfo(BaseModel):
     patientCandidate: bool = False
     isPatient: bool = False
     location: GeoPoint | None = None
+    healthSignals: HealthSignalSummary | None = None
 
 
 class ClientListResponse(BaseModel):
@@ -106,6 +122,11 @@ class ClientListResponse(BaseModel):
 class ClientLocationUpdateReq(BaseModel):
     userId: str
     location: GeoPoint
+
+
+class ClientHealthUpdateReq(BaseModel):
+    userId: str
+    healthSignals: HealthSignalSummary
 
 
 class AedSite(BaseModel):

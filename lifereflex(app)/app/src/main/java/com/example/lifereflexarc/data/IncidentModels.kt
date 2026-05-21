@@ -8,6 +8,8 @@ data class IncidentState(
     val logs: List<LogEntry>,
     val patientUserId: String? = null,
     val dispatchSource: String? = null,
+    val aedSites: List<AedSite> = emptyList(),
+    val dispatchRationale: Map<String, DispatchRoleDecision> = emptyMap(),
 )
 
 fun IncidentState.isArchived(): Boolean = phase == "ARCHIVED"
@@ -32,6 +34,50 @@ data class RoleState(
 data class LogEntry(
     val ts: Long,
     val msg: String,
+)
+
+data class GeoPoint(
+    val latitude: Double,
+    val longitude: Double,
+    val accuracyMeters: Double? = null,
+    val label: String? = null,
+    val floor: String? = null,
+    val source: String = "manual",
+    val updatedTs: Long? = null,
+)
+
+data class AedSite(
+    val siteId: String,
+    val name: String,
+    val location: GeoPoint,
+    val status: String = "AVAILABLE",
+    val accessNotes: String = "",
+    val lastCheckedTs: Long? = null,
+)
+
+data class DispatchRoleDecision(
+    val userId: String? = null,
+    val score: Double = 0.0,
+    val reasons: List<String> = emptyList(),
+    val warnings: List<String> = emptyList(),
+    val distanceToPatientMeters: Double? = null,
+    val nearestAedSiteId: String? = null,
+    val distanceToAedMeters: Double? = null,
+    val aedToPatientMeters: Double? = null,
+)
+
+data class HealthSignalSummary(
+    val source: String = "unavailable",
+    val authorizationStatus: String = "not_connected",
+    val provider: String = "OPPO_HEALTH",
+    val heartRateBpm: Int? = null,
+    val bloodOxygenPercent: Double? = null,
+    val pressureScore: Int? = null,
+    val activityLevel: String? = null,
+    val sleepQuality: String? = null,
+    val riskTags: List<String> = emptyList(),
+    val updatedTs: Long? = null,
+    val note: String? = null,
 )
 
 data class CreateIncidentResponse(
@@ -66,6 +112,18 @@ data class ClientRegisterRequest(
     val professionIdentity: String,
     val profileBio: String,
     val deviceType: String = "ANDROID",
+    val location: GeoPoint? = null,
+    val healthSignals: HealthSignalSummary? = null,
+)
+
+data class ClientLocationUpdateRequest(
+    val userId: String,
+    val location: GeoPoint,
+)
+
+data class ClientHealthUpdateRequest(
+    val userId: String,
+    val healthSignals: HealthSignalSummary,
 )
 
 data class WsMessage(

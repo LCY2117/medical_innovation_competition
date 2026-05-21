@@ -5,6 +5,7 @@ import type {
   AedSite,
   ClientInfo,
   GeoPoint,
+  HealthSignalSummary,
   IncidentState,
   RoleName,
 } from './types';
@@ -165,6 +166,18 @@ export async function registerClient(user: AuthUser, token: string, location?: G
       }),
     },
     '注册浏览器终端失败',
+  );
+}
+
+export async function updateClientHealth(userId: string, token: string, healthSignals: HealthSignalSummary): Promise<void> {
+  await requestJson(
+    '/clients/health',
+    {
+      method: 'POST',
+      headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ userId, healthSignals }),
+    },
+    '同步健康摘要失败',
   );
 }
 

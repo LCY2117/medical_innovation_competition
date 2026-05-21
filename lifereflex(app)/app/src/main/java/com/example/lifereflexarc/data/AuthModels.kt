@@ -19,6 +19,17 @@ data class AuthResponse(
     val ok: Boolean,
     val token: String,
     val user: AuthUser,
+    val tokenExpiresAt: Long? = null,
+)
+
+data class AuthMeResponse(
+    val ok: Boolean,
+    val user: AuthUser,
+    val tokenExpiresAt: Long? = null,
+)
+
+data class SimpleOkResponse(
+    val ok: Boolean,
 )
 
 data class AuthUser(

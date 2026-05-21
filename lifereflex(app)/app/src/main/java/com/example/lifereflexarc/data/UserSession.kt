@@ -146,6 +146,7 @@ data class UserSession(
     val professionIdentity: ProfessionIdentity = ProfessionIdentity.BASIC_KNOWLEDGE,
     val bio: String = "",
     val credentialStatus: String = "未认证",
+    val tokenExpiresAt: Long? = null,
 ) {
     val isPatientCandidate: Boolean
         get() = healthCondition.isPatientCandidate

@@ -8,11 +8,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okhttp3.OkHttpClient
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
@@ -55,8 +56,10 @@ class WsClient(
 
     private fun openSocket() {
         val id = incidentId ?: return
+        val separator = if ("?" in baseWsUrl) "&" else "?"
+        val encodedIncidentId = URLEncoder.encode(id, "UTF-8")
         val request = Request.Builder()
-            .url("$baseWsUrl?incidentId=$id")
+            .url("$baseWsUrl${separator}incidentId=$encodedIncidentId")
             .build()
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {

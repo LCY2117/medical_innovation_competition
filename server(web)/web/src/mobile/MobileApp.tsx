@@ -33,12 +33,14 @@ import {
   postIncidentAction,
   registerAccount,
   registerClient,
+  updateClientHealth,
   updateClientLocation,
   type RegisterForm,
 } from '@/shared/api';
 import {
   findUserRole,
   formatDistanceLabel,
+  formatHealthSignalSummary,
   formatLocationLabel,
   formatTimeLabel,
   getResuscitationGuidance,
@@ -49,10 +51,11 @@ import {
   isShockDelivered,
   mergeIncidentState,
   translatePhaseLabel,
+  translateHealthSource,
   translateRoleLabel,
   translateRoleStatus,
 } from '@/shared/domain';
-import type { AedSite, AuthUser, ClientInfo, GeoPoint, IncidentState, RoleName } from '@/shared/types';
+import type { AedSite, AuthUser, ClientInfo, GeoPoint, HealthSignalSummary, IncidentState, RoleName } from '@/shared/types';
 import './mobile.css';
 
 type AuthMode = 'login' | 'register';
@@ -172,6 +175,54 @@ function tabLocationKey(): string {
 
 function demoLocationFor(persona?: DemoPersona | null): GeoPoint {
   return demoPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
+}
+
+function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSignalSummary {
+  const text = `${user.healthCondition} ${user.professionIdentity} ${user.profileBio} ${persona ?? ''}`;
+  const now = Date.now();
+  if (text.includes('心脏') || persona === 'patient') {
+    return {
+      source: 'mock',
+      authorizationStatus: 'authorized',
+      provider: 'OPPO_HEALTH',
+      heartRateBpm: 118,
+      bloodOxygenPercent: 92,
+      pressureScore: 82,
+      activityLevel: 'low',
+      sleepQuality: 'poor',
+      riskTags: ['tachycardia', 'low_spo2', 'high_pressure'],
+      updatedTs: now,
+      note: 'OPPO Health mock fallback for mobile patient demo',
+    };
+  }
+  if (text.includes('体育') || text.includes('跑') || persona === 'runner') {
+    return {
+      source: 'mock',
+      authorizationStatus: 'authorized',
+      provider: 'OPPO_HEALTH',
+      heartRateBpm: 84,
+      bloodOxygenPercent: 99,
+      pressureScore: 28,
+      activityLevel: 'high',
+      sleepQuality: 'good',
+      riskTags: [],
+      updatedTs: now,
+      note: 'OPPO Health mock fallback for mobile runner demo',
+    };
+  }
+  return {
+    source: 'mock',
+    authorizationStatus: 'authorized',
+    provider: 'OPPO_HEALTH',
+    heartRateBpm: text.includes('医生') ? 76 : 80,
+    bloodOxygenPercent: 98,
+    pressureScore: text.includes('安保') ? 44 : 35,
+    activityLevel: 'normal',
+    sleepQuality: 'good',
+    riskTags: [],
+    updatedTs: now,
+    note: 'OPPO Health mock fallback for mobile browser',
+  };
 }
 
 const profilePresets = [
@@ -687,6 +738,11 @@ function MobileApp() {
       return;
     }
     await registerClient(activeSession.user, activeSession.token, activeLocation);
+    await updateClientHealth(
+      activeSession.user.userId,
+      activeSession.token,
+      mockHealthSignalsFor(activeSession.user, activeSession.demoPersona),
+    );
   }
 
   useEffect(() => {
@@ -993,6 +1049,10 @@ function MobileApp() {
               <strong>{user.displayName}</strong>
               <p>{user.organization} · {user.professionIdentity}</p>
               <p>{formatLocationLabel(location)}</p>
+              <div className="mobile-health-line">
+                <HeartPulse size={14} />
+                <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
+              </div>
             </div>
           </section>
 
@@ -1176,6 +1236,9 @@ function MobileApp() {
               <div>
                 <strong>{client.displayName}</strong>
                 <p>{client.isPatient ? '患者端' : translateRoleLabel(client.assignedRole)} · {formatLocationLabel(client.location)}</p>
+                <p className="mobile-health-copy">
+                  {translateHealthSource(client.healthSignals?.source)} · {formatHealthSignalSummary(client.healthSignals)}
+                </p>
               </div>
             </div>
           ))}

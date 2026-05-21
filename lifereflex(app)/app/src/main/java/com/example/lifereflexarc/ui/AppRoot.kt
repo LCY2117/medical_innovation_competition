@@ -53,6 +53,7 @@ fun AppRoot(
     val connecting by incidentViewModel.connecting.collectAsState(false)
     val incidentError by incidentViewModel.error.collectAsState(null)
     val assignedRoleRaw by incidentViewModel.assignedRole.collectAsState(null)
+    val healthSignals by incidentViewModel.healthSignals.collectAsState(null)
     val activeUserId = session.userId.ifBlank { deviceUserId }
 
     if (!session.isLoggedIn) {
@@ -91,7 +92,7 @@ fun AppRoot(
 
     LaunchedEffect(session.isLoggedIn) {
         if (session.isLoggedIn) {
-            incidentViewModel.connectCurrent(activeUserId, autoJoin = false)
+            incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
         }
     }
 
@@ -195,6 +196,7 @@ fun AppRoot(
                     incidentState = incidentState,
                     connected = connected,
                     assignedRole = assignedRole,
+                    healthSignals = healthSignals,
                     onCreateIncident = {
                         incidentViewModel.clearError()
                         incidentViewModel.createIncident()
@@ -202,7 +204,7 @@ fun AppRoot(
                     },
                     onOpenCurrent = {
                         incidentViewModel.clearError()
-                        incidentViewModel.connectCurrent(activeUserId, autoJoin = false)
+                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
                         activeTab = MainTab.Incident
                     },
                     onAutoJoinCurrent = null,
@@ -219,6 +221,7 @@ fun AppRoot(
                     session = session,
                     incidentState = incidentState,
                     assignedRole = assignedRole,
+                    healthSignals = healthSignals,
                     deviceUserId = activeUserId,
                     incidentViewModel = incidentViewModel,
                     onCreateIncident = {
@@ -227,7 +230,7 @@ fun AppRoot(
                     },
                     onOpenCurrent = {
                         incidentViewModel.clearError()
-                        incidentViewModel.connectCurrent(activeUserId, autoJoin = false)
+                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
                     },
                     onAutoJoinCurrent = null,
                 )
@@ -237,6 +240,7 @@ fun AppRoot(
                 )
                 MainTab.Profile -> ProfileScreen(
                     session = session,
+                    healthSignals = healthSignals,
                     onLogout = {
                         incidentViewModel.disconnect()
                         sessionViewModel.signOut()

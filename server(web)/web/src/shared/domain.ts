@@ -1,4 +1,4 @@
-import type { GeoPoint, IncidentState, RoleName } from './types';
+import type { GeoPoint, HealthSignalSummary, IncidentState, RoleName } from './types';
 
 export const roleNames: RoleName[] = ['PRIME', 'RUNNER', 'GUIDE'];
 
@@ -233,6 +233,37 @@ export function formatLocationLabel(location?: GeoPoint | null): string {
   const floor = floorLabel ? ` · ${floorLabel}` : '';
   const accuracy = location.accuracyMeters ? ` · 精度 ${formatDistanceLabel(location.accuracyMeters)}` : '';
   return `${location.label ?? '模拟点位'}${floor}${accuracy}`;
+}
+
+export function translateHealthSource(source?: string | null): string {
+  switch (source) {
+    case 'oppo':
+    case 'oppo_health':
+      return 'OPPO 健康';
+    case 'mock':
+      return '模拟健康';
+    case 'manual':
+      return '手动录入';
+    case 'unavailable':
+      return '健康数据未接入';
+    default:
+      return source ?? '健康数据未接入';
+  }
+}
+
+export function formatHealthSignalSummary(summary?: HealthSignalSummary | null): string {
+  if (!summary) {
+    return '健康数据未接入';
+  }
+  const parts = [
+    summary.heartRateBpm ? `心率 ${summary.heartRateBpm} bpm` : null,
+    summary.bloodOxygenPercent ? `血氧 ${summary.bloodOxygenPercent}%` : null,
+    summary.pressureScore !== undefined && summary.pressureScore !== null ? `压力 ${summary.pressureScore}` : null,
+  ].filter(Boolean);
+  if (!parts.length) {
+    return translateHealthSource(summary.source);
+  }
+  return `${translateHealthSource(summary.source)} · ${parts.join(' · ')}`;
 }
 
 export function findUserRole(state: IncidentState | null, userId?: string | null): RoleName | null {

@@ -38,6 +38,10 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
+    init {
+        validateStoredSession()
+    }
+
     fun register(
         displayName: String,
         phone: String,
@@ -108,10 +112,58 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun signOut() {
+        val token = _session.value.authToken
+        if (token.isNotBlank()) {
+            viewModelScope.launch {
+                runCatching { repository.logout(token) }
+            }
+        }
+        clearStoredSession()
+        _session.value = UserSession()
+        _error.value = null
+        _loading.value = false
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+
+    private fun validateStoredSession() {
+        val current = _session.value
+        if (!current.isLoggedIn || current.authToken.isBlank()) {
+            return
+        }
+        if (current.tokenExpiresAt != null && current.tokenExpiresAt <= System.currentTimeMillis()) {
+            clearStoredSession()
+            _session.value = UserSession()
+            _error.value = "登录态已过期，请重新登录"
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val response = repository.me(current.authToken)
+                persistAuthSession(
+                    AuthResponse(
+                        ok = response.ok,
+                        token = current.authToken,
+                        user = response.user,
+                        tokenExpiresAt = response.tokenExpiresAt,
+                    )
+                )
+            } catch (e: Exception) {
+                clearStoredSession()
+                _session.value = UserSession()
+                _error.value = "登录态已失效，请重新登录"
+            }
+        }
+    }
+
+    private fun clearStoredSession() {
         prefs.edit()
             .remove(KEY_LOGGED_IN)
             .remove(KEY_USER_ID)
             .remove(KEY_AUTH_TOKEN)
+            .remove(KEY_TOKEN_EXPIRES_AT)
             .remove(KEY_NAME)
             .remove(KEY_PHONE)
             .remove(KEY_ORGANIZATION)
@@ -120,13 +172,6 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             .remove(KEY_BIO)
             .remove(KEY_CREDENTIAL)
             .apply()
-        _session.value = UserSession()
-        _error.value = null
-        _loading.value = false
-    }
-
-    fun clearError() {
-        _error.value = null
     }
 
     private fun persistAuthSession(response: AuthResponse) {
@@ -145,6 +190,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             professionIdentity = professionIdentity,
             bio = response.user.profileBio,
             credentialStatus = response.user.credentialStatus,
+            tokenExpiresAt = response.tokenExpiresAt,
         )
         saveSession(newSession)
         _session.value = newSession
@@ -213,11 +259,16 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             professionIdentity = professionIdentity,
             bio = prefs.getString(KEY_BIO, "").orEmpty(),
             credentialStatus = prefs.getString(KEY_CREDENTIAL, "未认证").orEmpty(),
+            tokenExpiresAt = if (prefs.contains(KEY_TOKEN_EXPIRES_AT)) {
+                prefs.getLong(KEY_TOKEN_EXPIRES_AT, 0L).takeIf { it > 0L }
+            } else {
+                null
+            },
         )
     }
 
     private fun saveSession(session: UserSession) {
-        prefs.edit()
+        val editor = prefs.edit()
             .putBoolean(KEY_LOGGED_IN, session.isLoggedIn)
             .putString(KEY_USER_ID, session.userId)
             .putString(KEY_AUTH_TOKEN, session.authToken)
@@ -228,7 +279,12 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             .putString(KEY_IDENTITY, session.professionIdentity.name)
             .putString(KEY_BIO, session.bio)
             .putString(KEY_CREDENTIAL, session.credentialStatus)
-            .apply()
+        if (session.tokenExpiresAt != null) {
+            editor.putLong(KEY_TOKEN_EXPIRES_AT, session.tokenExpiresAt)
+        } else {
+            editor.remove(KEY_TOKEN_EXPIRES_AT)
+        }
+        editor.apply()
     }
 
     private fun loadArchives(): List<IncidentArchiveEntry> {
@@ -272,6 +328,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         const val KEY_LOGGED_IN = "logged_in"
         const val KEY_USER_ID = "user_id"
         const val KEY_AUTH_TOKEN = "auth_token"
+        const val KEY_TOKEN_EXPIRES_AT = "token_expires_at"
         const val KEY_NAME = "name"
         const val KEY_PHONE = "phone"
         const val KEY_ORGANIZATION = "organization"

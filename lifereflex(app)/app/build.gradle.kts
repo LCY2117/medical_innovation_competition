@@ -3,8 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val apiBase = providers.gradleProperty("LRA_API_BASE").orElse("http://111.230.52.99:8080/").get()
-val wsBase = providers.gradleProperty("LRA_WS_BASE").orElse("ws://111.230.52.99:8080/ws").get()
+val apiBase = providers.gradleProperty("LRA_API_BASE").orElse("https://lifereflex.mddcommunity.top/").get()
+val wsBase = providers.gradleProperty("LRA_WS_BASE").orElse("wss://lifereflex.mddcommunity.top/ws").get()
 
 android {
     namespace = "com.example.lifereflexarc"

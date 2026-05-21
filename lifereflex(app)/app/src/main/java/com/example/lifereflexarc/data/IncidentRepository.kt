@@ -82,8 +82,11 @@ class IncidentRepository(
         return apiService.getIncident(incidentId)
     }
 
-    suspend fun joinCurrentAuto(userId: String): AutoJoinResponse {
-        return apiService.joinCurrentAuto(AutoJoinRequest(userId = userId))
+    suspend fun joinCurrentAuto(authToken: String?, userId: String): AutoJoinResponse {
+        return apiService.joinCurrentAuto(
+            authorization = authToken?.let { "Bearer $it" },
+            body = AutoJoinRequest(userId = userId),
+        )
     }
 
     suspend fun createIncident(): String {
@@ -98,6 +101,8 @@ class IncidentRepository(
         healthCondition: String,
         professionIdentity: String,
         profileBio: String,
+        location: GeoPoint? = null,
+        healthSignals: HealthSignalSummary? = null,
     ) {
         apiService.registerClient(
             authorization = authToken?.let { "Bearer $it" },
@@ -108,16 +113,40 @@ class IncidentRepository(
                 healthCondition = healthCondition,
                 professionIdentity = professionIdentity,
                 profileBio = profileBio,
+                location = location,
+                healthSignals = healthSignals,
             )
         )
     }
 
-    suspend fun join(incidentId: String, role: String, userId: String) {
-        apiService.joinIncident(incidentId, JoinRequest(role = role, userId = userId))
+    suspend fun updateLocation(authToken: String?, userId: String, location: GeoPoint) {
+        apiService.updateClientLocation(
+            authorization = authToken?.let { "Bearer $it" },
+            body = ClientLocationUpdateRequest(userId = userId, location = location),
+        )
     }
 
-    suspend fun action(incidentId: String, action: String, userId: String) {
-        apiService.postAction(incidentId, ActionRequest(action = action, userId = userId))
+    suspend fun updateHealth(authToken: String?, userId: String, healthSignals: HealthSignalSummary) {
+        apiService.updateClientHealth(
+            authorization = authToken?.let { "Bearer $it" },
+            body = ClientHealthUpdateRequest(userId = userId, healthSignals = healthSignals),
+        )
+    }
+
+    suspend fun join(authToken: String?, incidentId: String, role: String, userId: String) {
+        apiService.joinIncident(
+            authorization = authToken?.let { "Bearer $it" },
+            incidentId = incidentId,
+            body = JoinRequest(role = role, userId = userId),
+        )
+    }
+
+    suspend fun action(authToken: String?, incidentId: String, action: String, userId: String) {
+        apiService.postAction(
+            authorization = authToken?.let { "Bearer $it" },
+            incidentId = incidentId,
+            body = ActionRequest(action = action, userId = userId),
+        )
     }
 
     suspend fun sosStart(incidentId: String) {
