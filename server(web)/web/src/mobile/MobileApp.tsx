@@ -91,7 +91,7 @@ const demoPersonas: Array<{
   {
     key: 'patient',
     label: '患者端',
-    title: 'Patient',
+    title: '患者端',
     description: '触发 SOS，观察系统分派',
     location: {
       latitude: 39.90412,
@@ -161,6 +161,10 @@ function readDemoPersonaFromUrl(): DemoPersona | null {
     return raw;
   }
   return null;
+}
+
+function readIncidentIdFromUrl(): string {
+  return new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
 }
 
 function readDemoSlotFromUrl(): string {
@@ -586,7 +590,7 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
         <div className="mobile-demo-entry">
           <div className="mobile-section-head">
             <div>
-              <p className="mobile-kicker">Demo mode</p>
+              <p className="mobile-kicker">演示模式</p>
               <h2>演示模式直达</h2>
             </div>
           </div>
@@ -683,10 +687,11 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
 
 function MobileApp() {
   const urlDemoPersona = useMemo(() => readDemoPersonaFromUrl(), []);
+  const urlIncidentId = useMemo(() => readIncidentIdFromUrl(), []);
   const [theme, setTheme] = useState<MobileTheme>(() => readStoredTheme());
   const [session, setSession] = useState<StoredSession | null>(() => (urlDemoPersona ? null : readStoredSession()));
   const [booting, setBooting] = useState(Boolean(urlDemoPersona) || Boolean(readStoredSession()));
-  const [incidentIdInput, setIncidentIdInput] = useState(() => window.localStorage.getItem(INCIDENT_KEY) ?? '');
+  const [incidentIdInput, setIncidentIdInput] = useState(() => urlIncidentId || (window.localStorage.getItem(INCIDENT_KEY) ?? ''));
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [aedSites, setAedSites] = useState<AedSite[]>([]);
@@ -782,7 +787,16 @@ function MobileApp() {
     setLocation(nextLocation);
     setBooting(false);
     await ensurePresence(next, nextLocation);
-    await openCurrentIncident();
+    if (urlIncidentId) {
+      const state = await fetchIncident(urlIncidentId);
+      setIncident((current) => mergeIncidentState(current, state));
+      setIncidentIdInput(state.incidentId);
+      window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
+      connectIncident(state.incidentId);
+      await loadPeripheralData();
+    } else {
+      await openCurrentIncident();
+    }
   }
 
   async function ensurePresence(activeSession = session, activeLocation = location) {
@@ -822,7 +836,16 @@ function MobileApp() {
           setSession(next);
           setLocation(nextLocation);
           await ensurePresence(next, nextLocation);
-          await openCurrentIncident();
+          if (urlIncidentId) {
+            const state = await fetchIncident(urlIncidentId);
+            setIncident((current) => mergeIncidentState(current, state));
+            setIncidentIdInput(state.incidentId);
+            window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
+            connectIncident(state.incidentId);
+            await loadPeripheralData();
+          } else {
+            await openCurrentIncident();
+          }
           setNotice({ kind: 'ok', text: `已进入${demoPersonas.find((item) => item.key === urlDemoPersona)?.label ?? '演示'}身份。` });
         } catch (error) {
           saveSession(null);
@@ -1107,21 +1130,6 @@ function MobileApp() {
 
       {activeView === 'home' && (
         <>
-          <section className="mobile-panel mobile-user-panel" id="top">
-            <div className="mobile-user-avatar">
-              <UserRound size={22} />
-            </div>
-            <div>
-              <strong>{user.displayName}</strong>
-              <p>{user.organization} · {user.professionIdentity}</p>
-              <p>{formatLocationLabel(location)}</p>
-              <div className="mobile-health-line">
-                <HeartPulse size={14} />
-                <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
-              </div>
-            </div>
-          </section>
-
           {activeRole && action && !isPatient ? (
             <section className="mobile-emergency-panel responder">
               <div>
@@ -1168,6 +1176,21 @@ function MobileApp() {
               </div>
             </section>
           )}
+
+          <section className="mobile-panel mobile-user-panel" id="top">
+            <div className="mobile-user-avatar">
+              <UserRound size={22} />
+            </div>
+            <div>
+              <strong>{user.displayName}</strong>
+              <p>{user.organization} · {user.professionIdentity}</p>
+              <p>{formatLocationLabel(location)}</p>
+              <div className="mobile-health-line">
+                <HeartPulse size={14} />
+                <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
+              </div>
+            </div>
+          </section>
 
           {!incident && (
             <section className="mobile-panel mobile-incident-panel">

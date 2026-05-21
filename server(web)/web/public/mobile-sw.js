@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lifereflex-mobile-shell-v3';
+const CACHE_NAME = 'lifereflex-mobile-shell-v4';
 const APP_SHELL = ['/manifest.webmanifest', '/pwa-icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -49,12 +49,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.pathname === '/mobile' || url.pathname.startsWith('/mobile/')) {
-    if (url.searchParams.has('incidentId')) {
-      url.searchParams.delete('incidentId');
-      event.respondWith(Response.redirect(url.toString(), 302));
-      return;
-    }
-
     event.respondWith(
       fetch(request)
         .catch(() => caches.match('/manifest.webmanifest').then(() => Response.error())),

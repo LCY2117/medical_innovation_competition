@@ -38,7 +38,7 @@
 - Android 本地归档会展示参与者视角任务总结，患者、PRIME、RUNNER、GUIDE、待命终端都有不同复盘要点。
 - 部署手册已补生产备份、SQLite 在线备份、1Panel/OpenResty 检查、数据库回滚和本地 DB 不提交的 Git 注意事项。
 - Android 首页快速入口已改为优先“进入当前事件/自动接单”，新建事件降级为“演示备用”。
-- 最终 P0/P1 验证已通过：后端 30 项测试、Web typecheck/build、Android debug APK 构建均通过。
+- 最终 P0/P1 验证已通过：后端 37 项测试、Web typecheck/build、Android debug APK 构建均通过。
 - 第三方资源文档新增 provider/fallback 接入契约：地图、AI、健康、推送、短信都按真实 provider + demo fallback 设计。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - 后端新增 SQLite 审计日志和轻量频控：登录、demo 管理、患者指定、角色响应、现场动作、实验导出均有脱敏留痕，`/api/health/detail` 可查看安全控制状态。
@@ -52,6 +52,9 @@
 - 移动端患者 SOS 正延迟分派已修复：`/mobile?demo=patient` 等待倒计时后不会再卡在 `DISPATCHING`，会继续完成角色分派。
 - Web 总控台在服务器配置 `LRA_ADMIN_PHONES` 后会显示正式管理员登录入口，管理请求优先使用 Bearer token，演示口令仍可作为备用。
 - Web 总控台与 `/mobile-demo` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
+- Web 总控台默认已降噪：首屏保留演示流程、智能分派摘要、任务单、现场拓扑和四端状态；AI 配置、调度评分、在线终端调试列表、审计和系统日志统一放入“技术详情”展开区。
+- `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
+- 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
 - 最新验证扫尾已通过：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
@@ -72,10 +75,10 @@
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
-& "..\.venv\Scripts\python.exe" -m unittest tests.test_server tests.test_link_mechanism
+& "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：33 项通过。
+结果：37 项通过。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -85,7 +88,9 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。
+结果：均通过。最新构建中桌面 `App-M71lbyYK.js` 为 220.37 kB raw / 67.15 kB gzip，移动 `MobileApp-DDAEQ_T7.js` 为 34.30 kB raw / 11.09 kB gzip。
+
+浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-demo?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?demo=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
 
 ```powershell
 cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\lifereflex(app)"
@@ -98,7 +103,7 @@ gradle tasks --no-daemon
 gradle :app:assembleDebug --no-daemon
 ```
 
-结果：通过，APK 大小约 12 MB，使用 Android debug 签名。当前构建会提示 AndroidX Security API deprecation warning，以及 `PhoneAppRoot.kt` 一个非阻塞 Kotlin warning，不影响 debug APK 生成。
+结果：通过，APK 大小约 12 MB，使用 Android debug 签名。当前构建仅提示既有 `android.overridePathCheck=true` 实验性配置警告，不影响 debug APK 生成。
 
 ## 本轮新增检查点
 
@@ -140,7 +145,7 @@ gradle :app:assembleDebug --no-daemon
 - `9b373f4`：患者 SOS 正延迟修复与 Web 总控台管理员登录，已推送。
 - `a648ad8`：Web 总控台和 `/mobile-demo` 可见标签中文化，已推送。
 - `c15d60f`：记录后端/Web 验证扫尾，已推送。
-- 待本轮提交：记录 Android debug APK 验证扫尾。
+- `36b818b`：记录 Android debug APK 验证扫尾，已推送。
 
 ## 你醒来后最该做的三件事
 
@@ -157,7 +162,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\lifereflex(app)"
 app\build\outputs\apk\debug\app-debug.apk
 ```
 
-2. 打开 Web 调度台时，右上角“演示口令”输入 `LCY`。之后初始化、触发、重置、导出才会成功。
+2. 打开 Web 调度台时，若服务器配置了 `LRA_ADMIN_PHONES`，优先用正式管理员账号登录；否则右上角“演示口令”输入 `LCY`。之后初始化、触发、重置、导出才会成功。
 
 3. 申请第三方资源，按 `docs/THIRD_PARTY_RESOURCES.md` 走：
 

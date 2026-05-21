@@ -15,22 +15,6 @@ function isMobileDemoRoute() {
   return window.location.pathname === "/mobile-demo" || window.location.pathname.startsWith("/mobile-demo/");
 }
 
-function cleanMobileUrlState() {
-  if (!isMobileRoute() || !window.location.search) {
-    return;
-  }
-
-  const url = new URL(window.location.href);
-  if (!url.searchParams.has("incidentId")) {
-    return;
-  }
-
-  url.searchParams.delete("incidentId");
-  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-}
-
-cleanMobileUrlState();
-
 function Root() {
   const App = isMobileDemoRoute() ? MobileDemoStage : isMobileRoute() ? MobileApp : DesktopApp;
 

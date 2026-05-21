@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: c15d60f
-- Last update: 2026-05-22 04:36:41 +08:00
+- HEAD: 36b818b
+- Last update: 2026-05-22 04:58:41 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -81,7 +81,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 56. Fix mobile patient SOS delayed auto-dispatch and wire Web command center admin login. (done, pushed)
 57. Localize visible Web command-center and `/mobile-demo` demo labels. (done, pushed)
 58. Run final post-polish validation sweep. (done, pushed)
-59. Run Android debug APK validation sweep. (done, checkpointing)
+59. Run Android debug APK validation sweep. (done, pushed)
+60. Reduce Web command-center first-screen technical overload and preserve mobile incident deep links. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -201,6 +202,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `/mobile-demo` now uses Chinese primary role labels; Web command-center audit labels, scenario phase, AED status, and visible timeline logs are localized for presentation while preserving raw backend logs for exports.
 - Git checkpoint `a648ad8` (`checkpoint: polish demo visible labels`) was pushed to `origin/codex/competition-hardening`.
 - Git checkpoint `c15d60f` (`checkpoint: record post-polish validation`) was pushed to `origin/codex/competition-hardening`.
+- Git checkpoint `36b818b` (`checkpoint: record android validation`) was pushed to `origin/codex/competition-hardening`.
+- Web command center now has a default-visible dispatch summary and collapses AI engine config, streaming decision details, scoring/rationale, online-terminal debug list, and logs under a 技术详情 toggle.
+- `/mobile` no longer strips `incidentId` from deep links; `/mobile-demo?incidentId=...` passes the same target incident into all four demo iframes, and the mobile service worker cache was bumped to avoid the old redirect behavior.
+- Mobile Web home now prioritizes SOS/current action before the user profile card, reducing emergency-state first-screen load.
+- Mobile demo-stage and mobile login entry visible labels are now fully Chinese-first: “生命反射弧”, “演示模式”, “患者端”, with PRIME/RUNNER/GUIDE only kept as auxiliary role codes.
 
 ## Validation Log
 
@@ -294,6 +300,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Final post-polish validation sweep: backend unittest discovery passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with dashboard chunk `217.60 kB` raw / `66.63 kB` gzip.
 - Git checkpoint: `c15d60f` (`checkpoint: record post-polish validation`) created and pushed to `origin/codex/competition-hardening`.
 - Android validation sweep: `gradle :app:assembleDebug --no-daemon` passed; only the existing `android.overridePathCheck=true` experimental warning appeared.
+- Git checkpoint: `36b818b` (`checkpoint: record android validation`) created and pushed to `origin/codex/competition-hardening`.
+- Web presentation polish validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-M71lbyYK.js` at `220.37 kB` raw / `67.15 kB` gzip and mobile `MobileApp-DDAEQ_T7.js` at `34.30 kB` raw / `11.09 kB` gzip.
+- Browser smoke on temporary local backend `127.0.0.1:18086` passed using temp DB and demo token `LCY`: dashboard defaults to collapsed technical details, technical details expand to AI/log diagnostics, `/mobile-demo?incidentId=...` propagated the same incident into all four iframes, and `/mobile?demo=patient&slot=smoke2&incidentId=...` retained the incident link with the SOS action panel above the profile card. Temporary backend and temp DB were stopped/removed.
 - Git checkpoint: `a648ad8` (`checkpoint: polish demo visible labels`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
@@ -303,7 +312,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Android validation record. Next safe work: continue visible text/localization polish or prepare a concise morning demo script update.
+Commit and push the Web/mobile presentation-polish checkpoint, excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

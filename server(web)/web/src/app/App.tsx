@@ -14,6 +14,7 @@ import {
   Users,
   Radio,
   FileText,
+  ChevronDown,
   ChevronRight,
   RotateCcw,
   Download,
@@ -275,6 +276,7 @@ interface DispatchMeta {
   selectionRules: Record<string, string>;
   responseFormat: Record<string, string>;
   systemPrompt: string;
+  mapProvider?: Record<string, unknown>;
 }
 
 interface HealthDetail {
@@ -284,6 +286,8 @@ interface HealthDetail {
     adminPhoneCount?: number;
   };
   frontend?: { ok?: boolean };
+  mapProvider?: Record<string, unknown>;
+  pushProvider?: Record<string, unknown>;
 }
 
 interface AdminSessionUser {
@@ -673,6 +677,22 @@ function formatLocationLabel(location?: GeoPoint | null): string {
   const floor = location.floor ? ` · ${location.floor}` : '';
   const accuracy = location.accuracyMeters ? ` · 精度 ${formatDistanceLabel(location.accuracyMeters)}` : '';
   return `${location.label ?? '模拟点位'}${floor}${accuracy}`;
+}
+
+function formatTechnicalValue(value: unknown): string {
+  if (value === undefined || value === null || value === '') {
+    return '--';
+  }
+  if (typeof value === 'boolean') {
+    return value ? '是' : '否';
+  }
+  if (Array.isArray(value)) {
+    return value.length ? value.map((item) => formatTechnicalValue(item)).join('、') : '--';
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
 }
 
 function downloadJson(filename: string, data: unknown): void {
@@ -1126,6 +1146,7 @@ export default function App() {
   const [healthDetail, setHealthDetail] = useState<HealthDetail | null>(null);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [showAuditPanel, setShowAuditPanel] = useState(false);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const [demoAdminToken, setDemoAdminToken] = useState(getStoredDemoAdminToken);
   const [adminSession, setAdminSession] = useState<AdminSession | null>(getStoredAdminSession);
   const [adminPhone, setAdminPhone] = useState('');
@@ -1200,6 +1221,14 @@ export default function App() {
         ? '分派已完成'
         : '等待触发'
     : '等待事件';
+  const dispatchSummaryLabel = incidentState?.phase === 'DISPATCHING'
+    ? '正在根据画像、距离、AED 可达性和健康风险生成任务。'
+    : hasRoleAssignments
+      ? assignedRoleEntries
+        .map(([role, roleState]) => `${translateRoleLabel(role)}：${getClientDisplayName(roleState.userId)}`)
+        .join('；')
+      : '等待患者端 SOS 后自动生成三类协同任务。';
+  const mapProviderDetail = dispatchMeta?.mapProvider ?? healthDetail?.mapProvider ?? {};
   const visibleAedSites = incidentState?.aedSites?.length ? incidentState.aedSites : aedSites;
   const cprLogTs = getLatestLogTs(incidentState, 'CPR started');
   const shockLogTs = getLatestLogTs(incidentState, 'AED shock delivered');
@@ -1630,6 +1659,9 @@ export default function App() {
       return;
     }
     const url = new URL('/mobile-demo', window.location.origin);
+    if (incidentId) {
+      url.searchParams.set('incidentId', incidentId);
+    }
     const opened = window.open(url.toString(), 'lifereflex-mobile-demo-stage');
     if (!opened) {
       setErrorMessage('浏览器拦截了 4端演示台，请允许本站弹出窗口后重试。');
@@ -2690,12 +2722,6 @@ export default function App() {
                 </div>
              </div>
           </div>
-          <div className="text-xs text-slate-400">
-            服务端阶段：{translatePhaseLabel(incidentState?.phase)} | 演示阶段：{translateScenarioPhaseLabel(phase)} | 核心施救：{translateRoleStatus(incidentState?.roles?.PRIME?.status)}
-          </div>
-          <div className="text-xs text-slate-500">
-            任务状态: 核心施救={translateRoleStatus(incidentState?.roles?.PRIME?.status)} | AED 保障={translateRoleStatus(incidentState?.roles?.RUNNER?.status)} | 环境清障={translateRoleStatus(incidentState?.roles?.GUIDE?.status)}
-          </div>
           <div className="rounded-lg border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
             安全边界：当前系统用于模拟急救协同、训练复盘和医创赛预实验，不替代 120、AED 语音提示、现场专业医护判断或真实医疗诊断。
           </div>
@@ -2762,6 +2788,50 @@ export default function App() {
             </div>
           )}
 
+          <div className="rounded-xl border border-emerald-800/50 bg-emerald-950/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] text-emerald-300 uppercase tracking-wider font-bold">智能分派摘要</div>
+                <div className="text-sm text-white font-semibold mt-1">{dispatchSummaryLabel}</div>
+              </div>
+              <div className={cn(
+                "px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider",
+                incidentState?.phase === 'DISPATCHING'
+                  ? "bg-red-950/60 text-red-200 border border-red-700/60"
+                  : hasRoleAssignments
+                    ? "bg-emerald-900/60 text-emerald-100 border border-emerald-600/60"
+                    : "bg-slate-900/60 text-slate-300 border border-slate-700/60",
+              )}>
+                {dispatchProgressLabel}
+              </div>
+            </div>
+            {hasRoleAssignments && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                {assignedRoleEntries.map(([role, roleState]) => (
+                  <div key={role} className="rounded-lg border border-emerald-800/50 bg-slate-950/40 px-3 py-3">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wider">{translateRoleLabel(role)}</div>
+                    <div className="mt-1 text-sm font-semibold text-white truncate">{getClientDisplayName(roleState.userId)}</div>
+                    <div className="mt-1 text-xs text-emerald-300">{translateRoleStatus(roleState.status)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowTechnicalDetails((visible) => !visible)}
+            className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-700/60 bg-slate-800/60 px-4 py-3 text-left text-sm text-slate-100 hover:bg-slate-800 transition-colors"
+          >
+            <span>
+              <span className="font-semibold">{showTechnicalDetails ? '收起技术详情' : '展开技术详情'}</span>
+              <span className="ml-2 text-xs text-slate-400">算法配置、调度评分与审计留痕</span>
+            </span>
+            <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", showTechnicalDetails && "rotate-180")} />
+          </button>
+
+          {showTechnicalDetails && (
+            <>
           <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div>
@@ -2802,6 +2872,22 @@ export default function App() {
             <div className="text-xs text-slate-400 leading-6 mt-2">
               <span className="text-slate-200 font-semibold">角色选择依据：</span>
               {dispatchMeta ? Object.entries(dispatchMeta.selectionRules).map(([role, rule]) => `${translateRoleLabel(role)}: ${rule}`).join('；') : '加载中...'}
+            </div>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-400">
+              <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">地图距离</div>
+                <div className="mt-1 break-all text-slate-200">
+                  {formatTechnicalValue(mapProviderDetail.activeProvider ?? mapProviderDetail.mode ?? mapProviderDetail.requestedProvider)}
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">距离来源</div>
+                <div className="mt-1 break-all text-slate-200">{formatTechnicalValue(mapProviderDetail.distanceSource)}</div>
+              </div>
+              <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">回退原因</div>
+                <div className="mt-1 break-all text-slate-200">{formatTechnicalValue(mapProviderDetail.fallbackReason)}</div>
+              </div>
             </div>
           </div>
 
@@ -3021,6 +3107,8 @@ export default function App() {
               ))}
             </div>
           </div>
+            </>
+          )}
 
           {/* Task Orders */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -3062,39 +3150,41 @@ export default function App() {
           </div>
 
           {/* Live Logs */}
-          <div className="h-64 bg-black rounded-lg border border-slate-800 p-4 overflow-hidden flex flex-col shadow-2xl">
-            <div className="text-[10px] font-mono text-slate-500 mb-3 flex justify-between border-b border-slate-900 pb-2">
-              <span>系统日志</span>
-              <span className="text-green-500">● 实时</span>
-            </div>
-            <div
-              ref={logContainerRef}
-              onScroll={handleLogScroll}
-              className="flex-1 overflow-y-auto space-y-3 font-mono text-xs pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
-            >
-               <AnimatePresence initial={false}>
-                 {logs.map((log) => (
-                   <motion.div 
-                    key={log.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex w-full min-w-0 items-start space-x-3 border-l-2 border-transparent pl-2 hover:bg-slate-900/50 py-1 rounded"
-                    style={{ borderLeftColor: log.type === 'alert' ? '#ef4444' : log.type === 'success' ? '#22c55e' : 'transparent' }}
-                   >
-                     <span className="text-slate-600 min-w-[50px]">{log.time}</span>
-                     <span className={cn(
-                       "font-bold min-w-[80px]",
-                       log.type === 'alert' ? 'text-red-500' :
-                       log.type === 'success' ? 'text-green-500' : 'text-blue-400'
-                     )}>{log.source}:</span>
-                     <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-slate-300">{log.message}</span>
-                   </motion.div>
+          {showTechnicalDetails && (
+            <div className="h-64 bg-black rounded-lg border border-slate-800 p-4 overflow-hidden flex flex-col shadow-2xl">
+              <div className="text-[10px] font-mono text-slate-500 mb-3 flex justify-between border-b border-slate-900 pb-2">
+                <span>系统日志</span>
+                <span className="text-green-500">● 实时</span>
+              </div>
+              <div
+                ref={logContainerRef}
+                onScroll={handleLogScroll}
+                className="flex-1 overflow-y-auto space-y-3 font-mono text-xs pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent"
+              >
+                <AnimatePresence initial={false}>
+                  {logs.map((log) => (
+                    <motion.div
+                      key={log.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex w-full min-w-0 items-start space-x-3 border-l-2 border-transparent pl-2 hover:bg-slate-900/50 py-1 rounded"
+                      style={{ borderLeftColor: log.type === 'alert' ? '#ef4444' : log.type === 'success' ? '#22c55e' : 'transparent' }}
+                    >
+                      <span className="text-slate-600 min-w-[50px]">{log.time}</span>
+                      <span className={cn(
+                        "font-bold min-w-[80px]",
+                        log.type === 'alert' ? 'text-red-500' :
+                        log.type === 'success' ? 'text-green-500' : 'text-blue-400'
+                      )}>{log.source}:</span>
+                      <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-slate-300">{log.message}</span>
+                    </motion.div>
                   ))}
                   <div ref={logEndRef} />
                 </AnimatePresence>
                 {logs.length === 0 && <div className="text-slate-700 italic text-center mt-10">等待事件触发...</div>}
-             </div>
-          </div>
+              </div>
+            </div>
+          )}
 
         </div>
 

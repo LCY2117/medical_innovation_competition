@@ -2,10 +2,10 @@ import { ArrowLeft, ExternalLink, RefreshCw, Smartphone } from 'lucide-react';
 import './mobile-demo-stage.css';
 
 const demoFrames = [
-  { key: 'patient', label: '患者端', caption: 'Patient' },
-  { key: 'prime', label: '核心施救', caption: 'PRIME' },
-  { key: 'runner', label: 'AED 保障', caption: 'RUNNER' },
-  { key: 'guide', label: '清障接驳', caption: 'GUIDE' },
+  { key: 'patient', label: '患者端', caption: '触发 SOS' },
+  { key: 'prime', label: '核心施救', caption: 'PRIME 辅助代号' },
+  { key: 'runner', label: 'AED 保障', caption: 'RUNNER 辅助代号' },
+  { key: 'guide', label: '清障接驳', caption: 'GUIDE 辅助代号' },
 ];
 
 const runbookSteps = [
@@ -17,6 +17,8 @@ const runbookSteps = [
 ];
 
 function MobileDemoStage() {
+  const incidentId = new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
+
   const reloadAll = () => {
     document.querySelectorAll<HTMLIFrameElement>('.mobile-demo-stage-frame').forEach((frame) => {
       frame.contentWindow?.location.reload();
@@ -32,7 +34,7 @@ function MobileDemoStage() {
         <div className="mobile-demo-stage-title">
           <Smartphone size={20} />
           <div>
-            <p>Life Reflex Arc</p>
+            <p>生命反射弧</p>
             <h1>4端协同演示台</h1>
           </div>
         </div>
@@ -52,7 +54,11 @@ function MobileDemoStage() {
 
       <section className="mobile-demo-stage-grid">
         {demoFrames.map((frame) => {
-          const src = `/mobile?demo=${frame.key}&slot=${frame.key}`;
+          const params = new URLSearchParams({ demo: frame.key, slot: frame.key });
+          if (incidentId) {
+            params.set('incidentId', incidentId);
+          }
+          const src = `/mobile?${params.toString()}`;
           return (
             <article className="mobile-demo-stage-panel" key={frame.key}>
               <div className="mobile-demo-stage-panel-head">
