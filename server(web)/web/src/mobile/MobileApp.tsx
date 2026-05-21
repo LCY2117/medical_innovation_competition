@@ -46,6 +46,7 @@ import {
   formatLocationLabel,
   formatTimeLabel,
   getResuscitationGuidance,
+  hasPrimeStarted,
   hasRunnerDelivered,
   hasRunnerPicked,
   isAedAnalyzing,
@@ -352,6 +353,52 @@ function roleAction(role: RoleName, state: IncidentState | null): { label: strin
     return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
   }
   return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本次模拟流程已结束' };
+}
+
+function primeNextStep(state: IncidentState | null): { title: string; body: string; tone: 'wait' | 'ready' | 'danger' } | null {
+  if (!state) {
+    return null;
+  }
+  if (isAedAnalyzing(state)) {
+    return {
+      title: '停止接触患者',
+      body: '等待 AED 分析结果，仅在设备明确建议时记录一次除颤。',
+      tone: 'danger',
+    };
+  }
+  if (isShockDelivered(state)) {
+    return {
+      title: '立即恢复 CPR',
+      body: '除颤完成后回到 30:2 基础复苏循环，约 2 分钟后再进入下一轮 AED 分析。',
+      tone: 'ready',
+    };
+  }
+  if (hasRunnerDelivered(state)) {
+    return {
+      title: '贴附电极片',
+      body: '连接 AED，确认周围安全后启动心律分析。',
+      tone: 'ready',
+    };
+  }
+  if (hasRunnerPicked(state)) {
+    return {
+      title: 'AED 正在回送',
+      body: '继续胸外按压，AED 到场后短暂停止并贴附电极片。',
+      tone: 'wait',
+    };
+  }
+  if (hasPrimeStarted(state)) {
+    return {
+      title: '等待 AED 到场',
+      body: '保持 100-120 次/分钟按压节律，按 30:2 循环持续复苏。',
+      tone: 'wait',
+    };
+  }
+  return {
+    title: '先启动 CPR',
+    body: '确认患者无意识且无正常呼吸后，立即开始胸外按压。',
+    tone: 'danger',
+  };
 }
 
 function selectPrimaryAed(state: IncidentState | null, aedSites: AedSite[], role: RoleName | null): AedSite | null {
@@ -1012,6 +1059,7 @@ function MobileApp() {
   const logs = [...(incident?.logs ?? [])].slice(-8).reverse();
   const assignedUsers = clients.filter((client) => client.assignedRole);
   const action = activeRole ? roleAction(activeRole, incident) : null;
+  const primeStep = activeRole === 'PRIME' ? primeNextStep(incident) : null;
   const visibleClients = clients.slice(0, 5);
   const viewTabs: Array<{ key: MobileView; label: string; icon: React.ReactNode }> = [
     { key: 'home', label: '总览', icon: <Activity size={18} /> },
@@ -1167,6 +1215,12 @@ function MobileApp() {
               </div>
             </div>
             <p>{action.hint}</p>
+            {primeStep && (
+              <div className={`mobile-next-step ${primeStep.tone}`}>
+                <strong>{primeStep.title}</strong>
+                <p>{primeStep.body}</p>
+              </div>
+            )}
             {activeRole === 'PRIME' && incident?.roles.PRIME?.status === 'CPR_STARTED' && (
               <div className="mobile-cpr-meter">
                 <div>

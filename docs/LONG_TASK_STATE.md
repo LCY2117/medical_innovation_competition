@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 5cc9534
-- Last update: 2026-05-22 02:57:00 +08:00
+- HEAD: b2c0370
+- Last update: 2026-05-22 03:01:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -47,6 +47,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 22. Push current checkpoints to GitHub. (done)
 23. Add Android Runner full-screen AED target card. (done, validating)
 24. Push Android AED target checkpoint. (done)
+25. Add mobile Web PRIME next-step CPR/AED guidance card. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -135,6 +136,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Mobile Web keeps manual PRIME/RUNNER/GUIDE role takeover available only under a collapsed “演示备用” control, so the default task path supports the AI dispatch story.
 - Android task and incident screens now show the latest six on-site timeline logs with Chinese summaries for patient SOS, dispatch, CPR, AED, ambulance, handover, and archive events.
 - Android Runner full-screen task now shows target AED name, location/floor/status, access notes, distance to AED, and AED return distance to patient using existing dispatch rationale and AED-site data.
+- Mobile Web PRIME task card now shows the next CPR/AED step: start CPR, wait for AED, AED returning, attach pads, stop touching during analysis, or resume CPR after shock.
 
 ## Validation Log
 
@@ -169,6 +171,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `6342bb7` (`checkpoint: record pushed state`) created and pushed to `origin/codex/competition-hardening`.
 - Android AED target validation: `gradle :app:assembleDebug --no-daemon` passed.
 - Git checkpoint: `5cc9534` (`checkpoint: show android AED target`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `b2c0370` (`checkpoint: record AED target push`) created and pushed to `origin/codex/competition-hardening`.
+- Mobile Web next-step validation: `npm run typecheck` passed; `npm run build` passed.
 
 ## Blockers Summary
 
@@ -177,7 +181,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue to the next unblocked polish or validation pass from remote checkpoint `5cc9534`, while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push mobile Web next-step guidance, then continue to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 

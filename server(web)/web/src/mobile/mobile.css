@@ -656,6 +656,42 @@ button:disabled {
   margin: 12px 0;
 }
 
+.mobile-next-step {
+  margin: 10px 0;
+  border: 1px solid var(--mobile-border);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--mobile-surface-2);
+}
+
+.mobile-next-step strong,
+.mobile-next-step p {
+  display: block;
+  margin: 0;
+}
+
+.mobile-next-step strong {
+  color: var(--mobile-ink);
+  font-size: 0.9rem;
+}
+
+.mobile-next-step p {
+  margin-top: 4px;
+  color: var(--mobile-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.mobile-next-step.ready {
+  border-color: color-mix(in srgb, var(--mobile-ok) 45%, var(--mobile-border));
+  background: color-mix(in srgb, var(--mobile-ok) 12%, var(--mobile-surface));
+}
+
+.mobile-next-step.danger {
+  border-color: color-mix(in srgb, var(--mobile-danger) 45%, var(--mobile-border));
+  background: var(--mobile-danger-soft);
+}
+
 .mobile-cpr-meter div {
   display: flex;
   justify-content: space-between;
