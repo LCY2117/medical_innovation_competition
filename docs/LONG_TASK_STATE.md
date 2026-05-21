@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7e9c65e
-- Last update: 2026-05-22 03:57:00 +08:00
+- HEAD: 4600663
+- Last update: 2026-05-22 04:00:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -63,6 +63,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 38. Complete deployment backup/rollback/1Panel/OpenResty runbook details. (done, validating)
 39. Push deployment runbook hardening checkpoint. (done)
 40. Reorder Android home event actions to prioritize current event and auto-join. (done, validating)
+41. Push Android current-event CTA checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -219,6 +220,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `aa0160b` (`checkpoint: harden deployment runbook`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `7e9c65e` (`checkpoint: record deployment runbook push`) created and pushed to `origin/codex/competition-hardening`.
 - Android home action validation: `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `4600663` (`checkpoint: prioritize android current event`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -227,7 +229,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push Android home-action polish, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Run final validation sweep, then continue only if a clearly unblocked high-value polish remains; leave local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
