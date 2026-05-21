@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7b8392b
-- Last update: 2026-05-22 05:27:05 +08:00
+- HEAD: b02c634
+- Last update: 2026-05-22 05:28:40 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -90,7 +90,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 65. Add mobile Web archived-flow evidence package download entry. (done, pushed)
 66. Localize remaining Android emergency-screen role-code wording. (done, pushed)
 67. Localize Android CPR metronome visible English labels. (done, pushed)
-68. Run post-label/evidence-package validation sweep. (done, checkpointing)
+68. Run post-label/evidence-package validation sweep. (done, pushed)
+69. Align whitepaper/pre-experiment/handoff wording with latest evidence package and Chinese role labels. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -337,6 +338,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android CPR label validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 - Git checkpoint: `7b8392b` (`checkpoint: localize android cpr labels`) created and pushed to `origin/codex/competition-hardening`.
 - Post-label/evidence-package validation sweep: backend `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-OIunfMkh.js` at `222.46 kB` raw / `67.65 kB` gzip and mobile `MobileApp-DTIoJNCQ.js` at `36.43 kB` raw / `11.71 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `b02c634` (`checkpoint: record validation sweep`) created and pushed to `origin/codex/competition-hardening`.
+- Whitepaper, pre-experiment protocol, and morning handoff are being aligned so the exported evidence package consistently mentions expert review checklist and observer record form, and presenter-facing role wording uses Chinese task names.
 
 ## Blockers Summary
 
@@ -345,7 +348,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push the validation-sweep record, then continue another safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Validate docs wording with `rg`, then stage and push the document-alignment checkpoint. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

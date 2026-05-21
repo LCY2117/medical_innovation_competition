@@ -161,7 +161,7 @@ gradle :app:assembleDebug --no-daemon
 - `b885b96`：移动 Web 归档页新增受保护的证据包下载入口，已推送。
 - `4e08911`：Android 全屏急救态进一步中文职责化，已推送。
 - `7b8392b`：Android CPR 节律辅助页可见英文标题中文化，已推送。
-- 待提交：记录后端/Web/Android 最新验证扫尾结果。
+- `b02c634`：记录后端/Web/Android 最新验证扫尾结果，已推送。
 
 ## 你醒来后最该做的三件事
 
@@ -193,7 +193,7 @@ app\build\outputs\apk\debug\app-debug.apk
 2. 点击“演示场景”或“初始化医创赛演示场景”。
 3. 展示 4 类终端画像和 AED 点位。
 4. 触发患者 `demo-patient`。
-5. 展示 PRIME/RUNNER/GUIDE 的分派过程和理由。
+5. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
 6. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
 7. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md` 和 `observer_record_form.csv`。
 
