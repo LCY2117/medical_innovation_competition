@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 548ed8f
-- Last update: 2026-05-22 04:58:41 +08:00
+- HEAD: 7719d7b
+- Last update: 2026-05-22 05:12:31 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -85,6 +85,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 60. Reduce Web command-center first-screen technical overload and preserve mobile incident deep links. (done, pushed)
 61. Simplify mobile scene/cooperation page technical details. (done, pushed)
 62. Surface demo readiness checklist in Web command center. (done, pushed)
+63. Add expert review checklist and observer record form into ZIP evidence package. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -313,6 +314,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Demo readiness validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-WEFAl1C8.js` at `222.46 kB` raw / `67.65 kB` gzip. Browser smoke on temporary local backend `127.0.0.1:18088` confirmed the readiness card and five checklist labels render, with initialized demo status “准备就绪”. Temporary backend and temp DB were stopped/removed.
 - Git checkpoint: `548ed8f` (`checkpoint: show demo readiness`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `a648ad8` (`checkpoint: polish demo visible labels`) created and pushed to `origin/codex/competition-hardening`.
+- Web command center/mobile deep-link checkpoint `7719d7b` (`checkpoint: record demo readiness`) is the current pushed HEAD.
+- ZIP evidence package work in progress: added `expert_review_checklist.md` and `observer_record_form.csv` generation, manifest public-review guidance, backend package assertions, and synchronized pre-experiment/deployment/expert/product docs.
+- Evidence package targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export -v` passed, 1 test OK.
+- Evidence package full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK.
 
 ## Blockers Summary
 
@@ -321,7 +326,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue the next safe competition-hardening slice: either further mobile task simplification, evidence wording polish, or Android/Web parity checks. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Inspect diffs, stage only evidence package source/tests/docs/state/handoff files, then commit and push a coherent checkpoint if clean. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

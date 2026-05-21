@@ -88,7 +88,8 @@
 3. 系统自动给核心施救、AED 保障、环境清障角色下发任务。
 4. 各终端按任务操作，依次记录加入、CPR 开始、AED 取到、AED 送达、AED 分析、救护接管。
 5. Web 调度台下载“预实验证据包”ZIP，并记录包内 `manifest.json` 的生成时间与文件校验信息。
-6. 观察员补充记录无法由系统自动采集的行为和问题。
+6. 观察员打开包内 `observer_record_form.csv`，补充记录无法由系统自动采集的行为、评分和开放反馈。
+7. 如有专家现场参与，可让专家对照包内 `expert_review_checklist.md` 逐项复核。
 
 ## 6. 指标
 
@@ -166,7 +167,7 @@
 - 每轮关键时间点折线图或条形图。
 - 使用系统前后 T1-T6 的均值、中位数和范围。
 - 参与者问卷均值和典型反馈。
-- 系统导出的预实验证据包摘要：优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv` 和 `expert_summary.md`。
+- 系统导出的预实验证据包摘要：优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md` 和 `observer_record_form.csv`。
 - 调度解释案例：展示为什么某人被分配为核心施救、AED 保障、环境清障。
 
 统计原则：
@@ -182,7 +183,7 @@
 - 系统访问地址和测试账号。
 - 3-5 分钟演示视频或现场演示脚本。
 - 预实验流程图。
-- 预实验证据包 ZIP 样例，含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要和 `manifest.json` 校验清单。
+- 预实验证据包 ZIP 样例，含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、观察员记录表和 `manifest.json` 校验清单。
 - 对外展示和专家审阅优先使用匿名化文件，避免暴露真实账号、手机号、设备编号或个人身份信息。
 - 调度解释截图。
 - 专家反馈表。

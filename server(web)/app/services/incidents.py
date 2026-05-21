@@ -653,6 +653,7 @@ class IncidentService:
         files: dict[str, str] = {
             "README.md": self._experiment_readme(export),
             "expert_summary.md": self._expert_summary(export, participant_map),
+            "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
             "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "experiment_anonymized.json": json.dumps(anonymized_payload, ensure_ascii=False, indent=2),
             "metrics.csv": self._csv_text(
@@ -672,6 +673,10 @@ class IncidentService:
             "dispatch_rationale.csv": self._csv_text(
                 self._dispatch_rationale_export_rows(export, participant_map),
                 self._dispatch_rationale_export_fields(),
+            ),
+            "observer_record_form.csv": self._csv_text(
+                self._observer_record_rows(export),
+                self._observer_record_fields(),
             ),
         }
         files["manifest.json"] = self._package_manifest(export, files)
@@ -1075,6 +1080,44 @@ class IncidentService:
     def _timeline_export_fields() -> list[str]:
         return ["ts", "tsIso", "elapsedSec", "eventType", "actorUserId", "role", "msg"]
 
+    @staticmethod
+    def _observer_record_fields() -> list[str]:
+        return ["roundId", "incidentId", "item", "systemValue", "observerValue", "score1to5", "notes"]
+
+    def _observer_record_rows(self, export: ExperimentExportResponse) -> list[dict]:
+        metrics = export.metrics
+        rows = [
+            ("round_id", "", "R001"),
+            ("scenario_location", "", ""),
+            ("observer_name", "", ""),
+            ("trigger_to_dispatch_seconds", metrics.get("dispatchSeconds"), ""),
+            ("trigger_to_cpr_seconds", metrics.get("cprStartSeconds"), ""),
+            ("trigger_to_aed_pickup_seconds", metrics.get("aedPickupSeconds"), ""),
+            ("trigger_to_aed_delivery_seconds", metrics.get("aedDeliverySeconds"), ""),
+            ("trigger_to_ambulance_handover_seconds", metrics.get("ambulanceArriveSeconds"), ""),
+            ("role_assignment_clarity", "", ""),
+            ("task_instruction_clarity", "", ""),
+            ("stress_scenario_operability", "", ""),
+            ("dispatch_reasonableness", "", ""),
+            ("aed_location_prompt_usefulness", "", ""),
+            ("data_record_completeness", "", ""),
+            ("observed_blocking_step", "", ""),
+            ("unsafe_or_misleading_copy", "", ""),
+            ("participant_open_feedback", "", ""),
+        ]
+        return [
+            {
+                "roundId": "R001",
+                "incidentId": export.incidentId,
+                "item": item,
+                "systemValue": "" if system_value is None else system_value,
+                "observerValue": observer_value,
+                "score1to5": "",
+                "notes": "",
+            }
+            for item, system_value, observer_value in rows
+        ]
+
     def _timeline_export_rows(self, timeline: list[IncidentLogEntry]) -> list[dict]:
         start_ts = timeline[0].ts if timeline else None
         rows: list[dict] = []
@@ -1199,6 +1242,8 @@ class IncidentService:
                     "metrics.csv",
                     "dispatch_rationale.csv",
                     "expert_summary.md",
+                    "expert_review_checklist.md",
+                    "observer_record_form.csv",
                 ],
                 "internalReviewOnly": ["experiment.json", "clients.csv"],
                 "note": "Use anonymized files for PPT, expert feedback, and externally shared materials.",
@@ -1345,12 +1390,14 @@ class IncidentService:
 - `experiment.json`：完整结构化导出，保留事件、终端、AED、调度依据和健康摘要。
 - `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
+- `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
 - `clients.csv`：参与终端画像、位置、角色和 OPPO/mock 健康摘要。
 - `clients_anonymized.csv`：匿名化参与者表，隐藏 userId、姓名、组织和个人简介。
 - `aed_sites.csv`：AED 点位与访问备注。
 - `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
 - `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
+- `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
 - `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
 
 ## 使用建议
@@ -1465,6 +1512,64 @@ class IncidentService:
 ## 数据使用边界
 
 本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。OPPO 健康数据若来源为 `mock`，仅代表演示闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
+"""
+
+    def _expert_review_checklist(
+        self,
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> str:
+        assignments = {
+            role: participant_map.get(user_id or "", user_id or "未分派")
+            for role, user_id in export.assignments.items()
+        }
+        metrics = export.metrics
+        generated_at = self._iso_timestamp(export.generatedAt)
+        return f"""# 生命反射弧专家现场复核清单
+
+事件编号：{export.incidentId}
+导出时间：{generated_at}
+患者代号：{participant_map.get(export.patientUserId or "", export.patientUserId or "未指定")}
+角色分派：PRIME={assignments.get("PRIME", "未分派")}，RUNNER={assignments.get("RUNNER", "未分派")}，GUIDE={assignments.get("GUIDE", "未分派")}
+
+## 一、建议审阅材料
+
+- [ ] Web 调度台首页、演示准备度、四端在线状态。
+- [ ] 患者 SOS 触发与二次确认流程。
+- [ ] PRIME/RUNNER/GUIDE 分派结果和解释。
+- [ ] 移动 Web 或 Android 任务页的当前动作、AED 位置、现场时间线。
+- [ ] 证据包中的 `experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`。
+- [ ] `manifest.json` 的生成时间、SHA-256 校验和匿名化文件建议。
+
+## 二、关键指标快照
+
+| 指标 | 系统记录 |
+| --- | --- |
+| 调度耗时 | {self._format_metric(metrics.get("dispatchSeconds"))} |
+| CPR 开始耗时 | {self._format_metric(metrics.get("cprStartSeconds"))} |
+| AED 取出耗时 | {self._format_metric(metrics.get("aedPickupSeconds"))} |
+| AED 送达耗时 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |
+| 救护接管耗时 | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} |
+| 角色完整度 | {metrics.get("roleAssignmentCompleteness", "--")} |
+| 定位覆盖率 | {metrics.get("locationCoveragePercent", "--")}% |
+| 健康摘要覆盖率 | {metrics.get("healthCoveragePercent", "--")}% |
+
+## 三、专家重点判断
+
+- [ ] 医学场景是否聚焦公共场所疑似心脏骤停的真实协同问题。
+- [ ] CPR/AED/救护接应提示是否适合演练和培训语境，是否存在不安全或过度医疗化表述。
+- [ ] PRIME/RUNNER/GUIDE 三类角色分工是否能降低现场混乱。
+- [ ] AI/规则分派是否合理体现人员能力、距离、AED 可达性和健康风险。
+- [ ] 调度解释是否足够清晰，能否被非技术评委和医学专家理解。
+- [ ] 证据包是否支持低成本预实验归档、匿名化审阅和后续 PPT 论证。
+
+## 四、现场补充记录
+
+请结合 `observer_record_form.csv` 填写系统无法自动采集的信息，例如参与者迟疑点、现场沟通问题、误触发、界面阅读困难、专家认为应修改的医学措辞。
+
+## 五、安全边界
+
+本系统为模拟急救协同、训练复盘和预实验验证工具。它不替代拨打 120、AED 语音提示、专业医护判断，也不用于真实医疗诊断或疗效证明。
 """
 
     def _assigned_role_for(self, user_id: str) -> str | None:

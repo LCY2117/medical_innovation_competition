@@ -36,6 +36,8 @@
 | 预实验证据包 ZIP 样例 |  |
 | 匿名化预实验 JSON / CSV |  |
 | 专家摘要 `expert_summary.md` |  |
+| 专家现场复核清单 `expert_review_checklist.md` |  |
+| 观察员补充记录表 `observer_record_form.csv` |  |
 | 证据包 `manifest.json` 校验清单 |  |
 | AI 分派解释与规则兜底说明 |  |
 

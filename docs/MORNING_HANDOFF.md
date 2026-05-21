@@ -13,14 +13,14 @@
 - Web 一键初始化医创赛演示场景：患者、医生、体育生、安保、2 个 AED 点位。
 - 云端调度会结合人员画像、患者距离、AED 距离和健康风险，输出 PRIME/RUNNER/GUIDE。
 - 调度结果包含可解释理由、评分、到患者距离、到 AED 距离。
-- 预实验证据包可导出 ZIP，包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要和 manifest 校验信息。
+- 预实验证据包可导出 ZIP，包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、观察员记录表和 manifest 校验信息。
 - 客户端和 AED 点位已持久化到 SQLite，PM2 重启后仍能恢复。
 - Web 控制台新增“演示口令”输入，公网演示管理接口已启用口令保护。
 - Android 默认后端改为 `https://lifereflex.mddcommunity.top/` 和 `wss://lifereflex.mddcommunity.top/ws`。
 - Android 现场总览新增 AED 点位和调度依据展示。
 - OPPO 健康增强一期已形成 mock/fallback 闭环：后端、Web、移动 Web、Android 都能同步和展示健康摘要。
 - 调度评分已经纳入健康摘要，高心率、低血氧、高压力等风险会降低高强度角色分派优先级。
-- 预实验证据包已升级为 ZIP：包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要和 manifest 校验信息。
+- 预实验证据包已升级为 ZIP：包含原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、观察员记录表和 manifest 校验信息。
 - 证据包 `manifest.json` 已补充匿名化使用建议、内部复核文件边界和 SHA-256 校验说明。
 - `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
 - Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
@@ -152,6 +152,7 @@ gradle :app:assembleDebug --no-daemon
 - `a648ad8`：Web 总控台和 `/mobile-demo` 可见标签中文化，已推送。
 - `c15d60f`：记录后端/Web 验证扫尾，已推送。
 - `36b818b`：记录 Android debug APK 验证扫尾，已推送。
+- 待提交：预实验证据包新增 `expert_review_checklist.md` 和 `observer_record_form.csv`，并同步测试与材料口径。
 
 ## 你醒来后最该做的三件事
 
@@ -185,7 +186,7 @@ app\build\outputs\apk\debug\app-debug.apk
 4. 触发患者 `demo-patient`。
 5. 展示 PRIME/RUNNER/GUIDE 的分派过程和理由。
 6. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
-7. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv` 和 `expert_summary.md`。
+7. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md` 和 `observer_record_form.csv`。
 
 ## 仍需谨慎表达
 
