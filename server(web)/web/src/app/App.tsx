@@ -411,6 +411,173 @@ function translateRoleStatus(status?: string | null): string {
   }
 }
 
+function translateScenarioPhaseLabel(phase?: ScenarioPhase | null): string {
+  switch (phase) {
+    case 'intro':
+      return '未开始';
+    case 'trigger':
+      return '患者告警';
+    case 'dispatch':
+      return '智能分派';
+    case 'action':
+      return '现场处置';
+    case 'convergence':
+      return 'AED 汇合';
+    case 'handover':
+      return '救护交接';
+    case 'summary':
+      return '记录归档';
+    default:
+      return '未开始';
+  }
+}
+
+function translateAedStatus(status?: string | null): string {
+  switch (status) {
+    case 'AVAILABLE':
+      return '可用';
+    case 'MAINTENANCE':
+      return '维护中';
+    case 'UNAVAILABLE':
+      return '不可用';
+    default:
+      return status || '未知';
+  }
+}
+
+function translateAuditEventType(type: string): string {
+  const labels: Record<string, string> = {
+    auth_register: '账号注册',
+    auth_login: '账号登录',
+    auth_logout: '退出登录',
+    auth_demo_login: '演示身份登录',
+    demo_admin_denied: '管理口令拒绝',
+    admin_denied: '管理权限拒绝',
+    admin_user_denied: '管理员账号拒绝',
+    incident_created: '创建事件',
+    incident_reset: '重置事件',
+    demo_bootstrapped: '初始化演示',
+    patient_designated: '指定患者',
+    role_joined: '角色响应',
+    role_auto_joined: '自动接单',
+    incident_action_posted: '现场动作',
+    sos_started: '启动 SOS',
+    sos_cancelled: '取消 SOS',
+    patient_sos_started: '患者 SOS',
+    patient_sos_cancelled: '患者取消 SOS',
+    incident_triggered: '触发事件',
+    experiment_exported: '导出 JSON',
+    experiment_package_exported: '导出证据包',
+    audit_events_viewed: '查看审计',
+    aed_site_upserted: '更新 AED',
+    client_registered: '终端接入',
+    client_location_updated: '位置更新',
+    client_health_updated: '健康摘要更新',
+    actor_user_mismatch: '终端身份不符',
+  };
+  return labels[type] ?? type;
+}
+
+function translateAuditOutcome(outcome: string): string {
+  switch (outcome) {
+    case 'success':
+      return '成功';
+    case 'denied':
+      return '拒绝';
+    default:
+      return outcome || '--';
+  }
+}
+
+function summarizeActor(value?: string | null): string {
+  if (!value) {
+    return '--';
+  }
+  if (value === 'demo_admin') {
+    return '演示口令';
+  }
+  if (value === 'open_demo_admin') {
+    return '本地演示';
+  }
+  return value;
+}
+
+function translateLogMessage(message: string, displayUser: (userId?: string | null) => string): string {
+  let match = message.match(/^Patient designated by (.+) \((.+)\)$/);
+  if (match) {
+    const source = match[1].startsWith('patient SOS') ? '患者端 SOS' : match[1] === 'dashboard' ? '调度台' : match[1];
+    return `${source}确认患者：${displayUser(match[2])}`;
+  }
+  match = message.match(/^Patient SOS alerting started \((.+)\)$/);
+  if (match) {
+    return `患者端启动 SOS：${displayUser(match[1])}`;
+  }
+  match = message.match(/^Patient SOS confirmed \((.+)\)$/);
+  if (match) {
+    return `患者端 SOS 已确认：${displayUser(match[1])}`;
+  }
+  match = message.match(/^Patient SOS alerting canceled \((.+)\)$/);
+  if (match) {
+    return `患者端取消 SOS：${displayUser(match[1])}`;
+  }
+  match = message.match(/^(PRIME|RUNNER|GUIDE) assigned \((.+)\) via (.+)$/);
+  if (match) {
+    const source = match[3] === 'fallback' ? '规则兜底' : match[3] === 'ai' ? '智能分派' : match[3];
+    return `${translateRoleLabel(match[1])} 已分派给 ${displayUser(match[2])}（${source}）`;
+  }
+  match = message.match(/^(PRIME|RUNNER|GUIDE) joined \((.+)\)$/);
+  if (match) {
+    return `${translateRoleLabel(match[1])} 已响应：${displayUser(match[2])}`;
+  }
+  match = message.match(/^CPR started \((.+)\)$/);
+  if (match) {
+    return `核心施救开始 CPR：${displayUser(match[1])}`;
+  }
+  match = message.match(/^AED picked \((.+)\)$/);
+  if (match) {
+    return `AED 保障已取到设备：${displayUser(match[1])}`;
+  }
+  match = message.match(/^AED delivered \((.+)\)$/);
+  if (match) {
+    return `AED 已送达患者旁：${displayUser(match[1])}`;
+  }
+  match = message.match(/^AED analysis started \((.+)\)$/);
+  if (match) {
+    return `AED 分析已开始：${displayUser(match[1])}`;
+  }
+  match = message.match(/^AED shock delivered \((.+)\)$/);
+  if (match) {
+    return `已完成一次 AED 除颤：${displayUser(match[1])}`;
+  }
+  match = message.match(/^Ambulance arrived \((.+)\)$/);
+  if (match) {
+    return `救护车已到场：${displayUser(match[1])}`;
+  }
+  match = message.match(/^Handover completed \((.+)\)$/);
+  if (match) {
+    return `现场交接已完成：${displayUser(match[1])}`;
+  }
+  if (message === 'Incident created') {
+    return '事件已创建';
+  }
+  if (message === 'Incident reset') {
+    return '事件已重置';
+  }
+  if (message === 'AI dispatching started') {
+    return '智能分派已启动';
+  }
+  if (message === 'Demo scenario bootstrapped') {
+    return '医创赛演示场景已初始化';
+  }
+  if (message === 'Incident auto-triggered') {
+    return '事件已自动触发';
+  }
+  if (message.startsWith('AED site updated')) {
+    return message.replace('AED site updated', 'AED 点位已更新');
+  }
+  return message;
+}
+
 function formatTimeLabel(ts?: number | null): string {
   if (!ts) {
     return '--:--:--';
@@ -646,7 +813,7 @@ function buildDemoFlowSteps(state: IncidentState | null) {
   const definitions = [
     { title: '初始化场景', detail: '准备患者、救援者、AED 点位', complete: hasIncident, active: !hasIncident },
     { title: '患者 SOS', detail: '患者端触发告警并锁定位置', complete: dispatchStarted, active: hasIncident && !dispatchStarted },
-    { title: 'AI 分派', detail: '生成 PRIME / RUNNER / GUIDE', complete: rolesAssigned, active: dispatchStarted && !rolesAssigned },
+    { title: 'AI 分派', detail: '生成核心施救、AED 保障、环境清障任务', complete: rolesAssigned, active: dispatchStarted && !rolesAssigned },
     { title: '现场处置', detail: 'CPR、AED 取送、清障接车', complete: rescueStarted || handover, active: rolesAssigned && !handover },
     { title: '交接归档', detail: '导出预实验证据包', complete: archived, active: handover && !archived },
   ];
@@ -988,11 +1155,13 @@ export default function App() {
   const sos = incidentState?.sos;
 
   const phase: ScenarioPhase = mapServerPhaseToScenarioPhase(incidentState);
+  const getClientDisplayName = (userId?: string | null) =>
+    clients.find((client) => client.userId === userId)?.displayName ?? userId ?? '未分配';
   const logs: LogEntry[] = (incidentState?.logs ?? []).map((log, index) => ({
     id: `${log.ts}-${index}`,
     time: new Date(log.ts).toLocaleTimeString('zh-CN', { hour12: false }),
     source: '服务端',
-    message: log.msg,
+    message: translateLogMessage(log.msg, getClientDisplayName),
     type: classifyLogType(log.msg),
   }));
   const activeServerRole =
@@ -1032,8 +1201,6 @@ export default function App() {
         : '等待触发'
     : '等待事件';
   const visibleAedSites = incidentState?.aedSites?.length ? incidentState.aedSites : aedSites;
-  const getClientDisplayName = (userId?: string | null) =>
-    clients.find((client) => client.userId === userId)?.displayName ?? userId ?? '未分配';
   const cprLogTs = getLatestLogTs(incidentState, 'CPR started');
   const shockLogTs = getLatestLogTs(incidentState, 'AED shock delivered');
   const guidanceStartTs = isPrimeShockDelivered ? shockLogTs : cprLogTs;
@@ -2460,7 +2627,7 @@ export default function App() {
           <div className="mx-auto flex max-w-[1800px] flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Security Audit Trail</div>
+                <div className="text-[10px] font-bold tracking-wider text-emerald-300">安全审计留痕</div>
                 <div className="text-sm text-slate-100">最近管理、登录、导出和现场动作留痕</div>
               </div>
               <button
@@ -2479,14 +2646,14 @@ export default function App() {
                 auditEvents.slice(0, 9).map((event) => (
                   <div key={event.eventId} className="rounded-lg border border-emerald-900/70 bg-slate-950/40 p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-emerald-200">{event.eventType}</span>
+                      <span className="text-xs font-bold text-emerald-200">{translateAuditEventType(event.eventType)}</span>
                       <span className="text-[10px] text-slate-500">{formatTimeLabel(event.ts)}</span>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-300">
-                      <span>actor: {event.actorId || event.actorType}</span>
-                      <span>outcome: {event.outcome}</span>
-                      <span>target: {event.targetId || event.targetType || '--'}</span>
-                      <span>req: {event.requestHash || '--'}</span>
+                      <span>操作者：{summarizeActor(event.actorId || event.actorType)}</span>
+                      <span>结果：{translateAuditOutcome(event.outcome)}</span>
+                      <span>对象：{event.targetId || event.targetType || '--'}</span>
+                      <span>请求指纹：{event.requestHash || '--'}</span>
                     </div>
                   </div>
                 ))
@@ -2524,7 +2691,7 @@ export default function App() {
              </div>
           </div>
           <div className="text-xs text-slate-400">
-            服务端阶段: {translatePhaseLabel(incidentState?.phase)} | 演示阶段: {phase} | 核心施救: {translateRoleStatus(incidentState?.roles?.PRIME?.status)}
+            服务端阶段：{translatePhaseLabel(incidentState?.phase)} | 演示阶段：{translateScenarioPhaseLabel(phase)} | 核心施救：{translateRoleStatus(incidentState?.roles?.PRIME?.status)}
           </div>
           <div className="text-xs text-slate-500">
             任务状态: 核心施救={translateRoleStatus(incidentState?.roles?.PRIME?.status)} | AED 保障={translateRoleStatus(incidentState?.roles?.RUNNER?.status)} | 环境清障={translateRoleStatus(incidentState?.roles?.GUIDE?.status)}
@@ -2711,7 +2878,7 @@ export default function App() {
                         "px-2 py-1 rounded-full text-[10px] font-bold",
                         site.status === 'AVAILABLE' ? "bg-emerald-500/15 text-emerald-300 border border-emerald-700/50" : "bg-amber-500/15 text-amber-300 border border-amber-700/50"
                       )}>
-                        {site.status}
+                        {translateAedStatus(site.status)}
                       </span>
                     </div>
                     <div className="text-xs text-slate-400 mt-2">{formatLocationLabel(site.location)}</div>

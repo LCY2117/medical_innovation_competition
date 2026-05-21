@@ -51,6 +51,7 @@
 - 后端最小 RBAC 已预埋：`LRA_ADMIN_PHONES` 可配置正式管理员手机号白名单，白名单用户登录后 `/auth/me` 返回 `admin` 权限，管理接口接受 Bearer token 或旧演示口令。
 - 移动端患者 SOS 正延迟分派已修复：`/mobile?demo=patient` 等待倒计时后不会再卡在 `DISPATCHING`，会继续完成角色分派。
 - Web 总控台在服务器配置 `LRA_ADMIN_PHONES` 后会显示正式管理员登录入口，管理请求优先使用 Bearer token，演示口令仍可作为备用。
+- Web 总控台与 `/mobile-demo` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -135,7 +136,8 @@ gradle :app:assembleDebug --no-daemon
 - `5855cf4`：后端通知 provider 与 WebSocket fallback，已推送。
 - `a635129`：后端正式管理员账号最小 RBAC，已推送。
 - `337496d`：前端共享类型补齐 `AuthUser.privileges`，已推送。
-- 待本轮提交：患者 SOS 正延迟修复与 Web 总控台管理员登录。
+- `9b373f4`：患者 SOS 正延迟修复与 Web 总控台管理员登录，已推送。
+- 待本轮提交：Web 总控台和 `/mobile-demo` 可见标签中文化。
 
 ## 你醒来后最该做的三件事
 

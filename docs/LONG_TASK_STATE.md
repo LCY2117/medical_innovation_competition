@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 337496d
-- Last update: 2026-05-22 04:27:27 +08:00
+- HEAD: 9b373f4
+- Last update: 2026-05-22 04:33:20 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -78,8 +78,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 53. Add backend notification provider with WebSocket fallback. (done, pushed)
 54. Add backend formal admin account minimal RBAC. (done, pushed)
 55. Align frontend admin user type. (done, pushed)
-56. Fix mobile patient SOS delayed auto-dispatch and wire Web command center admin login. (done, checkpointing)
-57. Explore remaining demo UX polish. (in progress)
+56. Fix mobile patient SOS delayed auto-dispatch and wire Web command center admin login. (done, pushed)
+57. Localize visible Web command-center and `/mobile-demo` demo labels. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -195,6 +195,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint `337496d` (`checkpoint: align admin user type`) was pushed to `origin/codex/competition-hardening`.
 - Mobile patient SOS delayed auto-dispatch no longer self-cancels the task that calls `designate_patient`; a positive-delay regression test now covers the exact `/mobile?demo=patient` failure mode.
 - Web command center now exposes optional formal admin login when `LRA_ADMIN_PHONES` is configured, uses the admin Bearer token for management APIs and dashboard-simulated role actions, and keeps the old demo admin token as a fallback.
+- Git checkpoint `9b373f4` (`checkpoint: fix patient sos and admin console login`) was pushed to `origin/codex/competition-hardening`.
+- `/mobile-demo` now uses Chinese primary role labels; Web command-center audit labels, scenario phase, AED status, and visible timeline logs are localized for presentation while preserving raw backend logs for exports.
 
 ## Validation Log
 
@@ -282,6 +284,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Admin UI/backend targeted validation: `& '..\.venv\Scripts\python.exe' -m unittest tests.test_server.ServerTestCase.test_patient_sos_with_dispatch_delay_completes_auto_dispatch tests.test_server.ServerTestCase.test_configured_admin_account_can_manage_demo -v` passed, 2 tests OK.
 - Current full backend validation: `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK.
 - Current Web validation: `npm run typecheck` passed; first `npm run build` attempt used an invalid path and did not run; rerun from `server(web)\web` passed with dashboard chunk `214.23 kB` raw / `65.60 kB` gzip.
+- Git checkpoint: `9b373f4` (`checkpoint: fix patient sos and admin console login`) created and pushed to `origin/codex/competition-hardening`.
+- Web localization validation: `npm run typecheck` passed; `npm run build` passed with dashboard chunk `217.60 kB` raw / `66.63 kB` gzip.
+- Browser smoke: temporary local backend on `127.0.0.1:18084` verified command-center Chinese scenario label and `/mobile-demo` Chinese role labels; temporary local backend on `127.0.0.1:18085` with `LRA_ADMIN_PHONES` verified admin-permission state shows “需要权限” and no longer reports “本地免口令”. Both services were stopped and temporary smoke DBs removed.
 
 ## Blockers Summary
 
@@ -290,7 +295,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the patient SOS delayed-dispatch fix and Web command-center admin login without committing DB/output/OPPO doc copy. Then continue with visible text/localization polish from the Web/mobile explorer findings.
+Checkpoint the Web/mobile visible-label localization without committing DB/output/OPPO doc copy. Then continue with one more low-risk demo polish or validation sweep.
 
 ## Resume Instructions
 

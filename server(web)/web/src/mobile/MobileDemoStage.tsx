@@ -2,18 +2,18 @@ import { ArrowLeft, ExternalLink, RefreshCw, Smartphone } from 'lucide-react';
 import './mobile-demo-stage.css';
 
 const demoFrames = [
-  { key: 'patient', label: 'Patient', caption: '患者端' },
-  { key: 'prime', label: 'PRIME', caption: '核心施救' },
-  { key: 'runner', label: 'RUNNER', caption: 'AED 保障' },
-  { key: 'guide', label: 'GUIDE', caption: '清障接驳' },
+  { key: 'patient', label: '患者端', caption: 'Patient' },
+  { key: 'prime', label: '核心施救', caption: 'PRIME' },
+  { key: 'runner', label: 'AED 保障', caption: 'RUNNER' },
+  { key: 'guide', label: '清障接驳', caption: 'GUIDE' },
 ];
 
 const runbookSteps = [
   '患者端启动 SOS',
   '等待 AI 分派',
-  'PRIME 开始 CPR',
-  'RUNNER 取送 AED',
-  'GUIDE 接车交接',
+  '核心施救开始 CPR',
+  'AED 保障取送设备',
+  '清障接驳完成交接',
 ];
 
 function MobileDemoStage() {
@@ -60,11 +60,11 @@ function MobileDemoStage() {
                   <strong>{frame.label}</strong>
                   <span>{frame.caption}</span>
                 </div>
-                <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${frame.caption}`}>
+                <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${frame.label}`}>
                   <ExternalLink size={16} />
                 </a>
               </div>
-              <iframe className="mobile-demo-stage-frame" title={frame.caption} src={src} />
+              <iframe className="mobile-demo-stage-frame" title={frame.label} src={src} />
             </article>
           );
         })}
