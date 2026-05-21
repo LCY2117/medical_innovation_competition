@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a648ad8
-- Last update: 2026-05-22 04:36:10 +08:00
+- HEAD: c15d60f
+- Last update: 2026-05-22 04:36:41 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -80,7 +80,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 55. Align frontend admin user type. (done, pushed)
 56. Fix mobile patient SOS delayed auto-dispatch and wire Web command center admin login. (done, pushed)
 57. Localize visible Web command-center and `/mobile-demo` demo labels. (done, pushed)
-58. Run final post-polish validation sweep. (done, checkpointing)
+58. Run final post-polish validation sweep. (done, pushed)
+59. Run Android debug APK validation sweep. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -199,6 +200,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint `9b373f4` (`checkpoint: fix patient sos and admin console login`) was pushed to `origin/codex/competition-hardening`.
 - `/mobile-demo` now uses Chinese primary role labels; Web command-center audit labels, scenario phase, AED status, and visible timeline logs are localized for presentation while preserving raw backend logs for exports.
 - Git checkpoint `a648ad8` (`checkpoint: polish demo visible labels`) was pushed to `origin/codex/competition-hardening`.
+- Git checkpoint `c15d60f` (`checkpoint: record post-polish validation`) was pushed to `origin/codex/competition-hardening`.
 
 ## Validation Log
 
@@ -290,6 +292,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Web localization validation: `npm run typecheck` passed; `npm run build` passed with dashboard chunk `217.60 kB` raw / `66.63 kB` gzip.
 - Browser smoke: temporary local backend on `127.0.0.1:18084` verified command-center Chinese scenario label and `/mobile-demo` Chinese role labels; temporary local backend on `127.0.0.1:18085` with `LRA_ADMIN_PHONES` verified admin-permission state shows “需要权限” and no longer reports “本地免口令”. Both services were stopped and temporary smoke DBs removed.
 - Final post-polish validation sweep: backend unittest discovery passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with dashboard chunk `217.60 kB` raw / `66.63 kB` gzip.
+- Git checkpoint: `c15d60f` (`checkpoint: record post-polish validation`) created and pushed to `origin/codex/competition-hardening`.
+- Android validation sweep: `gradle :app:assembleDebug --no-daemon` passed; only the existing `android.overridePathCheck=true` experimental warning appeared.
 - Git checkpoint: `a648ad8` (`checkpoint: polish demo visible labels`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
@@ -299,7 +303,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the final post-polish validation record. Next safe work: either Android build sweep or more visible text/localization polish.
+Checkpoint the Android validation record. Next safe work: continue visible text/localization polish or prepare a concise morning demo script update.
 
 ## Resume Instructions
 

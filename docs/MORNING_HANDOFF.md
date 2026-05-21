@@ -52,7 +52,7 @@
 - 移动端患者 SOS 正延迟分派已修复：`/mobile?demo=patient` 等待倒计时后不会再卡在 `DISPATCHING`，会继续完成角色分派。
 - Web 总控台在服务器配置 `LRA_ADMIN_PHONES` 后会显示正式管理员登录入口，管理请求优先使用 Bearer token，演示口令仍可作为备用。
 - Web 总控台与 `/mobile-demo` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
-- 最新验证扫尾已通过：后端 37 项测试、Web typecheck、Web build 均通过。
+- 最新验证扫尾已通过：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 
 ## 线上已验证
@@ -139,6 +139,8 @@ gradle :app:assembleDebug --no-daemon
 - `337496d`：前端共享类型补齐 `AuthUser.privileges`，已推送。
 - `9b373f4`：患者 SOS 正延迟修复与 Web 总控台管理员登录，已推送。
 - `a648ad8`：Web 总控台和 `/mobile-demo` 可见标签中文化，已推送。
+- `c15d60f`：记录后端/Web 验证扫尾，已推送。
+- 待本轮提交：记录 Android debug APK 验证扫尾。
 
 ## 你醒来后最该做的三件事
 
