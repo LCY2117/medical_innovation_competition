@@ -19,6 +19,46 @@
   margin-bottom: 12px;
 }
 
+.mobile-demo-stage-runbook {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mobile-demo-stage-runbook-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #26393d;
+  border-radius: 8px;
+  background: #101c1f;
+}
+
+.mobile-demo-stage-runbook-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.mobile-demo-stage-runbook-step strong {
+  overflow-wrap: anywhere;
+  color: #f2fbfa;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
 .mobile-demo-stage-icon-link,
 .mobile-demo-stage-icon-button {
   display: inline-flex;
@@ -69,7 +109,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(240px, 1fr));
   gap: 12px;
-  height: calc(100dvh - 82px);
+  height: calc(100dvh - 136px);
 }
 
 .mobile-demo-stage-panel {
@@ -128,6 +168,10 @@
 }
 
 @media (max-width: 1180px) {
+  .mobile-demo-stage-runbook {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+
   .mobile-demo-stage-grid {
     grid-template-columns: repeat(2, minmax(260px, 1fr));
     height: auto;
@@ -145,6 +189,10 @@
 
   .mobile-demo-stage-header {
     grid-template-columns: 38px minmax(0, 1fr) 38px;
+  }
+
+  .mobile-demo-stage-runbook {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mobile-demo-stage-grid {

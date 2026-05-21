@@ -566,6 +566,39 @@ function buildDispatchStream(
   }));
 }
 
+function buildDemoFlowSteps(state: IncidentState | null) {
+  const phase = state?.phase;
+  const hasIncident = Boolean(state);
+  const dispatchStarted = Boolean(
+    state?.patientUserId ||
+    phase === 'DISPATCHING' ||
+    phase === 'DISPATCHED' ||
+    phase === 'CPR' ||
+    phase === 'AED_PICKED' ||
+    phase === 'AED_DELIVERED' ||
+    phase === 'AED_ANALYZING' ||
+    phase === 'SHOCK_DELIVERED' ||
+    phase === 'HANDOVER' ||
+    phase === 'ARCHIVED',
+  );
+  const rolesAssigned = Boolean(
+    state?.roles?.PRIME?.userId ||
+    state?.roles?.RUNNER?.userId ||
+    state?.roles?.GUIDE?.userId,
+  );
+  const rescueStarted = Boolean(hasPrimeStarted(state) || hasRunnerPicked(state) || hasGuideCompleted(state));
+  const archived = phase === 'ARCHIVED';
+  const handover = archived || phase === 'HANDOVER' || hasGuideCompleted(state);
+  const definitions = [
+    { title: '初始化场景', detail: '准备患者、救援者、AED 点位', complete: hasIncident, active: !hasIncident },
+    { title: '患者 SOS', detail: '患者端触发告警并锁定位置', complete: dispatchStarted, active: hasIncident && !dispatchStarted },
+    { title: 'AI 分派', detail: '生成 PRIME / RUNNER / GUIDE', complete: rolesAssigned, active: dispatchStarted && !rolesAssigned },
+    { title: '现场处置', detail: 'CPR、AED 取送、清障接车', complete: rescueStarted || handover, active: rolesAssigned && !handover },
+    { title: '交接归档', detail: '导出预实验证据包', complete: archived, active: handover && !archived },
+  ];
+  return definitions;
+}
+
 function describeClientMission(client: ClientInfo, state: IncidentState | null): string {
   if (!state?.patientUserId) {
     return client.patientCandidate ? '重点监测中，尚未触发事件' : '在线待命，等待事件触发';
@@ -922,6 +955,7 @@ export default function App() {
   const actionDisabledTitle = actionsDisabled ? '等待服务端状态同步' : undefined;
   const incidentStartTs = incidentState?.logs?.[0]?.ts ?? null;
   const dispatchStream = buildDispatchStream(incidentState, clients, dispatchMeta, dispatchNowMs);
+  const demoFlowSteps = buildDemoFlowSteps(incidentState);
   const rationale = incidentState?.dispatchRationale ?? {};
   const rationaleEntries = Object.entries(rationale);
   const assignedRoleEntries = incidentState
@@ -2223,6 +2257,38 @@ export default function App() {
           </div>
           <div className="text-xs text-slate-500">
             任务状态: 核心施救={translateRoleStatus(incidentState?.roles?.PRIME?.status)} | AED 保障={translateRoleStatus(incidentState?.roles?.RUNNER?.status)} | 环境清障={translateRoleStatus(incidentState?.roles?.GUIDE?.status)}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+            {demoFlowSteps.map((step, index) => (
+              <div
+                key={step.title}
+                className={cn(
+                  "min-h-24 rounded-lg border px-3 py-3 transition-colors",
+                  step.complete
+                    ? "border-emerald-700/60 bg-emerald-950/30"
+                    : step.active
+                      ? "border-red-500/70 bg-red-950/40"
+                      : "border-slate-700 bg-slate-900/60",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                      step.complete
+                        ? "bg-emerald-500 text-slate-950"
+                        : step.active
+                          ? "bg-red-500 text-white"
+                          : "bg-slate-700 text-slate-300",
+                    )}
+                  >
+                    {step.complete ? <CheckCircle2 size={14} /> : index + 1}
+                  </span>
+                  <div className="min-w-0 text-xs font-semibold text-white">{step.title}</div>
+                </div>
+                <div className="mt-2 text-[11px] leading-4 text-slate-400">{step.detail}</div>
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <button

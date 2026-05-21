@@ -8,6 +8,14 @@ const demoFrames = [
   { key: 'guide', label: 'GUIDE', caption: '清障接驳' },
 ];
 
+const runbookSteps = [
+  '患者端启动 SOS',
+  '等待 AI 分派',
+  'PRIME 开始 CPR',
+  'RUNNER 取送 AED',
+  'GUIDE 接车交接',
+];
+
 function MobileDemoStage() {
   const reloadAll = () => {
     document.querySelectorAll<HTMLIFrameElement>('.mobile-demo-stage-frame').forEach((frame) => {
@@ -32,6 +40,15 @@ function MobileDemoStage() {
           <RefreshCw size={18} />
         </button>
       </header>
+
+      <section className="mobile-demo-stage-runbook" aria-label="演示导播步骤">
+        {runbookSteps.map((step, index) => (
+          <div className="mobile-demo-stage-runbook-step" key={step}>
+            <span>{index + 1}</span>
+            <strong>{step}</strong>
+          </div>
+        ))}
+      </section>
 
       <section className="mobile-demo-stage-grid">
         {demoFrames.map((frame) => {

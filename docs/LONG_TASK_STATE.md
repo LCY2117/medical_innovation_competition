@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7c2bcac
-- Last update: 2026-05-22 02:20:39 +08:00
+- HEAD: 2752c24
+- Last update: 2026-05-22 02:25:06 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -34,6 +34,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 9. Smoke-check Web UI after evidence package and health-summary additions. (done)
 10. Strengthen pre-experiment evidence integrity: anonymized package, manifest hashes, structured timeline, richer metrics, historical export correctness, and demo readiness. (done, validating)
 11. Wire Android app auto-join entry into the current AppRoot flow. (done, checkpointing)
+12. Add Web command-center flow stepper and 4-terminal demo-stage runbook. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -111,6 +112,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Historical event export now derives participant roles/patient flags from the target incident instead of the current incident.
 - `/api/health/detail` now reports `demoReadiness` with readiness warnings, location coverage, health coverage, AED availability, and export readiness.
 - Android Home and Incident tabs now expose the existing auto-join flow, passing the logged-in token and routing the user to Tasks after auto-join.
+- Web dashboard now shows a five-step competition demo flow: scenario bootstrap, patient SOS, AI dispatch, field response, and handover/export.
+- `/mobile-demo` now shows a compact runbook above the four terminal frames so a presenter can follow the correct sequence without separate notes.
 
 ## Validation Log
 
@@ -130,6 +133,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence integrity targeted tests: `.\.venv\Scripts\python.exe -m unittest tests.test_server.ServerTestCase.test_health_detail_reports_storage_and_frontend_state tests.test_server.ServerTestCase.test_health_detail_reports_demo_readiness_after_bootstrap tests.test_server.ServerTestCase.test_demo_bootstrap_aed_dispatch_and_export tests.test_server.ServerTestCase.test_historical_export_uses_target_incident_roles -v` passed, 4 tests OK.
 - Backend full tests after evidence integrity: `.\.venv\Scripts\python.exe -m unittest discover -s tests -v` passed, 29 tests OK.
 - Android auto-join validation: `gradle :app:assembleDebug --no-daemon` passed.
+- Web demo guidance validation: `npm run typecheck` passed; `npm run build` passed.
+- Browser smoke: temporary backend on `127.0.0.1:18082` opened dashboard and `/mobile-demo`; confirmed dashboard flow labels, evidence-package entry, runbook labels, and 4 iframe panels. Temporary service stopped.
 
 ## Blockers Summary
 
@@ -138,7 +143,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Android auto-join, then continue to the next unblocked Web/mobile demo-guidance polish.
+Checkpoint Web demo guidance, then continue to the next unblocked polish or validation pass.
 
 ## Resume Instructions
 
