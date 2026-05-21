@@ -6,7 +6,7 @@
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
 - HEAD: 4116432
-- Last update: 2026-05-22 06:55:03 +08:00
+- Last update: 2026-05-22 06:57:18 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -104,7 +104,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 79. Add reliable Web command-center opener for four mobile terminal tabs. (done, pushed)
 80. Polish Android PRIME navigation visible language and placeholder distance. (done, pushed)
 81. Add ZIP evidence-package review index for expert/judge review. (done, pushed)
-82. Improve mobile Web archived-flow evidence package permission UX. (done, checkpointing)
+82. Improve mobile Web archived-flow evidence package permission UX. (done, pushed)
+83. Run latest backend/Web/Android validation sweep and record handoff. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -400,6 +401,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `4116432` (`checkpoint: add evidence review index`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile Web archived-flow permission UX in progress: the archive card now has an inline demo-token field that saves to the same `lra_demo_admin_token` used by the Web command center and passes it to protected evidence-package download.
 - Mobile Web archive permission validation: `npm run typecheck` passed; `npm run build` passed with mobile `MobileApp-BiCFGvZL.js`. Browser smoke on temporary local backend `127.0.0.1:18091` with temp DB and demo token `LCY` created an archived incident and confirmed `/mobile?demo=guide&incidentId=...` shows “演示口令” plus “下载预实验证据包”. Temporary process and smoke DB/logs were removed.
+- Git checkpoint: `35768d6` (`checkpoint: improve mobile evidence download auth`) created and pushed to `origin/codex/competition-hardening`.
+- Latest validation sweep: backend `& '..\.venv\Scripts\python.exe' -m unittest discover -s tests -v` passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DAHq5Wl1.js`, mobile `MobileApp-BiCFGvZL.js`, and stage `MobileDemoStage-DKdt3ZAL.js`; Android `gradle :app:assembleDebug --no-daemon` passed. Existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -408,7 +411,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the mobile Web archived-flow permission UX slice, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the validation/handoff state, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

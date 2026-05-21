@@ -176,6 +176,11 @@ gradle :app:assembleDebug --no-daemon
 - `0674344`：预实验证据包新增 `expert_feedback_form.md` 事件级专家反馈与签字表，并同步测试与材料口径，已推送。
 - `5dc86eb`：Web 总控台新增“演示入口”链接面板，已通过 Web typecheck/build 和本地 Edge 烟测，已推送。
 - `0a97fda`：预实验证据包新增 `facilitator_run_sheet.md` 主持人/观察员跑场单，已通过后端目标测试和全量 37 项测试，已推送。
+- `f775954`：Web 总控台“演示入口”新增“打开4个手机端”同步打开和弹窗拦截复制兜底，已通过 Web typecheck/build 和本地浏览器烟测，已推送。
+- `56ea748`：Android 核心施救导航页移除英文/占位距离，改为中文距离提示与基础复苏按钮，已通过 debug APK 构建，已推送。
+- `4116432`：预实验证据包新增 `review_index.md` 审阅索引，已通过后端目标测试和全量 37 项测试，已推送。
+- `35768d6`：移动 Web 归档页可直接输入演示口令下载证据包，已通过 Web typecheck/build 和本地移动端烟测，已推送。
+- 最新验证扫尾：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过；Web 产物为桌面 `App-DAHq5Wl1.js`、移动 `MobileApp-BiCFGvZL.js`、4 端导播台 `MobileDemoStage-DKdt3ZAL.js`。
 
 ## 你醒来后最该做的三件事
 
