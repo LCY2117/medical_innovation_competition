@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 449815f
-- Last update: 2026-05-22 03:08:00 +08:00
+- HEAD: 261b05d
+- Last update: 2026-05-22 03:10:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -50,6 +50,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 25. Add mobile Web PRIME next-step CPR/AED guidance card. (done, validating)
 26. Push mobile Web PRIME next-step checkpoint. (done)
 27. Add Android profile demo-location selector. (done, validating)
+28. Push Android demo-location checkpoint. (done)
 
 ## Sub-Agent Ledger
 
@@ -179,6 +180,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `5a18fc5` (`checkpoint: guide mobile CPR next steps`) created and pushed to `origin/codex/competition-hardening`.
 - Git checkpoint: `449815f` (`checkpoint: record mobile guidance push`) created and pushed to `origin/codex/competition-hardening`.
 - Android demo-location validation: `gradle :app:assembleDebug --no-daemon` passed.
+- Git checkpoint: `261b05d` (`checkpoint: add android demo locations`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -187,7 +189,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Commit and push Android demo-location selector, then continue to the next unblocked polish or validation pass while leaving local DB/output/OPPO doc copy uncommitted.
+Run a lightweight post-checkpoint validation pass, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
