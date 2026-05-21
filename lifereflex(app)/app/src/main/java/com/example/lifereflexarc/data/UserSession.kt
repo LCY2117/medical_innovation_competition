@@ -182,4 +182,5 @@ data class IncidentArchiveEntry(
     val startedAt: Long,
     val endedAt: Long,
     val durationSec: Long,
+    val taskSummary: List<String> = emptyList(),
 )

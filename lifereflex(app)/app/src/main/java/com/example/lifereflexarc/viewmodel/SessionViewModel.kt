@@ -229,6 +229,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             startedAt = startedAt,
             endedAt = endedAt,
             durationSec = ((endedAt - startedAt).coerceAtLeast(0L) / 1000L),
+            taskSummary = archiveTaskSummary(incidentState, assignedRole, isPatient),
         )
         val next = _archives.value
             .filterNot { it.incidentId == entry.incidentId && it.userId == entry.userId }
@@ -298,6 +299,46 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit()
             .putString(KEY_ARCHIVES, gson.toJson(entries))
             .apply()
+    }
+
+    private fun archiveTaskSummary(
+        incidentState: IncidentState,
+        assignedRole: UserRole?,
+        isPatient: Boolean,
+    ): List<String> {
+        if (isPatient) {
+            return listOf(
+                "患者端触发或接入 SOS 协同流程",
+                "等待核心施救、AED 保障和环境清障任务到场",
+                "事件完成交接后进入匿名化预实验记录",
+            )
+        }
+        return when (assignedRole) {
+            UserRole.PRIME -> listOf(
+                "确认响应核心施救任务",
+                if (incidentState.roles.PRIME.status == "AED_SHOCK_DELIVERED") "完成 AED 分析与一次除颤记录" else "执行 CPR 并等待 AED 链路",
+                "配合救护车到场后完成交接归档",
+            )
+            UserRole.RUNNER -> listOf(
+                "确认响应 AED 保障任务",
+                if (incidentState.roles.RUNNER.status == "AED_DELIVERED") "完成 AED 取送并送达患者位置" else "参与 AED 取送链路",
+                "回送距离与 AED 点位记录进入证据包",
+            )
+            UserRole.GUIDE -> listOf(
+                "确认响应环境清障任务",
+                if (incidentState.roles.GUIDE.status == "AMBULANCE_ARRIVED") "完成救护车到场接应记录" else "参与通道疏导和现场秩序维护",
+                "交接状态进入本地档案与云端时间线",
+            )
+            UserRole.PATIENT -> listOf(
+                "患者端触发或接入 SOS 协同流程",
+                "等待核心施救、AED 保障和环境清障任务到场",
+                "事件完成交接后进入匿名化预实验记录",
+            )
+            null -> listOf(
+                "保持在线待命，接收现场协同状态",
+                "事件时间线已同步到本地档案",
+            )
+        }
     }
 
     private fun validateRegister(

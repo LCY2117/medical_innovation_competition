@@ -507,6 +507,22 @@ fun ArchiveScreen(
                     SummaryRow("归档状态", entry.phaseLabel, dark = entry.isPatient)
                     SummaryRow("任务来源", entry.dispatchSource, dark = entry.isPatient)
                     SummaryRow("处置时长", "${entry.durationSec / 60} 分 ${entry.durationSec % 60} 秒", dark = entry.isPatient)
+                    if (entry.taskSummary.isNotEmpty()) {
+                        Text(
+                            "参与者视角复盘",
+                            color = if (entry.isPatient) Color.White else Color(0xFF0F172A),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        entry.taskSummary.forEachIndexed { itemIndex, item ->
+                            Text(
+                                text = "${itemIndex + 1}. $item",
+                                color = if (entry.isPatient) Color(0xFFE2E8F0) else Color(0xFF475569),
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp,
+                            )
+                        }
+                    }
                     if (index == 0 && incidentState?.incidentId == entry.incidentId) {
                         SummaryRow("当前状态", "本轮事件刚完成归档", dark = entry.isPatient)
                     }

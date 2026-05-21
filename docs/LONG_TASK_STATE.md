@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 95b4e88
-- Last update: 2026-05-22 03:35:00 +08:00
+- HEAD: 7e39ee3
+- Last update: 2026-05-22 03:42:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -58,6 +58,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 33. Push frontend health diagnostics checkpoint. (done)
 34. Add Web/mobile medical disclaimer and data-use boundary copy. (done, validating)
 35. Push Web/mobile safety-boundary checkpoint. (done)
+36. Add Android local archive participant-perspective task summary. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -152,6 +153,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Expert feedback template now explicitly asks experts to review mobile Web, screenshot checklist, and demo script materials.
 - `/api/health/detail` frontend diagnostics now report index readiness, index mtime, asset count, latest asset mtime, mobile chunk readiness, and desktop chunk readiness.
 - Web dashboard and mobile Web now show concise safety-boundary copy: simulation/training/pre-experiment only, not a substitute for 120, AED voice prompts, professional medical judgment, or real diagnosis. Mobile archive copy now points users to anonymized evidence package materials.
+- Android local archive entries now persist and display participant-perspective task summaries for patient, PRIME, RUNNER, GUIDE, and standby roles.
 
 ## Validation Log
 
@@ -203,6 +205,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `3526ca0` (`checkpoint: record health diagnostics push`) created and pushed to `origin/codex/competition-hardening`.
 - Web disclaimer validation: `npm run typecheck` passed; `npm run build` passed.
 - Git checkpoint: `95b4e88` (`checkpoint: add safety boundary copy`) created and pushed to `origin/codex/competition-hardening`.
+- Git checkpoint: `7e39ee3` (`checkpoint: record safety copy push`) created and pushed to `origin/codex/competition-hardening`.
+- Android archive-summary validation: `gradle :app:assembleDebug --no-daemon` passed.
 
 ## Blockers Summary
 
@@ -211,7 +215,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Continue from remote checkpoint `95b4e88` to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
+Commit and push Android archive-summary polish, then continue to the next unblocked polish while leaving local DB/output/OPPO doc copy uncommitted.
 
 ## Resume Instructions
 
