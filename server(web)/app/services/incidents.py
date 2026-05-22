@@ -1691,7 +1691,7 @@ class IncidentService:
 - `data_dictionary.md`：证据包数据字典，解释关键指标、CSV 字段、角色代码和对外表述边界。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
-- `clients.csv`：参与终端画像、位置、角色和 OPPO/mock 健康摘要。
+- `clients.csv`：参与终端画像、位置、角色和健康摘要，仅建议内部复核使用。
 - `clients_anonymized.csv`：匿名化参与者表，隐藏 userId、姓名、组织和个人简介。
 - `aed_sites.csv`：AED 点位与访问备注。
 - `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
@@ -1705,7 +1705,15 @@ class IncidentService:
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。
+
+多轮系统演练结束后，把每轮 ZIP 放到同一目录，在项目根目录运行：
+
+```powershell
+python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"
+```
+
+脚本会先校验证据包 manifest/SHA-256，再生成 `round-summary.csv` 与 `round-analysis.md`。健康摘要如标记为样例接入或演示来源，只能作为预实验模拟数据说明，不应被表述为真实临床诊断或疗效依据。
 """
 
     def _review_index(self, export: ExperimentExportResponse, participant_map: dict[str, str]) -> str:
@@ -1777,6 +1785,7 @@ class IncidentService:
 - `participant_questionnaire.csv`
 - `baseline_vs_system_comparison.csv`
 - `pre_experiment_round_summary.csv`
+- `expert_feedback_summary.csv`
 
 ## 五、内部复核材料
 
@@ -1787,7 +1796,7 @@ class IncidentService:
 
 - 不宣称提高抢救成功率或改善患者预后。
 - 不宣称系统可替代 120、AED 语音提示或专业医护判断。
-- 不把 mock/演示健康摘要描述成真实临床监测、诊断或疗效依据。
+- 不把样例健康摘要或演示健康摘要描述成真实临床监测、诊断或疗效依据。
 - 小样本预实验只写流程可行性、可用性、协同清晰度和专家接受度，不写统计显著性临床结论。
 """
 
@@ -1911,7 +1920,7 @@ class IncidentService:
 
 ## 数据使用边界
 
-本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。OPPO 健康数据若来源为 `mock`，仅代表演示闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
+本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。健康摘要若为样例接入或演示来源，仅代表演练闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
 """
 
     def _analysis_guide(self, export: ExperimentExportResponse) -> str:
@@ -1932,7 +1941,22 @@ class IncidentService:
 5. `timeline.csv` 与 `metrics.csv`：复核关键时间点和系统自动指标。
 6. `dispatch_rationale.csv`：挑选 1-2 个角色分派案例，说明 AI/规则如何结合能力、距离、AED 与健康风险。
 
-## 二、T1-T6 指标解释
+## 二、多轮 ZIP 一键汇总
+
+多轮系统演练结束后，把每轮下载的 ZIP 放到同一目录，在项目根目录运行：
+
+```powershell
+python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"
+```
+
+输出文件：
+
+- `round-summary.csv`：合并每轮 `pre_experiment_round_summary.csv`，并附带包 SHA-256、校验状态、事件编号和生成时间。
+- `round-analysis.md`：面向 PPT 的谨慎分析摘要，包含样本数、阶段分布、关键指标的均值/中位数/范围和不可夸大结论边界。
+
+如果需要定位异常证据包，可分步运行 `summarize_evidence_rounds.py` 和 `analyze_round_summary.py`。
+
+## 三、T1-T6 指标解释
 
 | 指标 | 当前系统轮记录 | 建议解释 |
 | --- | --- | --- |
@@ -1943,7 +1967,7 @@ class IncidentService:
 | T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} | 反映 AED 取送链路总效率 |
 | T6 触发到救护接管 | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} | 反映环境清障、接应和交接流程 |
 
-## 三、基线轮与系统轮对照
+## 四、基线轮与系统轮对照
 
 `baseline_vs_system_comparison.csv` 已填入系统轮事件编号和系统轮 T1/T3/T4/T5/T6 数据。请把无系统基线轮观察到的时间和主观评分补入 baseline 列，再用 Excel 计算：
 
@@ -1952,7 +1976,7 @@ class IncidentService:
 
 解释时可以写“系统轮较基线轮在某指标上缩短/延长 X 秒”。样本量较小时，不建议写显著性结论。
 
-## 四、主观评分整理
+## 五、主观评分整理
 
 `participant_questionnaire.csv` 中 1-5 分题建议按题号计算：
 
@@ -1962,7 +1986,7 @@ class IncidentService:
 
 可以把评分归为三类：任务可理解性、协同减负、急救提示/安全边界。
 
-## 五、可用于 PPT 的谨慎表述
+## 六、可用于 PPT 的谨慎表述
 
 推荐写法：
 
@@ -1999,6 +2023,7 @@ class IncidentService:
 | `participant_questionnaire.csv` | 参与者主观问卷模板 | 计算可理解性、压力、可用性评分 |
 | `baseline_vs_system_comparison.csv` | 无系统基线轮与系统轮对照模板 | 描述性对照分析 |
 | `pre_experiment_round_summary.csv` | 单轮汇总行 | 多轮合并统计 |
+| `round-summary.csv` / `round-analysis.md` | 由一键分析脚本在 ZIP 外生成 | 多轮描述性统计和 PPT 谨慎摘要 |
 | `manifest.json` | 文件 hash、生成时间、隐私边界 | 复核证据包完整性 |
 
 ## 二、自动指标
@@ -2046,7 +2071,7 @@ class IncidentService:
 - `experiment.json`、`clients.csv` 可能包含原始 userId、显示名、组织等内部复核信息，不建议直接放入 PPT。
 - 可以写“用于模拟急救协同、训练复盘、预实验记录和专家反馈准备”。
 - 不要写“提高抢救成功率”“改善患者预后”“替代 120/AED/医护判断”。
-- `mock`、`demo`、演示位置或健康摘要只能作为演示/预实验数据来源说明，不能写成真实临床监测结论。
+- 样例健康摘要、演示位置或演示健康摘要只能作为演示/预实验数据来源说明，不能写成真实临床监测结论。
 """
 
     def _expert_review_checklist(
@@ -2304,7 +2329,7 @@ class IncidentService:
 
 - 不写“提高抢救成功率”“改善患者预后”。
 - 不写“系统可替代 120、AED 语音提示或专业医护判断”。
-- 不把 mock/演示健康摘要描述成真实临床监测或诊断。
+- 不把样例健康摘要或演示健康摘要描述成真实临床监测或诊断。
 - 不把小样本预实验描述成具有统计显著性的临床研究。
 """
 
@@ -2343,7 +2368,7 @@ class IncidentService:
 
 - 对外和专家材料优先使用匿名化文件，参与者以 P001、R001、S001 等代号出现。
 - 不把手机号、真实姓名、学校/单位身份、精确个人轨迹或未经授权的照片放入公开 PPT。
-- 健康摘要若为演示数据或 mock 来源，只能表述为模拟数据，不得表述为真实健康监测或临床诊断。
+- 健康摘要若为样例接入或演示来源，只能表述为模拟数据，不得表述为真实健康监测或临床诊断。
 
 ## 四、参与者确认记录
 

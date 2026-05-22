@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: ed7a17d
-- Last update: 2026-05-22 10:55:08 +08:00
+- HEAD: f758a1e
+- Last update: 2026-05-22 11:00:25 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -140,7 +140,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 115. Sync expert feedback template, whitepaper, and product plan with evidence analysis toolchain and 40-test validation. (done, pushed)
 116. Correct analysis-report percentage scaling for role assignment completeness. (done, pushed)
 117. Add one-command pre-experiment report builder for CSV plus Markdown generation. (done, pushed)
-118. Sync product plan, whitepaper, and expert template with the one-command evidence-analysis flow. (done, checkpointing)
+118. Sync product plan, whitepaper, and expert template with the one-command evidence-analysis flow. (done, pushed)
+119. Add one-command analysis guidance inside exported evidence-package materials. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -578,6 +579,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `ed7a17d` (`checkpoint: add pre-experiment report builder`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence-analysis documentation sync slice: `docs/PRODUCT_OPTIMIZATION_PLAN.md`, `docs/TECHNICAL_LANDING_WHITEPAPER.md`, and `docs/EXPERT_FEEDBACK_TEMPLATE.md` now point reviewers and teammates to `scripts/build_pre_experiment_report.py` as the preferred one-command multi-round ZIP analysis flow, while keeping the two-step scripts available for troubleshooting.
 - Evidence-analysis documentation validation: targeted `rg` confirmed the one-command flow, `round-summary.csv`, `round-analysis.md`, and current 41-test wording appear in public planning/review materials; safety wording scan found clinical-effectiveness terms only in cautionary or negative contexts; `git diff --check` passed with only Windows CRLF normalization warnings.
+- Git checkpoint: `f758a1e` (`checkpoint: sync evidence analysis docs`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence-package internal guidance slice: generated ZIP materials now include the one-command multi-round analysis workflow inside `README.md` and `analysis_guide.md`; `review_index.md` includes `expert_feedback_summary.csv` in public materials; expert-facing health-summary wording now uses sample/demo-health wording instead of raw engineering `mock` labels.
+- Evidence-package internal guidance validation: targeted package/export test passed; `python -m py_compile` passed for all four evidence scripts; full backend unittest discovery passed, 41 tests OK; targeted wording scan found no exposed `OPPO Health mock` or `mock/演示` wording in generated evidence-package templates outside negative test assertions.
 
 ## Blockers Summary
 
@@ -586,7 +590,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence-analysis documentation sync slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence-package internal guidance slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
