@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 6751516
-- Last update: 2026-05-22 14:31:35 +08:00
+- HEAD: c1ff709
+- Last update: 2026-05-22 14:38:30 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -153,7 +153,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 128. Add ZIP evidence quality report with key-event coverage, warnings, and low-cost pre-experiment readiness level. (done, pushed)
 129. Seed Android incident state from REST before waiting for WebSocket updates. (done, pushed)
 130. Make Android WebSocket reconnect scheduling single-flight under network flaps. (done, pushed)
-131. Add Android emergency action duplicate-submit guard for full-screen flow. (done, checkpointing)
+131. Add Android emergency action duplicate-submit guard for full-screen flow. (done, pushed)
+132. Extend Android pending-action feedback to regular task/incident mission cards. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -633,6 +634,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `6751516` (`checkpoint: make android websocket reconnect single flight`) created and pushed to `origin/codex/competition-hardening`.
 - Android emergency action debounce slice: full-screen emergency action buttons now expose a shared pending-action state, ignore duplicate submissions while an action is in flight, disable all action CTAs until the request returns, and show `提交中...` on the active action. Covered actions include CPR started, AED analysis, AED shock, AED pickup/delivery, ambulance arrival, and handover completion.
 - Android emergency action debounce validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `c1ff709` (`checkpoint: debounce android emergency actions`) created and pushed to `origin/codex/competition-hardening`.
+- Android regular mission-card pending-action slice: Tasks and Incident tabs now pass the shared pending-action state into `MissionPanel`; CPR, AED pickup/delivery, and ambulance-arrival CTAs show `提交中...` and disable while any emergency action is in flight, matching the full-screen emergency flow and reducing repeat taps in demos.
+- Android regular mission-card pending-action validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -641,7 +645,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Android emergency action debounce patch if staged diff is clean, then continue with another low-risk Android reliability or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Android regular mission-card pending-action patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

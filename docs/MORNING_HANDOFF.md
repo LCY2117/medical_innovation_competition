@@ -73,6 +73,7 @@
 - Android 事件连接已增加 REST 快照兜底：进入当前事件或指定事件时会先用 REST 返回值更新本地状态，再等待 WebSocket 实时帧，减少真机弱网下短暂空白或等待第一帧的问题。
 - Android WebSocket 重连已改为单飞调度：网络抖动或关闭/失败回调同时触发时，不会排队多个延迟重连任务，切换事件和主动关闭会取消旧重连。
 - Android 全屏急救动作已增加防重复提交：CPR 开始、AED 分析/除颤、AED 取送、救护车到达和交接完成按钮在提交中会禁用并显示“提交中...”，避免真机弱网或紧张操作时重复写入动作。
+- Android 普通任务卡也已接入同一提交态：“我的任务/现场总览”里的 CPR、AED 取送和救护车到达按钮会在提交中显示“提交中...”并禁用，和全屏急救态保持一致。
 - Android debug APK 已支持局域网 HTTP 联调，方便真机连接本地后端；release 构建仍保持 HTTPS/WSS 口径。
 - 移动 Web PWA service worker 已升级：缓存 `/mobile` 壳、离线页、manifest、图标和已加载静态资源；API/WebSocket 不缓存，弱网时更少白屏。
 - Android 关键展示文案再次收敛：登录页、患者端、归档页和全屏应急态避免“本地假会话/救援成功/黄金救援时间”等粗糙或过度承诺表达，统一为协同流程、记录归档和关键响应窗口。
@@ -233,7 +234,8 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `b89f55b`：证据包新增 `evidence_quality_report.json` 证据质量报告，README、部署手册、早晨交接和后端测试已同步，已推送。
 - `b52e5b6`：Android REST 获取事件后立即写入本地状态流，减少等待 WebSocket 首帧的空白状态，已通过 debug 构建并推送。
 - `6751516`：Android WebSocket 重连改为单飞调度，网络抖动时避免排队多个延迟重连任务，已通过 debug 构建并推送。
-- 最新验证扫尾：后端 43 项测试通过；证据包校验/汇总/分析/图表数据脚本和 `evidence_quality_report.json` 证据质量报告通过；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连和全屏急救动作防重复提交补丁验证；Web typecheck、Web build、Android release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- `c1ff709`：Android 全屏急救动作增加防重复提交和“提交中...”反馈，已通过 debug 构建并推送。
+- 最新验证扫尾：后端 43 项测试通过；证据包校验/汇总/分析/图表数据脚本和 `evidence_quality_report.json` 证据质量报告通过；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Web typecheck、Web build、Android release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
 ## 你醒来后最该做的事
 

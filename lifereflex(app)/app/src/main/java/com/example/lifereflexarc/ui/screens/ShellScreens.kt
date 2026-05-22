@@ -129,6 +129,7 @@ fun TasksScreen(
     assignedRole: UserRole?,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
     onOpenIncident: () -> Unit,
 ) {
     Column(
@@ -152,6 +153,7 @@ fun TasksScreen(
             assignedRole = assignedRole,
             deviceUserId = deviceUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
         )
         RecentTimelineCard(logs = incidentState.logs)
 
@@ -175,6 +177,7 @@ fun IncidentScreen(
     healthReadiness: HealthIntegrationReadiness,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
     onCreateIncident: () -> Unit,
     onOpenCurrent: () -> Unit,
     onAutoJoinCurrent: (() -> Unit)?,
@@ -209,6 +212,7 @@ fun IncidentScreen(
             assignedRole = assignedRole,
             deviceUserId = deviceUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
         )
         if (incidentState.phase != "ARCHIVED") {
             Card(

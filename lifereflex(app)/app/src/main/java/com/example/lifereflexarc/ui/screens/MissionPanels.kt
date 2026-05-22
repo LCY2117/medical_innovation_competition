@@ -133,6 +133,7 @@ fun MissionPanel(
     assignedRole: UserRole?,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
 ) {
     val activeRole = assignedRole
 
@@ -149,6 +150,7 @@ fun MissionPanel(
             deviceUserId = deviceUserId,
             onJoin = { incidentViewModel.joinPrime(deviceUserId) },
             onStartCpr = { incidentViewModel.actionCprStarted(deviceUserId) },
+            pendingAction = pendingAction,
         )
         activeRole == UserRole.RUNNER -> RunnerMissionCard(
             incidentState = incidentState,
@@ -156,12 +158,14 @@ fun MissionPanel(
             onJoin = { incidentViewModel.joinRunner(deviceUserId) },
             onPicked = { incidentViewModel.actionAedPicked(deviceUserId) },
             onDelivered = { incidentViewModel.actionAedDelivered(deviceUserId) },
+            pendingAction = pendingAction,
         )
         activeRole == UserRole.GUIDE -> GuideMissionCard(
             incidentState = incidentState,
             deviceUserId = deviceUserId,
             onJoin = { incidentViewModel.joinGuide(deviceUserId) },
             onAmbulanceArrived = { incidentViewModel.actionAmbulanceArrived(deviceUserId) },
+            pendingAction = pendingAction,
         )
         else -> ObserverMissionCard()
     }
@@ -225,6 +229,7 @@ private fun PrimeMissionCard(
     deviceUserId: String,
     onJoin: () -> Unit,
     onStartCpr: () -> Unit,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.PRIME.status
     val title: String
@@ -260,6 +265,8 @@ private fun PrimeMissionCard(
         accent = PhoneColors.Red,
         status = "核心施救 · ${roleStatusLabel(status)} · ${deviceUserId.takeLast(4)}",
         cta = cta,
+        actionCode = "CPR_STARTED",
+        pendingAction = pendingAction,
         onAction = action,
     ) {
         if (voiceCue != null) {
@@ -275,11 +282,13 @@ private fun RunnerMissionCard(
     onJoin: () -> Unit,
     onPicked: () -> Unit,
     onDelivered: () -> Unit,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.RUNNER.status
     val title: String
     val body: String
     val cta: String?
+    val actionCode: String?
     val action: (() -> Unit)?
 
     when (status) {
@@ -287,24 +296,28 @@ private fun RunnerMissionCard(
             title = "等待智能分派"
             body = "当前终端尚未被分配到 AED 保障任务。"
             cta = null
+            actionCode = null
             action = null
         }
         "ASSIGNED", "JOINED" -> {
             title = "前往 AED 点位"
             body = "系统已锁定最近 AED，拿到设备后立即回返患者位置。"
             cta = "确认已取到 AED"
+            actionCode = "AED_PICKED"
             action = onPicked
         }
         "AED_PICKED" -> {
             title = "回送患者位置"
             body = "继续赶往现场，与核心施救者汇合。"
             cta = "确认 AED 已送达"
+            actionCode = "AED_DELIVERED"
             action = onDelivered
         }
         else -> {
             title = "AED 已完成交付"
             body = "设备已到场，保持通信畅通，等待进一步调度。"
             cta = null
+            actionCode = null
             action = null
         }
     }
@@ -315,6 +328,8 @@ private fun RunnerMissionCard(
         accent = PhoneColors.Blue,
         status = "AED保障 · ${roleStatusLabel(status)} · ${deviceUserId.takeLast(4)}",
         cta = cta,
+        actionCode = actionCode,
+        pendingAction = pendingAction,
         onAction = action,
     )
 }
@@ -325,6 +340,7 @@ private fun GuideMissionCard(
     deviceUserId: String,
     onJoin: () -> Unit,
     onAmbulanceArrived: () -> Unit,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.GUIDE.status
     val title: String
@@ -359,6 +375,8 @@ private fun GuideMissionCard(
         accent = PhoneColors.Yellow,
         status = "环境清障 · ${roleStatusLabel(status)} · ${deviceUserId.takeLast(4)}",
         cta = cta,
+        actionCode = "AMBULANCE_ARRIVED",
+        pendingAction = pendingAction,
         onAction = action,
     )
 }
@@ -394,6 +412,8 @@ private fun MissionActionCard(
     accent: Color,
     status: String,
     cta: String?,
+    actionCode: String?,
+    pendingAction: String?,
     onAction: (() -> Unit)?,
     extraContent: @Composable () -> Unit = {},
 ) {
@@ -412,8 +432,9 @@ private fun MissionActionCard(
             Text(body, color = PhoneColors.GrayText, fontSize = 14.sp, lineHeight = 22.sp)
             if (cta != null && onAction != null) {
                 PressableButton(
-                    text = cta,
+                    text = actionButtonText(pendingAction, actionCode, cta),
                     onClick = onAction,
+                    enabled = pendingAction == null,
                     colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.White),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -421,6 +442,10 @@ private fun MissionActionCard(
             extraContent()
         }
     }
+}
+
+private fun actionButtonText(pendingAction: String?, actionCode: String?, idleText: String): String {
+    return if (actionCode != null && pendingAction == actionCode) "提交中..." else idleText
 }
 
 @Composable

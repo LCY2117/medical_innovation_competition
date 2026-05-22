@@ -233,6 +233,7 @@ fun AppRoot(
                     assignedRole = assignedRole,
                     deviceUserId = activeUserId,
                     incidentViewModel = incidentViewModel,
+                    pendingAction = pendingAction,
                     onOpenIncident = { activeTab = MainTab.Incident },
                 )
                 MainTab.Incident -> IncidentScreen(
@@ -243,6 +244,7 @@ fun AppRoot(
                     healthReadiness = healthReadiness,
                     deviceUserId = activeUserId,
                     incidentViewModel = incidentViewModel,
+                    pendingAction = pendingAction,
                     onCreateIncident = {
                         incidentViewModel.clearError()
                         incidentViewModel.createIncident()
