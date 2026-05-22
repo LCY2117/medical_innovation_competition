@@ -38,6 +38,8 @@ class IncidentViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
     private val _connecting = MutableStateFlow(false)
     val connecting: StateFlow<Boolean> = _connecting.asStateFlow()
+    private val _pendingAction = MutableStateFlow<String?>(null)
+    val pendingAction: StateFlow<String?> = _pendingAction.asStateFlow()
     private val _assignedRole = MutableStateFlow<String?>(null)
     val assignedRole: StateFlow<String?> = _assignedRole.asStateFlow()
     private val _healthSignals = MutableStateFlow<HealthSignalSummary?>(null)
@@ -150,12 +152,20 @@ class IncidentViewModel(
 
     private fun action(action: String, userId: String) {
         val id = _incidentId.value ?: return
+        if (_pendingAction.value != null) {
+            return
+        }
+        _pendingAction.value = action
         viewModelScope.launch {
             try {
                 _error.value = null
                 repository.action(_authToken.value, id, action, userId)
             } catch (e: Exception) {
                 _error.value = operationError(e)
+            } finally {
+                if (_pendingAction.value == action) {
+                    _pendingAction.value = null
+                }
             }
         }
     }
@@ -302,6 +312,7 @@ class IncidentViewModel(
         _authToken.value = null
         _error.value = null
         _connecting.value = false
+        _pendingAction.value = null
     }
 
     private fun demoLocationFor(displayName: String, professionIdentity: String, healthCondition: String): GeoPoint {

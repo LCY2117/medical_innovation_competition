@@ -54,6 +54,7 @@ fun AppRoot(
     val incidentState by incidentViewModel.state.collectAsState(null)
     val connected by incidentViewModel.connected.collectAsState(false)
     val connecting by incidentViewModel.connecting.collectAsState(false)
+    val pendingAction by incidentViewModel.pendingAction.collectAsState(null)
     val incidentError by incidentViewModel.error.collectAsState(null)
     val assignedRoleRaw by incidentViewModel.assignedRole.collectAsState(null)
     val healthSignals by incidentViewModel.healthSignals.collectAsState(null)
@@ -135,6 +136,7 @@ fun AppRoot(
             assignedRole = assignedRole,
             deviceUserId = activeUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
             onExitEmergency = {
                 dismissedArchivedIncidentId = currentIncidentId
                 activeTab = MainTab.Archive
