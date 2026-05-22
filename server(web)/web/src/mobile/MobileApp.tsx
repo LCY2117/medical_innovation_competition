@@ -1258,7 +1258,7 @@ function MobileApp() {
       <section className="mobile-status-strip">
         <div>
           <span className={`sync-dot ${syncStatus}`} />
-          <span>{syncStatus === 'live' ? '实时在线' : syncStatus === 'connecting' ? '连接中' : syncStatus === 'reconnecting' ? '重连中' : '待连接'}</span>
+          <span>{syncStatus === 'live' ? '实时在线' : syncStatus === 'connecting' ? '连接中' : syncStatus === 'reconnecting' ? '恢复连接中' : '待连接'}</span>
         </div>
         <strong>{incident ? translatePhaseLabel(incident.phase) : '未接入事件'}</strong>
       </section>

@@ -3058,8 +3058,8 @@ export default function App() {
             <Activity className="mr-2 text-red-500"/> 生命反射弧
           </div>
           <div className="hidden md:flex items-center space-x-2 text-[10px] bg-slate-800 px-3 py-1 rounded-full text-slate-400 uppercase tracking-wider font-bold">
-             <div className={cn("w-2 h-2 rounded-full", wsConnected ? "bg-green-500 animate-pulse" : "bg-yellow-500")}></div>
-             <span>{wsConnected ? "实时同步" : "离线"}</span>
+             <div className={cn("w-2 h-2 rounded-full", wsConnected ? "bg-green-500 animate-pulse" : incidentId ? "bg-amber-400 animate-pulse" : "bg-slate-500")}></div>
+             <span>{wsConnected ? "实时同步" : incidentId ? "恢复连接" : "待连接"}</span>
           </div>
         </div>
 

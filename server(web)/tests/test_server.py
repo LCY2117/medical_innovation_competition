@@ -248,6 +248,23 @@ class ServerTestCase(unittest.TestCase):
         self.assertTrue(readiness["exportReady"])
         self.assertEqual(readiness["warnings"], [])
 
+    def test_websocket_disconnect_is_removed_from_health_count(self) -> None:
+        with self._client() as client:
+            current = client.get("/api/incidents/current")
+            self.assertEqual(current.status_code, 200)
+            incident_id = current.json()["incidentId"]
+
+            with client.websocket_connect(f"/ws?incidentId={incident_id}") as websocket:
+                first = websocket.receive_json()
+                self.assertEqual(first["type"], "STATE")
+                detail = client.get("/api/health/detail")
+                self.assertEqual(detail.status_code, 200)
+                self.assertEqual(detail.json()["activeWebSockets"], 1)
+
+            detail = client.get("/api/health/detail")
+            self.assertEqual(detail.status_code, 200)
+            self.assertEqual(detail.json()["activeWebSockets"], 0)
+
     def test_dispatch_meta_is_serializable(self) -> None:
         with self._client() as client:
             response = client.get("/api/dispatch/meta")

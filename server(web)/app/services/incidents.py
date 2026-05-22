@@ -887,8 +887,13 @@ class IncidentService:
 
         try:
             while True:
-                await asyncio.sleep(30)
+                try:
+                    await asyncio.wait_for(websocket.receive_text(), timeout=25)
+                except asyncio.TimeoutError:
+                    await websocket.send_json({"type": "HEARTBEAT", "ts": self._now_ms()})
         except WebSocketDisconnect:
+            pass
+        except Exception:
             pass
         finally:
             self.ws_connections[incident_id] = [
