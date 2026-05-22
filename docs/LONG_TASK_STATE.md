@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: f758a1e
-- Last update: 2026-05-22 11:00:25 +08:00
+- HEAD: ae4bc9c
+- Last update: 2026-05-22 11:07:43 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -141,7 +141,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 116. Correct analysis-report percentage scaling for role assignment completeness. (done, pushed)
 117. Add one-command pre-experiment report builder for CSV plus Markdown generation. (done, pushed)
 118. Sync product plan, whitepaper, and expert template with the one-command evidence-analysis flow. (done, pushed)
-119. Add one-command analysis guidance inside exported evidence-package materials. (done, checkpointing)
+119. Add one-command analysis guidance inside exported evidence-package materials. (done, pushed)
+120. Add PPT/Excel chart-data CSV output for multi-round pre-experiment analysis. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -582,6 +583,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `f758a1e` (`checkpoint: sync evidence analysis docs`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence-package internal guidance slice: generated ZIP materials now include the one-command multi-round analysis workflow inside `README.md` and `analysis_guide.md`; `review_index.md` includes `expert_feedback_summary.csv` in public materials; expert-facing health-summary wording now uses sample/demo-health wording instead of raw engineering `mock` labels.
 - Evidence-package internal guidance validation: targeted package/export test passed; `python -m py_compile` passed for all four evidence scripts; full backend unittest discovery passed, 41 tests OK; targeted wording scan found no exposed `OPPO Health mock` or `mock/演示` wording in generated evidence-package templates outside negative test assertions.
+- Git checkpoint: `ae4bc9c` (`checkpoint: add evidence package analysis guidance`) created and pushed to `origin/codex/competition-hardening`.
+- Chart-data analysis slice: `scripts/analyze_round_summary.py` can now write `round-chart-data.csv` with metric group, key, label, unit, valid round count, mean, median, min, max, chart hint, and PPT-safe-use boundary. `scripts/build_pre_experiment_report.py` now generates `round-summary.csv`, `round-analysis.md`, and `round-chart-data.csv` in one command. README, deployment runbook, pre-experiment protocol, morning handoff, product plan, whitepaper, expert template, and generated ZIP guidance now document the chart data.
+- Chart-data validation: `analyze_round_summary.py --help` and `build_pre_experiment_report.py --help` passed; `python -m py_compile` passed for all four evidence scripts; targeted backend tests for round-summary analysis and one-command report builder passed; full backend unittest discovery passed, 41 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -590,7 +594,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence-package internal guidance slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the chart-data analysis slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

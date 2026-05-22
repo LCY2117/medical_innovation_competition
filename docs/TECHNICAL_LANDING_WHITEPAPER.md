@@ -110,7 +110,7 @@ flowchart LR
 
 - 第三方资源准备清单。
 - 低成本预实验方案。
-- 专家反馈表、专家意见汇总整改表、多轮汇总 CSV 和 PPT 安全口径 Markdown 分析摘要；多轮 ZIP 可用一条命令生成汇总和摘要。
+- 专家反馈表、专家意见汇总整改表、多轮汇总 CSV、PPT 安全口径 Markdown 分析摘要和 Excel/PPT 图表底表；多轮 ZIP 可用一条命令生成汇总、摘要和图表数据。
 - 部署运行手册。
 - 长任务状态和阻塞记录。
 
@@ -174,7 +174,7 @@ flowchart LR
 - Web build/typecheck 通过。
 - 云端网站可访问。
 - 演示场景一键初始化。
-- 预实验证据包可导出，包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息；多轮 ZIP 可通过 `scripts/build_pre_experiment_report.py` 一键生成 `round-summary.csv` 和 PPT 安全口径 `round-analysis.md`。
+- 预实验证据包可导出，包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息；多轮 ZIP 可通过 `scripts/build_pre_experiment_report.py` 一键生成 `round-summary.csv`、PPT 安全口径 `round-analysis.md` 和图表底表 `round-chart-data.csv`。
 
 ### M2：APK 可安装
 
@@ -197,7 +197,7 @@ flowchart LR
 - 完成 8-16 人模拟演练。
 - 导出系统预实验证据包，优先使用审阅索引、匿名化 JSON/CSV、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表和单轮汇总表形成材料。
 - 整理观察记录和问卷。
-- 用 `build_pre_experiment_report.py` 形成多轮汇总 CSV、描述性统计和谨慎结论草稿；必要时再分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py` 排查异常包。
+- 用 `build_pre_experiment_report.py` 形成多轮汇总 CSV、描述性统计、PPT 图表底表和谨慎结论草稿；必要时再分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py` 排查异常包。
 - 形成图表和结论。
 
 ### M5：专家反馈

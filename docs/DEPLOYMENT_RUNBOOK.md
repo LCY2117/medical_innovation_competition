@@ -344,11 +344,13 @@ python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 
 通过时脚本会输出 `OK`；如果提示 hash 不一致、缺文件、路径异常或公开/内部材料边界冲突，应重新导出证据包并保留问题记录。
 
-多轮预实验结束后，可以把每轮下载的 ZIP 放到同一目录，一键生成汇总 CSV 和 Markdown 分析摘要：
+多轮预实验结束后，可以把每轮下载的 ZIP 放到同一目录，一键生成汇总 CSV、Markdown 分析摘要和 Excel/PPT 图表数据：
 
 ```powershell
 python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
 ```
+
+输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。`round-chart-data.csv` 会把时间指标、覆盖率和场景上下文整理为均值、中位数、最小值和最大值，适合直接导入 Excel 或作为 PPT 图表底表。
 
 也可以分步生成汇总 CSV：
 
@@ -358,10 +360,10 @@ python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output 
 
 该脚本会先复用 manifest/SHA-256 校验，再合并每个包内的 `pre_experiment_round_summary.csv`，输出包路径、包 hash、校验状态、事件编号、生成时间和 T1-T6/覆盖率/角色完整度等核心字段。若需要把异常包也写入汇总表用于排查，可追加 `--include-invalid`。
 
-汇总 CSV 生成后，再导出 Markdown 分析摘要：
+汇总 CSV 生成后，再导出 Markdown 分析摘要，也可以同步导出图表数据 CSV：
 
 ```powershell
-python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md"
+python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md" --chart-output "D:\path\to\round-chart-data.csv"
 ```
 
 该报告只做描述性统计，并给出适合 PPT 改写的谨慎结论模板；不要把它写成真实临床疗效证明。

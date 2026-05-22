@@ -51,6 +51,7 @@
 | 一键多轮分析命令 `build_pre_experiment_report.py` |  |
 | 多轮汇总表 `round-summary.csv` |  |
 | 多轮 Markdown 分析摘要 `round-analysis.md` |  |
+| 多轮图表底表 `round-chart-data.csv` |  |
 | 证据包 `manifest.json` 校验清单 |  |
 | AI 分派解释与规则兜底说明 |  |
 
@@ -102,7 +103,7 @@
 
 ### 4.5 证据链与分析材料建议
 
-请评价证据包、manifest 校验、一键多轮分析流程、多轮汇总 CSV、Markdown 分析摘要和专家整改闭环表是否足以支撑预实验复盘。
+请评价证据包、manifest 校验、一键多轮分析流程、多轮汇总 CSV、Markdown 分析摘要、图表底表和专家整改闭环表是否足以支撑预实验复盘。
 
 反馈：
 

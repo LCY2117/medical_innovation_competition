@@ -1713,7 +1713,7 @@ class IncidentService:
 python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"
 ```
 
-脚本会先校验证据包 manifest/SHA-256，再生成 `round-summary.csv` 与 `round-analysis.md`。健康摘要如标记为样例接入或演示来源，只能作为预实验模拟数据说明，不应被表述为真实临床诊断或疗效依据。
+脚本会先校验证据包 manifest/SHA-256，再生成 `round-summary.csv`、`round-analysis.md` 与 `round-chart-data.csv`。健康摘要如标记为样例接入或演示来源，只能作为预实验模拟数据说明，不应被表述为真实临床诊断或疗效依据。
 """
 
     def _review_index(self, export: ExperimentExportResponse, participant_map: dict[str, str]) -> str:
@@ -1953,6 +1953,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 - `round-summary.csv`：合并每轮 `pre_experiment_round_summary.csv`，并附带包 SHA-256、校验状态、事件编号和生成时间。
 - `round-analysis.md`：面向 PPT 的谨慎分析摘要，包含样本数、阶段分布、关键指标的均值/中位数/范围和不可夸大结论边界。
+- `round-chart-data.csv`：面向 Excel/PPT 的图表数据，按时间指标、覆盖率和场景上下文输出均值、中位数、最小值和最大值。
 
 如果需要定位异常证据包，可分步运行 `summarize_evidence_rounds.py` 和 `analyze_round_summary.py`。
 
@@ -2023,7 +2024,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | `participant_questionnaire.csv` | 参与者主观问卷模板 | 计算可理解性、压力、可用性评分 |
 | `baseline_vs_system_comparison.csv` | 无系统基线轮与系统轮对照模板 | 描述性对照分析 |
 | `pre_experiment_round_summary.csv` | 单轮汇总行 | 多轮合并统计 |
-| `round-summary.csv` / `round-analysis.md` | 由一键分析脚本在 ZIP 外生成 | 多轮描述性统计和 PPT 谨慎摘要 |
+| `round-summary.csv` / `round-analysis.md` / `round-chart-data.csv` | 由一键分析脚本在 ZIP 外生成 | 多轮描述性统计、PPT 谨慎摘要和图表数据 |
 | `manifest.json` | 文件 hash、生成时间、隐私边界 | 复核证据包完整性 |
 
 ## 二、自动指标

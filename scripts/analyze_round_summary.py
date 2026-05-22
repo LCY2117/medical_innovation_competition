@@ -29,6 +29,33 @@ CONTEXT_FIELDS = [
     ("runnerRouteMeters", "AED 保障路线距离"),
 ]
 
+CHART_FIELDS = [
+    ("time", "seconds", "时间指标", field, label, 1.0)
+    for field, label in TIME_FIELDS
+] + [
+    ("coverage", "percent", "覆盖率与完整度", field, label, scale)
+    for field, label, scale in COVERAGE_FIELDS
+] + [
+    ("context", "count", "场景上下文", "participantCount", "参与终端数", 1.0),
+    ("context", "count", "场景上下文", "aedSiteCount", "AED 点位数", 1.0),
+    ("context", "count", "场景上下文", "availableAedSiteCount", "可用 AED 点位数", 1.0),
+    ("context", "meters", "场景上下文", "runnerRouteMeters", "AED 保障路线距离", 1.0),
+]
+
+CHART_FIELDNAMES = [
+    "metricGroup",
+    "metricKey",
+    "metricLabel",
+    "unit",
+    "validRoundCount",
+    "mean",
+    "median",
+    "min",
+    "max",
+    "chartHint",
+    "pptSafeUse",
+]
+
 
 def _read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -75,6 +102,11 @@ def _stats(values: list[float]) -> dict[str, float | int | None]:
     }
 
 
+def _analyzed_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    valid_rows = [row for row in rows if row.get("verificationStatus", "OK") == "OK"]
+    return valid_rows or rows
+
+
 def _metric_table(rows: list[dict[str, str]], fields: list[tuple[str, str]], unit: str) -> list[str]:
     lines = [f"| 指标 | 有效轮次 | 均值{unit} | 中位数{unit} | 最小{unit} | 最大{unit} |", "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for field, label in fields:
@@ -95,6 +127,40 @@ def _scaled_metric_table(rows: list[dict[str, str]], fields: list[tuple[str, str
     return lines
 
 
+def generate_chart_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    if not rows:
+        raise ValueError("round summary CSV has no data rows")
+
+    analyzed_rows = _analyzed_rows(rows)
+    chart_rows: list[dict[str, str]] = []
+    for metric_group, unit, chart_hint, field, label, scale in CHART_FIELDS:
+        stat = _stats(_scaled_values(analyzed_rows, field, scale))
+        chart_rows.append(
+            {
+                "metricGroup": metric_group,
+                "metricKey": field,
+                "metricLabel": label,
+                "unit": unit,
+                "validRoundCount": str(stat["count"]),
+                "mean": _fmt(stat["mean"]),
+                "median": _fmt(stat["median"]),
+                "min": _fmt(stat["min"]),
+                "max": _fmt(stat["max"]),
+                "chartHint": chart_hint,
+                "pptSafeUse": "descriptive_pre_experiment_only",
+            }
+        )
+    return chart_rows
+
+
+def write_chart_csv(rows: list[dict[str, str]], output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CHART_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def _phase_counts(rows: list[dict[str, str]]) -> str:
     counts = Counter(row.get("manifestPhase") or row.get("phase") or "unknown" for row in rows)
     return "，".join(f"{phase}: {count}" for phase, count in sorted(counts.items()))
@@ -106,7 +172,7 @@ def generate_report(rows: list[dict[str, str]], *, source_name: str) -> str:
 
     valid_rows = [row for row in rows if row.get("verificationStatus", "OK") == "OK"]
     failed_rows = [row for row in rows if row.get("verificationStatus", "OK") != "OK"]
-    analyzed_rows = valid_rows or rows
+    analyzed_rows = _analyzed_rows(rows)
     incident_ids = sorted({row.get("manifestIncidentId") or row.get("incidentId") or "" for row in analyzed_rows if row.get("manifestIncidentId") or row.get("incidentId")})
 
     lines = [
@@ -168,11 +234,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("summary_csv", help="CSV produced by scripts/summarize_evidence_rounds.py")
     parser.add_argument("-o", "--output", help="Output Markdown path. Defaults to stdout.")
+    parser.add_argument("--chart-output", help="Optional PPT/Excel-friendly chart data CSV path.")
     args = parser.parse_args(argv)
 
     summary_path = Path(args.summary_csv)
     try:
-        report = generate_report(_read_rows(summary_path), source_name=str(summary_path))
+        rows = _read_rows(summary_path)
+        report = generate_report(rows, source_name=str(summary_path))
+        chart_rows = generate_chart_rows(rows) if args.chart_output else []
     except (OSError, csv.Error, ValueError) as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
@@ -184,6 +253,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"OK: wrote pre-experiment analysis report -> {output}")
     else:
         sys.stdout.write(report)
+    if args.chart_output:
+        chart_output = Path(args.chart_output)
+        write_chart_csv(chart_rows, chart_output)
+        print(f"OK: wrote chart data CSV -> {chart_output}")
     return 0
 
 

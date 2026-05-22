@@ -909,6 +909,7 @@ class ServerTestCase(unittest.TestCase):
         package_path = self.root / "lifereflex-evidence.zip"
         summary_path = self.root / "round-summary.csv"
         report_path = self.root / "round-analysis.md"
+        chart_path = self.root / "round-chart-data.csv"
         package_path.write_bytes(package.content)
         scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
 
@@ -932,6 +933,8 @@ class ServerTestCase(unittest.TestCase):
                 str(summary_path),
                 "--output",
                 str(report_path),
+                "--chart-output",
+                str(chart_path),
             ],
             cwd=scripts_dir,
             capture_output=True,
@@ -942,12 +945,16 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(summary_result.returncode, 0, summary_result.stderr)
         self.assertEqual(report_result.returncode, 0, report_result.stderr)
         report = report_path.read_text(encoding="utf-8")
+        chart_data = chart_path.read_text(encoding="utf-8-sig")
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("T1 触发到分派完成", report)
         self.assertIn("校验通过轮次：1", report)
         self.assertIn("| 角色分派完整度 `roleAssignmentCompleteness` | 1 | 100 | 100 | 100 | 100 |", report)
         self.assertIn("不应表述为：提高真实抢救成功率", report)
         self.assertIn(bootstrapped.json()["incidentId"], report)
+        self.assertIn("metricGroup,metricKey,metricLabel,unit,validRoundCount", chart_data)
+        self.assertIn("time,dispatchSeconds,T1 触发到分派完成,seconds,1", chart_data)
+        self.assertIn("coverage,roleAssignmentCompleteness,角色分派完整度,percent,1,100,100,100,100", chart_data)
 
     def test_pre_experiment_report_builder_creates_summary_and_analysis(self) -> None:
         with self._client() as client:
@@ -983,10 +990,13 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("OK: summarized 1 evidence round", result.stdout)
         summary = (output_dir / "round-summary.csv").read_text(encoding="utf-8-sig")
         report = (output_dir / "round-analysis.md").read_text(encoding="utf-8")
+        chart_data = (output_dir / "round-chart-data.csv").read_text(encoding="utf-8-sig")
         self.assertIn("verificationStatus", summary)
         self.assertIn(bootstrapped.json()["incidentId"], summary)
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("角色分派完整度", report)
+        self.assertIn("metricGroup", chart_data)
+        self.assertIn("dispatchSeconds", chart_data)
 
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:

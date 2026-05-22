@@ -78,8 +78,8 @@
 - 证据包新增专家意见汇总与整改闭环表：`expert_feedback_summary.csv` 用于合并多名专家评分、风险关注点、整改负责人、优先级、处理状态、补充证据和二次复核意见；`expert_feedback_form.md` 继续用于单名专家签字留档。
 - 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 合并成一张 CSV，便于后续 Excel 描述性统计。
 - 新增多轮分析报告脚本：`scripts/analyze_round_summary.py` 可把汇总 CSV 转成 Markdown 分析摘要，包含均值、中位数、范围和 PPT 安全表述边界。
-- 新增一键预实验分析脚本：`scripts/build_pre_experiment_report.py` 可直接从多轮 ZIP 生成 `round-summary.csv` 和 `round-analysis.md`。
-- 最新验证扫尾为一键预实验分析切片：后端 41 项测试通过；证据包生成、manifest 校验脚本、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本和一键预实验分析脚本测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
+- 新增一键预实验分析脚本：`scripts/build_pre_experiment_report.py` 可直接从多轮 ZIP 生成 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。
+- 最新验证扫尾为一键预实验分析与图表数据切片：后端 41 项测试通过；证据包生成、manifest 校验脚本、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据和一键预实验分析脚本测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 - Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
 
@@ -103,7 +103,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：41 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单和公开/内部材料边界可独立校验；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV 与 Markdown。
+结果：41 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单和公开/内部材料边界可独立校验；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -243,11 +243,13 @@ app\build\outputs\apk\debug\app-debug.apk
 python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 ```
 
-多轮系统演练结束后，把多个 ZIP 放到同一目录，一键生成汇总表和分析摘要：
+多轮系统演练结束后，把多个 ZIP 放到同一目录，一键生成汇总表、分析摘要和图表底表：
 
 ```powershell
 python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
 ```
+
+输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。
 
 也可以分步执行：
 
@@ -255,10 +257,10 @@ python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --outpu
 python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output "D:\path\to\round-summary.csv"
 ```
 
-继续生成 PPT 安全口径的 Markdown 分析摘要：
+继续生成 PPT 安全口径的 Markdown 分析摘要，也可以同步生成图表底表：
 
 ```powershell
-python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md"
+python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md" --chart-output "D:\path\to\round-chart-data.csv"
 ```
 
 4. 申请第三方资源，按 `docs/THIRD_PARTY_RESOURCES.md` 走：
