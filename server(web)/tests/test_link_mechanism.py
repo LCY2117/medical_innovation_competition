@@ -10,6 +10,7 @@ from typing import Callable
 
 from app.models.schemas import ClientInfo
 from app.services.dispatch_ai import DispatchPlanner
+from app.services.spatial import SpatialProvider
 
 
 def _get_free_port() -> int:
@@ -279,6 +280,36 @@ class LinkMechanismTestCase(unittest.TestCase):
             self.assertEqual(slow_api.calls, 1)
         finally:
             slow_api.stop()
+
+    def test_static_fallback_uses_local_distance_without_map_api_wait(self) -> None:
+        class SlowSpatialProvider(SpatialProvider):
+            def __init__(self) -> None:
+                super().__init__(provider="amap", amap_service_key="fake", timeout_sec=3)
+                self.network_calls = 0
+
+            def distance_meters(self, origin, destination):  # type: ignore[no-untyped-def]
+                self.network_calls += 1
+                time.sleep(1)
+                return super().distance_meters(origin, destination)
+
+        spatial = SlowSpatialProvider()
+        planner = DispatchPlanner(
+            api_key=None,
+            model="remote-model",
+            base_url="http://127.0.0.1:1/v1",
+            timeout_sec=1,
+            spatial_provider=spatial,
+        )
+
+        started_at = time.perf_counter()
+        assignments, source, rationale = planner.fallback_assign_roles("patient-1", self._clients())
+        elapsed = time.perf_counter() - started_at
+
+        self.assertEqual(source, "fallback")
+        self.assertLess(elapsed, 0.2)
+        self.assertEqual(spatial.network_calls, 0)
+        self.assertEqual(assignments["PRIME"], "doctor-1")
+        self.assertIn("PRIME", rationale)
 
     def test_prefer_remote_when_switch_disabled(self) -> None:
         local = MockLLMServer(

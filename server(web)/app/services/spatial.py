@@ -82,6 +82,11 @@ class SpatialProvider:
             fallbackReason=fallback_reason,
         )
 
+    def local_distance_meters(self, origin: GeoPoint | None, destination: GeoPoint | None) -> float | None:
+        if origin is None or destination is None:
+            return None
+        return self._haversine_distance_meters(origin, destination)
+
     def _amap_distance(self, origin: GeoPoint, destination: GeoPoint) -> DistanceResult:
         query = parse.urlencode(
             {

@@ -107,8 +107,8 @@ class DispatchPlanner:
                     self.explain_assignments(assignments, patient, candidates, sites),
                 )
 
-        assignments = self._fallback_assignments(candidates, patient, sites)
-        return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites)
+        assignments = self._fallback_assignments(candidates, patient, sites, local_only=True)
+        return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites, local_only=True)
 
     def fallback_assign_roles(
         self,
@@ -120,8 +120,8 @@ class DispatchPlanner:
         patient = next((client for client in all_clients if client.userId == patient_user_id), None)
         candidates = [client for client in all_clients if client.userId != patient_user_id]
         sites = list(aed_sites or [])
-        assignments = self._fallback_assignments(candidates, patient, sites)
-        return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites)
+        assignments = self._fallback_assignments(candidates, patient, sites, local_only=True)
+        return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites, local_only=True)
 
     def explain(self) -> dict:
         provider = "fallback"
@@ -302,13 +302,14 @@ class DispatchPlanner:
         clients: list[ClientInfo],
         patient: ClientInfo | None,
         aed_sites: list[AedSite],
+        local_only: bool = False,
     ) -> dict[str, str | None]:
         assignments: dict[str, str | None] = {role: None for role in ROLE_ORDER}
         remaining = list(clients)
 
         for role in ROLE_ORDER:
             scored = sorted(
-                ((self._score_client(client, role, patient, aed_sites), client) for client in remaining),
+                ((self._score_client(client, role, patient, aed_sites, local_only=local_only), client) for client in remaining),
                 key=lambda item: item[0],
                 reverse=True,
             )
@@ -331,6 +332,7 @@ class DispatchPlanner:
         patient: ClientInfo | None,
         candidates: list[ClientInfo],
         aed_sites: list[AedSite],
+        local_only: bool = False,
     ) -> dict[str, DispatchRoleDecision]:
         candidate_map = {client.userId: client for client in candidates}
         rationale: dict[str, DispatchRoleDecision] = {}
@@ -346,19 +348,24 @@ class DispatchPlanner:
                 )
                 continue
 
-            reasons, warnings = self._decision_notes(client, role, patient, aed_sites)
-            nearest = self._nearest_aed(client.location, aed_sites)
+            reasons, warnings = self._decision_notes(client, role, patient, aed_sites, local_only=local_only)
+            nearest = self._nearest_aed(client.location, aed_sites, local_only=local_only)
             rationale[role] = DispatchRoleDecision(
                 userId=client.userId,
-                score=self._score_client(client, role, patient, aed_sites),
+                score=self._score_client(client, role, patient, aed_sites, local_only=local_only),
                 reasons=reasons,
                 warnings=warnings,
-                distanceToPatientMeters=self._distance_meters(client.location, patient.location if patient else None),
+                distanceToPatientMeters=self._distance_meters_for_mode(
+                    client.location,
+                    patient.location if patient else None,
+                    local_only,
+                ),
                 nearestAedSiteId=nearest[0].siteId if nearest else None,
                 distanceToAedMeters=nearest[1] if nearest else None,
-                aedToPatientMeters=self._distance_meters(
+                aedToPatientMeters=self._distance_meters_for_mode(
                     nearest[0].location if nearest else None,
                     patient.location if patient else None,
+                    local_only,
                 ),
             )
         return rationale
@@ -369,6 +376,7 @@ class DispatchPlanner:
         role: str,
         patient: ClientInfo | None = None,
         aed_sites: list[AedSite] | None = None,
+        local_only: bool = False,
     ) -> int:
         profession = client.professionIdentity.lower()
         bio = client.profileBio.lower()
@@ -392,8 +400,12 @@ class DispatchPlanner:
         if health_risk_score:
             score -= health_risk_score if role in {"PRIME", "RUNNER"} else max(1, health_risk_score // 3)
 
-        distance_to_patient = self._distance_meters(client.location, patient.location if patient else None)
-        nearest_aed = self._nearest_aed(client.location, list(aed_sites or []))
+        distance_to_patient = self._distance_meters_for_mode(
+            client.location,
+            patient.location if patient else None,
+            local_only,
+        )
+        nearest_aed = self._nearest_aed(client.location, list(aed_sites or []), local_only=local_only)
 
         if distance_to_patient is not None:
             if distance_to_patient <= 80:
@@ -446,6 +458,7 @@ class DispatchPlanner:
         role: str,
         patient: ClientInfo | None,
         aed_sites: list[AedSite],
+        local_only: bool = False,
     ) -> tuple[list[str], list[str]]:
         profession = client.professionIdentity.lower()
         bio = client.profileBio.lower()
@@ -453,7 +466,11 @@ class DispatchPlanner:
         reasons: list[str] = []
         warnings: list[str] = []
 
-        distance_to_patient = self._distance_meters(client.location, patient.location if patient else None)
+        distance_to_patient = self._distance_meters_for_mode(
+            client.location,
+            patient.location if patient else None,
+            local_only,
+        )
         if distance_to_patient is not None:
             reasons.append(f"距离患者约 {round(distance_to_patient)} 米")
         else:
@@ -465,7 +482,7 @@ class DispatchPlanner:
             if any(marker in bio for marker in ("急救", "cpr", "aed", "培训", "训练")):
                 reasons.append("画像显示掌握 CPR/AED 急救技能")
         elif role == "RUNNER":
-            nearest = self._nearest_aed(client.location, aed_sites)
+            nearest = self._nearest_aed(client.location, aed_sites, local_only=local_only)
             if nearest:
                 reasons.append(f"距离最近 AED 点约 {round(nearest[1])} 米")
             if any(marker in text for marker in ("体育", "跑得快", "体能", "运动", "快速")):
@@ -491,14 +508,29 @@ class DispatchPlanner:
     def _distance_meters(self, a: GeoPoint | None, b: GeoPoint | None) -> float | None:
         return self.spatial_provider.distance_meters(a, b).meters if self.spatial_provider else None
 
-    def _nearest_aed(self, origin: GeoPoint | None, aed_sites: list[AedSite]) -> tuple[AedSite, float] | None:
+    def _local_distance_meters(self, a: GeoPoint | None, b: GeoPoint | None) -> float | None:
+        if self.spatial_provider is None:
+            return None
+        return self.spatial_provider.local_distance_meters(a, b)
+
+    def _distance_meters_for_mode(self, a: GeoPoint | None, b: GeoPoint | None, local_only: bool) -> float | None:
+        if local_only:
+            return self._local_distance_meters(a, b)
+        return self._distance_meters(a, b)
+
+    def _nearest_aed(
+        self,
+        origin: GeoPoint | None,
+        aed_sites: list[AedSite],
+        local_only: bool = False,
+    ) -> tuple[AedSite, float] | None:
         if origin is None:
             return None
         available_sites = [site for site in aed_sites if site.status.upper() == "AVAILABLE"]
         distances = [
             (site, distance)
             for site in available_sites
-            if (distance := self._distance_meters(origin, site.location)) is not None
+            if (distance := self._distance_meters_for_mode(origin, site.location, local_only)) is not None
         ]
         if not distances:
             return None
