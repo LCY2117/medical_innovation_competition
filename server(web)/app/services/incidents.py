@@ -269,12 +269,26 @@ class IncidentService:
         if self.dispatch_delay_sec > 0:
             await asyncio.sleep(self.dispatch_delay_sec)
 
-        assignments, source, rationale = await asyncio.to_thread(
-            self.dispatch_planner.assign_roles,
-            patient_user_id,
-            self.list_clients(),
-            self.list_aed_sites(),
+        clients = self.list_clients()
+        aed_sites = self.list_aed_sites()
+        dispatch_task = asyncio.create_task(
+            asyncio.to_thread(self.dispatch_planner.assign_roles, patient_user_id, clients, aed_sites)
         )
+        try:
+            assignments, source, rationale = await asyncio.wait_for(
+                asyncio.shield(dispatch_task),
+                timeout=max(0.05, self.dispatch_planner.llm_budget_sec),
+            )
+        except asyncio.TimeoutError:
+            assignments, source, rationale = self.dispatch_planner.fallback_assign_roles(
+                patient_user_id,
+                clients,
+                aed_sites,
+            )
+            state.logs.append(
+                IncidentLogEntry(ts=self._now_ms(), msg="AI dispatch timed out; static fallback assigned")
+            )
+
         state.phase = "DISPATCHED"
         state.dispatchSource = source
         state.dispatchRationale = rationale

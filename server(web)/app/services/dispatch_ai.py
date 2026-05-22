@@ -110,6 +110,19 @@ class DispatchPlanner:
         assignments = self._fallback_assignments(candidates, patient, sites)
         return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites)
 
+    def fallback_assign_roles(
+        self,
+        patient_user_id: str,
+        clients: Iterable[ClientInfo],
+        aed_sites: Iterable[AedSite] | None = None,
+    ) -> tuple[dict[str, str | None], str, dict[str, DispatchRoleDecision]]:
+        all_clients = [client for client in clients if client.online]
+        patient = next((client for client in all_clients if client.userId == patient_user_id), None)
+        candidates = [client for client in all_clients if client.userId != patient_user_id]
+        sites = list(aed_sites or [])
+        assignments = self._fallback_assignments(candidates, patient, sites)
+        return assignments, "fallback", self.explain_assignments(assignments, patient, candidates, sites)
+
     def explain(self) -> dict:
         provider = "fallback"
         if self.prefer_local:

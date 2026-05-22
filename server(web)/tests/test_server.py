@@ -1436,6 +1436,47 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(to_thread.called)
 
+    def test_patient_designation_uses_static_fallback_when_dispatch_budget_expires(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=0,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            dispatch_llm_budget_sec=0.1,
+        )
+
+        def slow_assign(*_: object) -> tuple[dict[str, str | None], str, dict]:
+            import time
+
+            time.sleep(1)
+            return {"PRIME": None, "RUNNER": None, "GUIDE": None}, "slow", {}
+
+        with TestClient(create_app(settings)) as client:
+            client.post("/api/demo/bootstrap")
+            with patch("app.services.dispatch_ai.DispatchPlanner.assign_roles", side_effect=slow_assign):
+                started_at = __import__("time").perf_counter()
+                response = client.post(
+                    "/api/incidents/current/designate_patient",
+                    json={"patientUserId": "demo-patient"},
+                )
+                elapsed = __import__("time").perf_counter() - started_at
+            current = client.get("/api/incidents/current").json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(elapsed, 0.8)
+        self.assertEqual(current["phase"], "DISPATCHED")
+        self.assertEqual(current["dispatchSource"], "fallback")
+        self.assertEqual(current["roles"]["PRIME"]["userId"], "demo-prime")
+        self.assertTrue(
+            any("static fallback" in entry["msg"] for entry in current["logs"]),
+        )
+
     def test_client_location_and_aed_site_can_be_updated(self) -> None:
         with self._client() as client:
             auth = client.post(
