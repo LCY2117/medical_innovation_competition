@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.Request
 import okhttp3.Response
@@ -32,11 +33,14 @@ class WsClient(
     private var webSocket: WebSocket? = null
     private var incidentId: String? = null
     private var reconnectAttempt = 0
+    private var reconnectJob: Job? = null
     private var manualClose = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun connect(id: String) {
         manualClose = true
+        reconnectJob?.cancel()
+        reconnectJob = null
         webSocket?.close(1000, "switching incident")
         webSocket = null
         incidentId = id
@@ -49,6 +53,8 @@ class WsClient(
     fun close() {
         manualClose = true
         incidentId = null
+        reconnectJob?.cancel()
+        reconnectJob = null
         webSocket?.close(1000, "closed")
         webSocket = null
         connected.value = false
@@ -64,6 +70,8 @@ class WsClient(
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                reconnectJob?.cancel()
+                reconnectJob = null
                 connected.value = true
                 reconnectAttempt = 0
                 latestError.value = null
@@ -103,10 +111,14 @@ class WsClient(
 
     private fun scheduleReconnect() {
         val id = incidentId ?: return
+        if (reconnectJob?.isActive == true) {
+            return
+        }
         val delayMs = min(10_000L, 1_000L * (1 shl reconnectAttempt))
         reconnectAttempt = min(reconnectAttempt + 1, 4)
-        scope.launch {
+        reconnectJob = scope.launch {
             delay(delayMs)
+            reconnectJob = null
             if (incidentId == id) {
                 openSocket()
             }

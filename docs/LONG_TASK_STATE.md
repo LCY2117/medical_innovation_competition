@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b89f55b
-- Last update: 2026-05-22 14:19:32 +08:00
+- HEAD: b52e5b6
+- Last update: 2026-05-22 14:22:48 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -151,7 +151,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 126. Guard Android release builds against local HTTP/WS endpoints. (done, pushed)
 127. Strengthen evidence-package verifier with public-file raw participant ID leak detection. (done, pushed)
 128. Add ZIP evidence quality report with key-event coverage, warnings, and low-cost pre-experiment readiness level. (done, pushed)
-129. Seed Android incident state from REST before waiting for WebSocket updates. (done, validating)
+129. Seed Android incident state from REST before waiting for WebSocket updates. (done, pushed)
+130. Make Android WebSocket reconnect scheduling single-flight under network flaps. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -625,6 +626,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `b89f55b` (`checkpoint: add evidence quality report`) created and pushed to `origin/codex/competition-hardening`.
 - Android REST state-seeding slice: `IncidentRepository.getCurrentIncident()` and `getIncident()` now update the local `StateFlow` immediately from REST responses, so Android screens can render the incident snapshot before the first WebSocket `STATE` frame arrives.
 - Android REST state-seeding validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `b52e5b6` (`checkpoint: seed android state from rest`) created and pushed to `origin/codex/competition-hardening`.
+- Android WebSocket reconnect slice: `WsClient` now keeps a single reconnect `Job`, cancels stale reconnects on incident switch, manual close, and successful open, and avoids scheduling duplicate delayed reconnects when `onClosed`/`onFailure` fire close together.
+- Android WebSocket reconnect validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -633,7 +637,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Android REST state-seeding reliability patch if staged diff is clean, then continue with another low-risk Android reliability or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Android WebSocket reconnect reliability patch if staged diff is clean, then continue with another low-risk Android reliability or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
