@@ -2,11 +2,11 @@
 
 ## Current Status
 
-- Status: validating
+- Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 2b75ae1
-- Last update: 2026-05-22 08:10:55 +08:00
+- HEAD: f5fefa7
+- Last update: 2026-05-22 08:18:42 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -115,7 +115,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 90. Add mobile PWA offline fallback and event context strip. (done, pushed)
 91. Add ZIP evidence-package data dictionary and sync public review docs. (done, pushed)
 92. Polish visible evidence-package, health-summary, and location wording across Web/mobile/Android. (done, pushed)
-93. Soften medical-compliance wording and sample health authorization across Web/mobile/Android. (done, validating)
+93. Soften medical-compliance wording and sample health authorization across Web/mobile/Android. (done, pushed)
+94. Anonymize public evidence-package review files and sync docs. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -133,6 +134,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Web/mobile polish explorer (`019e4cfa-e2ad-7552-80b9-ad63f2facc8b`): completed read-only; recommended softening SOS/SCA/auto-call claims, PWA offline read-only state, evidence-package entry consistency, neutral demo-token placeholders, less mobile noise, removing hardcoded demo values, and role-name consistency.
 - Android polish explorer (`019e4cfa-f682-7d40-adc5-ce798a58db98`): completed read-only; recommended lower-friction current-event entry, hiding raw device IDs, filtering local archives, using sample health authorization instead of real authorization, stricter AED archive inference, and friendlier error mapping.
 - Backend evidence explorer (`019e4cfb-0a63-7343-9401-e225d1189f27`): completed read-only; recommended anonymization checks for public files, manifest/file-list consistency, external hash verification guide, full-field data dictionary, multi-round summary, expert feedback remediation loop, and medical-compliance wording scans.
+- Web/mobile next-slice explorer (`019e4d0a-d1d2-7f33-a973-bcebba0be928`): running read-only; inspecting remaining Web/mobile UI, compliance wording, demo reliability, evidence-package links, and performance opportunities.
+- Android/OPPO next-slice explorer (`019e4d0a-e5ae-70a0-8aa6-3fc9275cb531`): running read-only; inspecting remaining Android and OPPO Health readiness work that does not require approval, secrets, QR verification, or legal submission.
 
 ## Git Baseline
 
@@ -463,6 +466,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android archive slice in progress: Android archive AED summary no longer treats `HANDOVER`/`ARCHIVED` alone as `AED 已送达`; it now requires AED delivery, analysis, shock, or pickup status.
 - Medical-compliance validation: targeted `rg` found no remaining `SOS Alert`, `SCA`, `自动呼叫急救`, `触发心脏骤停`, `死亡真空`, `150 米`, `购物中心`, `LCY 移动端`, `如 LCY`, Android health-provider `authorizationStatus = "authorized"`, or mobile health sample `authorizationStatus: 'authorized'` in checked Web/Android UI files.
 - Medical-compliance validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-BG832lIu.js` at `229.52 kB` raw / `69.58 kB` gzip and mobile `MobileApp-DCIArHZJ.js` at `38.76 kB` raw / `12.41 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with existing `android.overridePathCheck=true` warning.
+- Git checkpoint: `f5fefa7` (`checkpoint: soften medical demo wording`) was already created and pushed to `origin/codex/competition-hardening`.
+- Public evidence anonymization slice: `review_index.md`, `timeline.csv`, and `dispatch_rationale.csv` now use `participantCode` for external review instead of raw demo/user IDs; timeline log text replaces participant IDs before export, and dispatch rationale no longer exposes a raw `userId` column.
+- Public evidence anonymization docs: generated `data_dictionary.md`, README, and deployment runbook now describe `participantCode`, anonymized timeline/rationale fields, and the public/internal file boundary consistently.
+- Public evidence anonymization validation: backend full unittest discovery passed, 37 tests OK; targeted `rg` confirms `docs/DEPLOYMENT_RUNBOOK.md`, README, and generated dictionary copy no longer describe public timeline/rationale exports with raw `actorUserId`/`userId` fields. Remaining `actorUserId` matches are internal parser keys only.
 
 ## Blockers Summary
 
@@ -471,7 +478,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the medical-compliance wording slice, then continue the next safe competition-hardening slice from current code inspection and read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the public evidence anonymization slice, then continue the next safe competition-hardening slice from read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

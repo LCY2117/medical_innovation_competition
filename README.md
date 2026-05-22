@@ -270,15 +270,15 @@ ZIP 包含：
 - `review_index.md`：专家/评委快速审阅索引，说明建议打开顺序、材料用途和公开边界。
 - `experiment_anonymized.json`：匿名化结构化事件。
 - `clients_anonymized.csv`：匿名化终端画像、角色、位置和健康摘要。
-- `timeline.csv`：结构化事件时间线。
+- `timeline.csv`：结构化事件时间线，使用匿名参与者代号。
 - `metrics.csv`：调度、CPR、AED、交接、覆盖率等指标。
-- `dispatch_rationale.csv`：分派评分、理由、距离和风险提示。
+- `dispatch_rationale.csv`：分派评分、理由、距离和风险提示，公开审阅字段使用匿名参与者代号。
 - `expert_summary.md`：专家快速阅读摘要。
 - `expert_review_checklist.md`：专家现场复核清单。
 - `expert_feedback_form.md`：事件级专家反馈与签字表。
 - `facilitator_run_sheet.md`：主持人/观察员跑场单。
 - `analysis_guide.md`：预实验数据分析说明。
-- `data_dictionary.md`：证据包数据字典，解释指标、CSV 字段、角色代码和表述边界。
+- `data_dictionary.md`：证据包数据字典，解释指标、CSV 字段、角色代码、匿名化口径和表述边界。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表。
 - `observer_record_form.csv`：观察员补充记录表。
 - `participant_questionnaire.csv`：参与者主观问卷表。

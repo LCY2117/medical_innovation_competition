@@ -246,7 +246,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | 调度解释 | 触发患者后出现三类角色评分和理由 |
 | 地图距离 provider | `health.detail.mapProvider` 显示 `mode`、`distanceSource`、`configured` 和 fallback 原因；未配置 Key 时仍可完整演示 |
 | 推送 provider | `health.detail.pushProvider` 显示 `mode=websocket`、`channel=websocket_state`；配置未来 provider 时应显示 fallback 原因 |
-| 数据导出 | 点击“证据包”或“导出预实验证据包”获得 ZIP，包内含审阅索引、JSON、CSV、专家摘要和 manifest 校验信息 |
+| 数据导出 | 点击“证据包”获得 ZIP，包内含审阅索引、匿名化 JSON/CSV、专家摘要、数据字典和 manifest 校验信息 |
 | 公网演示保护 | 配置 `LRA_DEMO_ADMIN_TOKEN` 后，未带口令的管理接口返回 403 |
 | 正式管理员账号 | 配置 `LRA_ADMIN_PHONES` 后，白名单手机号注册/登录的 `/auth/me.user.privileges` 含 `admin`，Bearer token 可访问管理接口 |
 | 审计日志 | Web 总控台点击“审计”可看到最近登录、演示、导出和现场动作；无口令读取返回 403 |
@@ -297,7 +297,7 @@ Git 注意事项：
 5. 选择患者端触发心脏骤停模拟。
 6. 展示 AI/规则分派过程和调度解释。
 7. 在 Android App 或 Web 端完成 CPR、AED、接应动作。
-8. 点击“导出预实验证据包”，展示 `review_index.md`、`timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json`、`expert_summary.md` 和 `expert_feedback_form.md`。
+8. 点击“证据包”，展示 `review_index.md`、`timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json`、`expert_summary.md` 和 `expert_feedback_form.md`。
 9. 总结：系统价值是缩短协同组织链路、明确角色任务、记录演练数据，不直接宣称临床疗效。
 
 ## 9. 预实验证据包说明
@@ -313,10 +313,10 @@ ZIP 包当前包含：
 - `experiment.json`：完整事件数据，保留终端、AED、调度依据和健康摘要。
 - `experiment_anonymized.json`：匿名化事件数据，优先用于 PPT、专家反馈和对外展示。
 - `clients.csv` / `clients_anonymized.csv`：终端画像、角色、位置和健康摘要表。
-- `timeline.csv`：含 `ts`、`tsIso`、`elapsedSec`、`eventType`、`actorUserId`、`role`、`msg` 的结构化时间线。
+- `timeline.csv`：含 `ts`、`tsIso`、`elapsedSec`、`eventType`、`participantCode`、`role`、`msg` 的结构化时间线，公开审阅时不暴露原始 userId。
 - `metrics.csv`：响应耗时、AED 取送、交接、角色完整度、定位/健康覆盖率等指标。
 - `aed_sites.csv`：AED 点位、可用状态、楼层和取用说明。
-- `dispatch_rationale.csv`：每个角色的分派对象、评分因素和解释。
+- `dispatch_rationale.csv`：每个角色的匿名参与者代号、评分因素和解释。
 - `expert_summary.md`：给专家/指导教师快速审阅的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖演示材料、关键指标、医学流程、AI 分派和安全边界。
 - `expert_feedback_form.md`：事件级专家反馈与签字表，用于专家评分、100-300 字意见和签字留档。

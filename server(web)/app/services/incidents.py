@@ -652,7 +652,7 @@ class IncidentService:
         anonymized_payload, participant_map = self._anonymized_experiment_payload(export)
         files: dict[str, str] = {
             "README.md": self._experiment_readme(export),
-            "review_index.md": self._review_index(export),
+            "review_index.md": self._review_index(export, participant_map),
             "expert_summary.md": self._expert_summary(export, participant_map),
             "expert_review_checklist.md": self._expert_review_checklist(export, participant_map),
             "expert_feedback_form.md": self._expert_feedback_form(export, participant_map),
@@ -667,7 +667,7 @@ class IncidentService:
                 ["metric", "value"],
             ),
             "timeline.csv": self._csv_text(
-                self._timeline_export_rows(export.timeline),
+                self._timeline_export_rows(export.timeline, participant_map),
                 self._timeline_export_fields(),
             ),
             "clients.csv": self._csv_text(self._client_export_rows(export.clients), self._client_export_fields()),
@@ -1096,7 +1096,7 @@ class IncidentService:
 
     @staticmethod
     def _timeline_export_fields() -> list[str]:
-        return ["ts", "tsIso", "elapsedSec", "eventType", "actorUserId", "role", "msg"]
+        return ["ts", "tsIso", "elapsedSec", "eventType", "participantCode", "role", "msg"]
 
     @staticmethod
     def _observer_record_fields() -> list[str]:
@@ -1337,20 +1337,25 @@ class IncidentService:
                 )
         return rows
 
-    def _timeline_export_rows(self, timeline: list[IncidentLogEntry]) -> list[dict]:
+    def _timeline_export_rows(
+        self,
+        timeline: list[IncidentLogEntry],
+        participant_map: dict[str, str],
+    ) -> list[dict]:
         start_ts = timeline[0].ts if timeline else None
         rows: list[dict] = []
         for item in timeline:
             parsed = self._parse_timeline_message(item.msg)
+            actor_user_id = parsed["actorUserId"]
             rows.append(
                 {
                     "ts": item.ts,
                     "tsIso": self._iso_timestamp(item.ts),
                     "elapsedSec": round((item.ts - start_ts) / 1000, 3) if start_ts else 0,
                     "eventType": parsed["eventType"],
-                    "actorUserId": parsed["actorUserId"],
+                    "participantCode": participant_map.get(actor_user_id, actor_user_id),
                     "role": parsed["role"],
-                    "msg": item.msg,
+                    "msg": self._replace_participant_ids(item.msg, participant_map),
                 }
             )
         return rows
@@ -1402,7 +1407,6 @@ class IncidentService:
     def _dispatch_rationale_export_fields() -> list[str]:
         return [
             "role",
-            "userId",
             "participantCode",
             "score",
             "reasons",
@@ -1421,7 +1425,6 @@ class IncidentService:
         return [
             {
                 "role": role,
-                "userId": decision.userId,
                 "participantCode": participant_map.get(decision.userId or "", ""),
                 "score": decision.score,
                 "reasons": "；".join(decision.reasons),
@@ -1642,11 +1645,11 @@ class IncidentService:
 该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
-    def _review_index(self, export: ExperimentExportResponse) -> str:
+    def _review_index(self, export: ExperimentExportResponse, participant_map: dict[str, str]) -> str:
         metrics = export.metrics
         generated_at = self._iso_timestamp(export.generatedAt)
         role_summary = "；".join(
-            f"{role}={user_id or '未分派'}"
+            f"{role}={participant_map.get(user_id or '', user_id or '未分派')}"
             for role, user_id in export.assignments.items()
         )
         return f"""# 生命反射弧证据包审阅索引
@@ -1654,7 +1657,7 @@ class IncidentService:
 事件编号：{export.incidentId}
 导出时间：{generated_at}
 事件阶段：{export.phase}
-患者终端：{export.patientUserId or "未指定"}
+患者代号：{participant_map.get(export.patientUserId or "", export.patientUserId or "未指定")}
 角色分派：{role_summary}
 
 ## 一、建议 3 分钟打开顺序
@@ -1925,9 +1928,9 @@ class IncidentService:
 | `review_index.md` | 3 分钟审阅顺序、材料用途和公开边界 | 专家或评委先打开 |
 | `experiment_anonymized.json` | 匿名化后的事件、角色、指标和健康摘要 | PPT、专家审阅、内部复盘 |
 | `clients_anonymized.csv` | 匿名化参与者列表，含角色、位置、健康摘要字段 | Excel 汇总、问卷匹配 |
-| `timeline.csv` | 事件日志的结构化时间线 | 复核 T0-T6 节点 |
+| `timeline.csv` | 事件日志的结构化时间线，使用匿名参与者代号和脱敏日志文本 | 复核 T0-T6 节点 |
 | `metrics.csv` | 系统自动计算的核心指标 | 低成本预实验结果表 |
-| `dispatch_rationale.csv` | 角色分派评分、距离、理由和警示 | 展示智能协同解释性 |
+| `dispatch_rationale.csv` | 角色分派评分、距离、理由和警示，使用匿名参与者代号 | 展示智能协同解释性 |
 | `observer_record_form.csv` | 观察员补充记录模板 | 记录系统无法自动采集的现场行为 |
 | `participant_questionnaire.csv` | 参与者主观问卷模板 | 计算可理解性、压力、可用性评分 |
 | `baseline_vs_system_comparison.csv` | 无系统基线轮与系统轮对照模板 | 描述性对照分析 |
@@ -1961,9 +1964,10 @@ class IncidentService:
 
 | 字段 | 常见文件 | 含义 |
 | --- | --- | --- |
-| `participantCode` | `clients_anonymized.csv`、问卷、汇总表 | 匿名参与者代号，如 P001/R001 |
+| `participantCode` | `clients_anonymized.csv`、`timeline.csv`、`dispatch_rationale.csv`、问卷、汇总表 | 匿名参与者代号，如 P001/R001 |
 | `eventType` | `timeline.csv` | 系统从日志归类出的事件类型 |
 | `elapsedSec` | `timeline.csv` | 相对本轮第一条日志的秒数 |
+| `msg` | `timeline.csv` | 脱敏后的日志文本，内部 userId 已替换为参与者代号 |
 | `score` | `dispatch_rationale.csv` | 角色候选综合评分 |
 | `reasons` | `dispatch_rationale.csv` | 分派理由，通常包含能力、距离、AED 可达性或健康风险 |
 | `warnings` | `dispatch_rationale.csv` | 候选终端风险或降权提示 |
@@ -1973,7 +1977,8 @@ class IncidentService:
 
 ## 五、匿名化与禁止表述
 
-- 对外材料优先使用 `experiment_anonymized.json`、`clients_anonymized.csv` 和本数据字典。
+- 对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`dispatch_rationale.csv` 和本数据字典。
+- `review_index.md`、`timeline.csv` 与 `dispatch_rationale.csv` 已使用 `participantCode` 做公开审阅匿名化，不应再手工补回原始 userId。
 - `experiment.json`、`clients.csv` 可能包含原始 userId、显示名、组织等内部复核信息，不建议直接放入 PPT。
 - 可以写“用于模拟急救协同、训练复盘、预实验记录和专家反馈准备”。
 - 不要写“提高抢救成功率”“改善患者预后”“替代 120/AED/医护判断”。
