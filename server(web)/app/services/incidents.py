@@ -49,7 +49,7 @@ class IncidentService:
     def __init__(
         self,
         store: SqliteIncidentStore,
-        sos_duration_sec: int = 10,
+        sos_duration_sec: int = 5,
         dispatch_delay_sec: int = 3,
         siliconflow_api_key: str | None = None,
         siliconflow_model: str = "Qwen/Qwen2-7B-Instruct",

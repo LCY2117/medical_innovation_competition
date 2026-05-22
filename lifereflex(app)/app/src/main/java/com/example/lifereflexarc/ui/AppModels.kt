@@ -160,9 +160,9 @@ fun rememberElapsedLabel(startTs: Long?): String {
 
 @Composable
 fun rememberCountdownValue(startTs: Long?, durationSec: Int?): Int {
-    val countdown = produceState(initialValue = durationSec ?: 10, startTs, durationSec) {
+    val countdown = produceState(initialValue = durationSec ?: 5, startTs, durationSec) {
         if (startTs == null || durationSec == null) {
-            value = durationSec ?: 10
+            value = durationSec ?: 5
             return@produceState
         }
         while (true) {

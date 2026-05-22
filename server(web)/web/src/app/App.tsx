@@ -1394,7 +1394,7 @@ export default function App() {
   const [clientId] = useState(() => `dashboard-${Math.random().toString(36).slice(2, 8)}`);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [victimView, setVictimView] = useState<'monitoring' | 'alerting'>('monitoring');
-  const [victimCountdown, setVictimCountdown] = useState(10);
+  const [victimCountdown, setVictimCountdown] = useState(5);
   const triggerRequestedRef = useRef(false);
   const sos = incidentState?.sos;
 
@@ -1672,14 +1672,14 @@ export default function App() {
   useEffect(() => {
     if (phase !== 'trigger') {
       setVictimView('monitoring');
-      setVictimCountdown(10);
+      setVictimCountdown(5);
       return;
     }
     if (sos?.status === 'ALERTING' && sos.startTs) {
       setVictimView('alerting');
     } else {
       setVictimView('monitoring');
-      setVictimCountdown(10);
+      setVictimCountdown(5);
     }
   }, [phase, sos?.status, sos?.startTs]);
 
@@ -1692,7 +1692,7 @@ export default function App() {
     if (phase !== 'trigger' || sos?.status !== 'ALERTING' || !sos.startTs) {
       return;
     }
-    const duration = sos?.durationSec ?? 10;
+    const duration = sos?.durationSec ?? 5;
     const updateCountdown = () => {
       const elapsed = Math.floor((Date.now() - sos.startTs) / 1000);
       setVictimCountdown(Math.max(0, duration - elapsed));
@@ -2454,7 +2454,7 @@ export default function App() {
         );
       }
 
-      const sosDuration = sos?.durationSec ?? 10;
+      const sosDuration = sos?.durationSec ?? 5;
       const circumference = 2 * Math.PI * 120;
       const strokeDashoffset = circumference - (victimCountdown / sosDuration) * circumference;
 

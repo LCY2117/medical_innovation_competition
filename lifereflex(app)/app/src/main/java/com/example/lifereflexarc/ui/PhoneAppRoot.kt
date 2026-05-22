@@ -165,7 +165,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
                         } else {
                             SosCountdownScreen(
                                 seconds = countdown.value,
-                                totalSeconds = sos?.durationSec ?: 10,
+                                totalSeconds = sos?.durationSec ?: 5,
                                 onCancel = {
                                     cancelRequested.value = true
                                     victimView.value = "monitoring"

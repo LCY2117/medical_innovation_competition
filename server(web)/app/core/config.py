@@ -109,7 +109,7 @@ def get_settings() -> Settings:
         host=os.getenv("LRA_HOST", "0.0.0.0"),
         port=int(os.getenv("LRA_PORT", "8080")),
         reload=_parse_bool(os.getenv("LRA_RELOAD"), default=False),
-        sos_duration_sec=int(os.getenv("LRA_SOS_DURATION_SEC", "10")),
+        sos_duration_sec=int(os.getenv("LRA_SOS_DURATION_SEC", "5")),
         dispatch_delay_sec=int(os.getenv("LRA_DISPATCH_DELAY_SEC", "3")),
         cors_origins=_parse_csv(
             os.getenv("LRA_CORS_ORIGINS"),
