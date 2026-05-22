@@ -251,6 +251,23 @@ export function translateHealthSource(source?: string | null): string {
   }
 }
 
+export function translateHealthAuthorization(status?: string | null): string {
+  switch (status) {
+    case 'authorized':
+      return '已授权';
+    case 'sample':
+      return '样例接入';
+    case 'denied':
+      return '未授权';
+    case 'not_connected':
+    case undefined:
+    case null:
+      return '未接入';
+    default:
+      return status;
+  }
+}
+
 export function translateHealthRiskTag(tag: string): string {
   switch (tag) {
     case 'tachycardia':
@@ -277,6 +294,7 @@ export function formatHealthSignalSummary(summary?: HealthSignalSummary | null):
     return '健康数据未接入';
   }
   const parts = [
+    translateHealthAuthorization(summary.authorizationStatus),
     summary.heartRateBpm ? `心率 ${summary.heartRateBpm} bpm` : null,
     summary.bloodOxygenPercent ? `血氧 ${summary.bloodOxygenPercent}%` : null,
     summary.pressureScore !== undefined && summary.pressureScore !== null ? `压力 ${summary.pressureScore}` : null,

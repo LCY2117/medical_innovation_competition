@@ -1462,7 +1462,7 @@ function MobileApp() {
                     <div>
                       <strong>{client.displayName}</strong>
                       <p className="mobile-health-copy">
-                        {translateHealthSource(client.healthSignals?.source)} · {formatHealthSignalSummary(client.healthSignals)}
+                        {formatHealthSignalSummary(client.healthSignals)}
                       </p>
                       {Boolean(client.healthSignals?.riskTags?.length) && (
                         <p className="mobile-health-copy warning">

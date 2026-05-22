@@ -36,7 +36,14 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { formatHealthRiskTags, formatHealthSignalSummary, mergeIncidentState, roleNames, translateHealthSource } from '@/shared/domain';
+import {
+  formatHealthRiskTags,
+  formatHealthSignalSummary,
+  mergeIncidentState,
+  roleNames,
+  translateHealthAuthorization,
+  translateHealthSource,
+} from '@/shared/domain';
 import type { HealthSignalSummary, IncidentState as SharedIncidentState } from '@/shared/types';
 
 // Utility for Tailwind classes
@@ -3642,16 +3649,21 @@ export default function App() {
                   <div className="rounded-xl bg-black/20 px-3 py-3 col-span-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-slate-500">健康摘要</div>
-                      <span className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                        client.healthSignals?.source === 'mock'
-                          ? "bg-amber-500/15 text-amber-300"
-                          : client.healthSignals
-                            ? "bg-emerald-500/15 text-emerald-300"
-                            : "bg-slate-700 text-slate-400"
-                      )}>
-                        {translateHealthSource(client.healthSignals?.source)}
-                      </span>
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <span className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                          client.healthSignals?.source === 'mock'
+                            ? "bg-amber-500/15 text-amber-300"
+                            : client.healthSignals
+                              ? "bg-emerald-500/15 text-emerald-300"
+                              : "bg-slate-700 text-slate-400"
+                        )}>
+                          {translateHealthSource(client.healthSignals?.source)}
+                        </span>
+                        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300">
+                          {translateHealthAuthorization(client.healthSignals?.authorizationStatus)}
+                        </span>
+                      </div>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-slate-100">
                       <span>{client.healthSignals?.heartRateBpm ? `${client.healthSignals.heartRateBpm} bpm` : '心率 --'}</span>
