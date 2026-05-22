@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: ae4bc9c
-- Last update: 2026-05-22 11:07:43 +08:00
+- HEAD: 1c1eab2
+- Last update: 2026-05-22 11:09:28 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -142,7 +142,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 117. Add one-command pre-experiment report builder for CSV plus Markdown generation. (done, pushed)
 118. Sync product plan, whitepaper, and expert template with the one-command evidence-analysis flow. (done, pushed)
 119. Add one-command analysis guidance inside exported evidence-package materials. (done, pushed)
-120. Add PPT/Excel chart-data CSV output for multi-round pre-experiment analysis. (done, checkpointing)
+120. Add PPT/Excel chart-data CSV output for multi-round pre-experiment analysis. (done, pushed)
+121. Refresh morning handoff with latest evidence-analysis checkpoints. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -586,6 +587,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `ae4bc9c` (`checkpoint: add evidence package analysis guidance`) created and pushed to `origin/codex/competition-hardening`.
 - Chart-data analysis slice: `scripts/analyze_round_summary.py` can now write `round-chart-data.csv` with metric group, key, label, unit, valid round count, mean, median, min, max, chart hint, and PPT-safe-use boundary. `scripts/build_pre_experiment_report.py` now generates `round-summary.csv`, `round-analysis.md`, and `round-chart-data.csv` in one command. README, deployment runbook, pre-experiment protocol, morning handoff, product plan, whitepaper, expert template, and generated ZIP guidance now document the chart data.
 - Chart-data validation: `analyze_round_summary.py --help` and `build_pre_experiment_report.py --help` passed; `python -m py_compile` passed for all four evidence scripts; targeted backend tests for round-summary analysis and one-command report builder passed; full backend unittest discovery passed, 41 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
+- Git checkpoint: `1c1eab2` (`checkpoint: add pre-experiment chart data`) created and pushed to `origin/codex/competition-hardening`.
+- Morning handoff refresh slice: `docs/MORNING_HANDOFF.md` now records the recent evidence-analysis checkpoints from `87e1941` through `1c1eab2`, including the one-command report builder and `round-chart-data.csv` output, so the wake-up report reflects the actual latest pushed branch.
+- Morning handoff refresh validation: `git status --short --branch` confirms branch `codex/competition-hardening` aligned with `origin/codex/competition-hardening`; only runtime/user files remain untracked or modified outside the checkpoint scope (`server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, `output/`).
 
 ## Blockers Summary
 
@@ -594,7 +598,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the chart-data analysis slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the morning handoff refresh slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

@@ -218,7 +218,14 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `aa1c634`：Web 总控台新增演示自检 Markdown 报告，已通过 Web typecheck/build 和本地一体化 DOM 烟测，已推送。
 - `8c44d97`：新增证据包 manifest/SHA-256 独立校验脚本，已通过 targeted 测试和后端全量 38 项测试，已推送。
 - `2443136`：预实验证据包新增 `expert_feedback_summary.csv` 专家意见汇总与整改闭环表，README、部署手册、manifest 指引和后端测试已同步，已推送。
-- 最新验证扫尾：后端 41 项测试通过；Web typecheck、Web build、Android debug/release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- `87e1941`：新增多轮证据包汇总脚本 `summarize_evidence_rounds.py`，可批量校验 ZIP 并生成 `round-summary.csv`，已推送。
+- `9ed144d`：新增 `analyze_round_summary.py`，可把多轮汇总 CSV 转成 PPT 安全口径 Markdown 分析摘要，已推送。
+- `af1bec5`：修正角色分派完整度百分比显示，避免 0-1 比例在报告中误写成 1%，已推送。
+- `ed7a17d`：新增一键预实验分析脚本 `build_pre_experiment_report.py`，可从多轮 ZIP 生成 `round-summary.csv` 和 `round-analysis.md`，已推送。
+- `f758a1e`：产品计划、白皮书和专家反馈模板同步一键分析流程，已推送。
+- `ae4bc9c`：证据包内部 `README.md`、`analysis_guide.md`、`review_index.md` 等材料加入一键分析说明，并收敛专家可见健康摘要口径，已推送。
+- `1c1eab2`：新增 `round-chart-data.csv` 图表底表输出；一键脚本现在生成 CSV、Markdown 和 Excel/PPT 图表数据，已通过脚本 help、py_compile、目标测试和后端全量 41 项测试，已推送。
+- 最新验证扫尾：后端 41 项测试通过；证据包校验/汇总/分析/图表数据脚本通过；Web typecheck、Web build、Android debug/release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
 ## 你醒来后最该做的事
 
