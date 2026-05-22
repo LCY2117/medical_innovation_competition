@@ -2,6 +2,11 @@ from pydantic import BaseModel, Field, field_validator
 
 
 AED_STATUS_VALUES = {"AVAILABLE", "MAINTENANCE", "UNAVAILABLE"}
+HEALTH_SOURCE_VALUES = {"mock", "manual", "oppo", "oppo_health", "unavailable"}
+HEALTH_AUTHORIZATION_VALUES = {"sample", "not_connected", "authorized", "denied"}
+HEALTH_ACTIVITY_VALUES = {"low", "normal", "high"}
+HEALTH_SLEEP_VALUES = {"poor", "fair", "good"}
+HEALTH_RISK_TAG_VALUES = {"tachycardia", "bradycardia", "low_spo2", "high_pressure", "limited_mobility"}
 
 
 class GeoPoint(BaseModel):
@@ -24,8 +29,56 @@ class HealthSignalSummary(BaseModel):
     activityLevel: str | None = None
     sleepQuality: str | None = None
     riskTags: list[str] = Field(default_factory=list)
-    updatedTs: int | None = None
+    updatedTs: int | None = Field(default=None, ge=0)
     note: str | None = None
+
+    @field_validator("source")
+    @classmethod
+    def normalize_source(cls, value: str) -> str:
+        normalized = value.strip().lower().replace("-", "_")
+        if normalized not in HEALTH_SOURCE_VALUES:
+            raise ValueError(f"source must be one of {sorted(HEALTH_SOURCE_VALUES)}")
+        return normalized
+
+    @field_validator("authorizationStatus")
+    @classmethod
+    def normalize_authorization_status(cls, value: str) -> str:
+        normalized = value.strip().lower().replace("-", "_")
+        if normalized not in HEALTH_AUTHORIZATION_VALUES:
+            raise ValueError(f"authorizationStatus must be one of {sorted(HEALTH_AUTHORIZATION_VALUES)}")
+        return normalized
+
+    @field_validator("activityLevel")
+    @classmethod
+    def normalize_activity_level(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().lower().replace("-", "_")
+        if normalized not in HEALTH_ACTIVITY_VALUES:
+            raise ValueError(f"activityLevel must be one of {sorted(HEALTH_ACTIVITY_VALUES)}")
+        return normalized
+
+    @field_validator("sleepQuality")
+    @classmethod
+    def normalize_sleep_quality(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().lower().replace("-", "_")
+        if normalized not in HEALTH_SLEEP_VALUES:
+            raise ValueError(f"sleepQuality must be one of {sorted(HEALTH_SLEEP_VALUES)}")
+        return normalized
+
+    @field_validator("riskTags")
+    @classmethod
+    def normalize_risk_tags(cls, value: list[str]) -> list[str]:
+        normalized_tags: list[str] = []
+        for tag in value:
+            normalized = tag.strip().lower().replace("-", "_")
+            if normalized not in HEALTH_RISK_TAG_VALUES:
+                raise ValueError(f"riskTags must use values from {sorted(HEALTH_RISK_TAG_VALUES)}")
+            if normalized not in normalized_tags:
+                normalized_tags.append(normalized)
+        return normalized_tags
 
 
 class AuthRegisterReq(BaseModel):

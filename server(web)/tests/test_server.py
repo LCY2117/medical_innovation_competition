@@ -606,6 +606,7 @@ class ServerTestCase(unittest.TestCase):
             self.assertTrue(exported["timeline"])
             patient = next(item for item in exported["clients"] if item["userId"] == "demo-patient")
             self.assertEqual(patient["healthSignals"]["source"], "mock")
+            self.assertEqual(patient["healthSignals"]["authorizationStatus"], "sample")
             self.assertIn("low_spo2", patient["healthSignals"]["riskTags"])
 
             package = client.get("/api/experiments/current/package")
@@ -635,6 +636,11 @@ class ServerTestCase(unittest.TestCase):
                 clients_csv = archive.read("clients.csv").decode("utf-8-sig")
                 self.assertIn("heartRateBpm", clients_csv)
                 self.assertIn("demo-patient", clients_csv)
+                self.assertIn("sample", clients_csv)
+                self.assertNotIn("OPPO Health mock", clients_csv)
+                experiment_json = archive.read("experiment.json").decode("utf-8")
+                self.assertIn('"authorizationStatus": "sample"', experiment_json)
+                self.assertNotIn("OPPO Health mock", experiment_json)
                 metrics_csv = archive.read("metrics.csv").decode("utf-8-sig")
                 self.assertIn("healthCoveragePercent", metrics_csv)
                 self.assertIn("runnerRouteMeters", metrics_csv)
@@ -1098,6 +1104,53 @@ class ServerTestCase(unittest.TestCase):
                     },
                 },
             )
+            bad_health_source = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "clinical-monitor",
+                        "authorizationStatus": "sample",
+                    },
+                },
+            )
+            bad_health_auth = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "real_clinical_authorized",
+                    },
+                },
+            )
+            bad_health_activity = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "sample",
+                        "activityLevel": "sprint",
+                        "sleepQuality": "diagnosed",
+                    },
+                },
+            )
+            bad_health_risk_tag = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "sample",
+                        "riskTags": ["diagnosis_confirmed"],
+                    },
+                },
+            )
             bad_aed = client.post(
                 "/api/aed-sites",
                 json={
@@ -1120,6 +1173,10 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(registered.status_code, 200)
         self.assertEqual(bad_location.status_code, 422)
         self.assertEqual(bad_health.status_code, 422)
+        self.assertEqual(bad_health_source.status_code, 422)
+        self.assertEqual(bad_health_auth.status_code, 422)
+        self.assertEqual(bad_health_activity.status_code, 422)
+        self.assertEqual(bad_health_risk_tag.status_code, 422)
         self.assertEqual(bad_aed.status_code, 422)
         self.assertEqual(normalized_aed.status_code, 200)
         self.assertEqual(normalized_aed.json()["aedSites"][0]["status"], "MAINTENANCE")
@@ -1197,8 +1254,8 @@ class ServerTestCase(unittest.TestCase):
                     "profileBio": "用于 OPPO 健康 mock/fallback 测试",
                     "deviceType": "ANDROID",
                     "healthSignals": {
-                        "source": "mock",
-                        "authorizationStatus": "authorized",
+                        "source": "MOCK",
+                        "authorizationStatus": "SAMPLE",
                         "heartRateBpm": 82,
                         "bloodOxygenPercent": 98,
                         "pressureScore": 30,
@@ -1216,13 +1273,13 @@ class ServerTestCase(unittest.TestCase):
                     "userId": user_id,
                     "healthSignals": {
                         "source": "manual",
-                        "authorizationStatus": "authorized",
+                        "authorizationStatus": "sample",
                         "heartRateBpm": 126,
                         "bloodOxygenPercent": 91,
                         "pressureScore": 78,
-                        "activityLevel": "low",
-                        "sleepQuality": "poor",
-                        "riskTags": ["tachycardia", "low_spo2"],
+                        "activityLevel": "LOW",
+                        "sleepQuality": "POOR",
+                        "riskTags": ["tachycardia", "low-spo2", "tachycardia"],
                         "note": "manual fallback snapshot",
                     },
                 },
@@ -1251,7 +1308,10 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(wrong_user.status_code, 403)
         health = next(item for item in clients if item["userId"] == user_id)["healthSignals"]
         self.assertEqual(health["source"], "manual")
+        self.assertEqual(health["authorizationStatus"], "sample")
         self.assertEqual(health["heartRateBpm"], 126)
+        self.assertEqual(health["activityLevel"], "low")
+        self.assertEqual(health["sleepQuality"], "poor")
         self.assertIsInstance(health["updatedTs"], int)
         exported_health = next(item for item in export["clients"] if item["userId"] == user_id)["healthSignals"]
         self.assertEqual(exported_health["riskTags"], ["tachycardia", "low_spo2"])
