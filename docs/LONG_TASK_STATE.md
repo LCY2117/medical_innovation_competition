@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 07881be
-- Last update: 2026-05-22 11:42:47 +08:00
+- HEAD: 6303c76
+- Last update: 2026-05-22 11:51:23 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -147,7 +147,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 122. Add post-demo evidence-processing checklist to the Web preflight Markdown report. (done, pushed)
 123. Identify next low-risk competition hardening slice after checkpoint. (done)
 124. Polish Web/mobile competition demo visibility: remove hardcoded phone-preview values, anchor mobile CPR timing to event logs, and keep mobile next action visible. (done, pushed)
-125. Add evidence-package SHA-256 response header and audit metadata. (done, validating)
+125. Add evidence-package SHA-256 response header and audit metadata. (done, pushed)
+126. Guard Android release builds against local HTTP/WS endpoints. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -608,6 +609,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `07881be` (`checkpoint: polish web mobile demo cues`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence-package SHA-256 slice: both current and incident-specific ZIP package endpoints now compute the package body SHA-256 once, expose it as `X-LifeReflexArc-Package-Sha256`, and record `filename`, `bytes`, and `packageSha256` in the audit event metadata for `experiment_package_exported`.
 - Evidence-package SHA-256 validation: targeted audit/package test passed; full backend unittest discovery passed, 41 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
+- Git checkpoint: `6303c76` (`checkpoint: add evidence package hash header`) created and pushed to `origin/codex/competition-hardening`.
+- Android release endpoint guard slice: `lifereflex(app)/app/build.gradle.kts` now fails release build tasks if `LRA_API_BASE` does not start with `https://` or `LRA_WS_BASE` does not start with `wss://`; debug builds remain able to use local HTTP/WS for LAN testing. `lifereflex(app)/local.properties.example` and `docs/ANDROID_RELEASE_READINESS.md` document the guard and expected failure test.
+- Android release endpoint guard validation: `gradle :app:assembleDebug --no-daemon` passed; `gradle :app:assembleRelease --no-daemon` passed; intentionally running `gradle :app:assembleRelease -PLRA_API_BASE=http://127.0.0.1:8080/ -PLRA_WS_BASE=ws://127.0.0.1:8080/ws --no-daemon` failed as expected with `LRA_API_BASE must start with https:// for release builds...`.
 
 ## Blockers Summary
 
@@ -616,7 +620,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence-package SHA-256 slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Android release endpoint guard slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

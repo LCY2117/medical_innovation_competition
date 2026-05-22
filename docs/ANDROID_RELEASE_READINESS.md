@@ -9,7 +9,7 @@ This checklist is for turning the current installable debug APK into a more form
 - Public backend: `https://lifereflex.mddcommunity.top/`
 - Public WebSocket: `wss://lifereflex.mddcommunity.top/ws`
 - Debug builds may use local HTTP for LAN testing.
-- Release builds should use HTTPS/WSS only.
+- Release builds use a Gradle guard: `LRA_API_BASE` must start with `https://` and `LRA_WS_BASE` must start with `wss://`.
 
 ## Secret Boundary
 
@@ -70,6 +70,14 @@ Release APK readiness check:
 gradle :app:assembleRelease --no-daemon
 ```
 
+Release endpoint guard check:
+
+```powershell
+gradle :app:assembleRelease -PLRA_API_BASE=http://127.0.0.1:8080/ -PLRA_WS_BASE=ws://127.0.0.1:8080/ws --no-daemon
+```
+
+Expected result: the command fails before packaging and explains that release builds must use HTTPS/WSS. Debug builds can still use local HTTP/WS for LAN testing.
+
 Install on a connected device:
 
 ```powershell
@@ -79,7 +87,7 @@ Install on a connected device:
 ## Before Expert Demo
 
 - Confirm `/api/health/detail` is healthy on the public domain.
-- Confirm Android `LRA_API_BASE` and `LRA_WS_BASE` are public HTTPS/WSS values.
+- Confirm Android `LRA_API_BASE` and `LRA_WS_BASE` are public HTTPS/WSS values; release packaging will fail fast if local HTTP/WS values are left in place.
 - Install the APK on 3-4 phones and log in with separate users.
 - Use the Web command center to initialize the scenario and open the four mobile links.
 - Run one full flow: patient SOS, automatic dispatch, CPR/AED/guide actions, handover, evidence package download.

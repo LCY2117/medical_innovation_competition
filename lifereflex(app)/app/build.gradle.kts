@@ -30,6 +30,27 @@ val hasReleaseSigning = listOf(
     releaseKeyPassword,
 ).all { !it.isNullOrBlank() }
 
+fun isReleaseBuildTask(taskName: String): Boolean {
+    val lowerName = taskName.lowercase()
+    return "release" in lowerName && listOf("assemble", "bundle", "package", "install", "process").any { it in lowerName }
+}
+
+fun requireReleaseUrlScheme(name: String, value: String, scheme: String) {
+    if (!value.trim().startsWith(scheme)) {
+        throw GradleException(
+            "$name must start with $scheme for release builds. " +
+                "Use local HTTP/WS only for debug builds."
+        )
+    }
+}
+
+gradle.taskGraph.whenReady {
+    if (allTasks.any { isReleaseBuildTask(it.name) }) {
+        requireReleaseUrlScheme("LRA_API_BASE", apiBase, "https://")
+        requireReleaseUrlScheme("LRA_WS_BASE", wsBase, "wss://")
+    }
+}
+
 android {
     namespace = "com.example.lifereflexarc"
     compileSdk {
