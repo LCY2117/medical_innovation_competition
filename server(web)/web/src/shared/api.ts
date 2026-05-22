@@ -276,12 +276,17 @@ export function openIncidentSocket(incidentId: string): WebSocket {
 export async function downloadExperimentPackage(
   token?: string | null,
   demoAdminToken = getStoredDemoAdminToken(),
+  incidentId?: string | null,
 ): Promise<void> {
   if (typeof window === 'undefined') {
     throw new Error('下载事件证据包失败：当前环境不支持浏览器下载');
   }
   const headers = buildDemoAdminHeaders(demoAdminToken, buildAuthHeaders(token));
-  const response = await fetch(`${getApiBase()}/experiments/current/package`, { headers });
+  const trimmedIncidentId = incidentId?.trim();
+  const packagePath = trimmedIncidentId
+    ? `/experiments/${encodeURIComponent(trimmedIncidentId)}/package`
+    : '/experiments/current/package';
+  const response = await fetch(`${getApiBase()}${packagePath}`, { headers });
   if (!response.ok) {
     throw new Error(await explainResponseError(response, '下载事件证据包失败'));
   }

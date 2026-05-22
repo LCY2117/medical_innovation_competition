@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7b3b3af
-- Last update: 2026-05-22 08:26:33 +08:00
+- HEAD: 18dec36
+- Last update: 2026-05-22 08:30:44 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -117,7 +117,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 92. Polish visible evidence-package, health-summary, and location wording across Web/mobile/Android. (done, pushed)
 93. Soften medical-compliance wording and sample health authorization across Web/mobile/Android. (done, pushed)
 94. Anonymize public evidence-package review files and sync docs. (done, pushed)
-95. Tighten health-summary sample authorization and backend input boundaries. (done, checkpointing)
+95. Tighten health-summary sample authorization and backend input boundaries. (done, pushed)
+96. Make evidence-package downloads incident-specific and tighten Web AED archive summary. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -135,7 +136,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Web/mobile polish explorer (`019e4cfa-e2ad-7552-80b9-ad63f2facc8b`): completed read-only; recommended softening SOS/SCA/auto-call claims, PWA offline read-only state, evidence-package entry consistency, neutral demo-token placeholders, less mobile noise, removing hardcoded demo values, and role-name consistency.
 - Android polish explorer (`019e4cfa-f682-7d40-adc5-ce798a58db98`): completed read-only; recommended lower-friction current-event entry, hiding raw device IDs, filtering local archives, using sample health authorization instead of real authorization, stricter AED archive inference, and friendlier error mapping.
 - Backend evidence explorer (`019e4cfb-0a63-7343-9401-e225d1189f27`): completed read-only; recommended anonymization checks for public files, manifest/file-list consistency, external hash verification guide, full-field data dictionary, multi-round summary, expert feedback remediation loop, and medical-compliance wording scans.
-- Web/mobile next-slice explorer (`019e4d0a-d1d2-7f33-a973-bcebba0be928`): running read-only; inspecting remaining Web/mobile UI, compliance wording, demo reliability, evidence-package links, and performance opportunities.
+- Web/mobile next-slice explorer (`019e4d0a-d1d2-7f33-a973-bcebba0be928`): completed read-only; recommended incident-specific evidence downloads, Web archive AED-summary tightening, backend demo-health wording, public-doc wording sync, and optional PWA asset caching.
 - Android/OPPO next-slice explorer (`019e4d0a-e5ae-70a0-8aa6-3fc9275cb531`): completed read-only; recommended backend demo health `sample` status, health input enum boundaries, Android HeyTap readiness states, local HTTP clarity, Android error mapping, and Web/mobile health authorization display.
 
 ## Git Baseline
@@ -474,6 +475,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `7b3b3af` (`checkpoint: anonymize public evidence files`) created and pushed to `origin/codex/competition-hardening`.
 - Health-summary boundary slice: backend demo bootstrap health summaries now use `authorizationStatus="sample"` and neutral Chinese notes instead of implying real OPPO authorization; `HealthSignalSummary` validates source, authorization status, activity level, sleep quality, risk tags, and non-negative update timestamps with normalization.
 - Health-summary boundary validation: targeted backend tests for demo evidence export, invalid health inputs, and health export passed; full backend unittest discovery passed, 37 tests OK; targeted `rg` found no `OPPO Health mock` or hardcoded sample `authorizationStatus="authorized"` patterns in checked server/Web/Android source.
+- Git checkpoint: `18dec36` (`checkpoint: tighten health summary boundaries`) created and pushed to `origin/codex/competition-hardening`.
+- Incident-specific evidence download slice: shared Web download helper now accepts an optional incident id, mobile archived-flow downloads the currently opened incident package, and Web command-center package export uses the loaded incident id instead of always `/current/package`.
+- Web archive AED summary slice: desktop phone-preview archive summary no longer infers `AED 已送达` from `HANDOVER` or `ARCHIVED` alone; it requires AED pickup, delivery, analysis, or shock status/log evidence.
+- Incident package validation: targeted historical export/package test passed; full backend unittest discovery passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DRTpuSLA.js` at `229.74 kB` raw / `69.67 kB` gzip and mobile `MobileApp-i_i6eOca.js` at `38.94 kB` raw / `12.46 kB` gzip.
 
 ## Blockers Summary
 
@@ -482,7 +487,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the health-summary boundary slice, then continue with incident-specific evidence-package downloads and Web archive AED summary tightening from read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the incident-specific evidence download and Web AED archive-summary slice, then continue with Web/mobile health authorization display or public-doc wording sync from read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

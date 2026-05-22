@@ -798,10 +798,20 @@ class ServerTestCase(unittest.TestCase):
             old_payload = old_export.json()
             old_prime = next(item for item in old_payload["clients"] if item["userId"] == "demo-prime")
             old_patient = next(item for item in old_payload["clients"] if item["userId"] == "demo-patient")
+            old_package = client.get(f"/api/experiments/{old_incident_id}/package")
+            self.assertEqual(old_package.status_code, 200)
+            current_package = client.get("/api/experiments/current/package")
+            self.assertEqual(current_package.status_code, 200)
 
         self.assertEqual(old_payload["assignments"]["PRIME"], "demo-prime")
         self.assertEqual(old_prime["assignedRole"], "PRIME")
         self.assertTrue(old_patient["isPatient"])
+        with zipfile.ZipFile(BytesIO(old_package.content)) as archive:
+            old_manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+        with zipfile.ZipFile(BytesIO(current_package.content)) as archive:
+            current_manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+        self.assertEqual(old_manifest["incidentId"], old_incident_id)
+        self.assertNotEqual(current_manifest["incidentId"], old_incident_id)
 
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:

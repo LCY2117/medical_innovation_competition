@@ -74,19 +74,40 @@ function formatArchiveAedSummary(state: IncidentState | null): string {
   }
   const primeStatus = state.roles.PRIME?.status;
   const runnerStatus = state.roles.RUNNER?.status;
-  if (primeStatus === 'AED_SHOCK_DELIVERED' || state.phase === 'SHOCK_DELIVERED') {
+  const hasShockRecord = primeStatus === 'AED_SHOCK_DELIVERED' || logContains(state, 'AED shock delivered');
+  const hasAnalysisRecord =
+    hasShockRecord ||
+    primeStatus === 'AED_ANALYZING' ||
+    state.phase === 'AED_ANALYZING' ||
+    logContains(state, 'AED analysis');
+  const hasDeliveryRecord =
+    hasAnalysisRecord ||
+    runnerStatus === 'AED_DELIVERED' ||
+    state.phase === 'AED_DELIVERED' ||
+    logContains(state, 'AED delivered');
+  const hasPickupRecord =
+    hasDeliveryRecord ||
+    runnerStatus === 'AED_PICKED' ||
+    state.phase === 'AED_PICKED' ||
+    logContains(state, 'AED picked');
+  if (hasShockRecord) {
     return '电击记录 1 次';
   }
-  if (primeStatus === 'AED_ANALYZING' || state.phase === 'AED_ANALYZING') {
+  if (hasAnalysisRecord) {
     return 'AED 分析已记录';
   }
-  if (runnerStatus === 'AED_DELIVERED' || state.phase === 'AED_DELIVERED' || state.phase === 'HANDOVER' || state.phase === 'ARCHIVED') {
+  if (hasDeliveryRecord) {
     return 'AED 已送达';
   }
-  if (runnerStatus === 'AED_PICKED' || state.phase === 'AED_PICKED') {
+  if (hasPickupRecord) {
     return 'AED 已取用';
   }
   return '未记录';
+}
+
+function logContains(state: IncidentState, keyword: string): boolean {
+  const normalizedKeyword = keyword.toLowerCase();
+  return state.logs?.some((entry) => entry.msg.toLowerCase().includes(normalizedKeyword)) ?? false;
 }
 
 function getResuscitationGuidance(elapsedSec: number) {
@@ -1871,7 +1892,11 @@ export default function App() {
   const exportExperimentPackage = async () => {
     try {
       setErrorMessage(null);
-      const res = await fetch(`${getApiBase()}/experiments/current/package`, {
+      const targetIncidentId = incidentState?.incidentId ?? incidentId;
+      const packagePath = targetIncidentId
+        ? `/experiments/${encodeURIComponent(targetIncidentId)}/package`
+        : '/experiments/current/package';
+      const res = await fetch(`${getApiBase()}${packagePath}`, {
         headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
       if (!res.ok) {

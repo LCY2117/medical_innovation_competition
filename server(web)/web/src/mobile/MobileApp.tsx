@@ -1120,9 +1120,13 @@ function MobileApp() {
   }
 
   async function downloadArchivePackage() {
+    if (!incident) {
+      setNotice({ kind: 'error', text: '请先打开本轮事件，再下载事件证据包。' });
+      return;
+    }
     await runAction(
       'package',
-      () => downloadExperimentPackage(session?.token, demoAdminToken),
+      () => downloadExperimentPackage(session?.token, demoAdminToken, incident.incidentId),
       '事件证据包已开始下载。',
     );
   }
