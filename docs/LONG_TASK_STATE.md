@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 4df1382
-- Last update: 2026-05-22 17:07:41 +08:00
+- HEAD: e8283d3
+- Last update: 2026-05-22 17:12:55 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -170,7 +170,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 145. Prevent non-patient demo mobile terminals from starting patient SOS. (done, pushed)
 146. Surface evidence-package SHA-256 after Web/mobile downloads. (done, pushed)
 147. Align Web command-center readiness warning count with visible/admin warnings. (done, pushed)
-148. Add bound-event status strip to the 4-terminal mobile demo stage. (done, validating)
+148. Add bound-event status strip to the 4-terminal mobile demo stage. (done, pushed)
+149. Add Web command-center copy affordance for evidence-package SHA-256. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -702,6 +703,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `4df1382` (`checkpoint: align readiness warnings`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile demo stage binding-status slice: `/mobile-demo` now shows whether the stage is bound to an incident, displays a shortened incident id, explains that all four terminals share the same event, and marks each terminal panel with the shared event id or an unbound warning. This reduces onsite confusion when four browser tabs/frames are opened for judging.
 - Mobile demo stage binding-status validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-C8-rsJ4D.js`, mobile `MobileApp-9a_Fy8WK.js`, and stage `MobileDemoStage-7g9iM-bl.js`; targeted source scan confirmed the visible bound/unbound/shared-event labels are present.
+- Git checkpoint: `e8283d3` (`checkpoint: show demo stage incident binding`) created and pushed to `origin/codex/competition-hardening`.
+- Web evidence-package SHA copy slice: after a Web command-center ZIP download with `X-LifeReflexArc-Package-Sha256`, the success banner now keeps the downloaded filename/hash metadata and shows a `复制 SHA` button. The button uses the existing clipboard fallback and replaces the success text with a copied confirmation, making it easier to paste the package hash into reviewer notes or pre-experiment records.
+- Web evidence-package SHA copy validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DVQkGLsA.js`, mobile `MobileApp-Dhqmeawv.js`, and stage `MobileDemoStage-bWe17Ylh.js`.
 
 ## Blockers Summary
 
@@ -710,7 +714,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the mobile demo stage binding-status slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: improve copy affordance for downloaded package hash, add a small Web smoke for the readiness card, or continue polishing judge-visible demo affordances. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Web evidence-package SHA copy slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: add a small Web smoke for the readiness card, continue polishing judge-visible demo affordances, or run a broader validation sweep. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

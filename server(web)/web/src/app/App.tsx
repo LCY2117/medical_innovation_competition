@@ -385,6 +385,11 @@ interface DemoReadiness {
   warnings?: string[];
 }
 
+type PackageDownloadInfo = {
+  filename: string;
+  packageSha256: string | null;
+};
+
 interface AdminSessionUser {
   userId: string;
   displayName: string;
@@ -1374,6 +1379,7 @@ export default function App() {
   const [wsError, setWsError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [lastPackageDownload, setLastPackageDownload] = useState<PackageDownloadInfo | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<number | null>(null);
@@ -1999,6 +2005,7 @@ export default function App() {
     try {
       setErrorMessage(null);
       setSuccessMessage(null);
+      setLastPackageDownload(null);
       const targetIncidentId = incidentState?.incidentId ?? incidentId;
       const packagePath = targetIncidentId
         ? `/experiments/${encodeURIComponent(targetIncidentId)}/package`
@@ -2010,6 +2017,7 @@ export default function App() {
         throw new Error(await explainResponseError(res, '导出事件证据包失败'));
       }
       const download = await downloadResponseBlob(res, `lifereflex-experiment-${incidentId ?? 'current'}.zip`);
+      setLastPackageDownload(download);
       setSuccessMessage(
         download.packageSha256
           ? `证据包已下载：${download.filename}；SHA-256 ${download.packageSha256}`
@@ -2018,6 +2026,20 @@ export default function App() {
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '导出事件证据包失败');
     }
+  };
+
+  const copyLastPackageSha = async () => {
+    const sha = lastPackageDownload?.packageSha256;
+    if (!sha) {
+      return;
+    }
+    const ok = await copyTextToClipboard(sha);
+    if (!ok) {
+      setErrorMessage('复制 SHA-256 失败，请手动复制下载提示中的哈希值。');
+      return;
+    }
+    setErrorMessage(null);
+    setSuccessMessage(`已复制证据包 SHA-256：${sha}`);
   };
 
   const exportPreflightReport = () => {
@@ -3422,8 +3444,18 @@ export default function App() {
             </div>
           )}
           {successMessage && (
-            <div className="text-xs text-emerald-200 border border-emerald-800/70 bg-emerald-950/40 rounded-lg px-3 py-2 break-all">
-              {successMessage}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-200 border border-emerald-800/70 bg-emerald-950/40 rounded-lg px-3 py-2">
+              <span className="break-all">{successMessage}</span>
+              {lastPackageDownload?.packageSha256 && (
+                <button
+                  type="button"
+                  onClick={copyLastPackageSha}
+                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-emerald-700/70 bg-emerald-900/40 px-2 text-[10px] font-bold uppercase tracking-wider text-emerald-100 hover:bg-emerald-900/70"
+                  title={`复制 ${lastPackageDownload.filename} 的 SHA-256`}
+                >
+                  <Copy size={13} /> 复制 SHA
+                </button>
+              )}
             </div>
           )}
           {errorMessage && (
