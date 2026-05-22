@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 1c1eab2
-- Last update: 2026-05-22 11:09:28 +08:00
+- HEAD: 8e482be
+- Last update: 2026-05-22 11:19:03 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -144,6 +144,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 119. Add one-command analysis guidance inside exported evidence-package materials. (done, pushed)
 120. Add PPT/Excel chart-data CSV output for multi-round pre-experiment analysis. (done, pushed)
 121. Refresh morning handoff with latest evidence-analysis checkpoints. (done, checkpointing)
+122. Add post-demo evidence-processing checklist to the Web preflight Markdown report. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -590,6 +591,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `1c1eab2` (`checkpoint: add pre-experiment chart data`) created and pushed to `origin/codex/competition-hardening`.
 - Morning handoff refresh slice: `docs/MORNING_HANDOFF.md` now records the recent evidence-analysis checkpoints from `87e1941` through `1c1eab2`, including the one-command report builder and `round-chart-data.csv` output, so the wake-up report reflects the actual latest pushed branch.
 - Morning handoff refresh validation: `git status --short --branch` confirms branch `codex/competition-hardening` aligned with `origin/codex/competition-hardening`; only runtime/user files remain untracked or modified outside the checkpoint scope (`server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, `output/`).
+- Git checkpoint: `8e482be` (`checkpoint: refresh evidence handoff`) created and pushed to `origin/codex/competition-hardening`.
+- Web preflight evidence-processing slice: `server(web)/web/src/app/App.tsx` now includes a post-demo evidence-processing section in the exported Markdown self-check report, telling operators how to verify a downloaded evidence ZIP and how to generate `round-summary.csv`, `round-analysis.md`, and `round-chart-data.csv` from multiple rounds.
+- Web preflight evidence-processing validation: Web `npm run typecheck` passed before this resume; Web `npm run build` passed after the report update with desktop bundle `App-BZWfXHVx.js` and mobile bundle `MobileApp-CMWWhsBf.js`.
 
 ## Blockers Summary
 
@@ -598,7 +602,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the morning handoff refresh slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Web preflight evidence-processing slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
