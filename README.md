@@ -287,9 +287,10 @@ ZIP 包含：
 - `participant_questionnaire.csv`：参与者主观问卷表。
 - `baseline_vs_system_comparison.csv`：基线轮与系统轮对照分析模板。
 - `pre_experiment_round_summary.csv`：单轮汇总行，适合多轮演练合并到 Excel 做描述性统计。
+- `expert_feedback_summary.csv`：专家意见汇总与整改闭环表，用于合并多名专家评分、风险点、负责人、状态和二次复核意见。
 - `manifest.json`：文件清单和 SHA-256 校验。
 
-对外材料优先使用审阅索引、匿名化文件、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、分析说明、数据字典、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
+对外材料优先使用审阅索引、匿名化文件、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总表、主持人跑场单、分析说明、数据字典、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
 
 下载 ZIP 后可用仓库内的独立校验脚本复核文件完整性、SHA-256 hash、文件清单和公开/内部材料边界：
 

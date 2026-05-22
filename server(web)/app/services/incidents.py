@@ -696,6 +696,10 @@ class IncidentService:
                 self._pre_experiment_round_summary_rows(export),
                 self._pre_experiment_round_summary_fields(),
             ),
+            "expert_feedback_summary.csv": self._csv_text(
+                self._expert_feedback_summary_rows(export),
+                self._expert_feedback_summary_fields(),
+            ),
         }
         files["manifest.json"] = self._package_manifest(export, files)
         archive = io.BytesIO()
@@ -1219,6 +1223,63 @@ class IncidentService:
             }
         ]
 
+    @staticmethod
+    def _expert_feedback_summary_fields() -> list[str]:
+        return [
+            "feedbackId",
+            "incidentId",
+            "roundId",
+            "expertCode",
+            "expertSpecialty",
+            "reviewDate",
+            "scenarioFitScore",
+            "medicalFlowSafetyScore",
+            "roleDivisionScore",
+            "dispatchExplainabilityScore",
+            "mobileUsabilityScore",
+            "evidencePackageScore",
+            "safetyBoundaryScore",
+            "overallRecommendation",
+            "keyPositiveFeedback",
+            "keyRiskOrConcern",
+            "requiredImprovement",
+            "owner",
+            "priority",
+            "status",
+            "targetFollowUpDate",
+            "followUpEvidence",
+            "secondReviewComment",
+        ]
+
+    def _expert_feedback_summary_rows(self, export: ExperimentExportResponse) -> list[dict]:
+        return [
+            {
+                "feedbackId": "EF001",
+                "incidentId": export.incidentId,
+                "roundId": "R001",
+                "expertCode": "E01",
+                "expertSpecialty": "",
+                "reviewDate": "",
+                "scenarioFitScore": "",
+                "medicalFlowSafetyScore": "",
+                "roleDivisionScore": "",
+                "dispatchExplainabilityScore": "",
+                "mobileUsabilityScore": "",
+                "evidencePackageScore": "",
+                "safetyBoundaryScore": "",
+                "overallRecommendation": "",
+                "keyPositiveFeedback": "",
+                "keyRiskOrConcern": "",
+                "requiredImprovement": "",
+                "owner": "",
+                "priority": "",
+                "status": "pending_review",
+                "targetFollowUpDate": "",
+                "followUpEvidence": "",
+                "secondReviewComment": "",
+            }
+        ]
+
     def _baseline_vs_system_comparison_rows(self, export: ExperimentExportResponse) -> list[dict]:
         metrics = export.metrics
         return [
@@ -1475,6 +1536,7 @@ class IncidentService:
                     "participant_questionnaire.csv",
                     "baseline_vs_system_comparison.csv",
                     "pre_experiment_round_summary.csv",
+                    "expert_feedback_summary.csv",
                 ],
                 "internalReviewOnly": ["experiment.json", "clients.csv"],
                 "note": "Use anonymized files for PPT, expert feedback, and externally shared materials.",
@@ -1638,11 +1700,12 @@ class IncidentService:
 - `participant_questionnaire.csv`：参与者主观问卷表，用于记录可理解性、协同减负、移动端提示和安全边界评分。
 - `baseline_vs_system_comparison.csv`：无系统基线轮与系统轮对照分析模板，用于计算 T1-T6 差值、百分比变化和主观评分差异。
 - `pre_experiment_round_summary.csv`：单轮预实验汇总行，便于把多轮 ZIP 的核心指标合并到 Excel 做描述性统计。
+- `expert_feedback_summary.csv`：多名专家意见汇总和整改闭环表，用于记录评分、风险点、负责人、处理状态和二次复核意见。
 - `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。健康摘要中 `mock` 来源表示演示/预实验模拟数据，不应被表述为真实临床诊断结论。
 """
 
     def _review_index(self, export: ExperimentExportResponse, participant_map: dict[str, str]) -> str:
@@ -1675,6 +1738,7 @@ class IncidentService:
 | `expert_summary.md` | 专家、指导教师、PPT 制作者 | 这轮演练的医学场景、协同流程、指标和谨慎结论 | 可外部展示 |
 | `expert_review_checklist.md` | 专家、指导教师 | 医学安全边界、AI 分派、数据记录是否可接受 | 可外部展示 |
 | `expert_feedback_form.md` | 专家 | 事件级评分、改进意见和签字材料 | 可外部展示 |
+| `expert_feedback_summary.csv` | 项目负责人、指导教师 | 汇总专家意见、风险点和整改闭环 | 可外部展示，需去除专家联系方式 |
 | `facilitator_run_sheet.md` | 主持人、观察员 | 现场跑场流程、T0-T6 记录提示、演练后整理步骤 | 可外部展示 |
 | `analysis_guide.md` | 数据整理同学、PPT 制作者 | 如何解释 T1-T6、问卷、基线对照和不可夸大结论 | 可外部展示 |
 | `data_dictionary.md` | 数据整理同学、专家、PPT 制作者 | 指标、CSV 字段、角色代码和数据边界说明 | 可外部展示 |
