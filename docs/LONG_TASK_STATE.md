@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: fbfd9a8
-- Last update: 2026-05-22 09:33:19 +08:00
+- HEAD: aa1c634
+- Last update: 2026-05-22 09:39:39 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -131,6 +131,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 106. Refresh morning handoff with latest checkpoints, APK artifacts, PWA, and release readiness. (done, checkpointing)
 107. Sync overnight plan, product plan, and technical whitepaper with Android release readiness, PWA cache resilience, and latest validation facts. (done, checkpointing)
 108. Add Web command-center preflight Markdown report for demo readiness, provider fallback, terminal/AED state, and safe handoff notes. (done, checkpointing)
+109. Add independent evidence-package verification script for manifest SHA-256, file-list, ZIP path safety, and privacy-boundary checks. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -535,6 +536,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `fbfd9a8` (`checkpoint: sync release readiness docs`) created and pushed to `origin/codex/competition-hardening`.
 - Web preflight report slice: Web command center now exports a Markdown self-check report covering demo readiness, warnings, auth status, frontend/backend health, audit/rate-limit state, map/push/health provider fallback, terminal tasks, AED sites, demo links, and safe usage boundaries without writing demo tokens, admin tokens, API keys, or personal phone numbers.
 - Web preflight validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-DHwe7OoC.js`; local integrated backend smoke on `127.0.0.1:18096` with temp DB and demo token `LCY` initialized a scenario and confirmed `自检报告`/`导出自检` buttons render with incident binding. The in-app Browser backend does not support download events, so downloaded Markdown content could not be captured through that tool; report generation was validated by code review, typecheck/build, and DOM smoke. Temporary preview/backend ports `18095`/`18096` were stopped.
+- Git checkpoint: `aa1c634` (`checkpoint: add demo preflight report`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence-package verification script slice: added `scripts/verify_evidence_package.py`, a standard-library CLI that validates `manifest.json`, SHA-256 hashes, byte counts, duplicate/missing files, unsafe ZIP paths, manifest file-list consistency, and public/internal privacy guidance. README and deployment runbook now document how to run it after downloading a ZIP package.
+- Evidence-package verification validation: targeted `test_evidence_package_verification_script_accepts_current_package` passed; `python scripts\verify_evidence_package.py --help` worked; backend full unittest discovery passed, 38 tests OK. Temporary `output/preflight-smoke` artifacts were removed after smoke testing.
 
 ## Blockers Summary
 
@@ -543,7 +547,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Web preflight report, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint evidence-package verification script, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

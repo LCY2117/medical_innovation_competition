@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -812,6 +814,32 @@ class ServerTestCase(unittest.TestCase):
             current_manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
         self.assertEqual(old_manifest["incidentId"], old_incident_id)
         self.assertNotEqual(current_manifest["incidentId"], old_incident_id)
+
+    def test_evidence_package_verification_script_accepts_current_package(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        package_path.write_bytes(package.content)
+        script_path = Path(__file__).resolve().parents[2] / "scripts" / "verify_evidence_package.py"
+        result = subprocess.run(
+            [sys.executable, str(script_path), str(package_path)],
+            cwd=script_path.parent.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: evidence package manifest", result.stdout)
 
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:

@@ -291,6 +291,14 @@ ZIP 包含：
 
 对外材料优先使用审阅索引、匿名化文件、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、分析说明、数据字典、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表；完整 `experiment.json`、`clients.csv` 只建议内部复核。
 
+下载 ZIP 后可用仓库内的独立校验脚本复核文件完整性、SHA-256 hash、文件清单和公开/内部材料边界：
+
+```powershell
+python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
+```
+
+校验通过会输出 `OK`；失败时会列出缺失文件、hash 不一致、路径异常或隐私边界配置问题。
+
 ## AI 调度说明
 
 SiliconFlow 的配置文件放在：

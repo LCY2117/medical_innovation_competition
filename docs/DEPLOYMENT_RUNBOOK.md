@@ -334,3 +334,11 @@ ZIP 包当前包含：
 - `manifest.json`：文件清单、SHA256 校验、生成时间和事件编号。
 
 对外材料默认使用审阅索引、匿名化文件、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、分析说明、数据字典、参与者安全简表、观察员记录表、参与者问卷、基线对照分析表和单轮汇总表。完整 `experiment.json` 只用于内部复核，不应直接发给专家或放入公开 PPT。
+
+下载 ZIP 后建议先在本地复核 manifest 和 SHA-256：
+
+```powershell
+python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
+```
+
+通过时脚本会输出 `OK`；如果提示 hash 不一致、缺文件、路径异常或公开/内部材料边界冲突，应重新导出证据包并保留问题记录。
