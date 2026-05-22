@@ -244,6 +244,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | API 健康检查 | `curl https://lifereflex.mddcommunity.top/api/health/detail`，确认 `frontend.indexReady`、`frontend.mobileChunkReady`、`frontend.desktopChunkReady`、DB、WebSocket、认证和 `demoReadiness` |
 | 安全控制 | `health.detail.security` 显示审计和限流配置，`storage.auditEventCount` 会随关键动作增加 |
 | WebSocket | Web 调度台显示“实时同步” |
+| WebSocket 切换稳定性 | 在 Web 总控台和 `/mobile` 切换事件、刷新或退出登录时，不应出现旧事件重新连接、状态回跳或重复“重连中” |
 | 演示场景 | 点击“初始化协同演示场景”后出现 4 个终端和 AED 点位 |
 | 调度解释 | 触发患者后出现三类角色评分和理由 |
 | 地图距离 provider | `health.detail.mapProvider` 显示 `mode`、`distanceSource`、`configured` 和 fallback 原因；未配置 Key 时仍可完整演示 |
@@ -343,7 +344,7 @@ ZIP 包当前包含：
 python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 ```
 
-通过时脚本会输出 `OK`；如果提示 hash 不一致、缺文件、路径异常或公开/内部材料边界冲突，应重新导出证据包并保留问题记录。
+通过时脚本会输出 `OK`；如果提示 hash 不一致、缺文件、路径异常、公开/内部材料边界冲突、公开材料泄漏原始参与者 ID 或 ZIP 含未列文件，应重新导出证据包并保留问题记录。
 
 多轮预实验结束后，可以把每轮下载的 ZIP 放到同一目录，一键生成汇总 CSV、Markdown 分析摘要和 Excel/PPT 图表数据：
 

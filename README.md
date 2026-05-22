@@ -245,7 +245,9 @@ APK 发布准备和 release 签名见 `docs/ANDROID_RELEASE_READINESS.md`。签�
 - 管理口令、正式管理员账号、审计日志和频率限制。
 - 患者 SOS、自动分派、CPR/AED/交接动作和归档。
 - 地图/推送/AI provider 不可用时的 demo fallback。
-- 预实验证据包 ZIP、匿名化文件、manifest hash 和专家材料。
+- Web/移动端 WebSocket 过期回调保护，避免切换事件或网络抖动时旧连接覆盖当前状态。
+- Android REST 状态种子、WebSocket 单飞重连和急救动作提交态。
+- 预实验证据包 ZIP、匿名化文件、manifest hash、坏包拒绝和专家材料。
 
 ## 协同演示入口
 
@@ -300,6 +302,7 @@ python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 ```
 
 校验通过会输出 `OK`；失败时会列出缺失文件、hash 不一致、路径异常或隐私边界配置问题。
+当前回归测试还覆盖了篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠和公开材料泄漏原始参与者 ID 等坏包负例。
 
 如果已经完成多轮系统演练，可以把多个 ZIP 放到同一目录，一键生成汇总 CSV、Markdown 分析摘要和 Excel/PPT 图表数据：
 

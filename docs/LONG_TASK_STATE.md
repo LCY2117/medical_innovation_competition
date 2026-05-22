@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 9ced23d
-- Last update: 2026-05-22 14:47:05 +08:00
+- HEAD: 6b967cb
+- Last update: 2026-05-22 14:51:54 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -156,7 +156,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 131. Add Android emergency action duplicate-submit guard for full-screen flow. (done, pushed)
 132. Extend Android pending-action feedback to regular task/incident mission cards. (done, pushed)
 133. Add evidence verifier negative tests for tampered hash, unlisted files, privacy overlap, and public raw-ID leaks. (done, pushed)
-134. Harden Web and mobile WebSocket reconnect against stale socket close/error callbacks. (done, checkpointing)
+134. Harden Web and mobile WebSocket reconnect against stale socket close/error callbacks. (done, pushed)
+135. Sync public product, deployment, README, and whitepaper docs with latest reliability and validation facts. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -645,6 +646,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `9ced23d` (`checkpoint: add evidence verifier negative tests`) created and pushed to `origin/codex/competition-hardening`.
 - Web/mobile WebSocket stale-callback guard slice: desktop command-center and mobile Web now clear refs before closing old sockets, ignore stale `onopen`/`onmessage`/`onerror`/`onclose` callbacks, bind reconnects to the connection's incident id, and cancel pending mobile reconnects on logout/unmount. This reduces ghost reconnect/status flips during event switching, logout, or network flaps.
 - Web/mobile WebSocket stale-callback validation: `npm run typecheck` passed; `npm run build` passed with desktop bundle `App-CCmke60w.js` and mobile bundle `MobileApp-CEP25Ntl.js`.
+- Git checkpoint: `6b967cb` (`checkpoint: guard web websocket stale callbacks`) created and pushed to `origin/codex/competition-hardening`.
+- Public documentation sync slice: README, deployment runbook, product plan, and technical whitepaper now mention Web/mobile WebSocket stale-callback protection, Android pending-action guards, evidence verifier bad-package negative tests, 46 passing backend tests, and the latest Web build artifacts. This keeps teammate/PPT-facing materials aligned with the current branch.
+- Public documentation sync validation: `git diff --check` passed; targeted scan found remaining clinical-effectiveness wording only in cautionary contexts and no newly exposed credential values.
 
 ## Blockers Summary
 
@@ -653,7 +657,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Web/mobile WebSocket stale-callback guard patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the public documentation sync patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

@@ -28,6 +28,7 @@
 - [x] AI 调度过程、AED 点位、角色分派理由适合直接截图放进 PPT。
 - [x] Web 控制台模拟手机动作使用一致 userId，避免 CPR/AED/交接演示被后端拒绝。
 - [x] 公网演示受保护时，Web 控制台 join/action 也携带演示管理员 header。
+- [x] WebSocket 连接已增加过期回调保护，切换事件、关闭旧连接或网络抖动时不会被旧 socket 覆盖实时状态或排出幽灵重连。
 
 Acceptance:
 
@@ -46,6 +47,7 @@ Acceptance:
 - [x] WebSocket incidentId 做 URL 编码，避免特殊事件 ID 破坏连接 URL。
 - [x] Android HTTP/网络/WebSocket 错误映射为可行动中文提示，避免演示时直接暴露底层异常。
 - [x] Debug-only HTTP/LAN 联调已放开，Release 继续保持 HTTPS/WSS 安全口径。
+- [x] Android 急救动作和普通任务卡已接入单飞提交态，提交中禁用按钮并显示“提交中...”，减少弱网或紧张演示下重复动作。
 
 Acceptance:
 
@@ -74,6 +76,7 @@ Acceptance:
 - [x] Web 增加“预实验记录包”下载入口：事件 JSON、匿名化 JSON/CSV、审阅索引、说明、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验清单。
 - [x] Android 本地归档可展示参与者视角的任务总结。
 - [x] 补充专家反馈模板中的证据包审阅材料、系统截图清单、参与者问卷、安全边界简表、3-5 分钟演示脚本和多专家整改闭环汇总表。
+- [x] 独立证据包校验器已有坏包负例测试，覆盖 SHA-256 篡改、ZIP 未列文件、公开/内部隐私边界重叠和公开材料原始参与者 ID 泄漏。
 
 Acceptance:
 
@@ -132,9 +135,9 @@ Implementation notes:
 
 Validation:
 
-- Backend unittest discovery: 41 tests OK after evidence-summary and one-command analysis-tool slices.
-- Web typecheck/build: passed.
-- Android debug APK build: passed after increasing Gradle heap for AndroidX Security + Compose builds.
+- Backend unittest discovery: 46 tests OK after evidence verifier negative tests.
+- Web typecheck/build: passed after desktop/mobile WebSocket stale-callback guard; latest build emitted desktop `App-CCmke60w.js` and mobile `MobileApp-CEP25Ntl.js`.
+- Android debug APK build: passed after REST state seeding, single-flight WebSocket reconnect, and action pending-state patches.
 
 ## Validation Commands
 
@@ -186,6 +189,7 @@ Required capabilities:
 - [x] Register the browser terminal as a rescue client with demo/manual location fallback.
 - [x] Open current incident or a pasted incident ID.
 - [x] Real-time WebSocket state sync with reconnect status.
+- [x] Mobile WebSocket reconnect ignores stale socket callbacks and clears pending reconnects on logout/unmount.
 - [x] Patient-side SOS start/cancel flow.
 - [x] Role-aware task execution for PRIME/RUNNER/GUIDE.
 - [x] Show AED sites, dispatch rationale, role status, and latest logs.
@@ -223,7 +227,7 @@ Validation results:
 - Backend unittest: 24 tests OK.
 - Web typecheck: passed.
 - Web production build: passed.
-- Build split: mobile JS `26.27 kB` raw / `8.80 kB` gzip; mobile CSS `9.74 kB` raw / `2.55 kB` gzip; desktop app remains a separate `App-*` chunk.
+- Latest build split after feature hardening: mobile JS `39.50 kB` raw / `12.62 kB` gzip; mobile CSS `15.93 kB` raw / `3.59 kB` gzip; desktop app remains a separate `App-*` chunk.
 - Mobile browser smoke at `390x844`: login/register screen rendered, no horizontal overflow, manifest detected.
 - Mobile SOS smoke at `390x844`: registered a browser user, opened current event, started SOS, auto-dispatched to `任务已下发`, showed patient mode, role statuses, timeline logs, and no horizontal overflow.
 - Mobile UX polish smoke at `390x844`: emergency content is separated into `总览 / 任务 / 现场 / 记录`; `总览` keeps only status, identity, and the current high-priority action/patient guidance.

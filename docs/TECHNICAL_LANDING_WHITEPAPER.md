@@ -92,6 +92,7 @@ flowchart LR
 - 展示 AI/规则分派过程。
 - 展示每个角色的评分、理由、距离和风险提示。
 - 修复模板 UI 组件与当前依赖版本的 TypeScript 兼容问题。
+- WebSocket 已补过期回调保护，切换事件、关闭旧连接、退出移动端登录或网络抖动时，不会让旧连接覆盖当前实时状态或排出幽灵重连。
 
 ### 5.3 Android
 
@@ -103,6 +104,7 @@ flowchart LR
 - 登录态使用 AndroidX Security 加密存储并兼容旧登录态迁移。
 - HTTP/网络/WebSocket 异常会映射为可行动中文提示。
 - Debug 构建支持局域网 HTTP 联调，release 构建保持 HTTPS/WSS 安全口径。
+- 事件状态会先从 REST 快照写入本地，再等待 WebSocket 实时帧；WebSocket 重连采用单飞调度；急救动作和普通任务卡提交中会禁用按钮并显示“提交中...”，降低弱网和连点下的重复动作风险。
 
 当前 debug APK 已可出包，release readiness 构建已通过。后续如需正式比赛包，按 `docs/ANDROID_RELEASE_READINESS.md` 生成 release keystore、记录 SHA1，并把签名四件套放在 `local.properties` 或环境变量中。
 
@@ -111,6 +113,7 @@ flowchart LR
 - 第三方资源准备清单。
 - 低成本预实验方案。
 - 专家反馈表、专家意见汇总整改表、多轮汇总 CSV、PPT 安全口径 Markdown 分析摘要和 Excel/PPT 图表底表；多轮 ZIP 可用一条命令生成汇总、摘要和图表数据。
+- 独立证据包校验脚本和坏包负例测试，覆盖 manifest/SHA-256、ZIP 文件清单、公开/内部隐私边界和公开材料原始参与者 ID 泄漏。
 - 部署运行手册。
 - 长任务状态和阻塞记录。
 
@@ -228,9 +231,9 @@ flowchart LR
 
 ## 11. 当前验证结果
 
-- 后端测试：41 项通过。
+- 后端测试：46 项通过。
 - 前端 TypeScript 检查：通过。
-- 前端生产构建：通过。
+- 前端生产构建：通过，最新 Web/mobile WebSocket 稳定性切片产物为桌面 `App-CCmke60w.js`、移动 `MobileApp-CEP25Ntl.js`。
 - Android Gradle 任务发现：通过。
 - Android APK 组装：debug APK 已生成，使用 Android debug 签名；release readiness 构建已生成未签名检查包，等待本地 release keystore。
 
