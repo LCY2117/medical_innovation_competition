@@ -358,10 +358,19 @@ interface HealthDetail {
     adminAccountAuthEnabled?: boolean;
     adminPhoneCount?: number;
   };
-  frontend?: { ok?: boolean };
+  frontend?: Record<string, unknown> & { ok?: boolean };
   mapProvider?: Record<string, unknown>;
   pushProvider?: Record<string, unknown>;
+  features?: Record<string, unknown>;
+  healthProvider?: Record<string, unknown>;
+  security?: Record<string, unknown>;
+  storage?: Record<string, unknown>;
   demoReadiness?: DemoReadiness;
+  registeredClients?: number;
+  registeredAedSites?: number;
+  activeWebSockets?: number;
+  activeSosTimers?: number;
+  version?: string | null;
 }
 
 interface DemoReadiness {
@@ -832,6 +841,21 @@ function downloadJson(filename: string, data: unknown): void {
     return;
   }
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+function downloadText(filename: string, text: string, mimeType = 'text/markdown;charset=utf-8'): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const blob = new Blob([text], { type: mimeType });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -1915,6 +1939,123 @@ export default function App() {
     }
   };
 
+  const exportPreflightReport = () => {
+    const generatedAt = new Date();
+    const targetIncidentId = incidentState?.incidentId ?? incidentId ?? '未创建';
+    const statusLabel = demoReadiness?.ready ? '准备就绪' : '仍需确认';
+    const currentPhase = translatePhaseLabel(incidentState?.phase);
+    const warningList = [
+      ...readinessWarnings,
+      ...(!demoAdminReady ? ['管理权限未就绪：请先登录正式管理员账号或填写演示口令。'] : []),
+      ...(wsError ? [`实时连接异常：${wsError}`] : []),
+    ];
+    const roleRows = roleNames.map((role) => {
+      const roleState = incidentState?.roles?.[role];
+      return [
+        translateRoleLabel(role),
+        getClientDisplayName(roleState?.userId),
+        translateRoleStatus(roleState?.status),
+      ];
+    });
+    const clientRows = clients.map((client) => [
+      client.displayName,
+      client.isPatient ? '患者端' : translateRoleLabel(client.assignedRole),
+      client.deviceType || '移动终端',
+      client.online ? '在线' : '离线',
+      formatLocationLabel(client.location),
+      `${translateHealthSource(client.healthSignals?.source)} / ${translateHealthAuthorization(client.healthSignals?.authorizationStatus)}`,
+    ]);
+    const aedRows = visibleAedSites.map((site) => [
+      site.name,
+      translateAedStatus(site.status),
+      formatLocationLabel(site.location),
+      site.accessNotes || '无补充说明',
+    ]);
+    const shareLinkRows = demoShareLinks.map((link) => [link.label, link.url]);
+    const table = (headers: string[], rows: Array<Array<string | number | boolean | null | undefined>>) => {
+      const normalize = (value: string | number | boolean | null | undefined) => String(value ?? '--').replace(/\|/g, '/');
+      return [
+        `| ${headers.map(normalize).join(' | ')} |`,
+        `| ${headers.map(() => '---').join(' | ')} |`,
+        ...rows.map((row) => `| ${row.map(normalize).join(' | ')} |`),
+      ].join('\n');
+    };
+    const lines = [
+      '# 生命反射弧演示自检报告',
+      '',
+      `- 生成时间：${generatedAt.toLocaleString('zh-CN', { hour12: false })}`,
+      `- 事件编号：${targetIncidentId}`,
+      `- 当前阶段：${currentPhase}`,
+      `- 总体状态：${statusLabel}`,
+      `- 安全边界：本报告仅用于协同演示、训练复盘和低成本预实验，不构成临床疗效证明。`,
+      '',
+      '## 一、准备度检查',
+      '',
+      table(['检查项', '当前值', '状态'], readinessItems.map((item) => [item.label, item.value, item.ready ? '通过' : '待确认'])),
+      '',
+      warningList.length
+        ? ['## 二、待确认项', '', ...warningList.map((item) => `- ${item}`)].join('\n')
+        : '## 二、待确认项\n\n- 暂无阻塞项。正式演示前仍建议完成真机走查。',
+      '',
+      '## 三、运行状态',
+      '',
+      table(
+        ['项目', '状态'],
+        [
+          ['实时连接', wsConnected ? '已连接' : '未连接'],
+          ['管理权限', demoAdminStatusLabel],
+          ['正式管理员账号', adminAccountEnabled ? '已启用' : '未启用'],
+          ['演示口令保护', healthDetail?.demoAdminAuthEnabled ? '已启用' : '未启用'],
+          ['后端版本', healthDetail?.version ?? '未返回'],
+          ['前端构建', healthDetail?.frontend?.ok ? '可用' : '待确认'],
+          ['审计日志', healthDetail?.security?.auditLogEnabled ? '已启用' : '未启用'],
+          ['频率限制', healthDetail?.security?.rateLimitEnabled ? '已启用' : '未启用'],
+        ],
+      ),
+      '',
+      '## 四、第三方与备用链路',
+      '',
+      table(
+        ['能力', '当前状态'],
+        [
+          ['地图距离', formatTechnicalValue(mapProviderDetail)],
+          ['实时通知', formatTechnicalValue(healthDetail?.pushProvider ?? {})],
+          ['健康摘要', formatTechnicalValue(healthDetail?.healthProvider ?? {})],
+          ['智能分派', dispatchMeta?.configured ? '云端智能分派已启用' : '规则引擎兜底'],
+        ],
+      ),
+      '',
+      '## 五、终端与任务',
+      '',
+      roleRows.length ? table(['职责', '终端', '状态'], roleRows) : '- 尚未生成角色任务。',
+      '',
+      clientRows.length
+        ? table(['终端', '职责', '设备', '在线', '位置', '健康摘要'], clientRows)
+        : '- 尚未注册移动终端。',
+      '',
+      '## 六、AED 点位',
+      '',
+      aedRows.length ? table(['AED', '状态', '位置', '取用说明'], aedRows) : '- 尚未配置 AED 点位。',
+      '',
+      '## 七、演示入口',
+      '',
+      shareLinkRows.length ? table(['入口', '链接'], shareLinkRows) : '- 当前浏览器无法生成演示入口。',
+      '',
+      '## 八、建议演示顺序',
+      '',
+      ...demoFlowSteps.map((step, index) => `${index + 1}. ${step.title}：${step.detail}（${step.complete ? '已完成' : step.active ? '当前步骤' : '待执行'}）`),
+      '',
+      '## 九、报告使用边界',
+      '',
+      '- 对外展示优先配合事件证据包中的匿名化文件、专家复核清单和观察员记录表。',
+      '- 不在报告中记录演示口令、登录 token、API Key、证书私钥或个人手机号。',
+      '- 真正比赛/专家演示前仍需完成至少一次真机 APK 与移动浏览器端全流程走查。',
+      '',
+    ];
+    const filenameIncident = targetIncidentId === '未创建' ? 'current' : targetIncidentId.slice(0, 8);
+    downloadText(`lifereflex-preflight-${filenameIncident}.md`, lines.join('\n'));
+  };
+
   const handleLogScroll = () => {
     const container = logContainerRef.current;
     if (!container) {
@@ -2933,6 +3074,13 @@ export default function App() {
                <FileText size={16} /> 证据包
              </button>
              <button
+               onClick={exportPreflightReport}
+               className="h-9 px-3 rounded-lg bg-slate-800 text-slate-100 hover:bg-slate-700 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
+               title="导出演示前自检 Markdown 报告，不包含口令、token 或 API Key"
+             >
+               <CheckCircle2 size={16} /> 自检报告
+             </button>
+             <button
                onClick={loadAuditEvents}
                className="h-9 px-3 rounded-lg bg-emerald-800 text-emerald-50 hover:bg-emerald-700 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
                title="查看最近的登录、演示、导出和角色动作审计记录"
@@ -3034,13 +3182,23 @@ export default function App() {
                   {demoReadiness?.ready ? '已满足本轮协同演示前置条件' : '仍有演示前检查项需要确认'}
                 </div>
               </div>
-              <div className={cn(
-                "rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider",
-                demoReadiness?.ready
-                  ? "border-emerald-700/60 bg-emerald-900/50 text-emerald-100"
-                  : "border-amber-700/60 bg-amber-900/40 text-amber-100",
-              )}>
-                {demoReadiness?.ready ? '准备就绪' : `${readinessWarnings.length || 1} 项待确认`}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={exportPreflightReport}
+                  className="h-9 rounded-lg border border-slate-700 bg-slate-900/60 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-100 hover:bg-slate-800 transition-colors flex items-center gap-2"
+                  title="导出演示前自检 Markdown 报告，便于赛前排雷和团队交接"
+                >
+                  <FileText size={14} /> 导出自检
+                </button>
+                <div className={cn(
+                  "rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider",
+                  demoReadiness?.ready
+                    ? "border-emerald-700/60 bg-emerald-900/50 text-emerald-100"
+                    : "border-amber-700/60 bg-amber-900/40 text-amber-100",
+                )}>
+                  {demoReadiness?.ready ? '准备就绪' : `${readinessWarnings.length || 1} 项待确认`}
+                </div>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
