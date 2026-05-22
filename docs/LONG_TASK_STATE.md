@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 6303c76
-- Last update: 2026-05-22 11:51:23 +08:00
+- HEAD: 4a4a48b
+- Last update: 2026-05-22 11:56:54 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -148,7 +148,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 123. Identify next low-risk competition hardening slice after checkpoint. (done)
 124. Polish Web/mobile competition demo visibility: remove hardcoded phone-preview values, anchor mobile CPR timing to event logs, and keep mobile next action visible. (done, pushed)
 125. Add evidence-package SHA-256 response header and audit metadata. (done, pushed)
-126. Guard Android release builds against local HTTP/WS endpoints. (done, validating)
+126. Guard Android release builds against local HTTP/WS endpoints. (done, pushed)
+127. Strengthen evidence-package verifier with public-file raw participant ID leak detection. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -612,6 +613,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `6303c76` (`checkpoint: add evidence package hash header`) created and pushed to `origin/codex/competition-hardening`.
 - Android release endpoint guard slice: `lifereflex(app)/app/build.gradle.kts` now fails release build tasks if `LRA_API_BASE` does not start with `https://` or `LRA_WS_BASE` does not start with `wss://`; debug builds remain able to use local HTTP/WS for LAN testing. `lifereflex(app)/local.properties.example` and `docs/ANDROID_RELEASE_READINESS.md` document the guard and expected failure test.
 - Android release endpoint guard validation: `gradle :app:assembleDebug --no-daemon` passed; `gradle :app:assembleRelease --no-daemon` passed; intentionally running `gradle :app:assembleRelease -PLRA_API_BASE=http://127.0.0.1:8080/ -PLRA_WS_BASE=ws://127.0.0.1:8080/ws --no-daemon` failed as expected with `LRA_API_BASE must start with https:// for release builds...`.
+- Git checkpoint: `4a4a48b` (`checkpoint: guard android release endpoints`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence verifier privacy-leak slice: `scripts/verify_evidence_package.py` now derives raw participant IDs from internal `experiment.json` and `clients.csv`, then scans manifest-declared public/expert-review files for those IDs. A public file containing `demo-patient`/raw user IDs now fails verification instead of silently passing.
+- Evidence verifier privacy-leak validation: targeted positive/negative verifier tests passed; `verify_evidence_package.py --help` passed; `python -m py_compile` passed for the evidence scripts; full backend unittest discovery passed, 42 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -620,7 +624,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Android release endpoint guard slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence verifier privacy-leak slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

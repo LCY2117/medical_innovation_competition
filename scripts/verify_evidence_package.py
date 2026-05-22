@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import sys
 import zipfile
+from io import StringIO
 from pathlib import PurePosixPath
 
 
@@ -27,6 +29,55 @@ def _load_manifest(archive: zipfile.ZipFile) -> dict:
         return json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ValueError("manifest.json is not valid UTF-8 JSON") from exc
+
+
+def _read_text_file(archive: zipfile.ZipFile, name: str) -> str | None:
+    try:
+        raw = archive.read(name)
+    except KeyError:
+        return None
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return None
+
+
+def _collect_json_participant_ids(value: object, ids: set[str]) -> None:
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key in {"userId", "patientUserId"} and isinstance(item, str):
+                ids.add(item)
+            elif key == "assignments" and isinstance(item, dict):
+                ids.update(str(user_id) for user_id in item.values() if user_id)
+            elif key == "dispatchRationale" and isinstance(item, dict):
+                for decision in item.values():
+                    if isinstance(decision, dict) and isinstance(decision.get("userId"), str):
+                        ids.add(decision["userId"])
+            _collect_json_participant_ids(item, ids)
+    elif isinstance(value, list):
+        for item in value:
+            _collect_json_participant_ids(item, ids)
+
+
+def _raw_participant_ids(archive: zipfile.ZipFile, name_set: set[str]) -> set[str]:
+    ids: set[str] = set()
+    if "experiment.json" in name_set:
+        text = _read_text_file(archive, "experiment.json")
+        if text:
+            try:
+                _collect_json_participant_ids(json.loads(text), ids)
+            except json.JSONDecodeError:
+                pass
+
+    if "clients.csv" in name_set:
+        text = _read_text_file(archive, "clients.csv")
+        if text:
+            for row in csv.DictReader(StringIO(text)):
+                user_id = row.get("userId")
+                if user_id:
+                    ids.add(user_id)
+
+    return {item for item in ids if len(item.strip()) >= 4}
 
 
 def verify_package(zip_path: str, *, require_public_guidance: bool = True) -> list[str]:
@@ -107,6 +158,18 @@ def verify_package(zip_path: str, *, require_public_guidance: bool = True) -> li
             if overlap:
                 problems.append(f"privacy guidance marks files as both public and internal: {', '.join(sorted(overlap))}")
 
+            raw_ids = _raw_participant_ids(archive, name_set)
+            for name in public_files:
+                if name not in name_set:
+                    continue
+                text = _read_text_file(archive, name)
+                if text is None:
+                    continue
+                for raw_id in sorted(raw_ids):
+                    if raw_id in text:
+                        problems.append(f"public file leaks raw participant id: {name}")
+                        break
+
     return problems
 
 
@@ -134,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- {problem}", file=sys.stderr)
         return 1
 
-    print("OK: evidence package manifest, SHA-256 hashes, file list, and privacy guidance are valid.")
+    print("OK: evidence package manifest, SHA-256 hashes, file list, privacy guidance, and public-file anonymization are valid.")
     return 0
 
 

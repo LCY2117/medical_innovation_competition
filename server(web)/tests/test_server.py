@@ -860,6 +860,38 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("OK: evidence package manifest", result.stdout)
 
+    def test_evidence_package_verifier_rejects_public_raw_user_id_leak(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence-leaky.zip"
+        with zipfile.ZipFile(BytesIO(package.content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                content = source.read(info.filename)
+                if info.filename == "review_index.md":
+                    content += "\nraw leak: demo-patient\n".encode("utf-8")
+                target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        script_path = Path(__file__).resolve().parents[2] / "scripts" / "verify_evidence_package.py"
+        result = subprocess.run(
+            [sys.executable, str(script_path), str(package_path)],
+            cwd=script_path.parent.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("public file leaks raw participant id: review_index.md", result.stderr)
+
     def test_evidence_round_summary_script_merges_packages(self) -> None:
         with self._client() as client:
             bootstrapped = client.post("/api/demo/bootstrap")
