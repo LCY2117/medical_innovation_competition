@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 32affef
-- Last update: 2026-05-22 08:33:27 +08:00
+- HEAD: 40cdc98
+- Last update: 2026-05-22 08:36:47 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -119,7 +119,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 94. Anonymize public evidence-package review files and sync docs. (done, pushed)
 95. Tighten health-summary sample authorization and backend input boundaries. (done, pushed)
 96. Make evidence-package downloads incident-specific and tighten Web AED archive summary. (done, pushed)
-97. Surface health authorization status across Web/mobile summaries. (done, checkpointing)
+97. Surface health authorization status across Web/mobile summaries. (done, pushed)
+98. Sync public documentation wording with safer demo/evidence language. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -483,6 +484,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `32affef` (`checkpoint: fix incident evidence downloads`) created and pushed to `origin/codex/competition-hardening`.
 - Web/mobile health authorization display slice: shared domain formatting now translates `sample`/`authorized`/`denied`/`not_connected`; Web phone-preview health cards and mobile health summaries surface `样例接入` or the relevant authorization state instead of only showing data source and vitals.
 - Health authorization display validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-B_LHHgCt.js` at `229.98 kB` raw / `69.71 kB` gzip and mobile `MobileApp-Bjui0p8t.js` at `38.89 kB` raw / `12.45 kB` gzip.
+- Git checkpoint: `40cdc98` (`checkpoint: show health authorization status`) created and pushed to `origin/codex/competition-hardening`.
+- Public-doc wording sync: README, third-party resources, deployment runbook, pre-experiment protocol, product plan, technical whitepaper, and morning handoff now use safer public-facing terms such as `协同演示场景`, `疑似心脏骤停协同流程`, `事件证据包`, and `现场审阅端` while preserving legitimate `预实验` protocol wording.
+- Public-doc wording validation: targeted `rg` found no remaining `医创赛演示`, `评委浏览器`, `触发心脏骤停模拟`, `下载预实验证据包`, `导出预实验证据包`, `触发心脏骤停`, `自动呼叫急救`, `死亡真空`, `SOS Alert`, or `SCA` in README/docs excluding `LONG_TASK_STATE.md`.
 
 ## Blockers Summary
 
@@ -491,7 +495,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Web/mobile health authorization display slice, then continue with public-doc wording sync from read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the public-doc wording sync, then continue with the next safe Android or operations hardening slice from read-only findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

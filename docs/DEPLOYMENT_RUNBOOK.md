@@ -242,7 +242,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | API 健康检查 | `curl https://lifereflex.mddcommunity.top/api/health/detail`，确认 `frontend.indexReady`、`frontend.mobileChunkReady`、`frontend.desktopChunkReady`、DB、WebSocket、认证和 `demoReadiness` |
 | 安全控制 | `health.detail.security` 显示审计和限流配置，`storage.auditEventCount` 会随关键动作增加 |
 | WebSocket | Web 调度台显示“实时同步” |
-| 演示场景 | 点击“初始化医创赛演示场景”后出现 4 个终端和 AED 点位 |
+| 演示场景 | 点击“初始化协同演示场景”后出现 4 个终端和 AED 点位 |
 | 调度解释 | 触发患者后出现三类角色评分和理由 |
 | 地图距离 provider | `health.detail.mapProvider` 显示 `mode`、`distanceSource`、`configured` 和 fallback 原因；未配置 Key 时仍可完整演示 |
 | 推送 provider | `health.detail.pushProvider` 显示 `mode=websocket`、`channel=websocket_state`；配置未来 provider 时应显示 fallback 原因 |
@@ -291,10 +291,10 @@ Git 注意事项：
 ## 8. 比赛演示脚本
 
 1. 打开 Web 调度台。
-2. 点击“初始化医创赛演示场景”。
+2. 点击“初始化协同演示场景”。
 3. 在“演示入口”面板复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接，确认链接均绑定当前事件编号。
 4. 展示患者、医生、体育生、安保和 AED 点位。
-5. 选择患者端触发心脏骤停模拟。
+5. 选择患者端触发疑似心脏骤停协同流程。
 6. 展示 AI/规则分派过程和调度解释。
 7. 在 Android App 或 Web 端完成 CPR、AED、接应动作。
 8. 点击“证据包”，展示 `review_index.md`、`timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json`、`expert_summary.md` 和 `expert_feedback_form.md`。
