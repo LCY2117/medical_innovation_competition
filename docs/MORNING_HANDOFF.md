@@ -58,7 +58,7 @@
 - Web 总控台新增“演示准备度”检查卡：终端数量、AED 可用性、定位覆盖、健康摘要覆盖、证据导出状态会直接显示在首屏，便于正式展示前快速排雷。
 - Web 总控台新增“自检报告/导出自检”：可下载 Markdown 演示前自检报告，汇总准备度、管理权限、前后端健康、审计/频控、provider fallback、终端任务、AED 点位、演示入口和安全边界，不写入口令、token 或 API Key。
 - Web 总控台新增“演示入口”面板：可复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接，也可同步打开 4 个手机端标签页；初始化协同演示场景后自动绑定当前 `incidentId`，方便发给队友手机或现场审阅端。
-- `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
+- `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，并在导播台顶部和每个面板显示“已绑定当前事件/共享事件”，便于专家远程或多标签复现实验时确认没有开错轮次。
 - Web 总控台和移动 Web 的 WebSocket 重连已补过期回调保护：切换事件、退出登录、关闭旧连接或网络抖动时，旧 socket 的 close/error/message 不会再覆盖当前连接状态或排出幽灵重连。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
 - 移动 Web “现场/协同”页已进一步分层：默认只展示 AED 位置、队友角色、在线状态和任务状态；分派评分、理由、健康摘要和风险标记收进“分派依据与健康摘要”展开区。
@@ -123,9 +123,13 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最新演示准备度告警一致性增量构建产物为桌面 `App-DKGpinBD.js`、移动 `MobileApp-CWxAHAbu.js`、4端演示台 `MobileDemoStage-cNrZP1Tv.js`。上一轮证据包 SHA-256 前端展示增量构建产物为桌面 `App-C1o_GuN-.js`、移动 `MobileApp-D6sQFbqf.js`、4端演示台 `MobileDemoStage-DylKZH_L.js`。
+结果：均通过。最新证据包 SHA 复制增量构建产物为桌面 `App-DVQkGLsA.js`、移动 `MobileApp-Dhqmeawv.js`、4端演示台 `MobileDemoStage-bWe17Ylh.js`；上一轮 4 端导播台事件绑定构建产物为桌面 `App-C8-rsJ4D.js`、移动 `MobileApp-9a_Fy8WK.js`、4端演示台 `MobileDemoStage-7g9iM-bl.js`；准备度告警一致性构建产物为桌面 `App-DKGpinBD.js`、移动 `MobileApp-CWxAHAbu.js`、4端演示台 `MobileDemoStage-cNrZP1Tv.js`。
 
 演示准备度告警一致性检查：Web 总控台现在把管理员权限未就绪并入可见准备度告警，卡片颜色、标题、待确认数量、告警摘要和导出的 Markdown 自检报告使用同一套状态。这样不会再出现页面显示“准备就绪”但自检报告仍列出管理权限阻塞的口径不一致。
+
+4 端导播台绑定状态检查：`/mobile-demo` 现在显示是否已绑定当前事件、短事件编号和“共享事件”面板标记；如果没有从总控台带入 `incidentId`，会提示先初始化演示场景再打开导播台。
+
+证据包 SHA 复制检查：Web 总控台下载 ZIP 证据包后，成功提示会保留文件名和 SHA-256，并提供“复制 SHA”按钮，便于把哈希贴到预实验记录、专家反馈或交接材料中。
 
 证据包 SHA-256 展示烟测：使用临时本地后端 `127.0.0.1:18093`、演示口令 `LCY`、临时 SQLite DB 通过。确认 Web 总控台点击“证据包”后显示“证据包已下载”和 64 位 SHA-256，且不显示“请求异常”；移动归档页 `/mobile?demo=guide&incidentId=...` 点击“下载事件证据包”后显示文件名和 64 位 SHA-256，且无下载错误提示。
 
@@ -260,7 +264,9 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `9ced23d`：证据包 verifier 新增篡改 hash、未列文件、隐私边界重叠等坏包负例测试，后端 46 项通过并推送。
 - `6b967cb`：Web/mobile WebSocket 过期回调保护，已通过 typecheck/build 并推送。
 - `594a410`：README、部署手册、产品计划和白皮书同步最新可靠性与验证事实，已推送。
-- 演示准备度告警一致性：Web 总控台准备度卡片和 Markdown 自检报告共用管理员权限告警，已通过 Web typecheck/build，checkpoint 见最新提交记录。
+- `4df1382`：Web 总控台准备度卡片和 Markdown 自检报告共用管理员权限告警，已通过 Web typecheck/build 并推送。
+- `e8283d3`：4 端导播台新增事件绑定状态条和共享事件标记，已通过 Web typecheck/build 并推送。
+- `7ea7537`：Web 总控台证据包下载成功后可一键复制 SHA-256，已通过 Web typecheck/build 并推送。
 - 最新验证扫尾：后端 49 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例、auto-join/join/action 幂等和 `evidence_quality_report.json` 证据质量报告通过；Web `npm run typecheck` 与 `npm run build` 已通过移动端同帧防连点补丁验证，最新构建产物为桌面 `App-WniwvbhZ.js`、移动 `MobileApp-VrPZVJ6u.js`；Android `gradle :app:assembleDebug --no-daemon` 已通过自动接单后即时 REST 快照刷新、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Android release readiness 构建保持上一轮通过状态。
 
 ## 你醒来后最该做的事

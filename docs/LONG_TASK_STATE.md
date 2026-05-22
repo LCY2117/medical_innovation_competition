@@ -5,8 +5,8 @@
 - Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: e8283d3
-- Last update: 2026-05-22 17:12:55 +08:00
+- HEAD: 7ea7537
+- Last update: 2026-05-22 17:14:26 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -171,7 +171,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 146. Surface evidence-package SHA-256 after Web/mobile downloads. (done, pushed)
 147. Align Web command-center readiness warning count with visible/admin warnings. (done, pushed)
 148. Add bound-event status strip to the 4-terminal mobile demo stage. (done, pushed)
-149. Add Web command-center copy affordance for evidence-package SHA-256. (done, validating)
+149. Add Web command-center copy affordance for evidence-package SHA-256. (done, pushed)
 
 ## Sub-Agent Ledger
 
@@ -706,6 +706,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `e8283d3` (`checkpoint: show demo stage incident binding`) created and pushed to `origin/codex/competition-hardening`.
 - Web evidence-package SHA copy slice: after a Web command-center ZIP download with `X-LifeReflexArc-Package-Sha256`, the success banner now keeps the downloaded filename/hash metadata and shows a `复制 SHA` button. The button uses the existing clipboard fallback and replaces the success text with a copied confirmation, making it easier to paste the package hash into reviewer notes or pre-experiment records.
 - Web evidence-package SHA copy validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DVQkGLsA.js`, mobile `MobileApp-Dhqmeawv.js`, and stage `MobileDemoStage-bWe17Ylh.js`.
+- Git checkpoint: `7ea7537` (`checkpoint: add package hash copy action`) created and pushed to `origin/codex/competition-hardening`.
 
 ## Blockers Summary
 
@@ -714,7 +715,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Web evidence-package SHA copy slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: add a small Web smoke for the readiness card, continue polishing judge-visible demo affordances, or run a broader validation sweep. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Continue with another low-risk Web/mobile demo quality slice or run a broader validation sweep. Good next candidates from sidecar review: add a small Web smoke for the readiness card, continue polishing judge-visible demo affordances, or refresh morning handoff with the newest three checkpoints. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
