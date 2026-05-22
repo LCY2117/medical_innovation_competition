@@ -1368,6 +1368,58 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(current["roles"]["RUNNER"]["status"], "ASSIGNED")
         self.assertEqual(current["roles"]["GUIDE"]["status"], "ASSIGNED")
 
+    def test_bootstrap_recovers_expired_patient_sos_for_original_incident(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=1,
+            dispatch_delay_sec=0,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+        )
+        with TestClient(create_app(settings)) as client:
+            first_bootstrap = client.post("/api/demo/bootstrap")
+            patient_auth = client.post("/api/auth/demo", json={"persona": "patient"})
+            patient_token = patient_auth.json()["token"]
+            first_incident_id = first_bootstrap.json()["incidentId"]
+            started = client.post(
+                f"/api/incidents/{first_incident_id}/patient_sos_start",
+                headers={"Authorization": f"Bearer {patient_token}"},
+            )
+            first_during_sos = client.get(f"/api/incidents/{first_incident_id}").json()
+
+            second_bootstrap = client.post("/api/demo/bootstrap")
+            second_incident_id = second_bootstrap.json()["incidentId"]
+            current_designated = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-prime"},
+            )
+
+        self.assertEqual(first_bootstrap.status_code, 200)
+        self.assertEqual(patient_auth.status_code, 200)
+        self.assertEqual(started.status_code, 200)
+        self.assertEqual(first_during_sos["phase"], "CREATED")
+        self.assertEqual(first_during_sos["sos"]["status"], "ALERTING")
+        self.assertEqual(second_bootstrap.status_code, 200)
+        self.assertEqual(current_designated.status_code, 200)
+
+        import time
+
+        time.sleep(1.2)
+        with TestClient(create_app(settings)) as restarted_client:
+            first_after_restart = restarted_client.get(f"/api/incidents/{first_incident_id}").json()
+            current_after_restart = restarted_client.get("/api/incidents/current").json()
+
+        self.assertEqual(first_after_restart["phase"], "DISPATCHED")
+        self.assertEqual(first_after_restart["patientUserId"], "demo-patient")
+        self.assertEqual(current_after_restart["incidentId"], second_incident_id)
+        self.assertEqual(current_after_restart["phase"], "DISPATCHED")
+        self.assertEqual(current_after_restart["patientUserId"], "demo-prime")
+
     def test_patient_designation_runs_dispatch_in_worker_thread(self) -> None:
         with self._client() as client:
             client.post("/api/demo/bootstrap")

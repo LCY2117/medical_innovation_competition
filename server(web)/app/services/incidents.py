@@ -230,6 +230,15 @@ class IncidentService:
         cancel_sos_timer: bool = True,
     ) -> DispatchResponse:
         state = self.get_current_incident()
+        return await self._designate_patient_for_state(state, patient_user_id, source_label, cancel_sos_timer)
+
+    async def _designate_patient_for_state(
+        self,
+        state: IncidentState,
+        patient_user_id: str,
+        source_label: str,
+        cancel_sos_timer: bool,
+    ) -> DispatchResponse:
         now = self._now_ms()
         if patient_user_id not in self.clients:
             raise HTTPException(status_code=404, detail="Patient client not registered")
@@ -768,9 +777,10 @@ class IncidentService:
                         IncidentLogEntry(ts=self._now_ms(), msg="Patient SOS confirmed after restart")
                     )
                     self._persist()
-                    await self.designate_patient(
+                    await self._designate_patient_for_state(
+                        state,
                         state.patientUserId,
-                        source_label="patient SOS after restart",
+                        "patient SOS after restart",
                         cancel_sos_timer=False,
                     )
                 else:
@@ -993,7 +1003,7 @@ class IncidentService:
 
         state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"Patient SOS confirmed ({patient_user_id})"))
         self._persist()
-        await self.designate_patient(patient_user_id, source_label="patient SOS", cancel_sos_timer=False)
+        await self._designate_patient_for_state(state, patient_user_id, "patient SOS", cancel_sos_timer=False)
 
     @staticmethod
     def _incident_payload(state: IncidentState) -> dict:
