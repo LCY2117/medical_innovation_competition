@@ -33,9 +33,19 @@ function Root() {
 
 if ("serviceWorker" in navigator && isMobileRoute()) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/mobile-sw.js").catch(() => {
-      // PWA support should never block emergency browser access.
-    });
+    navigator.serviceWorker
+      .register("/mobile-sw.js")
+      .then((registration) => {
+        registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+        registration.addEventListener("updatefound", () => {
+          registration.installing?.addEventListener("statechange", () => {
+            registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+          });
+        });
+      })
+      .catch(() => {
+        // PWA support should never block emergency browser access.
+      });
   });
 }
 

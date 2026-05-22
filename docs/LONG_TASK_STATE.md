@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 65260e1
-- Last update: 2026-05-22 08:54:54 +08:00
+- HEAD: 451bbd8
+- Last update: 2026-05-22 09:00:24 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -124,7 +124,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 99. Add Android HeyTap Health readiness display without invoking real SDK authorization. (done, pushed)
 100. Run post-health-readiness validation sweep. (done, checkpointing)
 101. Add Android friendly error mapping for HTTP/network/WebSocket failures. (done, pushed)
-102. Add debug-only Android cleartext network support for LAN/local backend testing. (done, checkpointing)
+102. Add debug-only Android cleartext network support for LAN/local backend testing. (done, pushed)
+103. Strengthen mobile PWA shell/resource caching and update activation. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -200,6 +201,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `server(web)/web/src/mobile/mobile.css`
 - `server(web)/web/public/mobile-sw.js`
 - `server(web)/web/public/offline.html`
+- `server(web)/web/src/main.tsx`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/ErrorMessages.kt`
 - `lifereflex(app)/app/src/main/AndroidManifest.xml`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/IncidentModels.kt`
@@ -508,6 +510,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `65260e1` (`checkpoint: harden android error states`) created and pushed to `origin/codex/competition-hardening`.
 - Android local HTTP/debug network slice: added debug-only `networkSecurityConfig` and `usesCleartextTraffic=true` so debug APKs can connect to `http://LAN-IP:PORT` or emulator/local backends during development while release manifest remains without cleartext flags; README and Android local config template now explain HTTP/WS debug versus HTTPS/WSS public demo usage.
 - Android debug-network validation: `gradle :app:assembleDebug --no-daemon` passed; `gradle :app:processReleaseMainManifest --no-daemon` passed; `rg` confirmed cleartext/networkSecurityConfig only appears in the debug merged manifest, not release.
+- Git checkpoint: `451bbd8` (`checkpoint: allow android debug local http`) created and pushed to `origin/codex/competition-hardening`.
+- Mobile PWA cache-resilience slice: `mobile-sw.js` now caches `/mobile` in the app shell, uses network-first navigation for the mobile shell, stale-while-revalidate for mobile static assets/manifest/offline/icon, keeps API and WebSocket requests uncached, enables navigation preload when available, and accepts `SKIP_WAITING` update messages; `main.tsx` now asks waiting/installing mobile service workers to activate so new mobile shells do not linger behind an old cache during demonstrations.
+- Mobile PWA validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-DSEHznZU.js` at `38.89 kB` raw / `12.45 kB` gzip; local Vite preview on `127.0.0.1:18094` returned 200 for `/mobile`, `/offline.html`, and `/mobile-sw.js`; Browser DOM smoke confirmed `/mobile` renders `浏览器应急端`/demo entries and `/offline.html` renders `移动端暂时离线`/`重新连接`. The Node REPL browser sandbox could not inspect `navigator.serviceWorker`, so SW registration/cache internals were verified by build, served script content, and visible-page smoke; temporary preview processes were stopped.
 
 ## Blockers Summary
 
@@ -516,7 +521,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Android debug-network hardening, then continue with mobile PWA cache resilience or another low-risk validation slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint mobile PWA cache resilience, then continue with another low-risk hardening slice such as release APK readiness notes, small Android visible wording scan, or documentation/handoff refresh. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
