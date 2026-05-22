@@ -25,6 +25,7 @@
 - `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
 - Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
 - 移动 Web 患者 SOS 增加二次确认，第一次点击只进入确认态，避免误触发。
+- 移动 Web 通用操作已增加 ref 级单飞保护：SOS、自动接单、角色动作、位置同步和证据包下载在同一帧极快连点时只会提交一次。
 - 移动 Web 任务页默认优先“自动接单”，PRIME/RUNNER/GUIDE 手动抢接折叠为“演示备用”，减少绕过 AI 分派叙事的误操作。
 - 移动 Web PRIME 任务卡新增 CPR/AED 下一动作提示，会随 AED 取回、送达、分析、除颤状态切换。
 - Android 首页和事件页已接通“自动接单”，登录后可直接加入当前事件并进入任务页。
@@ -121,7 +122,7 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最新 Web 演示入口增量构建产物为桌面 `App-DRfENPpz.js`、移动 `MobileApp-BoXW44GW.js`；证据包材料增量本身未改前端代码。
+结果：均通过。最新移动端单飞保护增量构建产物为桌面 `App-WniwvbhZ.js`、移动 `MobileApp-VrPZVJ6u.js`、4端演示台 `MobileDemoStage-BqdjEtRj.js`。
 
 浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-demo?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?demo=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
 
@@ -252,7 +253,7 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `9ced23d`：证据包 verifier 新增篡改 hash、未列文件、隐私边界重叠等坏包负例测试，后端 46 项通过并推送。
 - `6b967cb`：Web/mobile WebSocket 过期回调保护，已通过 typecheck/build 并推送。
 - `594a410`：README、部署手册、产品计划和白皮书同步最新可靠性与验证事实，已推送。
-- 最新验证扫尾：后端 49 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例、auto-join/join/action 幂等和 `evidence_quality_report.json` 证据质量报告通过；Web `npm run typecheck` 与 `npm run build` 已通过 Web/mobile WebSocket 过期回调保护补丁验证，最新构建产物为桌面 `App-CCmke60w.js`、移动 `MobileApp-CEP25Ntl.js`；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Android release readiness 构建保持上一轮通过状态。
+- 最新验证扫尾：后端 49 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例、auto-join/join/action 幂等和 `evidence_quality_report.json` 证据质量报告通过；Web `npm run typecheck` 与 `npm run build` 已通过移动端同帧防连点补丁验证，最新构建产物为桌面 `App-WniwvbhZ.js`、移动 `MobileApp-VrPZVJ6u.js`；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Android release readiness 构建保持上一轮通过状态。
 
 ## 你醒来后最该做的事
 

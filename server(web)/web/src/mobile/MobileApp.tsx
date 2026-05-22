@@ -748,6 +748,7 @@ function MobileApp() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [notice, setNotice] = useState<Notice>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const busyActionRef = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [activeView, setActiveView] = useState<MobileView>('home');
   const [sosConfirming, setSosConfirming] = useState(false);
@@ -1002,6 +1003,10 @@ function MobileApp() {
   }, []);
 
   async function runAction(label: string, work: () => Promise<void>, okText?: string) {
+    if (busyActionRef.current) {
+      return;
+    }
+    busyActionRef.current = label;
     setBusyAction(label);
     setNotice(null);
     try {
@@ -1017,6 +1022,7 @@ function MobileApp() {
     } catch (error) {
       setNotice({ kind: 'error', text: error instanceof Error ? error.message : '操作失败' });
     } finally {
+      busyActionRef.current = null;
       setBusyAction(null);
     }
   }

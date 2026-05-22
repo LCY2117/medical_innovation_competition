@@ -137,7 +137,7 @@ Implementation notes:
 Validation:
 
 - Backend unittest discovery: 49 tests OK after auto-join logging, join/action idempotency, and evidence verifier negative tests.
-- Web typecheck/build: passed after desktop/mobile WebSocket stale-callback guard; latest build emitted desktop `App-CCmke60w.js` and mobile `MobileApp-CEP25Ntl.js`.
+- Web typecheck/build: passed after mobile Web single-flight action guard; latest build emitted desktop `App-WniwvbhZ.js` and mobile `MobileApp-VrPZVJ6u.js`.
 - Android debug APK build: passed after REST state seeding, single-flight WebSocket reconnect, and action pending-state patches.
 
 ## Validation Commands
@@ -191,6 +191,7 @@ Required capabilities:
 - [x] Open current incident or a pasted incident ID.
 - [x] Real-time WebSocket state sync with reconnect status.
 - [x] Mobile WebSocket reconnect ignores stale socket callbacks and clears pending reconnects on logout/unmount.
+- [x] Mobile actions use a ref-level single-flight guard so very fast same-frame taps cannot submit duplicate SOS, auto-join, task, location, or package-download requests.
 - [x] Patient-side SOS start/cancel flow.
 - [x] Role-aware task execution for PRIME/RUNNER/GUIDE.
 - [x] Show AED sites, dispatch rationale, role status, and latest logs.

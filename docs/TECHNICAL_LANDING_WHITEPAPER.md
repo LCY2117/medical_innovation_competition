@@ -234,7 +234,7 @@ flowchart LR
 
 - 后端测试：49 项通过。
 - 前端 TypeScript 检查：通过。
-- 前端生产构建：通过，最新 Web/mobile WebSocket 稳定性切片产物为桌面 `App-CCmke60w.js`、移动 `MobileApp-CEP25Ntl.js`。
+- 前端生产构建：通过，最新移动端单飞操作切片产物为桌面 `App-WniwvbhZ.js`、移动 `MobileApp-VrPZVJ6u.js`。
 - Android Gradle 任务发现：通过。
 - Android APK 组装：debug APK 已生成，使用 Android debug 签名；release readiness 构建已生成未签名检查包，等待本地 release keystore。
 
