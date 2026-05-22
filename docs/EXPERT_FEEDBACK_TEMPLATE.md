@@ -44,6 +44,7 @@
 | 预实验数据分析说明 `analysis_guide.md` |  |
 | 证据包数据字典 `data_dictionary.md` |  |
 | 参与者知情与安全边界简表 `participant_consent_safety_brief.md` |  |
+| 证据质量报告 `evidence_quality_report.json` |  |
 | 观察员补充记录表 `observer_record_form.csv` |  |
 | 参与者主观问卷表 `participant_questionnaire.csv` |  |
 | 基线-系统对照分析表 `baseline_vs_system_comparison.csv` |  |
@@ -103,7 +104,7 @@
 
 ### 4.5 证据链与分析材料建议
 
-请评价证据包、manifest 校验、一键多轮分析流程、多轮汇总 CSV、Markdown 分析摘要、图表底表和专家整改闭环表是否足以支撑预实验复盘。
+请评价证据包、manifest 校验、证据质量报告、一键多轮分析流程、多轮汇总 CSV、Markdown 分析摘要、图表底表和专家整改闭环表是否足以支撑预实验复盘。可特别关注质量等级、质量分、缺失关键节点和 warning/critical 提示是否足以判断某一轮需要重跑或人工补充说明。
 
 反馈：
 

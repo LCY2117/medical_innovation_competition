@@ -29,12 +29,28 @@ CONTEXT_FIELDS = [
     ("runnerRouteMeters", "AED 保障路线距离"),
 ]
 
+QUALITY_FIELDS = [
+    ("qualityScore", "质量分"),
+]
+
+QUALITY_COUNT_FIELDS = [
+    ("qualityCriticalCount", "Critical 问题数"),
+    ("qualityWarningCount", "Warning 问题数"),
+    ("qualityInfoCount", "Info 提醒数"),
+    ("missingKeyEventCount", "缺失关键节点数"),
+]
+
 CHART_FIELDS = [
     ("time", "seconds", "时间指标", field, label, 1.0)
     for field, label in TIME_FIELDS
 ] + [
     ("coverage", "percent", "覆盖率与完整度", field, label, scale)
     for field, label, scale in COVERAGE_FIELDS
+] + [
+    ("quality", "score", "证据质量", "qualityScore", "质量分", 1.0),
+    ("quality", "count", "证据质量", "qualityCriticalCount", "Critical 问题数", 1.0),
+    ("quality", "count", "证据质量", "qualityWarningCount", "Warning 问题数", 1.0),
+    ("quality", "count", "证据质量", "missingKeyEventCount", "缺失关键节点数", 1.0),
 ] + [
     ("context", "count", "场景上下文", "participantCount", "参与终端数", 1.0),
     ("context", "count", "场景上下文", "aedSiteCount", "AED 点位数", 1.0),
@@ -166,6 +182,15 @@ def _phase_counts(rows: list[dict[str, str]]) -> str:
     return "，".join(f"{phase}: {count}" for phase, count in sorted(counts.items()))
 
 
+def _quality_level_counts(rows: list[dict[str, str]]) -> str:
+    counts = Counter(row.get("qualityLevel") or "missing_quality_report" for row in rows)
+    return "，".join(f"{level}: {count}" for level, count in sorted(counts.items()))
+
+
+def _sum_field(rows: list[dict[str, str]], field: str) -> int:
+    return int(sum(_values(rows, field)))
+
+
 def generate_report(rows: list[dict[str, str]], *, source_name: str) -> str:
     if not rows:
         raise ValueError("round summary CSV has no data rows")
@@ -187,6 +212,16 @@ def generate_report(rows: list[dict[str, str]], *, source_name: str) -> str:
         f"- 事件编号数：{len(incident_ids)}",
         f"- 事件编号：{', '.join(incident_ids) if incident_ids else '-'}",
         f"- 事件阶段分布：{_phase_counts(analyzed_rows)}",
+        "",
+        "## 证据质量",
+        "",
+        f"- 质量等级分布：{_quality_level_counts(analyzed_rows)}",
+        f"- Critical 问题数：{_sum_field(analyzed_rows, 'qualityCriticalCount')}",
+        f"- Warning 问题数：{_sum_field(analyzed_rows, 'qualityWarningCount')}",
+        f"- Info 提醒数：{_sum_field(analyzed_rows, 'qualityInfoCount')}",
+        f"- 缺失关键节点数：{_sum_field(analyzed_rows, 'missingKeyEventCount')}",
+        "",
+        *_metric_table(analyzed_rows, QUALITY_FIELDS, ""),
         "",
         "## 关键时间指标",
         "",

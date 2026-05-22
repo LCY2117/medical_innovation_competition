@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import csv
 import json
 import subprocess
 import sys
@@ -969,12 +970,27 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("OK: summarized 1 evidence round", result.stdout)
         summary = output_path.read_text(encoding="utf-8-sig")
+        rows = list(csv.DictReader(summary.splitlines()))
         self.assertIn("packageSha256", summary)
         self.assertIn("verificationStatus", summary)
         self.assertIn("manifestIncidentId", summary)
+        self.assertIn("qualityLevel", summary)
+        self.assertIn("qualityScore", summary)
+        self.assertIn("qualityWarningCount", summary)
+        self.assertIn("qualityCriticalCount", summary)
+        self.assertIn("missingKeyEventCount", summary)
+        self.assertIn("qualityWarningCodes", summary)
         self.assertIn("roleAssignmentCompleteness", summary)
         self.assertIn("OK", summary)
         self.assertIn(bootstrapped.json()["incidentId"], summary)
+        self.assertEqual(rows[0]["qualityLevel"], "needs_rerun_or_manual_review")
+        self.assertEqual(rows[0]["qualityScore"], "51")
+        self.assertEqual(rows[0]["qualityIssueCount"], "7")
+        self.assertEqual(rows[0]["qualityCriticalCount"], "0")
+        self.assertEqual(rows[0]["qualityWarningCount"], "4")
+        self.assertEqual(rows[0]["qualityInfoCount"], "3")
+        self.assertEqual(rows[0]["missingKeyEventCount"], "5")
+        self.assertIn("missing_cprStarted", rows[0]["qualityWarningCodes"])
 
     def test_round_summary_analysis_script_writes_ppt_safe_report(self) -> None:
         with self._client() as client:
@@ -1031,6 +1047,11 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("T1 触发到分派完成", report)
         self.assertIn("校验通过轮次：1", report)
+        self.assertIn("## 证据质量", report)
+        self.assertIn("needs_rerun_or_manual_review: 1", report)
+        self.assertIn("| 质量分 `qualityScore` | 1 | 51 | 51 | 51 | 51 |", report)
+        self.assertIn("Critical 问题数：0", report)
+        self.assertIn("缺失关键节点数：5", report)
         self.assertIn("| 角色分派完整度 `roleAssignmentCompleteness` | 1 | 100 | 100 | 100 | 100 |", report)
         self.assertIn("不应表述为：提高真实抢救成功率", report)
         self.assertIn(bootstrapped.json()["incidentId"], report)
@@ -1074,8 +1095,11 @@ class ServerTestCase(unittest.TestCase):
         report = (output_dir / "round-analysis.md").read_text(encoding="utf-8")
         chart_data = (output_dir / "round-chart-data.csv").read_text(encoding="utf-8-sig")
         self.assertIn("verificationStatus", summary)
+        self.assertIn("qualityLevel", summary)
+        self.assertIn("qualityScore", summary)
         self.assertIn(bootstrapped.json()["incidentId"], summary)
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
+        self.assertIn("证据质量", report)
         self.assertIn("角色分派完整度", report)
         self.assertIn("metricGroup", chart_data)
         self.assertIn("dispatchSeconds", chart_data)

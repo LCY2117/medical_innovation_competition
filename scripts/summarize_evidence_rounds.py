@@ -23,6 +23,18 @@ BASE_FIELDS = [
     "manifestPhase",
 ]
 
+QUALITY_FIELDS = [
+    "qualityLevel",
+    "qualityScore",
+    "qualityIssueCount",
+    "qualityCriticalCount",
+    "qualityWarningCount",
+    "qualityInfoCount",
+    "missingKeyEventCount",
+    "missingKeyEvents",
+    "qualityWarningCodes",
+]
+
 
 def _candidate_zip_paths(inputs: list[str], *, recursive: bool) -> list[Path]:
     paths: list[Path] = []
@@ -49,6 +61,47 @@ def _read_round_summary(archive: zipfile.ZipFile) -> list[dict[str, str]]:
     return [dict(row) for row in csv.DictReader(StringIO(raw))]
 
 
+def _read_quality_report(archive: zipfile.ZipFile) -> dict:
+    if "evidence_quality_report.json" not in archive.namelist():
+        return {}
+    return json.loads(archive.read("evidence_quality_report.json").decode("utf-8"))
+
+
+def _quality_summary(report: dict) -> dict[str, str]:
+    warnings = report.get("warnings") if isinstance(report.get("warnings"), list) else []
+    missing_events = report.get("missingKeyEvents") if isinstance(report.get("missingKeyEvents"), list) else []
+
+    severity_counts = {"critical": 0, "warning": 0, "info": 0}
+    warning_codes: list[str] = []
+    for item in warnings:
+        if not isinstance(item, dict):
+            continue
+        severity = str(item.get("severity", "")).lower()
+        if severity in severity_counts:
+            severity_counts[severity] += 1
+        code = str(item.get("code", "")).strip()
+        if code:
+            warning_codes.append(code)
+
+    missing_keys = [
+        str(item.get("key", "")).strip()
+        for item in missing_events
+        if isinstance(item, dict) and str(item.get("key", "")).strip()
+    ]
+    quality_score = report.get("qualityScore", "")
+    return {
+        "qualityLevel": str(report.get("qualityLevel", "")),
+        "qualityScore": "" if quality_score is None else str(quality_score),
+        "qualityIssueCount": str(len(warnings)),
+        "qualityCriticalCount": str(severity_counts["critical"]),
+        "qualityWarningCount": str(severity_counts["warning"]),
+        "qualityInfoCount": str(severity_counts["info"]),
+        "missingKeyEventCount": str(len(missing_keys)),
+        "missingKeyEvents": " | ".join(missing_keys),
+        "qualityWarningCodes": " | ".join(warning_codes),
+    }
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -73,11 +126,14 @@ def summarize_packages(paths: list[Path], *, include_invalid: bool = False) -> t
             raise ValueError(f"{path}: " + "; ".join(problems))
 
         manifest: dict = {}
+        quality_report: dict = {}
         summary_rows: list[dict[str, str]] = [{}]
         if not problems:
             with zipfile.ZipFile(path) as archive:
                 manifest = _read_manifest(archive)
+                quality_report = _read_quality_report(archive)
                 summary_rows = _read_round_summary(archive)
+        quality_fields = _quality_summary(quality_report) if quality_report else {field: "" for field in QUALITY_FIELDS}
 
         for summary in summary_rows:
             for field in summary:
@@ -92,10 +148,12 @@ def summarize_packages(paths: list[Path], *, include_invalid: bool = False) -> t
                 "manifestGeneratedAtIso": str(manifest.get("generatedAtIso", "")),
                 "manifestPhase": str(manifest.get("phase", "")),
             }
+            row.update(quality_fields)
             row.update({key: str(value) for key, value in summary.items()})
             rows.append(row)
 
-    return BASE_FIELDS + [field for field in round_fields if field not in BASE_FIELDS], rows
+    fixed_fields = BASE_FIELDS + QUALITY_FIELDS
+    return fixed_fields + [field for field in round_fields if field not in fixed_fields], rows
 
 
 def write_csv(fieldnames: list[str], rows: list[dict[str, str]], output: Path | None) -> None:

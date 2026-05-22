@@ -85,8 +85,8 @@
 - 证据包新增专家意见汇总与整改闭环表：`expert_feedback_summary.csv` 用于合并多名专家评分、风险关注点、整改负责人、优先级、处理状态、补充证据和二次复核意见；`expert_feedback_form.md` 继续用于单名专家签字留档。
 - 证据包新增证据质量报告：`evidence_quality_report.json` 会用匿名参与者代号汇总关键节点覆盖、缺失项、指标可用性、质量分、质量等级和 provider/fallback 提醒，帮助判断本轮是否适合进入低成本预实验汇总。
 - 证据包独立校验脚本已补坏包负例测试：篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠、公开材料泄漏原始参与者 ID 都会导致校验失败。
-- 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 合并成一张 CSV，便于后续 Excel 描述性统计。
-- 新增多轮分析报告脚本：`scripts/analyze_round_summary.py` 可把汇总 CSV 转成 Markdown 分析摘要，包含均值、中位数、范围和 PPT 安全表述边界。
+- 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 与 `evidence_quality_report.json` 合并成一张 CSV，包含质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码，便于后续 Excel 描述性统计。
+- 新增多轮分析报告脚本：`scripts/analyze_round_summary.py` 可把汇总 CSV 转成 Markdown 分析摘要，包含证据质量小节、均值、中位数、范围和 PPT 安全表述边界。
 - 新增一键预实验分析脚本：`scripts/build_pre_experiment_report.py` 可直接从多轮 ZIP 生成 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。
 - 最新验证扫尾为后端 auto-join/join/action 幂等切片：后端 49 项测试通过；证据包生成、manifest 校验脚本、隐私泄漏扫描、篡改 hash/未列文件/隐私边界重叠坏包拦截、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据、一键预实验分析脚本、证据质量报告、自动接单留痕、重复动作不追加日志和重复 join 不回退角色进度测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
@@ -112,7 +112,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：49 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；坏包负例覆盖篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠和公开材料泄漏原始参与者 ID；AI 已分派终端首次自动接单会写入 JOINED 时间线；现场动作重复提交保持幂等，不会追加重复日志污染时间线；同一终端重复 join 已推进角色不会把 CPR/AED 等进度重置为 JOINED；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
+结果：49 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；坏包负例覆盖篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠和公开材料泄漏原始参与者 ID；AI 已分派终端首次自动接单会写入 JOINED 时间线；现场动作重复提交保持幂等，不会追加重复日志污染时间线；同一终端重复 join 已推进角色不会把 CPR/AED 等进度重置为 JOINED；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv` 和 `evidence_quality_report.json`，确认多轮系统演练可以汇总成带质量等级、质量分和缺失关键节点计数的 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、证据质量、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -284,7 +284,7 @@ python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
 ```
 
-输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。
+输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。`round-summary.csv` 会附带每轮证据质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码；`round-analysis.md` 会汇总证据质量分布，帮助先筛掉需要重跑或人工复核的轮次。
 
 也可以分步执行：
 

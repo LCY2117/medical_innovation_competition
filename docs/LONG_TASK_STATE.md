@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 187f0e3
-- Last update: 2026-05-22 15:23:54 +08:00
+- HEAD: 5f30b14
+- Last update: 2026-05-22 16:11:56 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -163,6 +163,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 138. Mark already assigned users as JOINED when they auto-join current incident. (done, pushed)
 139. Add mobile Web ref-level single-flight guard for emergency actions. (done, pushed)
 140. Refresh Android incident state immediately after auto-joining. (done, checkpointing)
+141. Merge evidence quality fields into multi-round CSV/report analysis and reviewer docs. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -188,6 +189,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Backend evidence sidecar (`019e4dba-cf57-79e0-9ad1-a081f9f0f1f0`): completed read-only; recommended package SHA-256 response headers/audit metadata, ZIP-internal evidence quality report, stronger verifier privacy scans, clearer multi-round identifiers, and negative verifier tests.
 - Android reliability sidecar (`019e4dba-e576-7461-999a-70bb9904450c`): completed read-only; recommended REST state seeding before WebSocket, terminal registration readiness/retry, emergency CTA debouncing, single-flight WebSocket reconnect, and release endpoint HTTPS/WSS guard.
 - Android REST-state sidecar (`019e4ddd-fa5d-7d52-89ca-d5550cb8b20b`): completed read-only after resume; recommended the smallest safe Android reliability patch as seeding repository state from REST `getCurrentIncident`/`getIncident` before waiting for the first WebSocket frame.
+- Evidence-quality summary sidecar (`019e4e96-350a-7763-834a-c0a70925f9cd`): completed read-only after resume; recommended adding quality fields to `summarize_evidence_rounds.py`, asserting one-command report-builder propagation, optionally surfacing quality in `analyze_round_summary.py`, and syncing README/deployment/pre-experiment/handoff/reviewer docs.
 
 ## Git Baseline
 
@@ -669,6 +671,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `187f0e3` (`checkpoint: guard mobile actions single flight`) created and pushed to `origin/codex/competition-hardening`.
 - Android auto-join refresh slice: after `connectCurrent(autoJoin=true)` calls the backend auto-join endpoint, the app now immediately fetches the joined incident snapshot before opening the WebSocket. This lets the APK show the JOINED role/task state without waiting for the first realtime frame.
 - Android auto-join refresh validation: `gradle :app:assembleDebug --no-daemon` passed; only the existing `android.overridePathCheck=true` experimental warning appeared.
+- Evidence-quality multi-round summary slice: `scripts/summarize_evidence_rounds.py` now reads each ZIP's `evidence_quality_report.json` and adds fixed `round-summary.csv` columns for quality level, quality score, total issue count, critical/warning/info counts, missing key-event count/list, and warning codes. Older ZIPs without the report keep blank quality fields instead of failing.
+- Evidence-quality analysis slice: `scripts/analyze_round_summary.py` now adds a `证据质量` Markdown section with quality-level distribution, total critical/warning/info counts, missing-key-event total, and quality-score statistics; `round-chart-data.csv` now includes quality score, critical count, warning count, and missing-key-event count rows for Excel/PPT charts.
+- Evidence-quality documentation sync: README, deployment runbook, pre-experiment protocol, morning handoff, product plan, technical whitepaper, and expert feedback template now describe that multi-round summaries include evidence quality fields for deciding which simulation rounds need rerun or manual review, while keeping clinical-effectiveness wording cautious.
+- Evidence-quality validation: `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted evidence-summary/report-builder tests passed; full backend unittest discovery passed, 49 tests OK.
 
 ## Blockers Summary
 
@@ -677,7 +683,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Android auto-join refresh patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence-quality summary/report slice if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
