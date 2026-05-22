@@ -979,7 +979,7 @@ function describeClientMission(client: ClientInfo, state: IncidentState | null):
   }
   if (client.isPatient) {
     if (state.phase === 'DISPATCHING') {
-      return '已触发心脏骤停，系统正在广播红色告警并进行智能分派';
+      return '患者端已发出告警，系统正在广播协同通知并进行智能分派';
     }
     if (state.phase === 'HANDOVER') {
       return '救护车已完成现场接管，进入交接阶段';
@@ -1062,7 +1062,7 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => {
             <p className="text-slate-400 text-sm leading-relaxed">
               急救车平均到达 12-15 分钟 <br/>
               心脏骤停黄金抢救 4 分钟 <br/>
-              <span className="text-red-400 font-bold block mt-2">结果：8分钟死亡真空</span>
+              <span className="text-red-400 font-bold block mt-2">痛点：现场协同空窗风险</span>
             </p>
           </div>
           <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800 backdrop-blur-sm">
@@ -2196,13 +2196,13 @@ export default function App() {
             </svg>
             <div className="text-center z-10">
               <div className="text-8xl font-bold font-mono">{victimCountdown}</div>
-              <div className="text-red-500 font-bold uppercase mt-2 animate-pulse">SOS Alert</div>
+              <div className="text-red-500 font-bold mt-2 animate-pulse">协同 SOS</div>
             </div>
           </div>
 
           <div className="space-y-4 w-full z-10">
             <div className="text-center text-slate-300 mb-4">
-              检测到异常倒地<br/>即将自动呼叫急救
+              患者端已发出告警<br/>即将启动协同响应
             </div>
             <button 
               onClick={cancelSos}
@@ -2229,12 +2229,12 @@ export default function App() {
                    <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center space-x-2 bg-red-800/60 px-2 py-1 rounded text-xs font-bold border border-red-400/30">
                          <AlertTriangle size={12} className="text-white" />
-                         <span>一级危急 (SCA)</span>
+                         <span>一级危急</span>
                       </div>
                       <div className="text-[10px] opacity-70">ID: {incidentId ?? '--'}</div>
                    </div>
-                   <h2 className="text-3xl font-bold leading-tight">附近有人<br/>心脏骤停</h2>
-                   <p className="text-red-100 text-sm mt-2 opacity-90">距离您 150 米 • 购物中心中庭</p>
+                   <h2 className="text-3xl font-bold leading-tight">附近有人<br/>疑似心脏骤停</h2>
+                   <p className="text-red-100 text-sm mt-2 opacity-90">请按定位提示前往患者所在点位</p>
                 </div>
 
                 {/* Golden Timer */}
@@ -2242,7 +2242,7 @@ export default function App() {
                      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl w-full text-center mb-8">
                         <div className="text-xs text-slate-500 mb-2 font-bold">黄金急救时间</div>
                        <div className="text-6xl font-bold font-mono text-yellow-500 flex items-center justify-center">
-                          3:30
+                          03:30
                        </div>
                        <div className="text-xs text-red-400 mt-2 font-medium">刻不容缓，请立即前往！</div>
                     </div>
@@ -3462,7 +3462,7 @@ export default function App() {
                         : "bg-slate-700 text-slate-200 hover:bg-red-600 hover:text-white"
                     )}
                   >
-                    {client.isPatient ? '心脏骤停患者' : '触发心脏骤停'}
+                    {client.isPatient ? '患者告警中' : '标记患者告警'}
                   </button>
                 </div>
               ))}

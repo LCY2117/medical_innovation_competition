@@ -49,8 +49,7 @@ fun HandoverArchiveScreen(
     val aedSummary = when {
         incidentState.roles.PRIME.status == "AED_SHOCK_DELIVERED" || incidentState.phase == "SHOCK_DELIVERED" -> "电击记录 1 次"
         incidentState.roles.PRIME.status == "AED_ANALYZING" || incidentState.phase == "AED_ANALYZING" -> "AED 分析已记录"
-        incidentState.roles.RUNNER.status == "AED_DELIVERED" || incidentState.phase == "AED_DELIVERED" ||
-            incidentState.phase == "HANDOVER" || incidentState.phase == "ARCHIVED" -> "AED 已送达"
+        incidentState.roles.RUNNER.status == "AED_DELIVERED" || incidentState.phase == "AED_DELIVERED" -> "AED 已送达"
         incidentState.roles.RUNNER.status == "AED_PICKED" || incidentState.phase == "AED_PICKED" -> "AED 已取用"
         else -> "未记录"
     }

@@ -42,12 +42,12 @@ fun EmergencyAlertScreen(
                     .background(PhoneColors.Red, RoundedCornerShape(PhoneTokens.CardRadiusLg))
                     .padding(horizontal = 18.dp, vertical = 18.dp)
             ) {
-                Text("一级危急（SCA）", color = PhoneColors.RedSoft, fontSize = PhoneTokens.Body, fontWeight = FontWeight.SemiBold)
+                Text("一级危急", color = PhoneColors.RedSoft, fontSize = PhoneTokens.Body, fontWeight = FontWeight.SemiBold)
                 Text("ID: $incidentId", color = PhoneColors.RedSoft, fontSize = 10.sp)
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("附近有人\n心脏骤停", color = Color.White, fontSize = PhoneTokens.TitleXL, fontWeight = FontWeight.Bold)
+                Text("附近有人\n疑似心脏骤停", color = Color.White, fontSize = PhoneTokens.TitleXL, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("距离您 150 米 • 购物中心中庭", color = PhoneColors.RedSoft, fontSize = PhoneTokens.Body)
+                Text("请按定位提示前往患者所在点位", color = PhoneColors.RedSoft, fontSize = PhoneTokens.Body)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -61,7 +61,7 @@ fun EmergencyAlertScreen(
             ) {
                 Text("黄金救援时间", color = PhoneColors.GrayText, fontSize = 11.sp)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("3:30", color = Color(0xFFFACC15), fontSize = 52.sp, fontWeight = FontWeight.Bold)
+                Text("03:30", color = Color(0xFFFACC15), fontSize = 52.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("刻不容缓，请立即前往！", color = PhoneColors.RedSoft, fontSize = 12.sp)
             }

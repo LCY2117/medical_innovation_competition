@@ -442,6 +442,7 @@ private fun translateHealthSource(source: String?): String = when (source) {
 
 private fun translateHealthAuthorization(status: String?): String = when (status) {
     "authorized" -> "已授权"
+    "sample" -> "样例接入"
     "not_connected", null -> "未接入"
     "denied" -> "未授权"
     else -> status

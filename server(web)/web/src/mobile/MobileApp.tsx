@@ -225,7 +225,7 @@ function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSign
   if (text.includes('心脏') || persona === 'patient') {
     return {
       source: 'mock',
-      authorizationStatus: 'authorized',
+      authorizationStatus: 'sample',
       provider: 'OPPO_HEALTH',
       heartRateBpm: 118,
       bloodOxygenPercent: 92,
@@ -240,7 +240,7 @@ function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSign
   if (text.includes('体育') || text.includes('跑') || persona === 'runner') {
     return {
       source: 'mock',
-      authorizationStatus: 'authorized',
+      authorizationStatus: 'sample',
       provider: 'OPPO_HEALTH',
       heartRateBpm: 84,
       bloodOxygenPercent: 99,
@@ -254,7 +254,7 @@ function mockHealthSignalsFor(user: AuthUser, persona?: DemoPersona): HealthSign
   }
   return {
     source: 'mock',
-    authorizationStatus: 'authorized',
+    authorizationStatus: 'sample',
     provider: 'OPPO_HEALTH',
     heartRateBpm: text.includes('医生') ? 76 : 80,
     bloodOxygenPercent: 98,
@@ -562,7 +562,7 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const [form, setForm] = useState<RegisterForm>({
-    displayName: 'LCY 移动端',
+    displayName: '移动端用户',
     phone: '',
     password: '',
     organization: profilePresets[0].values.organization,
@@ -1507,7 +1507,7 @@ function MobileApp() {
             <input
               value={demoAdminToken}
               onChange={(event) => setDemoAdminToken(event.target.value)}
-              placeholder="如 LCY"
+              placeholder="输入演示口令"
               autoComplete="off"
             />
           </label>

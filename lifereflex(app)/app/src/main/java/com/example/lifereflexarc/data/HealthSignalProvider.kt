@@ -12,7 +12,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
         return when (session.healthCondition) {
             HealthCondition.CARDIAC_RISK -> HealthSignalSummary(
                 source = "mock",
-                authorizationStatus = "authorized",
+                authorizationStatus = "sample",
                 heartRateBpm = 118,
                 bloodOxygenPercent = 92.0,
                 pressureScore = 82,
@@ -25,7 +25,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
 
             HealthCondition.ATHLETIC -> HealthSignalSummary(
                 source = "mock",
-                authorizationStatus = "authorized",
+                authorizationStatus = "sample",
                 heartRateBpm = 84,
                 bloodOxygenPercent = 99.0,
                 pressureScore = 28,
@@ -37,7 +37,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
 
             HealthCondition.LIMITED_MOBILITY -> HealthSignalSummary(
                 source = "mock",
-                authorizationStatus = "authorized",
+                authorizationStatus = "sample",
                 heartRateBpm = 92,
                 bloodOxygenPercent = 96.0,
                 pressureScore = 58,
@@ -50,7 +50,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
 
             HealthCondition.GENERAL -> HealthSignalSummary(
                 source = "mock",
-                authorizationStatus = "authorized",
+                authorizationStatus = "sample",
                 heartRateBpm = if (session.professionIdentity == ProfessionIdentity.EMERGENCY_DOCTOR) 76 else 80,
                 bloodOxygenPercent = 98.0,
                 pressureScore = 35,

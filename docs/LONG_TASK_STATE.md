@@ -5,8 +5,8 @@
 - Status: validating
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7640379
-- Last update: 2026-05-22 08:03:43 +08:00
+- HEAD: 2b75ae1
+- Last update: 2026-05-22 08:10:55 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -114,7 +114,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 89. Normalize dispatch-source labels across Web and Android. (done, pushed)
 90. Add mobile PWA offline fallback and event context strip. (done, pushed)
 91. Add ZIP evidence-package data dictionary and sync public review docs. (done, pushed)
-92. Polish visible evidence-package, health-summary, and location wording across Web/mobile/Android. (done, validating)
+92. Polish visible evidence-package, health-summary, and location wording across Web/mobile/Android. (done, pushed)
+93. Soften medical-compliance wording and sample health authorization across Web/mobile/Android. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -129,6 +130,9 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Web/mobile polish explorer (`019e4c27-ed2f-71e2-b975-4d47eaeac985`): completed read-only; identified a P0 mobile patient SOS delayed auto-dispatch stall, raw English/status labels in the command center, overloaded AI diagnostics, English role labels in `/mobile-demo`, and evidence wording polish.
 - Expert feedback evidence explorer (`019e4c90-6c28-7110-bbd1-05db34c07ada`): completed read-only; confirmed `expert_feedback_form.md` belongs in export generation, manifest public-review guidance, package tests, README, deployment runbook, expert template, pre-experiment protocol, product plan, whitepaper, and morning handoff.
 - Next-slice explorer (`019e4ca9-a516-7362-8b0f-57a17315eaf3`): completed read-only; recommended Android visible-language polish, mobile Web evidence-package permission UX, and ZIP review index as the next low-risk slices.
+- Web/mobile polish explorer (`019e4cfa-e2ad-7552-80b9-ad63f2facc8b`): completed read-only; recommended softening SOS/SCA/auto-call claims, PWA offline read-only state, evidence-package entry consistency, neutral demo-token placeholders, less mobile noise, removing hardcoded demo values, and role-name consistency.
+- Android polish explorer (`019e4cfa-f682-7d40-adc5-ce798a58db98`): completed read-only; recommended lower-friction current-event entry, hiding raw device IDs, filtering local archives, using sample health authorization instead of real authorization, stricter AED archive inference, and friendlier error mapping.
+- Backend evidence explorer (`019e4cfb-0a63-7343-9401-e225d1189f27`): completed read-only; recommended anonymization checks for public files, manifest/file-list consistency, external hash verification guide, full-field data dictionary, multi-round summary, expert feedback remediation loop, and medical-compliance wording scans.
 
 ## Git Baseline
 
@@ -453,6 +457,12 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Visible wording validation: targeted `rg` found no remaining `下载预实验证据包`, `预实验患者端`, `匿名化预实验记录`, `已切换到演示位置`, `OPPO Health mock fallback`, `演示健康数据`, `OPPO 健康增强`, or `可用于调度评分与预实验记录` in checked Web/Android UI files.
 - Web visible wording validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-hfqjqD1K.js` at `229.51 kB` raw / `69.57 kB` gzip and mobile `MobileApp-BZNCyjRt.js` at `38.76 kB` raw / `12.41 kB` gzip.
 - Android visible wording validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning and AndroidX Security deprecation warnings remain non-blocking.
+- Git checkpoint: `2b75ae1` (`checkpoint: polish visible evidence wording`) created and pushed to `origin/codex/competition-hardening`.
+- Medical-compliance wording slice in progress: Web demo-phone and Android alert/countdown screens now use `协同 SOS`、`一级危急`、`疑似心脏骤停`、`启动协同响应` instead of `SOS Alert`、`SCA`、`自动呼叫急救` or diagnosis-like trigger text; intro wording now says `现场协同空窗风险`.
+- Health authorization slice in progress: mobile Web and Android health samples now send/display `authorizationStatus=sample` and show `样例接入`, avoiding the appearance of completed real OPPO Health authorization.
+- Android archive slice in progress: Android archive AED summary no longer treats `HANDOVER`/`ARCHIVED` alone as `AED 已送达`; it now requires AED delivery, analysis, shock, or pickup status.
+- Medical-compliance validation: targeted `rg` found no remaining `SOS Alert`, `SCA`, `自动呼叫急救`, `触发心脏骤停`, `死亡真空`, `150 米`, `购物中心`, `LCY 移动端`, `如 LCY`, Android health-provider `authorizationStatus = "authorized"`, or mobile health sample `authorizationStatus: 'authorized'` in checked Web/Android UI files.
+- Medical-compliance validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-BG832lIu.js` at `229.52 kB` raw / `69.58 kB` gzip and mobile `MobileApp-DCIArHZJ.js` at `38.76 kB` raw / `12.41 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with existing `android.overridePathCheck=true` warning.
 
 ## Blockers Summary
 
@@ -461,7 +471,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the visible wording polish slice, then continue the next safe competition-hardening slice from current code inspection and read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the medical-compliance wording slice, then continue the next safe competition-hardening slice from current code inspection and read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
