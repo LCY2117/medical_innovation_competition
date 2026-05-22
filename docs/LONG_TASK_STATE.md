@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 594a410
-- Last update: 2026-05-22 14:55:29 +08:00
+- HEAD: 7b015d3
+- Last update: 2026-05-22 15:05:50 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -158,7 +158,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 133. Add evidence verifier negative tests for tampered hash, unlisted files, privacy overlap, and public raw-ID leaks. (done, pushed)
 134. Harden Web and mobile WebSocket reconnect against stale socket close/error callbacks. (done, pushed)
 135. Sync public product, deployment, README, and whitepaper docs with latest reliability and validation facts. (done, pushed)
-136. Make backend role action endpoints idempotent for repeated completed actions. (done, checkpointing)
+136. Make backend role action endpoints idempotent for repeated completed actions. (done, pushed)
+137. Prevent repeated manual join from resetting completed role progress. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -653,6 +654,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `594a410` (`checkpoint: sync reliability validation docs`) created and pushed to `origin/codex/competition-hardening`.
 - Backend action idempotency slice: repeated completed role actions now return the current incident phase without appending duplicate logs. Covered completed states include CPR started, AED analysis, AED shock, AED picked/delivered, ambulance arrived, and archived handover completion. This keeps evidence timelines clean if a client retries after weak network or rapid taps.
 - Backend action idempotency validation: targeted role-action tests passed; full backend unittest discovery passed, 47 tests OK.
+- Git checkpoint: `7b015d3` (`checkpoint: make backend actions idempotent`) created and pushed to `origin/codex/competition-hardening`.
+- Backend join idempotency slice: repeated manual join by the same role user now returns the current incident phase without resetting already advanced role status such as CPR started or AED analysis back to JOINED. This protects mobile refresh/retry paths after the participant has already started task execution.
+- Backend join idempotency validation: targeted repeated-join/action tests passed; full backend unittest discovery passed, 48 tests OK.
 
 ## Blockers Summary
 
@@ -661,7 +665,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the backend action idempotency patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the backend join idempotency patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

@@ -446,6 +446,8 @@ class IncidentService:
         self._touch_client(user_id)
 
         role_state = getattr(state.roles, normalized_role)
+        if role_state.userId == user_id and role_state.status != "ASSIGNED":
+            return MutationResponse(incidentId=incident_id, phase=state.phase)
         role_state.status = "JOINED"
         role_state.userId = user_id
 

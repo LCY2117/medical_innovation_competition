@@ -1826,6 +1826,35 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["roles"]["PRIME"]["status"], "CPR_STARTED")
         self.assertEqual(payload["roles"]["RUNNER"]["status"], "AED_PICKED")
 
+    def test_repeated_join_does_not_reset_completed_role_progress(self) -> None:
+        with self._client() as client:
+            incident_id = client.post("/api/incidents").json()["incidentId"]
+            joined = client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            action = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            after_action = client.get(f"/api/incidents/{incident_id}").json()
+            repeated_join = client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            after_repeated_join = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(joined.status_code, 200)
+        self.assertEqual(action.status_code, 200)
+        self.assertEqual(repeated_join.status_code, 200)
+        self.assertEqual(after_repeated_join["phase"], "CPR")
+        self.assertEqual(after_repeated_join["roles"]["PRIME"]["status"], "CPR_STARTED")
+        self.assertEqual(len(after_repeated_join["logs"]), len(after_action["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_repeated_join["logs"] if log["msg"] == "PRIME joined (prime-user)"),
+            1,
+        )
+
     def test_repeated_role_action_is_idempotent_and_does_not_duplicate_logs(self) -> None:
         with self._client() as client:
             incident_id = client.post("/api/incidents").json()["incidentId"]
