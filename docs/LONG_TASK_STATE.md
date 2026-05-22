@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 7dfebfd
-- Last update: 2026-05-22 09:50:33 +08:00
+- HEAD: 2443136
+- Last update: 2026-05-22 09:58:55 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -133,7 +133,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 108. Add Web command-center preflight Markdown report for demo readiness, provider fallback, terminal/AED state, and safe handoff notes. (done, checkpointing)
 109. Add independent evidence-package verification script for manifest SHA-256, file-list, ZIP path safety, and privacy-boundary checks. (done, pushed)
 110. Refresh morning handoff with Web preflight report, evidence-package verifier, and latest 38-test backend validation. (done, pushed)
-111. Add expert feedback summary and remediation-loop CSV into the evidence package. (done, checkpointing)
+111. Add expert feedback summary and remediation-loop CSV into the evidence package. (done, pushed)
+112. Sync long-task state, handoff, and competition docs with the expert-feedback remediation loop. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -153,6 +154,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Backend evidence explorer (`019e4cfb-0a63-7343-9401-e225d1189f27`): completed read-only; recommended anonymization checks for public files, manifest/file-list consistency, external hash verification guide, full-field data dictionary, multi-round summary, expert feedback remediation loop, and medical-compliance wording scans.
 - Web/mobile next-slice explorer (`019e4d0a-d1d2-7f33-a973-bcebba0be928`): completed read-only; recommended incident-specific evidence downloads, Web archive AED-summary tightening, backend demo-health wording, public-doc wording sync, and optional PWA asset caching.
 - Android/OPPO next-slice explorer (`019e4d0a-e5ae-70a0-8aa6-3fc9275cb531`): completed read-only; recommended backend demo health `sample` status, health input enum boundaries, Android HeyTap readiness states, local HTTP clarity, Android error mapping, and Web/mobile health authorization display.
+- New sidecar review attempts after resume: requested by user but blocked by current agent thread limit; main thread continued locally with read-only review and scoped documentation updates.
 
 ## Git Baseline
 
@@ -546,6 +548,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `7dfebfd` (`checkpoint: refresh handoff with verifier`) created and pushed to `origin/codex/competition-hardening`.
 - Expert feedback remediation slice: evidence packages now include `expert_feedback_summary.csv`, a public-review-friendly CSV for aggregating multiple experts' scores, positive feedback, risk concerns, required improvements, owner, priority, remediation status, follow-up evidence, and second-review comments. README, deployment runbook, package README, review index, manifest privacy guidance, and backend package tests now include the new file.
 - Expert feedback remediation validation: targeted package/export and verifier tests passed; backend full unittest discovery passed, 38 tests OK.
+- Git checkpoint: `2443136` (`checkpoint: add expert feedback summary`) created and pushed to `origin/codex/competition-hardening`.
+- Resume/status sync slice: updated `docs/LONG_TASK_STATE.md`, `docs/MORNING_HANDOFF.md`, `docs/PRE_EXPERIMENT_PROTOCOL.md`, `docs/PRODUCT_OPTIMIZATION_PLAN.md`, and `docs/TECHNICAL_LANDING_WHITEPAPER.md` so the new expert-feedback remediation loop is visible in the morning handoff, pre-experiment flow, product plan, and whitepaper.
+- Documentation sync validation: targeted `rg` confirmed `expert_feedback_summary.csv` and expert-remediation wording now appear in README, deployment runbook, morning handoff, pre-experiment protocol, product plan, and technical whitepaper; targeted safety scan found risky clinical-claim terms only inside cautionary/negative contexts; `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -554,7 +559,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint expert feedback remediation summary, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Commit and push the expert-feedback documentation sync, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

@@ -93,6 +93,7 @@
 8. 演练前使用包内 `participant_consent_safety_brief.md` 完成参与者安全边界说明；演练后让参与者填写 `participant_questionnaire.csv`。
 9. 观察员打开包内 `observer_record_form.csv`，补充记录无法由系统自动采集的行为、评分和开放反馈。
 10. 如有专家现场参与，可让专家对照包内 `expert_review_checklist.md` 逐项复核，并使用 `expert_feedback_form.md` 完成评分、100-300 字意见和签字留档。
+11. 多名专家或多轮复核后，使用 `expert_feedback_summary.csv` 汇总评分、肯定意见、风险关注点、需整改事项、负责人、优先级、处理状态、补充证据和二次复核意见，形成“专家反馈 -> 工程整改 -> 再验证”的闭环记录。
 
 ## 6. 指标
 
@@ -170,7 +171,7 @@
 - 每轮关键时间点折线图或条形图。
 - 使用系统前后 T1-T6 的均值、中位数和范围。
 - 参与者问卷均值和典型反馈。
-- 系统导出的预实验证据包摘要：优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
+- 系统导出的预实验证据包摘要：优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
 - 对照分析表：把无系统基线轮的 T1-T6、主观评分填入 `baseline_vs_system_comparison.csv`，与系统轮导出的耗时和演练后人工填写的问卷评分做差值、百分比变化；小样本只报告描述性变化，不做夸大显著性推断。
 - 调度解释案例：展示为什么某人被分配为核心施救、AED 保障、环境清障。
 
@@ -187,10 +188,10 @@
 - 系统访问地址和测试账号。
 - 3-5 分钟演示视频或现场演示脚本。
 - 预实验流程图。
-- 预实验证据包 ZIP 样例，含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 `manifest.json` 校验清单。
+- 预实验证据包 ZIP 样例，含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标表、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 `manifest.json` 校验清单。
 - 对外展示和专家审阅优先使用匿名化文件，避免暴露真实账号、手机号、设备编号或个人身份信息。
 - 调度解释截图。
-- 专家反馈表。
+- 专家反馈表：`expert_feedback_form.md` 用于单名专家签字留档，`expert_feedback_summary.csv` 用于汇总多名专家意见、风险点、整改责任人、处理状态和二次复核意见。
 
 建议截图清单：
 
@@ -203,7 +204,7 @@
 | S05 | AED 点位与 AED 保障者距离/取用说明 | 展示位置和 AED 因素进入流程 |
 | S06 | 移动 Web 或 Android 任务页：我的任务、下一动作、现场时间线 | 展示低门槛移动端执行能力 |
 | S07 | CPR/AED 分析/除颤/恢复 CPR 状态 | 展示急救流程提示闭环 |
-| S08 | 证据包 ZIP 文件列表、`review_index.md`、`manifest.json`、`expert_summary.md`、专家反馈签字表、主持人跑场单、数据分析说明、数据字典、参与者问卷、安全边界简表和基线对照分析表 | 展示预实验数据可归档、可匿名化、可校验，并可形成专家签字留档 |
+| S08 | 证据包 ZIP 文件列表、`review_index.md`、`manifest.json`、`expert_summary.md`、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者问卷、安全边界简表和基线对照分析表 | 展示预实验数据可归档、可匿名化、可校验，并可形成专家签字与整改闭环留档 |
 
 3-5 分钟演示脚本：
 
@@ -212,7 +213,7 @@
 3. 40 秒：患者端触发 SOS，说明系统进入智能分派，结合人员画像、位置、AED 距离和健康风险生成核心施救、AED 保障、环境清障三类任务。
 4. 60 秒：展示移动 Web 或 Android 端执行任务。核心施救端开始 CPR，AED 保障端取送 AED，环境清障端接应救护车。
 5. 40 秒：展示调度解释、现场时间线和 AED/CPR 下一动作提示，强调 AI 是辅助分派与解释，不替代 120 或专业医护。
-6. 30 秒：完成交接归档，下载事件证据包，展示审阅索引、匿名化数据、指标 CSV、专家摘要、专家复核清单、专家反馈签字表、主持人跑场单、数据分析说明、数据字典、参与者安全简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验。
+6. 30 秒：完成交接归档，下载事件证据包，展示审阅索引、匿名化数据、指标 CSV、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者安全简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验。
 
 希望专家重点评价：
 
