@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b6792f0
-- Last update: 2026-05-22 14:14:22 +08:00
+- HEAD: b89f55b
+- Last update: 2026-05-22 14:19:32 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -150,7 +150,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 125. Add evidence-package SHA-256 response header and audit metadata. (done, pushed)
 126. Guard Android release builds against local HTTP/WS endpoints. (done, pushed)
 127. Strengthen evidence-package verifier with public-file raw participant ID leak detection. (done, pushed)
-128. Add ZIP evidence quality report with key-event coverage, warnings, and low-cost pre-experiment readiness level. (done, validating)
+128. Add ZIP evidence quality report with key-event coverage, warnings, and low-cost pre-experiment readiness level. (done, pushed)
+129. Seed Android incident state from REST before waiting for WebSocket updates. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -621,6 +622,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `b6792f0` (`checkpoint: strengthen evidence verifier privacy scan`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence quality report slice: ZIP packages now include `evidence_quality_report.json`, a public/expert-review-safe JSON report with anonymized participant codes, key event coverage, missing nodes, metric availability, quality score, readiness level, provider/fallback warnings, and simulation-only usage boundaries.
 - Evidence quality report validation: targeted package/export, completed-flow quality-report, and verifier tests passed; full backend unittest discovery passed, 43 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
+- Git checkpoint: `b89f55b` (`checkpoint: add evidence quality report`) created and pushed to `origin/codex/competition-hardening`.
+- Android REST state-seeding slice: `IncidentRepository.getCurrentIncident()` and `getIncident()` now update the local `StateFlow` immediately from REST responses, so Android screens can render the incident snapshot before the first WebSocket `STATE` frame arrives.
+- Android REST state-seeding validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -629,7 +633,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence quality report slice if staged diff is clean, then continue with the Android REST state-seeding reliability patch. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Android REST state-seeding reliability patch if staged diff is clean, then continue with another low-risk Android reliability or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

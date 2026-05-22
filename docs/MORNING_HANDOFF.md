@@ -70,6 +70,7 @@
 - Android 核心施救导航页已移除 `AHEAD`、`Start CPR` 和固定 `15 m` 占位距离；现在优先显示调度距离，没有精确距离时提示按现场指引前往患者位置。
 - Android 现场总览、AED 目标卡和“我的”页已把楼层、AED 状态、定位来源等可见字段转成中文表述，避免展示 `1F/AVAILABLE/app-demo-fallback` 这类工程内部值。
 - Android 错误提示已友好化：登录、事件连接、角色响应、定位/健康同步和 WebSocket 断线会显示 401/403/404/422、网络不可达、超时、证书、明文 HTTP 等中文排查提示，不再直接展示底层异常。
+- Android 事件连接已增加 REST 快照兜底：进入当前事件或指定事件时会先用 REST 返回值更新本地状态，再等待 WebSocket 实时帧，减少真机弱网下短暂空白或等待第一帧的问题。
 - Android debug APK 已支持局域网 HTTP 联调，方便真机连接本地后端；release 构建仍保持 HTTPS/WSS 口径。
 - 移动 Web PWA service worker 已升级：缓存 `/mobile` 壳、离线页、manifest、图标和已加载静态资源；API/WebSocket 不缓存，弱网时更少白屏。
 - Android 关键展示文案再次收敛：登录页、患者端、归档页和全屏应急态避免“本地假会话/救援成功/黄金救援时间”等粗糙或过度承诺表达，统一为协同流程、记录归档和关键响应窗口。
@@ -227,7 +228,8 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `ae4bc9c`：证据包内部 `README.md`、`analysis_guide.md`、`review_index.md` 等材料加入一键分析说明，并收敛专家可见健康摘要口径，已推送。
 - `1c1eab2`：新增 `round-chart-data.csv` 图表底表输出；一键脚本现在生成 CSV、Markdown 和 Excel/PPT 图表数据，已通过脚本 help、py_compile、目标测试和后端全量 41 项测试，已推送。
 - `b6792f0`：证据包校验脚本新增公开材料原始参与者 ID 泄漏扫描，已通过 targeted 测试和后端全量 42 项测试，已推送。
-- 最新验证扫尾：后端 43 项测试通过；证据包校验/汇总/分析/图表数据脚本和 `evidence_quality_report.json` 证据质量报告通过；Web typecheck、Web build、Android debug/release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- `b89f55b`：证据包新增 `evidence_quality_report.json` 证据质量报告，README、部署手册、早晨交接和后端测试已同步，已推送。
+- 最新验证扫尾：后端 43 项测试通过；证据包校验/汇总/分析/图表数据脚本和 `evidence_quality_report.json` 证据质量报告通过；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子小补丁验证；Web typecheck、Web build、Android release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
 ## 你醒来后最该做的事
 

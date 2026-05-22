@@ -75,11 +75,15 @@ class IncidentRepository(
     }
 
     suspend fun getCurrentIncident(): IncidentState {
-        return apiService.getCurrentIncident()
+        return apiService.getCurrentIncident().also { incident ->
+            _state.value = incident
+        }
     }
 
     suspend fun getIncident(incidentId: String): IncidentState {
-        return apiService.getIncident(incidentId)
+        return apiService.getIncident(incidentId).also { incident ->
+            _state.value = incident
+        }
     }
 
     suspend fun joinCurrentAuto(authToken: String?, userId: String): AutoJoinResponse {
