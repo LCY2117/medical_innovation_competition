@@ -1497,6 +1497,12 @@ export default function App() {
   const adminSessionReady = Boolean(adminSession?.token && adminSession.user.privileges?.includes('admin'));
   const demoAdminRequired = Boolean(healthDetail?.demoAdminAuthEnabled || adminAccountEnabled);
   const demoAdminReady = !demoAdminRequired || adminSessionReady || demoAdminToken.trim().length > 0;
+  const adminReadinessWarning = '管理权限未就绪：请先登录正式管理员账号或填写演示口令。';
+  const visibleReadinessWarnings = [
+    ...readinessWarnings,
+    ...(!demoAdminReady ? [adminReadinessWarning] : []),
+  ];
+  const readinessReady = Boolean(demoReadiness?.ready && demoAdminReady);
   const demoAdminStatusLabel = adminSessionReady
     ? '账号已登录'
     : demoAdminToken.trim()
@@ -2017,13 +2023,9 @@ export default function App() {
   const exportPreflightReport = () => {
     const generatedAt = new Date();
     const targetIncidentId = incidentState?.incidentId ?? incidentId ?? '未创建';
-    const statusLabel = demoReadiness?.ready ? '准备就绪' : '仍需确认';
     const currentPhase = translatePhaseLabel(incidentState?.phase);
-    const warningList = [
-      ...readinessWarnings,
-      ...(!demoAdminReady ? ['管理权限未就绪：请先登录正式管理员账号或填写演示口令。'] : []),
-      ...(wsError ? [`实时连接异常：${wsError}`] : []),
-    ];
+    const statusLabel = readinessReady ? '准备就绪' : '仍需确认';
+    const warningList = [...visibleReadinessWarnings, ...(wsError ? [`实时连接异常：${wsError}`] : [])];
     const roleRows = roleNames.map((role) => {
       const roleState = incidentState?.roles?.[role];
       return [
@@ -3257,7 +3259,7 @@ export default function App() {
           </div>
           <div className={cn(
             "rounded-xl border p-4",
-            demoReadiness?.ready
+            readinessReady
               ? "border-emerald-700/60 bg-emerald-950/20"
               : "border-amber-700/60 bg-amber-950/20",
           )}>
@@ -3265,7 +3267,7 @@ export default function App() {
               <div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">运行准备度</div>
                 <div className="text-sm text-white font-semibold mt-1">
-                  {demoReadiness?.ready ? '已满足本轮协同演示前置条件' : '仍有演示前检查项需要确认'}
+                  {readinessReady ? '已满足本轮协同演示前置条件' : '仍有演示前检查项需要确认'}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -3279,11 +3281,11 @@ export default function App() {
                 </button>
                 <div className={cn(
                   "rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider",
-                  demoReadiness?.ready
+                  readinessReady
                     ? "border-emerald-700/60 bg-emerald-900/50 text-emerald-100"
                     : "border-amber-700/60 bg-amber-900/40 text-amber-100",
                 )}>
-                  {demoReadiness?.ready ? '准备就绪' : `${readinessWarnings.length || 1} 项待确认`}
+                  {readinessReady ? '准备就绪' : `${visibleReadinessWarnings.length || 1} 项待确认`}
                 </div>
               </div>
             </div>
@@ -3298,9 +3300,9 @@ export default function App() {
                 </div>
               ))}
             </div>
-            {readinessWarnings.length > 0 && (
+            {visibleReadinessWarnings.length > 0 && (
               <div className="mt-3 text-xs leading-5 text-amber-100">
-                {readinessWarnings.slice(0, 3).join('；')}
+                {visibleReadinessWarnings.slice(0, 3).join('；')}
               </div>
             )}
           </div>

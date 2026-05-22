@@ -123,7 +123,9 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最新证据包 SHA-256 前端展示增量构建产物为桌面 `App-C1o_GuN-.js`、移动 `MobileApp-D6sQFbqf.js`、4端演示台 `MobileDemoStage-DylKZH_L.js`。
+结果：均通过。最新演示准备度告警一致性增量构建产物为桌面 `App-DKGpinBD.js`、移动 `MobileApp-CWxAHAbu.js`、4端演示台 `MobileDemoStage-cNrZP1Tv.js`。上一轮证据包 SHA-256 前端展示增量构建产物为桌面 `App-C1o_GuN-.js`、移动 `MobileApp-D6sQFbqf.js`、4端演示台 `MobileDemoStage-DylKZH_L.js`。
+
+演示准备度告警一致性检查：Web 总控台现在把管理员权限未就绪并入可见准备度告警，卡片颜色、标题、待确认数量、告警摘要和导出的 Markdown 自检报告使用同一套状态。这样不会再出现页面显示“准备就绪”但自检报告仍列出管理权限阻塞的口径不一致。
 
 证据包 SHA-256 展示烟测：使用临时本地后端 `127.0.0.1:18093`、演示口令 `LCY`、临时 SQLite DB 通过。确认 Web 总控台点击“证据包”后显示“证据包已下载”和 64 位 SHA-256，且不显示“请求异常”；移动归档页 `/mobile?demo=guide&incidentId=...` 点击“下载事件证据包”后显示文件名和 64 位 SHA-256，且无下载错误提示。
 
@@ -258,6 +260,7 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `9ced23d`：证据包 verifier 新增篡改 hash、未列文件、隐私边界重叠等坏包负例测试，后端 46 项通过并推送。
 - `6b967cb`：Web/mobile WebSocket 过期回调保护，已通过 typecheck/build 并推送。
 - `594a410`：README、部署手册、产品计划和白皮书同步最新可靠性与验证事实，已推送。
+- 演示准备度告警一致性：Web 总控台准备度卡片和 Markdown 自检报告共用管理员权限告警，已通过 Web typecheck/build，checkpoint 见最新提交记录。
 - 最新验证扫尾：后端 49 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例、auto-join/join/action 幂等和 `evidence_quality_report.json` 证据质量报告通过；Web `npm run typecheck` 与 `npm run build` 已通过移动端同帧防连点补丁验证，最新构建产物为桌面 `App-WniwvbhZ.js`、移动 `MobileApp-VrPZVJ6u.js`；Android `gradle :app:assembleDebug --no-daemon` 已通过自动接单后即时 REST 快照刷新、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Android release readiness 构建保持上一轮通过状态。
 
 ## 你醒来后最该做的事

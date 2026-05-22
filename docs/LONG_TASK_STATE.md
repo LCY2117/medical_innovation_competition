@@ -2,11 +2,11 @@
 
 ## Current Status
 
-- Status: checkpointing
+- Status: validating
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 0b127b5
-- Last update: 2026-05-22 16:53:56 +08:00
+- HEAD: 8ee452a
+- Last update: 2026-05-22 17:01:27 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -168,7 +168,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 143. Sync Web preflight report post-demo evidence steps with quality review table. (done, pushed)
 144. Add multi-round review-action CSV for PPT/expert evidence triage. (done, pushed)
 145. Prevent non-patient demo mobile terminals from starting patient SOS. (done, pushed)
-146. Surface evidence-package SHA-256 after Web/mobile downloads. (done, validating)
+146. Surface evidence-package SHA-256 after Web/mobile downloads. (done, pushed)
+147. Align Web command-center readiness warning count with visible/admin warnings. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -694,6 +695,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `0b127b5` (`checkpoint: gate mobile demo sos trigger`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence-package SHA display slice: Web command-center package downloads and mobile archived-flow package downloads now read `X-LifeReflexArc-Package-Sha256` and show the downloaded filename plus SHA-256 in a success message. The shared mobile download helper returns filename/hash metadata; the Web command center shows successful downloads in a green status bar rather than the red request-error area.
 - Evidence-package SHA display validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-C1o_GuN-.js`, mobile `MobileApp-D6sQFbqf.js`, and stage `MobileDemoStage-DylKZH_L.js`. Browser smoke on temporary local backend `127.0.0.1:18093` with demo token `LCY` confirmed Web header package download displays `证据包已下载` and a 64-character SHA-256 without `请求异常`; mobile `/mobile?demo=guide&incidentId=...` archived package download displays `事件证据包已下载` and a 64-character SHA-256 without error. Temporary process, DB, log, and pid files were stopped/removed.
+- Git checkpoint: `8ee452a` (`checkpoint: show package hash after download`) created and pushed to `origin/codex/competition-hardening`.
+- Web readiness warning alignment slice: the command-center readiness card now derives its color, title, count, visible warning text, and exported Markdown self-check status from one combined readiness state. Admin-auth gaps are counted and displayed alongside backend readiness warnings, so the card no longer says ready while the self-check report still lists management permission as unresolved.
+- Web readiness warning alignment validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DKGpinBD.js`, mobile `MobileApp-CWxAHAbu.js`, and stage `MobileDemoStage-cNrZP1Tv.js`.
 
 ## Blockers Summary
 
@@ -702,7 +706,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence-package SHA display slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: make readiness warning count match visible warnings, add bound-event status to the 4-terminal stage, or improve copy affordance for downloaded package hash. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the readiness warning alignment slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: add bound-event status to the 4-terminal stage, improve copy affordance for downloaded package hash, or add a small Web smoke for the readiness card. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
