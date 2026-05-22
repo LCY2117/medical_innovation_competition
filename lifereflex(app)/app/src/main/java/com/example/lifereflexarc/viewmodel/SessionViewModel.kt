@@ -241,11 +241,11 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         val entry = IncidentArchiveEntry(
             incidentId = incidentState.incidentId,
             userId = current.userId,
-            title = if (isPatient) "患者端救援记录已归档" else "$roleLabel 任务记录已归档",
+            title = if (isPatient) "患者端协同记录已归档" else "$roleLabel 任务记录已归档",
             summary = if (isPatient) {
-                "本次心脏骤停事件已完成院前协同救援，并由救护车接管。"
+                "本次疑似心脏骤停协同流程已完成现场交接，并进入记录归档。"
             } else {
-                "你以${roleLabel}身份参与了本次院前协同救援，现场任务已完成并进入归档。"
+                "你以${roleLabel}身份参与了本次院前协同流程，现场任务已完成并进入归档。"
             },
             roleLabel = roleLabel,
             phaseLabel = phaseTitle(incidentState.phase),

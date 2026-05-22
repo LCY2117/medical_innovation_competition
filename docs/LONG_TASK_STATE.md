@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 451bbd8
-- Last update: 2026-05-22 09:00:24 +08:00
+- HEAD: a179220
+- Last update: 2026-05-22 09:04:32 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -125,7 +125,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 100. Run post-health-readiness validation sweep. (done, checkpointing)
 101. Add Android friendly error mapping for HTTP/network/WebSocket failures. (done, pushed)
 102. Add debug-only Android cleartext network support for LAN/local backend testing. (done, pushed)
-103. Strengthen mobile PWA shell/resource caching and update activation. (done, checkpointing)
+103. Strengthen mobile PWA shell/resource caching and update activation. (done, pushed)
+104. Polish Android visible safety/archive wording for presentation readiness. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -513,6 +514,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `451bbd8` (`checkpoint: allow android debug local http`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile PWA cache-resilience slice: `mobile-sw.js` now caches `/mobile` in the app shell, uses network-first navigation for the mobile shell, stale-while-revalidate for mobile static assets/manifest/offline/icon, keeps API and WebSocket requests uncached, enables navigation preload when available, and accepts `SKIP_WAITING` update messages; `main.tsx` now asks waiting/installing mobile service workers to activate so new mobile shells do not linger behind an old cache during demonstrations.
 - Mobile PWA validation: Web `npm run typecheck` passed; Web `npm run build` passed with mobile `MobileApp-DSEHznZU.js` at `38.89 kB` raw / `12.45 kB` gzip; local Vite preview on `127.0.0.1:18094` returned 200 for `/mobile`, `/offline.html`, and `/mobile-sw.js`; Browser DOM smoke confirmed `/mobile` renders `浏览器应急端`/demo entries and `/offline.html` renders `移动端暂时离线`/`重新连接`. The Node REPL browser sandbox could not inspect `navigator.serviceWorker`, so SW registration/cache internals were verified by build, served script content, and visible-page smoke; temporary preview processes were stopped.
+- Git checkpoint: `a179220` (`checkpoint: strengthen mobile pwa cache`) created and pushed to `origin/codex/competition-hardening`.
+- Android visible wording polish: removed remaining presentation-rough wording such as `本地假会话`, `救援记录`, `被救援记录`, `黄金救援时间`, and `心脏骤停事件已完成院前协同救援` from key Android login, emergency, archive, and phase screens; replaced with service-account/encrypted-session, cooperative record, response window, and suspected-cardiac-arrest cooperative-flow wording.
+- Android wording validation: targeted `rg` found no remaining `本地假会话|心脏骤停事件已完成|救援记录|被救援记录|黄金救援时间|急救接力|协同救援` in Android source; remaining `急救车` hits are normal 120 ambulance context. `gradle :app:assembleDebug --no-daemon` passed with existing non-blocking `android.overridePathCheck=true` and AndroidX Security deprecation warnings.
 
 ## Blockers Summary
 
@@ -521,7 +525,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint mobile PWA cache resilience, then continue with another low-risk hardening slice such as release APK readiness notes, small Android visible wording scan, or documentation/handoff refresh. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint Android visible wording polish, then continue with release APK readiness notes, documentation/handoff refresh, or another low-risk validation slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

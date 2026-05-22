@@ -174,7 +174,7 @@ private fun PatientFullScreen(
     CriticalScaffold(
         eyebrow = "患者端",
         title = "已进入患者应急态",
-        body = "系统已向周边协同成员发出求助，并同步生成急救任务。患者端保持当前位置，等待周边力量到场和救护车接管。",
+        body = "系统已向周边协同成员发出求助，并同步生成现场任务。患者端保持当前位置，等待周边力量到场和救护车接管。",
         accent = PhoneColors.Red,
     ) {
         MetricTile(label = "当前阶段", value = phaseTitle(incidentState.phase))
@@ -544,14 +544,14 @@ private fun HandoverFullScreen(
 ) {
     CriticalScaffold(
         eyebrow = "医疗交接",
-        title = "急救车已接管患者",
+        title = "救护车已接管患者",
         body = "本轮社会化协同任务已经完成，现场进入医疗交接与日志归档阶段。",
         accent = PhoneColors.Green,
     ) {
         MetricTile(label = "总耗时", value = rememberElapsedLabel(incidentState.logs.firstOrNull()?.ts))
         MetricTile(label = "分配来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         PressableButton(
-            text = "确认完成救护车交接并归档",
+            text = "确认完成交接并归档",
             onClick = { incidentViewModel.actionHandoverCompleted(userId) },
             colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Green, contentColor = Color.White),
             modifier = Modifier.fillMaxWidth(),
@@ -569,11 +569,11 @@ private fun ArchivedFullScreen(
     val isPatient = incidentState.patientUserId == session.userId
     CriticalScaffold(
         eyebrow = "已归档",
-        title = if (isPatient) "患者端记录已保存" else "本轮救援记录已保存",
+        title = if (isPatient) "患者端记录已保存" else "本轮协同记录已保存",
         body = if (isPatient) {
-            "救护车已完成接管，本次被救援记录已经写入手机档案。你现在可以退出应急模式。"
+            "救护车已完成接管，本次协同记录已经写入手机档案。你现在可以退出应急模式。"
         } else {
-            "你的现场任务和处置日志已经归档到本机，可在档案页复盘本次协同救援。"
+            "你的现场任务和处置日志已经归档到本机，可在档案页复盘本次协同流程。"
         },
         accent = PhoneColors.Green,
     ) {

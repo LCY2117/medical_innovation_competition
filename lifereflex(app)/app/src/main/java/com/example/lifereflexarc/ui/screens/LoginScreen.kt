@@ -99,7 +99,7 @@ fun LoginScreen(
                         text = if (authMode == AuthMode.Register) {
                             "注册时提交真实账号信息和急救画像，后续由云端智能协同自动分配任务。"
                         } else {
-                            "登录使用服务端真实账号，不再只是本地假会话。"
+                            "登录后使用服务端账号和加密会话，便于跨端同步事件与归档记录。"
                         },
                         color = PhoneColors.GrayText,
                         fontSize = 12.sp,

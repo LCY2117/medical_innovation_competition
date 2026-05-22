@@ -59,7 +59,7 @@ fun EmergencyAlertScreen(
                     .background(PhoneColors.Navy, RoundedCornerShape(PhoneTokens.CardRadiusMd))
                     .padding(horizontal = 20.dp, vertical = 18.dp)
             ) {
-                Text("黄金救援时间", color = PhoneColors.GrayText, fontSize = 11.sp)
+                Text("关键响应窗口", color = PhoneColors.GrayText, fontSize = 11.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text("03:30", color = Color(0xFFFACC15), fontSize = 52.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))

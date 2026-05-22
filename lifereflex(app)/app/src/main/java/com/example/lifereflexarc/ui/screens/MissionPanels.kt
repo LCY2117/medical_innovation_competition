@@ -186,7 +186,7 @@ private fun CreatedMissionCard(
                 text = if (isAlerting) {
                     "检测到异常倒地，系统正在执行 SOS 倒计时。"
                 } else {
-                    "当前处于监测态，可手动确认异常并发起急救接力。"
+                    "当前处于监测态，可手动确认异常并发起协同 SOS。"
                 },
                 color = PhoneColors.GrayText,
                 fontSize = 14.sp,
@@ -248,7 +248,7 @@ private fun PrimeMissionCard(
         }
         else -> {
             title = "CPR 执行中"
-            body = "保持 100-120 次/分钟节律，等待 AED 与急救车汇合。"
+            body = "保持 100-120 次/分钟节律，等待 AED 与救护车汇合。"
             cta = null
             action = null
         }
@@ -341,7 +341,7 @@ private fun GuideMissionCard(
         }
         "ASSIGNED", "JOINED" -> {
             title = "生命通道处理中"
-            body = "请疏通消防通道、引导电梯与路口，等待急救车靠近。"
+            body = "请疏通消防通道、引导电梯与路口，等待救护车靠近。"
             cta = "确认救护车已到达"
             action = onAmbulanceArrived
         }
