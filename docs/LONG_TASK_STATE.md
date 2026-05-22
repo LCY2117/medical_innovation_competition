@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: ee0a6af
-- Last update: 2026-05-22 16:21:25 +08:00
+- HEAD: b7e5a96
+- Last update: 2026-05-22 16:33:27 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -165,7 +165,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 140. Refresh Android incident state immediately after auto-joining. (done, checkpointing)
 141. Merge evidence quality fields into multi-round CSV/report analysis and reviewer docs. (done, checkpointing)
 142. Add round-analysis quality review table for rerun/manual-review triage. (done, checkpointing)
-143. Sync Web preflight report post-demo evidence steps with quality review table. (done, validating)
+143. Sync Web preflight report post-demo evidence steps with quality review table. (done, pushed)
+144. Add multi-round review-action CSV for PPT/expert evidence triage. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -681,6 +682,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Quality review triage validation: `python -m py_compile scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted report/report-builder tests passed; full backend unittest discovery passed, 49 tests OK.
 - Web preflight quality-review sync slice: `server(web)/web/src/app/App.tsx` self-check Markdown now tells operators to open `round-analysis.md` and review the `证据质量` / `需复核轮次` sections before handing chart data to PPT, and includes `round-analysis.md` among recommended external materials.
 - Web preflight quality-review validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-BJA77-CK.js`, mobile `MobileApp-C_SM1_pZ.js`, and stage `MobileDemoStage-DKrKuX3T.js`.
+- Git checkpoint: `b7e5a96` (`checkpoint: sync preflight evidence quality guidance`) created and pushed to `origin/codex/competition-hardening`.
+- Review-action CSV slice: `scripts/analyze_round_summary.py` can now write `round-review-actions.csv` via `--review-output`, and `scripts/build_pre_experiment_report.py` now generates it by default alongside `round-summary.csv`, `round-analysis.md`, and `round-chart-data.csv`. The CSV labels each round as usable, usable with notes, requiring rerun/manual supplement, or excluded/manual review, so PPT and expert materials can be filtered before charting.
+- Review-action CSV documentation sync: README, deployment runbook, pre-experiment protocol, product plan, technical whitepaper, expert feedback template, evidence-package internal guidance, Web self-check report, and morning handoff now mention `round-review-actions.csv` and explain that it is a pre-PPT triage aid, not clinical evidence.
+- Review-action CSV validation: `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted evidence analysis/report-builder tests passed; full backend unittest discovery passed, 49 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-JkgAD_yM.js`, mobile `MobileApp-7Q1VHnBQ.js`, and stage `MobileDemoStage-DyZIJVu5.js`.
 
 ## Blockers Summary
 
@@ -689,7 +694,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Validate, checkpoint, and push the Web preflight quality-review wording slice if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the review-action CSV slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: show evidence ZIP SHA-256 after download, prevent non-patient demo terminals from starting patient SOS, make readiness warning count match visible warnings, or add bound-event status to the 4-terminal stage. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

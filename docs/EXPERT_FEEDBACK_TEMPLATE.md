@@ -53,6 +53,7 @@
 | 多轮汇总表 `round-summary.csv` |  |
 | 多轮 Markdown 分析摘要 `round-analysis.md` |  |
 | 多轮图表底表 `round-chart-data.csv` |  |
+| 多轮复核行动清单 `round-review-actions.csv` |  |
 | 证据包 `manifest.json` 校验清单 |  |
 | AI 分派解释与规则兜底说明 |  |
 

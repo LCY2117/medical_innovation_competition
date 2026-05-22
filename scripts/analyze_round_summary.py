@@ -72,6 +72,23 @@ CHART_FIELDNAMES = [
     "pptSafeUse",
 ]
 
+REVIEW_ACTION_FIELDNAMES = [
+    "roundId",
+    "incidentId",
+    "verificationStatus",
+    "qualityLevel",
+    "qualityScore",
+    "reviewDecision",
+    "reviewReason",
+    "criticalCount",
+    "warningCount",
+    "missingKeyEventCount",
+    "missingKeyEvents",
+    "warningCodes",
+    "recommendedAction",
+    "pptUseBoundary",
+]
+
 
 def _read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -173,6 +190,108 @@ def write_chart_csv(rows: list[dict[str, str]], output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=CHART_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _round_id(row: dict[str, str]) -> str:
+    return row.get("roundId") or row.get("manifestIncidentId") or row.get("incidentId") or "-"
+
+
+def _count_text(row: dict[str, str], field: str) -> str:
+    value = _number(row.get(field))
+    if value is None:
+        return row.get(field) or ""
+    return str(int(value))
+
+
+def _review_decision(row: dict[str, str]) -> tuple[str, str, str, str]:
+    verification_status = row.get("verificationStatus", "OK") or "OK"
+    quality_level = row.get("qualityLevel", "")
+    critical_count = _number(row.get("qualityCriticalCount")) or 0
+    warning_count = _number(row.get("qualityWarningCount")) or 0
+    missing_count = _number(row.get("missingKeyEventCount")) or 0
+
+    if verification_status != "OK":
+        return (
+            "exclude_from_summary",
+            "证据包校验未通过，不能进入多轮描述性统计。",
+            "重新导出或修复证据包后再运行分析脚本。",
+            "do_not_use",
+        )
+    if not quality_level:
+        return (
+            "manual_review_required",
+            "该轮来自旧版证据包或缺少 evidence_quality_report.json。",
+            "优先用新版系统重跑；如必须保留，需观察员人工说明关键节点完整性。",
+            "do_not_use_until_reviewed",
+        )
+    if (
+        quality_level == "ready_for_low_cost_pre_experiment_summary"
+        and critical_count == 0
+        and warning_count == 0
+        and missing_count == 0
+    ):
+        return (
+            "use_for_summary",
+            "关键节点和质量检查已满足低成本预实验汇总要求。",
+            "可进入多轮描述性统计和 PPT 图表底表。",
+            "descriptive_pre_experiment_only",
+        )
+    if critical_count > 0 or missing_count > 0 or quality_level == "needs_rerun_or_manual_review":
+        return (
+            "rerun_or_manual_supplement",
+            "存在 critical 问题、缺失关键节点，或质量等级要求重跑/人工复核。",
+            "优先重跑该轮；如现场无法重跑，需在观察员记录和 PPT 备注中补充说明。",
+            "do_not_use_until_resolved",
+        )
+    if warning_count > 0 or quality_level == "usable_with_notes":
+        return (
+            "use_with_notes",
+            "该轮可作为流程可行性材料，但存在 warning，需要备注。",
+            "可进入描述性汇总，但 PPT/专家材料必须保留限制说明。",
+            "descriptive_with_notes_only",
+        )
+    return (
+        "manual_review_required",
+        "质量等级或提示代码未落入预设规则。",
+        "由数据整理同学复核 timeline、dispatch_rationale 和观察员记录后决定。",
+        "do_not_use_until_reviewed",
+    )
+
+
+def generate_review_action_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    if not rows:
+        raise ValueError("round summary CSV has no data rows")
+
+    action_rows: list[dict[str, str]] = []
+    for row in rows:
+        decision, reason, action, boundary = _review_decision(row)
+        action_rows.append(
+            {
+                "roundId": _round_id(row),
+                "incidentId": row.get("manifestIncidentId") or row.get("incidentId") or "",
+                "verificationStatus": row.get("verificationStatus", "OK") or "OK",
+                "qualityLevel": row.get("qualityLevel") or "missing_quality_report",
+                "qualityScore": row.get("qualityScore") or "",
+                "reviewDecision": decision,
+                "reviewReason": reason,
+                "criticalCount": _count_text(row, "qualityCriticalCount"),
+                "warningCount": _count_text(row, "qualityWarningCount"),
+                "missingKeyEventCount": _count_text(row, "missingKeyEventCount"),
+                "missingKeyEvents": row.get("missingKeyEvents") or "",
+                "warningCodes": row.get("qualityWarningCodes") or "",
+                "recommendedAction": action,
+                "pptUseBoundary": boundary,
+            }
+        )
+    return action_rows
+
+
+def write_review_action_csv(rows: list[dict[str, str]], output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=REVIEW_ACTION_FIELDNAMES)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -314,6 +433,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("summary_csv", help="CSV produced by scripts/summarize_evidence_rounds.py")
     parser.add_argument("-o", "--output", help="Output Markdown path. Defaults to stdout.")
     parser.add_argument("--chart-output", help="Optional PPT/Excel-friendly chart data CSV path.")
+    parser.add_argument("--review-output", help="Optional round review/action checklist CSV path.")
     args = parser.parse_args(argv)
 
     summary_path = Path(args.summary_csv)
@@ -321,6 +441,7 @@ def main(argv: list[str] | None = None) -> int:
         rows = _read_rows(summary_path)
         report = generate_report(rows, source_name=str(summary_path))
         chart_rows = generate_chart_rows(rows) if args.chart_output else []
+        review_rows = generate_review_action_rows(rows) if args.review_output else []
     except (OSError, csv.Error, ValueError) as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
@@ -336,6 +457,10 @@ def main(argv: list[str] | None = None) -> int:
         chart_output = Path(args.chart_output)
         write_chart_csv(chart_rows, chart_output)
         print(f"OK: wrote chart data CSV -> {chart_output}")
+    if args.review_output:
+        review_output = Path(args.review_output)
+        write_review_action_csv(review_rows, review_output)
+        print(f"OK: wrote review action CSV -> {review_output}")
     return 0
 
 

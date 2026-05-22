@@ -346,13 +346,13 @@ python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 
 通过时脚本会输出 `OK`；如果提示 hash 不一致、缺文件、路径异常、公开/内部材料边界冲突、公开材料泄漏原始参与者 ID 或 ZIP 含未列文件，应重新导出证据包并保留问题记录。
 
-多轮预实验结束后，可以把每轮下载的 ZIP 放到同一目录，一键生成汇总 CSV、Markdown 分析摘要和 Excel/PPT 图表数据：
+多轮预实验结束后，可以把每轮下载的 ZIP 放到同一目录，一键生成汇总 CSV、Markdown 分析摘要、Excel/PPT 图表数据和复核行动清单：
 
 ```powershell
 python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
 ```
 
-输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。`round-summary.csv` 会合并每轮 `evidence_quality_report.json` 的质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码；`round-analysis.md` 会新增证据质量小节和“需复核轮次”表，优先列出需要重跑或人工补充说明的轮次；`round-chart-data.csv` 会把时间指标、覆盖率、证据质量和场景上下文整理为均值、中位数、最小值和最大值，适合直接导入 Excel 或作为 PPT 图表底表。
+输出目录会包含 `round-summary.csv`、`round-analysis.md`、`round-chart-data.csv` 和 `round-review-actions.csv`。`round-summary.csv` 会合并每轮 `evidence_quality_report.json` 的质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码；`round-analysis.md` 会新增证据质量小节和“需复核轮次”表，优先列出需要重跑或人工补充说明的轮次；`round-chart-data.csv` 会把时间指标、覆盖率、证据质量和场景上下文整理为均值、中位数、最小值和最大值，适合直接导入 Excel 或作为 PPT 图表底表；`round-review-actions.csv` 会输出每轮采用/备注采用/重跑或人工补充的建议。
 
 也可以分步生成汇总 CSV：
 
@@ -362,10 +362,10 @@ python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output 
 
 该脚本会先复用 manifest/SHA-256 校验，再合并每个包内的 `pre_experiment_round_summary.csv` 和 `evidence_quality_report.json`，输出包路径、包 hash、校验状态、事件编号、生成时间、质量等级、质量分、问题计数和 T1-T6/覆盖率/角色完整度等核心字段。若需要把异常包也写入汇总表用于排查，可追加 `--include-invalid`。
 
-汇总 CSV 生成后，再导出 Markdown 分析摘要，也可以同步导出图表数据 CSV：
+汇总 CSV 生成后，再导出 Markdown 分析摘要，也可以同步导出图表数据 CSV 和复核行动清单：
 
 ```powershell
-python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md" --chart-output "D:\path\to\round-chart-data.csv"
+python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md" --chart-output "D:\path\to\round-chart-data.csv" --review-output "D:\path\to\round-review-actions.csv"
 ```
 
-该报告只做证据质量、关键节点缺失、需复核轮次和流程指标的描述性统计，并给出适合 PPT 改写的谨慎结论模板；不要把它写成真实临床疗效证明。
+该报告只做证据质量、关键节点缺失、需复核轮次和流程指标的描述性统计，并给出适合 PPT 改写的谨慎结论模板；复核行动清单用于赛前决定哪些轮次可进图表、哪些轮次必须备注或重跑。不要把这些材料写成真实临床疗效证明。

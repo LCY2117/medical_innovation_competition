@@ -1008,6 +1008,7 @@ class ServerTestCase(unittest.TestCase):
         summary_path = self.root / "round-summary.csv"
         report_path = self.root / "round-analysis.md"
         chart_path = self.root / "round-chart-data.csv"
+        review_path = self.root / "round-review-actions.csv"
         package_path.write_bytes(package.content)
         scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
 
@@ -1033,6 +1034,8 @@ class ServerTestCase(unittest.TestCase):
                 str(report_path),
                 "--chart-output",
                 str(chart_path),
+                "--review-output",
+                str(review_path),
             ],
             cwd=scripts_dir,
             capture_output=True,
@@ -1044,6 +1047,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(report_result.returncode, 0, report_result.stderr)
         report = report_path.read_text(encoding="utf-8")
         chart_data = chart_path.read_text(encoding="utf-8-sig")
+        review_actions = review_path.read_text(encoding="utf-8-sig")
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("T1 触发到分派完成", report)
         self.assertIn("校验通过轮次：1", report)
@@ -1062,9 +1066,14 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("time,dispatchSeconds,T1 触发到分派完成,seconds,1", chart_data)
         self.assertIn("quality,qualityScore,质量分,score,1,51,51,51,51", chart_data)
         self.assertIn("coverage,roleAssignmentCompleteness,角色分派完整度,percent,1,100,100,100,100", chart_data)
+        self.assertIn("roundId,incidentId,verificationStatus,qualityLevel,qualityScore,reviewDecision", review_actions)
+        self.assertIn("rerun_or_manual_supplement", review_actions)
+        self.assertIn("missing_cprStarted", review_actions)
+        self.assertIn("do_not_use_until_resolved", review_actions)
 
         legacy_summary_path = self.root / "round-summary-legacy.csv"
         legacy_report_path = self.root / "round-analysis-legacy.md"
+        legacy_review_path = self.root / "round-review-actions-legacy.csv"
         legacy_summary_path.write_text(
             "verificationStatus,manifestIncidentId,manifestPhase,roleAssignmentCompleteness\nOK,legacy-incident,ARCHIVED,1\n",
             encoding="utf-8-sig",
@@ -1076,6 +1085,8 @@ class ServerTestCase(unittest.TestCase):
                 str(legacy_summary_path),
                 "--output",
                 str(legacy_report_path),
+                "--review-output",
+                str(legacy_review_path),
             ],
             cwd=scripts_dir,
             capture_output=True,
@@ -1084,8 +1095,11 @@ class ServerTestCase(unittest.TestCase):
         )
         self.assertEqual(legacy_report_result.returncode, 0, legacy_report_result.stderr)
         legacy_report = legacy_report_path.read_text(encoding="utf-8")
+        legacy_review = legacy_review_path.read_text(encoding="utf-8-sig")
         self.assertIn("missing_quality_report: 1", legacy_report)
         self.assertIn("| legacy-incident | missing_quality_report | - | - | - | - | - |", legacy_report)
+        self.assertIn("manual_review_required", legacy_review)
+        self.assertIn("do_not_use_until_reviewed", legacy_review)
 
     def test_pre_experiment_report_builder_creates_summary_and_analysis(self) -> None:
         with self._client() as client:
@@ -1122,6 +1136,7 @@ class ServerTestCase(unittest.TestCase):
         summary = (output_dir / "round-summary.csv").read_text(encoding="utf-8-sig")
         report = (output_dir / "round-analysis.md").read_text(encoding="utf-8")
         chart_data = (output_dir / "round-chart-data.csv").read_text(encoding="utf-8-sig")
+        review_actions = (output_dir / "round-review-actions.csv").read_text(encoding="utf-8-sig")
         self.assertIn("verificationStatus", summary)
         self.assertIn("qualityLevel", summary)
         self.assertIn("qualityScore", summary)
@@ -1132,6 +1147,8 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("角色分派完整度", report)
         self.assertIn("metricGroup", chart_data)
         self.assertIn("dispatchSeconds", chart_data)
+        self.assertIn("reviewDecision", review_actions)
+        self.assertIn("rerun_or_manual_supplement", review_actions)
 
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:

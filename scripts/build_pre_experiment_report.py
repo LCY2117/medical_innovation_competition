@@ -4,7 +4,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from analyze_round_summary import generate_chart_rows, generate_report, write_chart_csv
+from analyze_round_summary import (
+    generate_chart_rows,
+    generate_report,
+    generate_review_action_rows,
+    write_chart_csv,
+    write_review_action_csv,
+)
 from summarize_evidence_rounds import summarize_packages, write_csv, _candidate_zip_paths
 
 
@@ -12,7 +18,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Build LifeReflexArc pre-experiment summary artifacts from evidence-package ZIPs: "
-            "round-summary.csv, round-analysis.md, and round-chart-data.csv."
+            "round-summary.csv, round-analysis.md, round-chart-data.csv, and round-review-actions.csv."
         ),
     )
     parser.add_argument("paths", nargs="+", help="Evidence ZIP file, directory, or glob pattern")
@@ -25,6 +31,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--summary-name", default="round-summary.csv", help="Generated summary CSV file name.")
     parser.add_argument("--report-name", default="round-analysis.md", help="Generated Markdown analysis file name.")
     parser.add_argument("--chart-name", default="round-chart-data.csv", help="Generated PPT/Excel chart-data CSV file name.")
+    parser.add_argument("--review-name", default="round-review-actions.csv", help="Generated review/action checklist CSV file name.")
     parser.add_argument("--recursive", action="store_true", help="When a directory is passed, scan ZIPs recursively.")
     parser.add_argument(
         "--include-invalid",
@@ -45,10 +52,12 @@ def main(argv: list[str] | None = None) -> int:
         summary_path = output_dir / args.summary_name
         report_path = output_dir / args.report_name
         chart_path = output_dir / args.chart_name
+        review_path = output_dir / args.review_name
         write_csv(fieldnames, rows, summary_path)
         report = generate_report(rows, source_name=str(summary_path))
         report_path.write_text(report, encoding="utf-8")
         write_chart_csv(generate_chart_rows(rows), chart_path)
+        write_review_action_csv(generate_review_action_rows(rows), review_path)
     except (OSError, ValueError) as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
@@ -57,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"- CSV: {summary_path}")
     print(f"- Markdown: {report_path}")
     print(f"- Chart CSV: {chart_path}")
+    print(f"- Review CSV: {review_path}")
     return 0
 
 
