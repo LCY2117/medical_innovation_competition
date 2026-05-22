@@ -68,8 +68,14 @@
 - Android CPR 节律辅助页已将可见英文标题改为中文，减少评委演示时的语言割裂。
 - Android 核心施救导航页已移除 `AHEAD`、`Start CPR` 和固定 `15 m` 占位距离；现在优先显示调度距离，没有精确距离时提示按现场指引前往患者位置。
 - Android 现场总览、AED 目标卡和“我的”页已把楼层、AED 状态、定位来源等可见字段转成中文表述，避免展示 `1F/AVAILABLE/app-demo-fallback` 这类工程内部值。
-- 最新完整三端验证扫尾为 `b02c634`：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过；Web 产物为 `App-OIunfMkh.js`、`MobileApp-DTIoJNCQ.js`。后续证据包材料增量已通过后端目标测试和全量 37 项测试。
+- Android 错误提示已友好化：登录、事件连接、角色响应、定位/健康同步和 WebSocket 断线会显示 401/403/404/422、网络不可达、超时、证书、明文 HTTP 等中文排查提示，不再直接展示底层异常。
+- Android debug APK 已支持局域网 HTTP 联调，方便真机连接本地后端；release 构建仍保持 HTTPS/WSS 口径。
+- 移动 Web PWA service worker 已升级：缓存 `/mobile` 壳、离线页、manifest、图标和已加载静态资源；API/WebSocket 不缓存，弱网时更少白屏。
+- Android 关键展示文案再次收敛：登录页、患者端、归档页和全屏应急态避免“本地假会话/救援成功/黄金救援时间”等粗糙或过度承诺表达，统一为协同流程、记录归档和关键响应窗口。
+- Android release 准备度已补齐：`docs/ANDROID_RELEASE_READINESS.md` 说明 release keystore、SHA1、第三方 Android Key、secret 边界和专家演示前检查；Gradle 会在本地签名四件套齐全时自动签 release。
+- 最新完整三端验证扫尾为 `cb45832`：后端 37 项测试、Web typecheck/build、Android debug APK 构建均通过；新增 release readiness 后，Android debug 与 release 构建也均通过。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
+- Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
 
 ## 线上已验证
 
@@ -122,7 +128,15 @@ gradle tasks --no-daemon
 gradle :app:assembleDebug --no-daemon
 ```
 
-结果：通过，APK 大小约 12 MB，使用 Android debug 签名。当前构建仅提示既有 `android.overridePathCheck=true` 实验性配置警告，不影响 debug APK 生成。
+结果：通过，APK 大小约 14.18 MB，使用 Android debug 签名。当前构建仅提示既有 `android.overridePathCheck=true` 实验性配置警告，不影响 debug APK 生成。
+
+```powershell
+gradle :app:assembleRelease --no-daemon
+```
+
+结果：通过，生成 `app-release-unsigned.apk`，大小约 9.65 MB。由于本机没有配置 release keystore 四件套，当前 release 产物是未签名检查包；按 `docs/ANDROID_RELEASE_READINESS.md` 配置后会自动签名。
+
+移动 PWA 烟测：本地 Vite preview `127.0.0.1:18094` 通过。确认 `/mobile`、`/offline.html`、`/mobile-sw.js` 返回 200，浏览器 DOM 烟测可见“浏览器应急端”和“移动端暂时离线/重新连接”。service worker 评估接口在浏览器沙箱内不可读，已通过构建、脚本内容和可见页面验证替代。
 
 ## 本轮新增检查点
 
@@ -185,7 +199,13 @@ gradle :app:assembleDebug --no-daemon
 - `56ea748`：Android 核心施救导航页移除英文/占位距离，改为中文距离提示与基础复苏按钮，已通过 debug APK 构建，已推送。
 - `4116432`：预实验证据包新增 `review_index.md` 审阅索引，已通过后端目标测试和全量 37 项测试，已推送。
 - `35768d6`：移动 Web 归档页可直接输入演示口令下载证据包，已通过 Web typecheck/build 和本地移动端烟测，已推送。
-- 最新验证扫尾：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过；Web 产物为桌面 `App-DAHq5Wl1.js`、移动 `MobileApp-BiCFGvZL.js`、4 端导播台 `MobileDemoStage-DKdt3ZAL.js`。
+- `fa7abc1`：记录后端 37 项、Web typecheck/build、Android debug APK 全量验证扫尾，已推送。
+- `65260e1`：Android 错误状态友好化，HTTP/网络/WebSocket 异常改为可行动中文提示，已通过 debug APK 构建并推送。
+- `451bbd8`：Android debug-only HTTP/LAN 联调配置，release 不放开明文网络，已通过 debug 构建、release manifest 检查并推送。
+- `a179220`：移动 Web PWA 缓存韧性增强，已通过 Web typecheck/build、本地 preview 和浏览器 DOM 烟测，已推送。
+- `8e683f5`：Android 演示文案进一步收敛，已通过 targeted 文案扫描和 debug APK 构建，已推送。
+- `cb45832`：Android release readiness，Gradle 可选签名配置、release 出包清单和未签名 release 检查包验证，已推送。
+- 最新验证扫尾：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过；Web 最近验证产物为桌面 `App-B_LHHgCt.js`、移动 `MobileApp-Bjui0p8t.js`，随后 PWA 增量构建产物为移动 `MobileApp-DSEHznZU.js`。
 
 ## 你醒来后最该做的三件事
 
@@ -210,6 +230,8 @@ app\build\outputs\apk\debug\app-debug.apk
 - Android 包名 + SHA1。
 - AI API Key。
 - 后续推送/短信先不强依赖。
+
+4. 如需要更正式的专家/比赛安装包，按 `docs/ANDROID_RELEASE_READINESS.md` 生成 release keystore、记录 SHA1，并把签名四件套只写入 `lifereflex(app)/local.properties` 或环境变量；不要提交 `.jks`、密码或 APK/AAB。
 
 ## 演示脚本
 

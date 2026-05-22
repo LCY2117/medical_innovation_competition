@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 8e683f5
-- Last update: 2026-05-22 09:12:54 +08:00
+- HEAD: cb45832
+- Last update: 2026-05-22 09:15:46 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -127,7 +127,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 102. Add debug-only Android cleartext network support for LAN/local backend testing. (done, pushed)
 103. Strengthen mobile PWA shell/resource caching and update activation. (done, pushed)
 104. Polish Android visible safety/archive wording for presentation readiness. (done, pushed)
-105. Add Android release APK readiness and optional signing configuration. (done, checkpointing)
+105. Add Android release APK readiness and optional signing configuration. (done, pushed)
+106. Refresh morning handoff with latest checkpoints, APK artifacts, PWA, and release readiness. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -186,6 +187,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `docs/LONG_TASK_BLOCKERS.md`
 - `docs/OPPO_HEALTH_INTEGRATION_CHECKLIST.md`
 - `docs/ANDROID_RELEASE_READINESS.md`
+- `docs/MORNING_HANDOFF.md`
 - `README.md`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/AppModels.kt`
 - `lifereflex(app)/local.properties.example`
@@ -523,6 +525,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `8e683f5` (`checkpoint: polish android presentation wording`) created and pushed to `origin/codex/competition-hardening`.
 - Android release-readiness slice: Gradle release signing now reads `LRA_RELEASE_STORE_FILE`, `LRA_RELEASE_STORE_PASSWORD`, `LRA_RELEASE_KEY_ALIAS`, and `LRA_RELEASE_KEY_PASSWORD` from Gradle properties, untracked `local.properties`, or environment variables; if all four are present, `release` is signed, otherwise the release variant remains unsigned for readiness checks. `local.properties.example`, README, deployment runbook, and new `docs/ANDROID_RELEASE_READINESS.md` document debug APK, release keystore/SHA1, secret boundaries, build commands, and expert-demo preflight steps.
 - Android release-readiness validation: `gradle :app:assembleDebug --no-daemon` passed and produced `app-debug.apk` (~14.18 MB); `gradle :app:assembleRelease --no-daemon` passed and produced `app-release-unsigned.apk` (~9.65 MB) because release signing secrets are not configured. The previous `PhoneAppRoot.kt` safe-call warning was removed; remaining warnings are the existing `android.overridePathCheck=true` experimental notice and AndroidX Security deprecations.
+- Git checkpoint: `cb45832` (`checkpoint: add android release readiness`) created and pushed to `origin/codex/competition-hardening`.
+- Morning handoff refresh: `docs/MORNING_HANDOFF.md` now lists the latest Android error-state, debug HTTP, PWA cache, Android presentation wording, and release-readiness checkpoints; it also records debug/release APK artifact paths and sizes, PWA smoke validation, and the release keystore/SHA1 next step.
 
 ## Blockers Summary
 
@@ -531,7 +535,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Android release-readiness work, then refresh morning handoff/latest checkpoints and continue only with low-risk validation or documentation slices. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright install artifacts.
+Checkpoint morning handoff refresh, then continue only with low-risk validation or documentation slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
