@@ -76,7 +76,8 @@
 - Android release 准备度已补齐：`docs/ANDROID_RELEASE_READINESS.md` 说明 release keystore、SHA1、第三方 Android Key、secret 边界和专家演示前检查；Gradle 会在本地签名四件套齐全时自动签 release。
 - 证据包新增独立校验脚本：`scripts/verify_evidence_package.py` 可复核 ZIP 的 `manifest.json`、SHA-256、文件清单、路径安全和公开/内部材料边界；README 和部署手册已写入使用命令。
 - 证据包新增专家意见汇总与整改闭环表：`expert_feedback_summary.csv` 用于合并多名专家评分、风险关注点、整改负责人、优先级、处理状态、补充证据和二次复核意见；`expert_feedback_form.md` 继续用于单名专家签字留档。
-- 最新验证扫尾为 `2443136`：后端 38 项测试通过；证据包生成、manifest 校验脚本和专家意见汇总表测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
+- 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 合并成一张 CSV，便于后续 Excel 描述性统计。
+- 最新验证扫尾为多轮汇总工具切片：后端 39 项测试通过；证据包生成、manifest 校验脚本、专家意见汇总表和多轮 ZIP 汇总脚本测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 - Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
 
@@ -100,7 +101,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：38 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单和公开/内部材料边界可独立校验。
+结果：39 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单和公开/内部材料边界可独立校验；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -215,7 +216,7 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `aa1c634`：Web 总控台新增演示自检 Markdown 报告，已通过 Web typecheck/build 和本地一体化 DOM 烟测，已推送。
 - `8c44d97`：新增证据包 manifest/SHA-256 独立校验脚本，已通过 targeted 测试和后端全量 38 项测试，已推送。
 - `2443136`：预实验证据包新增 `expert_feedback_summary.csv` 专家意见汇总与整改闭环表，README、部署手册、manifest 指引和后端测试已同步，已推送。
-- 最新验证扫尾：后端 38 项测试、Web typecheck、Web build、Android debug/release readiness 构建均通过；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- 最新验证扫尾：后端 39 项测试通过；Web typecheck、Web build、Android debug/release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
 ## 你醒来后最该做的事
 
@@ -238,6 +239,12 @@ app\build\outputs\apk\debug\app-debug.apk
 
 ```powershell
 python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
+```
+
+多轮系统演练结束后，把多个 ZIP 放到同一目录，再生成汇总表：
+
+```powershell
+python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output "D:\path\to\round-summary.csv"
 ```
 
 4. 申请第三方资源，按 `docs/THIRD_PARTY_RESOURCES.md` 走：

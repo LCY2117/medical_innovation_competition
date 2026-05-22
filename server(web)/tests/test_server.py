@@ -848,6 +848,40 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("OK: evidence package manifest", result.stdout)
 
+    def test_evidence_round_summary_script_merges_packages(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        output_path = self.root / "round-summary.csv"
+        package_path.write_bytes(package.content)
+        script_path = Path(__file__).resolve().parents[2] / "scripts" / "summarize_evidence_rounds.py"
+        result = subprocess.run(
+            [sys.executable, str(script_path), str(package_path), "--output", str(output_path)],
+            cwd=script_path.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: summarized 1 evidence round", result.stdout)
+        summary = output_path.read_text(encoding="utf-8-sig")
+        self.assertIn("packageSha256", summary)
+        self.assertIn("verificationStatus", summary)
+        self.assertIn("manifestIncidentId", summary)
+        self.assertIn("roleAssignmentCompleteness", summary)
+        self.assertIn("OK", summary)
+        self.assertIn(bootstrapped.json()["incidentId"], summary)
+
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:
             response = client.post(
