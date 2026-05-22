@@ -2,11 +2,11 @@
 
 ## Current Status
 
-- Status: validating
+- Status: running
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 8ee452a
-- Last update: 2026-05-22 17:01:27 +08:00
+- HEAD: 4df1382
+- Last update: 2026-05-22 17:07:41 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -169,7 +169,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 144. Add multi-round review-action CSV for PPT/expert evidence triage. (done, pushed)
 145. Prevent non-patient demo mobile terminals from starting patient SOS. (done, pushed)
 146. Surface evidence-package SHA-256 after Web/mobile downloads. (done, pushed)
-147. Align Web command-center readiness warning count with visible/admin warnings. (done, validating)
+147. Align Web command-center readiness warning count with visible/admin warnings. (done, pushed)
+148. Add bound-event status strip to the 4-terminal mobile demo stage. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -698,6 +699,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `8ee452a` (`checkpoint: show package hash after download`) created and pushed to `origin/codex/competition-hardening`.
 - Web readiness warning alignment slice: the command-center readiness card now derives its color, title, count, visible warning text, and exported Markdown self-check status from one combined readiness state. Admin-auth gaps are counted and displayed alongside backend readiness warnings, so the card no longer says ready while the self-check report still lists management permission as unresolved.
 - Web readiness warning alignment validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-DKGpinBD.js`, mobile `MobileApp-CWxAHAbu.js`, and stage `MobileDemoStage-cNrZP1Tv.js`.
+- Git checkpoint: `4df1382` (`checkpoint: align readiness warnings`) created and pushed to `origin/codex/competition-hardening`.
+- Mobile demo stage binding-status slice: `/mobile-demo` now shows whether the stage is bound to an incident, displays a shortened incident id, explains that all four terminals share the same event, and marks each terminal panel with the shared event id or an unbound warning. This reduces onsite confusion when four browser tabs/frames are opened for judging.
+- Mobile demo stage binding-status validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-C8-rsJ4D.js`, mobile `MobileApp-9a_Fy8WK.js`, and stage `MobileDemoStage-7g9iM-bl.js`; targeted source scan confirmed the visible bound/unbound/shared-event labels are present.
 
 ## Blockers Summary
 
@@ -706,7 +710,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the readiness warning alignment slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: add bound-event status to the 4-terminal stage, improve copy affordance for downloaded package hash, or add a small Web smoke for the readiness card. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the mobile demo stage binding-status slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: improve copy affordance for downloaded package hash, add a small Web smoke for the readiness card, or continue polishing judge-visible demo affordances. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

@@ -19,6 +19,11 @@ const runbookSteps = [
 
 function MobileDemoStage() {
   const incidentId = new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
+  const shortIncidentId = incidentId ? `${incidentId.slice(0, 8)}...${incidentId.slice(-4)}` : '未绑定';
+  const incidentStatus = incidentId ? '已绑定当前事件' : '未绑定事件';
+  const incidentHint = incidentId
+    ? '四个终端将共享同一事件编号，适合现场导播和评委同步观察。'
+    : '请先从总控台初始化演示场景，再打开 4 端导播台。';
 
   const reloadAll = () => {
     document.querySelectorAll<HTMLIFrameElement>('.mobile-demo-stage-frame').forEach((frame) => {
@@ -44,6 +49,17 @@ function MobileDemoStage() {
         </button>
       </header>
 
+      <section
+        className={`mobile-demo-stage-context ${incidentId ? 'is-bound' : 'is-unbound'}`}
+        aria-label="当前演示事件绑定状态"
+      >
+        <div>
+          <strong>{incidentStatus}</strong>
+          <span title={incidentId || undefined}>事件编号：{shortIncidentId}</span>
+        </div>
+        <p>{incidentHint}</p>
+      </section>
+
       <section className="mobile-demo-stage-runbook" aria-label="演示导播步骤">
         {runbookSteps.map((step, index) => (
           <div className="mobile-demo-stage-runbook-step" key={step}>
@@ -66,6 +82,7 @@ function MobileDemoStage() {
                 <div>
                   <strong>{frame.label}</strong>
                   <span>{frame.caption}</span>
+                  <em>{incidentId ? `共享事件 ${shortIncidentId}` : '等待总控绑定事件'}</em>
                 </div>
                 <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${frame.label}`}>
                   <ExternalLink size={16} />
