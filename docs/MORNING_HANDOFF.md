@@ -13,14 +13,14 @@
 - Web 一键初始化协同演示场景：患者、医生、体育生、安保、2 个 AED 点位。
 - 云端调度会结合人员画像、患者距离、AED 距离和健康风险，输出 PRIME/RUNNER/GUIDE。
 - 调度结果包含可解释理由、评分、到患者距离、到 AED 距离。
-- 预实验证据包可导出 ZIP，包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
+- 预实验证据包可导出 ZIP，包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、证据质量报告、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
 - 客户端和 AED 点位已持久化到 SQLite，PM2 重启后仍能恢复。
 - Web 控制台新增“演示口令”输入，公网演示管理接口已启用口令保护。
 - Android 默认后端改为 `https://lifereflex.mddcommunity.top/` 和 `wss://lifereflex.mddcommunity.top/ws`。
 - Android 现场总览新增 AED 点位和调度依据展示。
 - OPPO 健康增强一期已形成 mock/fallback 闭环：后端、Web、移动 Web、Android 都能同步和展示健康摘要。
 - 调度评分已经纳入健康摘要，高心率、低血氧、高压力等风险会降低高强度角色分派优先级。
-- 预实验证据包已升级为 ZIP：包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
+- 预实验证据包已升级为 ZIP：包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、证据质量报告、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
 - 证据包 `review_index.md` 已提供专家/评委快速审阅顺序；`manifest.json` 已补充匿名化使用建议、内部复核文件边界和 SHA-256 校验说明。
 - `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
 - Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
@@ -76,10 +76,11 @@
 - Android release 准备度已补齐：`docs/ANDROID_RELEASE_READINESS.md` 说明 release keystore、SHA1、第三方 Android Key、secret 边界和专家演示前检查；Gradle 会在本地签名四件套齐全时自动签 release。
 - 证据包新增独立校验脚本：`scripts/verify_evidence_package.py` 可复核 ZIP 的 `manifest.json`、SHA-256、文件清单、路径安全和公开/内部材料边界；README 和部署手册已写入使用命令。
 - 证据包新增专家意见汇总与整改闭环表：`expert_feedback_summary.csv` 用于合并多名专家评分、风险关注点、整改负责人、优先级、处理状态、补充证据和二次复核意见；`expert_feedback_form.md` 继续用于单名专家签字留档。
+- 证据包新增证据质量报告：`evidence_quality_report.json` 会用匿名参与者代号汇总关键节点覆盖、缺失项、指标可用性、质量分、质量等级和 provider/fallback 提醒，帮助判断本轮是否适合进入低成本预实验汇总。
 - 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 合并成一张 CSV，便于后续 Excel 描述性统计。
 - 新增多轮分析报告脚本：`scripts/analyze_round_summary.py` 可把汇总 CSV 转成 Markdown 分析摘要，包含均值、中位数、范围和 PPT 安全表述边界。
 - 新增一键预实验分析脚本：`scripts/build_pre_experiment_report.py` 可直接从多轮 ZIP 生成 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。
-- 最新验证扫尾为一键预实验分析与图表数据切片：后端 41 项测试通过；证据包生成、manifest 校验脚本、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据和一键预实验分析脚本测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
+- 最新验证扫尾为证据质量报告切片：后端 43 项测试通过；证据包生成、manifest 校验脚本、隐私泄漏扫描、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据、一键预实验分析脚本和证据质量报告测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 - Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
 
@@ -103,7 +104,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：41 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单和公开/内部材料边界可独立校验；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。
+结果：43 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -225,7 +226,8 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `f758a1e`：产品计划、白皮书和专家反馈模板同步一键分析流程，已推送。
 - `ae4bc9c`：证据包内部 `README.md`、`analysis_guide.md`、`review_index.md` 等材料加入一键分析说明，并收敛专家可见健康摘要口径，已推送。
 - `1c1eab2`：新增 `round-chart-data.csv` 图表底表输出；一键脚本现在生成 CSV、Markdown 和 Excel/PPT 图表数据，已通过脚本 help、py_compile、目标测试和后端全量 41 项测试，已推送。
-- 最新验证扫尾：后端 41 项测试通过；证据包校验/汇总/分析/图表数据脚本通过；Web typecheck、Web build、Android debug/release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- `b6792f0`：证据包校验脚本新增公开材料原始参与者 ID 泄漏扫描，已通过 targeted 测试和后端全量 42 项测试，已推送。
+- 最新验证扫尾：后端 43 项测试通过；证据包校验/汇总/分析/图表数据脚本和 `evidence_quality_report.json` 证据质量报告通过；Web typecheck、Web build、Android debug/release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
 ## 你醒来后最该做的事
 
@@ -289,7 +291,7 @@ python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output 
 6. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
 7. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
 8. 点击“自检报告”导出演示前状态记录；点击“证据包”下载 ZIP 作为低成本预实验记录，并用 `scripts/verify_evidence_package.py` 校验。
-9. 对外给专家/PPT 优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；单名专家用 `expert_feedback_form.md` 签字，多名专家意见和后续整改用 `expert_feedback_summary.csv` 汇总。
+9. 对外给专家/PPT 优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`evidence_quality_report.json`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；单名专家用 `expert_feedback_form.md` 签字，多名专家意见和后续整改用 `expert_feedback_summary.csv` 汇总。
 
 ## 仍需谨慎表达
 

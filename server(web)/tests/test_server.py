@@ -626,6 +626,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("analysis_guide.md", names)
                 self.assertIn("data_dictionary.md", names)
                 self.assertIn("participant_consent_safety_brief.md", names)
+                self.assertIn("evidence_quality_report.json", names)
                 self.assertIn("clients.csv", names)
                 self.assertIn("clients_anonymized.csv", names)
                 self.assertIn("timeline.csv", names)
@@ -717,6 +718,15 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("参与者知情与安全边界简表", safety_brief)
                 self.assertIn("参与者可随时暂停或退出", safety_brief)
                 self.assertIn("样例接入或演示来源", safety_brief)
+                quality_report = json.loads(archive.read("evidence_quality_report.json").decode("utf-8"))
+                self.assertEqual(quality_report["schemaVersion"], 1)
+                self.assertEqual(quality_report["scope"], "simulation_training_pre_experiment_only")
+                self.assertEqual(quality_report["participantSummary"]["patientCode"], "P001")
+                self.assertEqual(quality_report["participantSummary"]["roleCodes"]["PRIME"], "R001-PRIME")
+                self.assertEqual(quality_report["metricCoverage"]["roleAssignmentCompleteness"], 1.0)
+                self.assertEqual(quality_report["metricCoverage"]["healthCoveragePercent"], 100.0)
+                self.assertIn("missing_cprStarted", {item["code"] for item in quality_report["warnings"]})
+                self.assertNotIn("demo-patient", json.dumps(quality_report, ensure_ascii=False))
                 observer_form = archive.read("observer_record_form.csv").decode("utf-8-sig")
                 self.assertIn("observerValue", observer_form)
                 self.assertIn("role_assignment_clarity", observer_form)
@@ -750,6 +760,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("analysis_guide.md", manifest["privacyGuidance"]["publicOrExpertReview"])
                 self.assertIn("data_dictionary.md", manifest["privacyGuidance"]["publicOrExpertReview"])
                 self.assertIn("participant_consent_safety_brief.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("evidence_quality_report.json", manifest["privacyGuidance"]["publicOrExpertReview"])
                 self.assertIn("observer_record_form.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
                 self.assertIn("participant_questionnaire.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
                 self.assertIn("baseline_vs_system_comparison.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
@@ -765,6 +776,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("analysis_guide.md", manifest_files)
                 self.assertIn("data_dictionary.md", manifest_files)
                 self.assertIn("participant_consent_safety_brief.md", manifest_files)
+                self.assertIn("evidence_quality_report.json", manifest_files)
                 self.assertIn("observer_record_form.csv", manifest_files)
                 self.assertIn("participant_questionnaire.csv", manifest_files)
                 self.assertIn("baseline_vs_system_comparison.csv", manifest_files)
@@ -1897,6 +1909,45 @@ class ServerTestCase(unittest.TestCase):
         payload = current.json()
         self.assertEqual(payload["phase"], "ARCHIVED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
+
+    def test_completed_demo_package_quality_report_is_ready(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            incident_id = dispatch.json()["incidentId"]
+            for action, user_id in (
+                ("CPR_STARTED", "demo-prime"),
+                ("AED_PICKED", "demo-runner"),
+                ("AED_DELIVERED", "demo-runner"),
+                ("AMBULANCE_ARRIVED", "demo-guide"),
+                ("HANDOVER_COMPLETED", "demo-guide"),
+            ):
+                response = client.post(
+                    f"/api/incidents/{incident_id}/actions",
+                    json={"action": action, "userId": user_id},
+                )
+                self.assertEqual(response.status_code, 200)
+
+            package = client.get(f"/api/experiments/{incident_id}/package")
+            self.assertEqual(package.status_code, 200)
+
+        with zipfile.ZipFile(BytesIO(package.content)) as archive:
+            report = json.loads(archive.read("evidence_quality_report.json").decode("utf-8"))
+
+        self.assertEqual(report["phase"], "ARCHIVED")
+        self.assertEqual(report["qualityLevel"], "ready_for_low_cost_pre_experiment_summary")
+        self.assertGreaterEqual(report["qualityScore"], 85)
+        self.assertEqual(report["missingKeyEvents"], [])
+        self.assertEqual({item["code"] for item in report["warnings"]}, {"dispatch_fallback_used"})
+        self.assertTrue(report["metricCoverage"]["cprStartSeconds"])
+        self.assertTrue(report["metricCoverage"]["aedPickupSeconds"])
+        self.assertTrue(report["metricCoverage"]["aedDeliverySeconds"])
+        self.assertTrue(report["metricCoverage"]["ambulanceArriveSeconds"])
 
 
 if __name__ == "__main__":

@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 4a4a48b
-- Last update: 2026-05-22 11:56:54 +08:00
+- HEAD: b6792f0
+- Last update: 2026-05-22 14:14:22 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -149,7 +149,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 124. Polish Web/mobile competition demo visibility: remove hardcoded phone-preview values, anchor mobile CPR timing to event logs, and keep mobile next action visible. (done, pushed)
 125. Add evidence-package SHA-256 response header and audit metadata. (done, pushed)
 126. Guard Android release builds against local HTTP/WS endpoints. (done, pushed)
-127. Strengthen evidence-package verifier with public-file raw participant ID leak detection. (done, validating)
+127. Strengthen evidence-package verifier with public-file raw participant ID leak detection. (done, pushed)
+128. Add ZIP evidence quality report with key-event coverage, warnings, and low-cost pre-experiment readiness level. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -174,6 +175,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Web/mobile UI sidecar (`019e4dba-bb11-7032-ae34-363e6ab4bb99`): completed read-only; recommended event-anchored mobile CPR timing, actionable readiness cues, milestone ribbon, persistent mobile next action, and residual terminal/SOS wording cleanup.
 - Backend evidence sidecar (`019e4dba-cf57-79e0-9ad1-a081f9f0f1f0`): completed read-only; recommended package SHA-256 response headers/audit metadata, ZIP-internal evidence quality report, stronger verifier privacy scans, clearer multi-round identifiers, and negative verifier tests.
 - Android reliability sidecar (`019e4dba-e576-7461-999a-70bb9904450c`): completed read-only; recommended REST state seeding before WebSocket, terminal registration readiness/retry, emergency CTA debouncing, single-flight WebSocket reconnect, and release endpoint HTTPS/WSS guard.
+- Android REST-state sidecar (`019e4ddd-fa5d-7d52-89ca-d5550cb8b20b`): completed read-only after resume; recommended the smallest safe Android reliability patch as seeding repository state from REST `getCurrentIncident`/`getIncident` before waiting for the first WebSocket frame.
 
 ## Git Baseline
 
@@ -616,6 +618,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `4a4a48b` (`checkpoint: guard android release endpoints`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence verifier privacy-leak slice: `scripts/verify_evidence_package.py` now derives raw participant IDs from internal `experiment.json` and `clients.csv`, then scans manifest-declared public/expert-review files for those IDs. A public file containing `demo-patient`/raw user IDs now fails verification instead of silently passing.
 - Evidence verifier privacy-leak validation: targeted positive/negative verifier tests passed; `verify_evidence_package.py --help` passed; `python -m py_compile` passed for the evidence scripts; full backend unittest discovery passed, 42 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
+- Git checkpoint: `b6792f0` (`checkpoint: strengthen evidence verifier privacy scan`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence quality report slice: ZIP packages now include `evidence_quality_report.json`, a public/expert-review-safe JSON report with anonymized participant codes, key event coverage, missing nodes, metric availability, quality score, readiness level, provider/fallback warnings, and simulation-only usage boundaries.
+- Evidence quality report validation: targeted package/export, completed-flow quality-report, and verifier tests passed; full backend unittest discovery passed, 43 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -624,7 +629,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence verifier privacy-leak slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence quality report slice if staged diff is clean, then continue with the Android REST state-seeding reliability patch. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

@@ -660,6 +660,11 @@ class IncidentService:
             "analysis_guide.md": self._analysis_guide(export),
             "data_dictionary.md": self._data_dictionary(export),
             "participant_consent_safety_brief.md": self._participant_consent_safety_brief(export, participant_map),
+            "evidence_quality_report.json": json.dumps(
+                self._evidence_quality_report(export, participant_map),
+                ensure_ascii=False,
+                indent=2,
+            ),
             "experiment.json": json.dumps(payload, ensure_ascii=False, indent=2),
             "experiment_anonymized.json": json.dumps(anonymized_payload, ensure_ascii=False, indent=2),
             "metrics.csv": self._csv_text(
@@ -1223,6 +1228,164 @@ class IncidentService:
             }
         ]
 
+    def _evidence_quality_report(
+        self,
+        export: ExperimentExportResponse,
+        participant_map: dict[str, str],
+    ) -> dict:
+        metrics = export.metrics
+        timeline_rows = self._timeline_export_rows(export.timeline, participant_map)
+        event_types = {str(row.get("eventType", "")) for row in timeline_rows}
+
+        required_events = [
+            {
+                "key": "patientTrigger",
+                "label": "患者触发或指定",
+                "eventTypes": ["PATIENT_SOS", "PATIENT_DESIGNATED"],
+            },
+            {
+                "key": "roleAssignment",
+                "label": "角色分派或接单",
+                "eventTypes": ["ROLE_ASSIGNED", "ROLE_JOINED", "ROLE_AUTO_JOINED"],
+            },
+            {"key": "cprStarted", "label": "CPR 开始记录", "eventTypes": ["CPR_STARTED"]},
+            {"key": "aedPicked", "label": "AED 取到记录", "eventTypes": ["AED_PICKED"]},
+            {"key": "aedDelivered", "label": "AED 送达记录", "eventTypes": ["AED_DELIVERED"]},
+            {"key": "ambulanceArrived", "label": "救护接管记录", "eventTypes": ["AMBULANCE_ARRIVED"]},
+            {"key": "handoverCompleted", "label": "交接归档记录", "eventTypes": ["HANDOVER_COMPLETED"]},
+        ]
+        event_coverage = [
+            {
+                "key": item["key"],
+                "label": item["label"],
+                "covered": any(event_type in event_types for event_type in item["eventTypes"]),
+            }
+            for item in required_events
+        ]
+        missing_key_events = [
+            {"key": item["key"], "label": item["label"]}
+            for item in event_coverage
+            if not item["covered"]
+        ]
+
+        warnings: list[dict[str, str]] = []
+
+        def add_warning(code: str, severity: str, message: str, suggested_action: str) -> None:
+            warnings.append(
+                {
+                    "code": code,
+                    "severity": severity,
+                    "message": message,
+                    "suggestedAction": suggested_action,
+                }
+            )
+
+        if export.phase != "ARCHIVED":
+            add_warning(
+                "incident_not_archived",
+                "warning",
+                "事件尚未归档，本轮材料可能缺少最终交接或复盘节点。",
+                "完成救护接管、交接归档后重新下载证据包。",
+            )
+        if metrics.get("roleAssignmentCompleteness") != 1.0:
+            add_warning(
+                "role_assignment_incomplete",
+                "critical",
+                "PRIME/RUNNER/GUIDE 三类角色未完整覆盖。",
+                "重新初始化或手动补齐三类终端后再开始预实验轮次。",
+            )
+        if metrics.get("availableAedSiteCount", 0) < 1:
+            add_warning(
+                "no_available_aed",
+                "critical",
+                "本轮没有可用 AED 点位记录。",
+                "在总控台或后台补充至少一个可用 AED 点位。",
+            )
+        if metrics.get("locationCoveragePercent", 0) < 100:
+            add_warning(
+                "location_coverage_partial",
+                "warning",
+                "部分终端缺少位置摘要，距离或取送链路解释可能不完整。",
+                "让每个移动端上报位置，或在预实验记录中注明手动点位来源。",
+            )
+        if metrics.get("healthCoveragePercent", 0) < 100:
+            add_warning(
+                "health_coverage_partial",
+                "info",
+                "部分终端缺少健康摘要，健康数据增强展示不完整。",
+                "补齐样例健康摘要或在记录中说明该轮未启用健康增强。",
+            )
+        if metrics.get("dispatchSourceIsFallback") == 1:
+            add_warning(
+                "dispatch_fallback_used",
+                "info",
+                "本轮使用规则或备用分派路径，适合演示闭环但不代表第三方 AI/地图能力已接入。",
+                "在 PPT 和专家材料中注明当前 provider 状态。",
+            )
+        for missing in missing_key_events:
+            if missing["key"] in {"patientTrigger", "roleAssignment"}:
+                severity = "critical"
+            elif missing["key"] in {"cprStarted", "aedPicked", "aedDelivered"}:
+                severity = "warning"
+            else:
+                severity = "info"
+            add_warning(
+                f"missing_{missing['key']}",
+                severity,
+                f"缺少“{missing['label']}”时间线节点。",
+                "按主持人跑场单完成本节点，或由观察员在记录表中补充说明。",
+            )
+
+        penalty = sum(25 if item["severity"] == "critical" else 10 if item["severity"] == "warning" else 3 for item in warnings)
+        quality_score = max(0, 100 - penalty)
+        if quality_score >= 85 and export.phase == "ARCHIVED":
+            quality_level = "ready_for_low_cost_pre_experiment_summary"
+        elif quality_score >= 65:
+            quality_level = "usable_with_notes"
+        else:
+            quality_level = "needs_rerun_or_manual_review"
+
+        role_codes = {
+            role: participant_map.get(user_id or "", None)
+            for role, user_id in export.assignments.items()
+        }
+        role_codes["PATIENT"] = participant_map.get(export.patientUserId or "", None)
+
+        return {
+            "schemaVersion": 1,
+            "incidentId": export.incidentId,
+            "generatedAtIso": self._iso_timestamp(export.generatedAt),
+            "phase": export.phase,
+            "qualityLevel": quality_level,
+            "qualityScore": quality_score,
+            "scope": "simulation_training_pre_experiment_only",
+            "participantSummary": {
+                "participantCount": len(export.clients),
+                "patientCode": role_codes.get("PATIENT"),
+                "roleCodes": role_codes,
+            },
+            "metricCoverage": {
+                "dispatchSeconds": metrics.get("dispatchSeconds") is not None,
+                "cprStartSeconds": metrics.get("cprStartSeconds") is not None,
+                "aedPickupSeconds": metrics.get("aedPickupSeconds") is not None,
+                "aedDeliverySeconds": metrics.get("aedDeliverySeconds") is not None,
+                "ambulanceArriveSeconds": metrics.get("ambulanceArriveSeconds") is not None,
+                "roleAssignmentCompleteness": metrics.get("roleAssignmentCompleteness"),
+                "locationCoveragePercent": metrics.get("locationCoveragePercent"),
+                "healthCoveragePercent": metrics.get("healthCoveragePercent"),
+                "availableAedSiteCount": metrics.get("availableAedSiteCount"),
+                "runnerRouteMetersAvailable": metrics.get("runnerRouteMeters") is not None,
+            },
+            "eventCoverage": event_coverage,
+            "missingKeyEvents": missing_key_events,
+            "warnings": warnings,
+            "recommendedUse": [
+                "用于低成本预实验流程可行性、协同清晰度和专家反馈材料整理。",
+                "如存在 warning 或 critical 项，应在观察员记录或 PPT 备注中说明。",
+                "不得作为真实临床疗效、抢救成功率或患者预后改善证据。",
+            ],
+        }
+
     @staticmethod
     def _expert_feedback_summary_fields() -> list[str]:
         return [
@@ -1532,6 +1695,7 @@ class IncidentService:
                     "analysis_guide.md",
                     "data_dictionary.md",
                     "participant_consent_safety_brief.md",
+                    "evidence_quality_report.json",
                     "observer_record_form.csv",
                     "participant_questionnaire.csv",
                     "baseline_vs_system_comparison.csv",
@@ -1690,6 +1854,7 @@ class IncidentService:
 - `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `data_dictionary.md`：证据包数据字典，解释关键指标、CSV 字段、角色代码和对外表述边界。
 - `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
+- `evidence_quality_report.json`：本轮证据质量报告，标记关键节点覆盖、缺失项、质量分和可否进入低成本预实验汇总。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
 - `clients.csv`：参与终端画像、位置、角色和健康摘要，仅建议内部复核使用。
 - `clients_anonymized.csv`：匿名化参与者表，隐藏 userId、姓名、组织和个人简介。
@@ -1705,7 +1870,7 @@ class IncidentService:
 
 ## 使用建议
 
-该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`evidence_quality_report.json`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。
 
 多轮系统演练结束后，把每轮 ZIP 放到同一目录，在项目根目录运行：
 
