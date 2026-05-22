@@ -454,14 +454,25 @@
 }
 
 .mobile-icon-button {
+  display: grid;
+  place-items: center;
   width: 42px;
+  height: 42px;
+  min-width: 42px;
+  padding: 0;
+  line-height: 1;
   background: var(--mobile-surface-2);
   color: var(--mobile-muted);
+}
+
+.mobile-icon-button svg {
+  display: block;
 }
 
 .mobile-top-actions {
   display: flex;
   gap: 8px;
+  flex: 0 0 auto;
 }
 
 .mobile-small-button {
@@ -572,6 +583,11 @@ button:disabled {
   align-items: flex-start;
 }
 
+.mobile-user-panel > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
 .mobile-user-panel strong,
 .mobile-aed-card strong,
 .mobile-team-list strong {
@@ -592,7 +608,7 @@ button:disabled {
 }
 
 .mobile-health-line {
-  display: inline-flex;
+  display: flex;
   max-width: 100%;
   align-items: center;
   gap: 6px;
@@ -604,12 +620,17 @@ button:disabled {
   color: var(--mobile-ink);
   font-size: 0.78rem;
   font-weight: 760;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .mobile-health-line span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
+}
+
+.mobile-health-line svg {
+  flex: 0 0 auto;
 }
 
 .mobile-health-copy {

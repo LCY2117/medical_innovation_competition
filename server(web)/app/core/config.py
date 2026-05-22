@@ -74,6 +74,7 @@ class Settings:
     siliconflow_model: str = "Qwen/Qwen2-7B-Instruct"
     siliconflow_base_url: str = "https://api.siliconflow.cn/v1"
     siliconflow_timeout_sec: int = 8
+    dispatch_llm_budget_sec: float = 1.0
     local_model_base_url: str | None = None
     local_model_name: str = "default"
     local_model_timeout_sec: int = 30
@@ -110,7 +111,7 @@ def get_settings() -> Settings:
         port=int(os.getenv("LRA_PORT", "8080")),
         reload=_parse_bool(os.getenv("LRA_RELOAD"), default=False),
         sos_duration_sec=int(os.getenv("LRA_SOS_DURATION_SEC", "5")),
-        dispatch_delay_sec=int(os.getenv("LRA_DISPATCH_DELAY_SEC", "3")),
+        dispatch_delay_sec=int(os.getenv("LRA_DISPATCH_DELAY_SEC", "0")),
         cors_origins=_parse_csv(
             os.getenv("LRA_CORS_ORIGINS"),
             default=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -123,6 +124,7 @@ def get_settings() -> Settings:
         siliconflow_model=os.getenv("LRA_SILICONFLOW_MODEL", "Qwen/Qwen2-7B-Instruct"),
         siliconflow_base_url=os.getenv("LRA_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1").rstrip("/"),
         siliconflow_timeout_sec=int(os.getenv("LRA_SILICONFLOW_TIMEOUT_SEC", "8")),
+        dispatch_llm_budget_sec=float(os.getenv("LRA_DISPATCH_LLM_BUDGET_SEC", "1")),
         local_model_base_url=os.getenv("LRA_LOCAL_MODEL_BASE_URL", "http://localhost:8008/v1").rstrip("/") if os.getenv("LRA_LOCAL_MODEL_BASE_URL") else None,
         local_model_name=os.getenv("LRA_LOCAL_MODEL_NAME", "default"),
         local_model_timeout_sec=int(os.getenv("LRA_LOCAL_MODEL_TIMEOUT_SEC", "30")),

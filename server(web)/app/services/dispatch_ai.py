@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import dataclass
 from typing import Iterable
 from urllib import error, request
@@ -59,6 +60,7 @@ class DispatchPlanner:
     local_model: str = "default"
     local_timeout_sec: int = 30
     prefer_local: bool = True
+    llm_budget_sec: float = 1.0
     spatial_provider: SpatialProvider | None = None
 
     def __post_init__(self) -> None:
@@ -91,8 +93,13 @@ class DispatchPlanner:
             if self.local_base_url:
                 endpoints.append(("local", self.local_base_url, None, self.local_model, self.local_timeout_sec))
 
+        deadline = time.monotonic() + max(0.0, self.llm_budget_sec)
         for name, url, key, model, timeout in endpoints:
-            assignments = self._assign_with_llm(patient, candidates, sites, url, key, model, timeout)
+            remaining_budget = deadline - time.monotonic()
+            if remaining_budget <= 0:
+                break
+            endpoint_timeout = max(0.05, min(float(timeout), remaining_budget))
+            assignments = self._assign_with_llm(patient, candidates, sites, url, key, model, endpoint_timeout)
             if assignments is not None:
                 return (
                     assignments,
@@ -125,6 +132,7 @@ class DispatchPlanner:
             "model": self.model,
             "baseUrl": self.base_url,
             "timeoutSec": self.timeout_sec,
+            "llmBudgetSec": self.llm_budget_sec,
             "candidateFields": list(CANDIDATE_FIELDS),
             "selectionRules": dict(SELECTION_RULES),
             "responseFormat": dict(RESPONSE_FORMAT),
@@ -155,7 +163,7 @@ class DispatchPlanner:
         base_url: str,
         api_key: str | None,
         model: str,
-        timeout_sec: int,
+        timeout_sec: float,
     ) -> dict[str, str | None] | None:
         payload = {
             "model": model,

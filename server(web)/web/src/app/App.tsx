@@ -343,6 +343,7 @@ interface DispatchMeta {
   model: string;
   baseUrl: string;
   timeoutSec: number;
+  llmBudgetSec?: number;
   configFile: string;
   envKeys: string[];
   candidateFields: string[];
@@ -3523,7 +3524,7 @@ export default function App() {
                 {dispatchMeta?.configured ? '智能分派' : '规则兜底'}
               </div>
             </div>
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-4">
               <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider">运行配置</div>
                 <div className="text-xs text-slate-200 mt-1 break-all">{dispatchMeta?.configFile ? '服务端运行配置' : '未返回配置状态'}</div>
@@ -3539,6 +3540,10 @@ export default function App() {
               <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider">超时</div>
                 <div className="text-xs text-slate-200 mt-1">{dispatchMeta?.timeoutSec ?? '--'} 秒</div>
+              </div>
+              <div className="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider">演示预算</div>
+                <div className="text-xs text-slate-200 mt-1">{dispatchMeta?.llmBudgetSec ?? '--'} 秒</div>
               </div>
             </div>
             <div className="text-xs text-slate-400 leading-6">

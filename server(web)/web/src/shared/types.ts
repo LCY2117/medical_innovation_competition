@@ -87,6 +87,7 @@ export interface DispatchMeta {
   model: string;
   baseUrl: string;
   timeoutSec: number;
+  llmBudgetSec?: number;
   configFile: string;
   envKeys: string[];
   candidateFields: string[];

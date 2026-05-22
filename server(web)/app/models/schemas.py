@@ -373,6 +373,7 @@ class DispatchExplainResponse(BaseModel):
     model: str
     baseUrl: str
     timeoutSec: int
+    llmBudgetSec: float = 1.0
     configFile: str
     envKeys: list[str]
     candidateFields: list[str]

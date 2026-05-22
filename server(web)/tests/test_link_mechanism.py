@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import socket
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Callable
@@ -18,9 +19,15 @@ def _get_free_port() -> int:
 
 
 class MockLLMServer:
-    def __init__(self, response_factory: Callable[[], dict], with_health: bool = True) -> None:
+    def __init__(
+        self,
+        response_factory: Callable[[], dict],
+        with_health: bool = True,
+        response_delay_sec: float = 0,
+    ) -> None:
         self.response_factory = response_factory
         self.with_health = with_health
+        self.response_delay_sec = response_delay_sec
         self.calls = 0
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
@@ -52,6 +59,8 @@ class MockLLMServer:
                     return
                 outer.calls += 1
                 _ = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+                if outer.response_delay_sec > 0:
+                    time.sleep(outer.response_delay_sec)
                 self._send_json(200, outer.response_factory())
 
             def log_message(self, format: str, *args) -> None:  # noqa: A003
@@ -200,6 +209,7 @@ class LinkMechanismTestCase(unittest.TestCase):
                 local_base_url=dead_local_url,
                 local_model="local-model",
                 local_timeout_sec=1,
+                llm_budget_sec=2,
                 prefer_local=True,
             )
             assignments, source, rationale = planner.assign_roles("patient-1", self._clients())
@@ -227,6 +237,48 @@ class LinkMechanismTestCase(unittest.TestCase):
         self.assertEqual(source, "fallback")
         self.assertTrue(any(value is not None for value in assignments.values()))
         self.assertIn("PRIME", rationale)
+
+    def test_fallback_to_rules_when_llm_exceeds_demo_budget(self) -> None:
+        slow_api = MockLLMServer(
+            response_delay_sec=1.5,
+            response_factory=lambda: {
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "PRIME": "doctor-1",
+                                    "RUNNER": "runner-1",
+                                    "GUIDE": "guide-1",
+                                }
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+        slow_api.start()
+
+        try:
+            planner = DispatchPlanner(
+                api_key="key",
+                model="remote-model",
+                base_url=slow_api.base_url or "",
+                timeout_sec=5,
+                llm_budget_sec=0.2,
+                prefer_local=False,
+            )
+            started_at = time.perf_counter()
+            assignments, source, rationale = planner.assign_roles("patient-1", self._clients())
+            elapsed = time.perf_counter() - started_at
+
+            self.assertEqual(source, "fallback")
+            self.assertLess(elapsed, 1.0)
+            self.assertTrue(any(value is not None for value in assignments.values()))
+            self.assertIn("PRIME", rationale)
+            self.assertEqual(slow_api.calls, 1)
+        finally:
+            slow_api.stop()
 
     def test_prefer_remote_when_switch_disabled(self) -> None:
         local = MockLLMServer(

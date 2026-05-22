@@ -30,6 +30,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         siliconflow_model=settings.siliconflow_model,
         siliconflow_base_url=settings.siliconflow_base_url,
         siliconflow_timeout_sec=settings.siliconflow_timeout_sec,
+        dispatch_llm_budget_sec=settings.dispatch_llm_budget_sec,
         local_model_base_url=settings.local_model_base_url,
         local_model_name=settings.local_model_name,
         local_model_timeout_sec=settings.local_model_timeout_sec,
