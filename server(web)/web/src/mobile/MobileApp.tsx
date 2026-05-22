@@ -443,6 +443,17 @@ function primeNextStep(state: IncidentState | null): { title: string; body: stri
   };
 }
 
+function getLatestLogTs(state: IncidentState | null, keyword: string): number | null {
+  const normalizedKeyword = keyword.toLowerCase();
+  for (let index = (state?.logs?.length ?? 0) - 1; index >= 0; index -= 1) {
+    const entry = state?.logs[index];
+    if (entry?.msg.toLowerCase().includes(normalizedKeyword)) {
+      return entry.ts;
+    }
+  }
+  return null;
+}
+
 function selectPrimaryAed(state: IncidentState | null, aedSites: AedSite[], role: RoleName | null): AedSite | null {
   const sites = state?.aedSites?.length ? state.aedSites : aedSites;
   if (!sites.length) {
@@ -761,7 +772,9 @@ function MobileApp() {
     incident?.phase === 'CREATED' && incident?.sos?.status === 'ALERTING'
       ? Math.max(0, (incident.sos.durationSec ?? 0) - elapsedSec)
       : null;
-  const cprGuidance = getResuscitationGuidance(Math.floor(now / 1000));
+  const cprAnchorTs = getLatestLogTs(incident, isShockDelivered(incident) ? 'AED shock delivered' : 'CPR started');
+  const cprElapsedSec = cprAnchorTs ? Math.max(0, Math.floor((now - cprAnchorTs) / 1000)) : 0;
+  const cprGuidance = getResuscitationGuidance(cprElapsedSec);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1165,6 +1178,13 @@ function MobileApp() {
   const assignedUsers = clients.filter((client) => client.assignedRole);
   const action = activeRole ? roleAction(activeRole, incident) : null;
   const primeStep = activeRole === 'PRIME' ? primeNextStep(incident) : null;
+  const nextActionSummary = isPatient
+    ? '保持当前位置，等待协同成员到场'
+    : activeRole && action
+      ? `${translateRoleLabel(activeRole)}：${action.label}`
+      : incident
+        ? '保持在线，等待本轮任务'
+        : '打开或加入事件';
   const visibleClients = clients.slice(0, 5);
   const incidentShortId = incident?.incidentId ? incident.incidentId.slice(0, 8) : null;
   const viewTabs: Array<{ key: MobileView; label: string; icon: React.ReactNode }> = [
@@ -1204,6 +1224,7 @@ function MobileApp() {
           <BadgeInfo size={15} />
           <span>事件 {incidentShortId}</span>
           <span>{syncStatus === 'live' ? '实时同步中' : syncStatus === 'reconnecting' ? '正在恢复连接' : '最近状态已保留'}</span>
+          <strong>{nextActionSummary}</strong>
         </section>
       )}
 
@@ -1240,7 +1261,7 @@ function MobileApp() {
                 <h2>{isPatient ? '患者应急模式' : '患者 SOS'}</h2>
                 <p>
                   {sosRemaining !== null
-                    ? `倒计时 ${sosRemaining}s，结束后自动智能分派`
+                    ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
                     : isPatient && incident?.phase !== 'CREATED'
                       ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
                     : incident?.phase === 'CREATED'

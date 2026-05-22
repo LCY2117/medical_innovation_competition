@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 8e482be
-- Last update: 2026-05-22 11:19:03 +08:00
+- HEAD: a7aa77c
+- Last update: 2026-05-22 11:38:00 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -144,7 +144,9 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 119. Add one-command analysis guidance inside exported evidence-package materials. (done, pushed)
 120. Add PPT/Excel chart-data CSV output for multi-round pre-experiment analysis. (done, pushed)
 121. Refresh morning handoff with latest evidence-analysis checkpoints. (done, checkpointing)
-122. Add post-demo evidence-processing checklist to the Web preflight Markdown report. (done, validating)
+122. Add post-demo evidence-processing checklist to the Web preflight Markdown report. (done, pushed)
+123. Identify next low-risk competition hardening slice after checkpoint. (done)
+124. Polish Web/mobile competition demo visibility: remove hardcoded phone-preview values, anchor mobile CPR timing to event logs, and keep mobile next action visible. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -165,6 +167,10 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 - Web/mobile next-slice explorer (`019e4d0a-d1d2-7f33-a973-bcebba0be928`): completed read-only; recommended incident-specific evidence downloads, Web archive AED-summary tightening, backend demo-health wording, public-doc wording sync, and optional PWA asset caching.
 - Android/OPPO next-slice explorer (`019e4d0a-e5ae-70a0-8aa6-3fc9275cb531`): completed read-only; recommended backend demo health `sample` status, health input enum boundaries, Android HeyTap readiness states, local HTTP clarity, Android error mapping, and Web/mobile health authorization display.
 - New sidecar review attempts after resume: requested by user but blocked by current agent thread limit; main thread continued locally with read-only review and scoped documentation updates.
+- Resume after interruption: user again authorized sub-agents/parallel agents; main thread will keep ownership of edits and may use read-only/sidecar agents for non-overlapping recommendations if capacity allows.
+- Web/mobile UI sidecar (`019e4dba-bb11-7032-ae34-363e6ab4bb99`): completed read-only; recommended event-anchored mobile CPR timing, actionable readiness cues, milestone ribbon, persistent mobile next action, and residual terminal/SOS wording cleanup.
+- Backend evidence sidecar (`019e4dba-cf57-79e0-9ad1-a081f9f0f1f0`): completed read-only; recommended package SHA-256 response headers/audit metadata, ZIP-internal evidence quality report, stronger verifier privacy scans, clearer multi-round identifiers, and negative verifier tests.
+- Android reliability sidecar (`019e4dba-e576-7461-999a-70bb9904450c`): completed read-only; recommended REST state seeding before WebSocket, terminal registration readiness/retry, emergency CTA debouncing, single-flight WebSocket reconnect, and release endpoint HTTPS/WSS guard.
 
 ## Git Baseline
 
@@ -594,6 +600,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `8e482be` (`checkpoint: refresh evidence handoff`) created and pushed to `origin/codex/competition-hardening`.
 - Web preflight evidence-processing slice: `server(web)/web/src/app/App.tsx` now includes a post-demo evidence-processing section in the exported Markdown self-check report, telling operators how to verify a downloaded evidence ZIP and how to generate `round-summary.csv`, `round-analysis.md`, and `round-chart-data.csv` from multiple rounds.
 - Web preflight evidence-processing validation: Web `npm run typecheck` passed before this resume; Web `npm run build` passed after the report update with desktop bundle `App-BZWfXHVx.js` and mobile bundle `MobileApp-CMWWhsBf.js`.
+- Git checkpoint: `a7aa77c` (`checkpoint: add preflight evidence processing steps`) created and pushed to `origin/codex/competition-hardening`.
+- Resume continuation after checkpoint: `git status --short --branch` shows only runtime/user files outside checkpoint scope (`server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, `output/`). Started scanning for the next low-risk competition-hardening slice.
+- Web/mobile visible-demo polish slice: Web command-center phone preview now avoids fixed personal names, fake status-bar values, fixed AED location, fixed ambulance plate/distance, fixed prime/runner distances, and raw `km/m` labels; it derives AED target/distance from incident/AED state when available and uses neutral role/device wording otherwise. Mobile Web CPR guidance now starts its CPR/AED cycle from the current incident's CPR or AED-shock log timestamp instead of wall-clock Unix time, and the event context strip keeps a one-line “my next action” visible across tabs.
+- Web/mobile visible-demo validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop bundle `App-Czvvf4Pu.js` and mobile bundle `MobileApp-C9dwup_s.js`; targeted `rg` scan found no remaining `在线安卓终端|自动智能分派|粤B|120QA|3km|50m|小李|二楼服务台|商场场景|心脏骤停事件|14:00|5G|100%|03:30|黄金急救时间|15<span` in Web/mobile source, with only a non-visible animation coordinate match remaining.
 
 ## Blockers Summary
 
@@ -602,7 +612,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Web preflight evidence-processing slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Web/mobile visible-demo polish slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

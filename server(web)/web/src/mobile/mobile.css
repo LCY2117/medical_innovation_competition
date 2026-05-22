@@ -242,6 +242,7 @@
 .mobile-context-strip {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
   padding: 8px 10px;
@@ -260,6 +261,12 @@
 .mobile-context-strip span:first-of-type {
   color: var(--mobile-ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.mobile-context-strip strong {
+  flex-basis: 100%;
+  color: var(--mobile-ink);
+  font-size: 0.84rem;
 }
 
 .mobile-status-strip div {

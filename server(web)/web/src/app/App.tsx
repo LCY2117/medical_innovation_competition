@@ -785,16 +785,40 @@ function formatDistanceLabel(value?: number | null): string {
     return '--';
   }
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(2)} km`;
+    return `${(value / 1000).toFixed(2)} 公里`;
   }
-  return `${Math.round(value)} m`;
+  return `${Math.round(value)} 米`;
+}
+
+function formatFloorLabel(floor?: string | null): string {
+  if (!floor) {
+    return '';
+  }
+  const normalized = floor.trim().toUpperCase();
+  const match = normalized.match(/^(\d+)F$/);
+  if (!match) {
+    return floor;
+  }
+  const labels: Record<string, string> = {
+    '1': '一层',
+    '2': '二层',
+    '3': '三层',
+    '4': '四层',
+    '5': '五层',
+    '6': '六层',
+    '7': '七层',
+    '8': '八层',
+    '9': '九层',
+  };
+  return labels[match[1]] ?? `${match[1]}层`;
 }
 
 function formatLocationLabel(location?: GeoPoint | null): string {
   if (!location) {
     return '未上报位置';
   }
-  const floor = location.floor ? ` · ${location.floor}` : '';
+  const floorLabel = formatFloorLabel(location.floor);
+  const floor = floorLabel ? ` · ${floorLabel}` : '';
   const accuracy = location.accuracyMeters ? ` · 精度 ${formatDistanceLabel(location.accuracyMeters)}` : '';
   return `${location.label ?? '演示点位'}${floor}${accuracy}`;
 }
@@ -1163,10 +1187,10 @@ const DeviceSimulator = ({ role, children }: { role: RoleType, children: React.R
 
   const getRoleName = () => {
     switch(role) {
-      case 'doctor': return '张医生 (核心施救)';
-      case 'student': return '大学生小李 (资源保障)';
-      case 'security': return '保安老王 (环境清障)';
-      case 'victim': return '患者 (监测中)';
+      case 'doctor': return '核心施救端';
+      case 'student': return 'AED 保障端';
+      case 'security': return '清障接驳端';
+      case 'victim': return '患者端';
       default: return '生命反射弧';
     }
   };
@@ -1188,10 +1212,10 @@ const DeviceSimulator = ({ role, children }: { role: RoleType, children: React.R
         </div>
         {/* Status Bar */}
         <div className="h-8 bg-transparent w-full absolute top-0 left-0 z-20 flex justify-between px-6 items-center pt-1">
-           <div className="text-[10px] text-white font-mono">14:00</div>
+           <div className="text-[10px] text-white font-mono">演示</div>
            <div className="text-[10px] text-white font-mono flex space-x-1">
-             <span>5G</span>
-             <span>100%</span>
+             <span>在线</span>
+             <span>同步中</span>
            </div>
         </div>
         
@@ -1217,7 +1241,7 @@ const CloudMap = ({ phase }: { phase: ScenarioPhase }) => {
       
       {/* Central Hub - Mall */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] border border-slate-800 rounded-lg flex items-center justify-center bg-slate-900/50">
-        <span className="text-slate-700 text-xs font-mono font-bold tracking-[0.2em] absolute top-4 left-4">商场场景</span>
+        <span className="text-slate-700 text-xs font-mono font-bold tracking-[0.2em] absolute top-4 left-4">协同演示场景</span>
         
         {/* Corridors */}
         <div className="absolute inset-0 border-[20px] border-slate-900/30 rounded-lg clip-path-polygon"></div>
@@ -1234,7 +1258,7 @@ const CloudMap = ({ phase }: { phase: ScenarioPhase }) => {
          </div>
          {phase !== 'intro' && (
            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-950/90 text-red-200 text-[10px] px-2 py-1 rounded border border-red-800 whitespace-nowrap shadow-lg">
-             <span className="font-bold">心脏骤停事件</span>
+             <span className="font-bold">疑似心脏骤停</span>
              <span className="block text-[8px] opacity-70">一级危急</span>
            </div>
          )}
@@ -1254,7 +1278,7 @@ const CloudMap = ({ phase }: { phase: ScenarioPhase }) => {
         >
           <div className="w-3 h-3 bg-green-500 rounded-full ring-4 ring-green-900/50"></div>
           <div className="text-[10px] text-green-400 mt-2 font-mono bg-slate-900/80 px-1 rounded absolute whitespace-nowrap -translate-x-1/3">
-            张医生（核心施救）
+            核心施救端
           </div>
         </motion.div>
       )}
@@ -1273,7 +1297,7 @@ const CloudMap = ({ phase }: { phase: ScenarioPhase }) => {
         >
           <div className="w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-900/50"></div>
           <div className="text-[10px] text-blue-400 mt-2 font-mono bg-slate-900/80 px-1 rounded absolute whitespace-nowrap -translate-x-1/2">
-            小李（AED 保障）
+            AED 保障端
           </div>
         </motion.div>
       )}
@@ -1285,7 +1309,7 @@ const CloudMap = ({ phase }: { phase: ScenarioPhase }) => {
         >
           <div className="w-3 h-3 bg-yellow-500 rounded-full ring-4 ring-yellow-900/50"></div>
           <div className="text-[10px] text-yellow-400 mt-2 font-mono bg-slate-900/80 px-1 rounded absolute whitespace-nowrap -translate-x-1/2">
-            保安老王（环境清障）
+            清障接驳端
           </div>
         </motion.div>
       )}
@@ -1425,6 +1449,30 @@ export default function App() {
       : '等待患者端 SOS 后自动生成三类协同任务。';
   const mapProviderDetail = dispatchMeta?.mapProvider ?? healthDetail?.mapProvider ?? {};
   const visibleAedSites = incidentState?.aedSites?.length ? incidentState.aedSites : aedSites;
+  const nearestAedSiteId = incidentState?.dispatchRationale?.RUNNER?.nearestAedSiteId ?? incidentState?.dispatchRationale?.PRIME?.nearestAedSiteId ?? null;
+  const selectedAedSite = visibleAedSites.find((site) => site.siteId === nearestAedSiteId) ?? visibleAedSites[0] ?? null;
+  const selectedAedLabel = selectedAedSite
+    ? `${selectedAedSite.name}${selectedAedSite.location.floor ? ` · ${formatFloorLabel(selectedAedSite.location.floor)}` : ''}`
+    : '最近 AED 点位';
+  const selectedAedShortLabel = selectedAedSite
+    ? `${selectedAedSite.name}${selectedAedSite.location.floor ? ` (${formatFloorLabel(selectedAedSite.location.floor)})` : ''}`
+    : '最近 AED';
+  const selectedAedAccessNotes = selectedAedSite?.accessNotes ?? '按现场标识或 AED 点位说明取用';
+  const selectedAedDistanceLabel =
+    incidentState?.dispatchRationale?.RUNNER?.distanceToAedMeters != null
+      ? formatDistanceLabel(incidentState.dispatchRationale.RUNNER.distanceToAedMeters)
+      : '按现场路线';
+  const runnerToPatientDistanceLabel =
+    incidentState?.dispatchRationale?.RUNNER?.aedToPatientMeters != null
+      ? formatDistanceLabel(incidentState.dispatchRationale.RUNNER.aedToPatientMeters)
+      : incidentState?.dispatchRationale?.RUNNER?.distanceToPatientMeters != null
+        ? formatDistanceLabel(incidentState.dispatchRationale.RUNNER.distanceToPatientMeters)
+        : '按现场路线';
+  const primeToPatientDistanceLabel =
+    incidentState?.dispatchRationale?.PRIME?.distanceToPatientMeters != null
+      ? formatDistanceLabel(incidentState.dispatchRationale.PRIME.distanceToPatientMeters)
+      : '按现场路线';
+  const runnerDisplayName = getClientDisplayName(incidentState?.roles.RUNNER.userId);
   const demoReadiness = healthDetail?.demoReadiness;
   const readinessWarnings = demoReadiness?.warnings ?? [];
   const readinessItems = [
@@ -2418,13 +2466,13 @@ export default function App() {
                 </div>
 
                 {/* Golden Timer */}
-                <div className="flex-1 flex flex-col items-center justify-center p-6 -mt-8 z-20">
+                   <div className="flex-1 flex flex-col items-center justify-center p-6 -mt-8 z-20">
                      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl w-full text-center mb-8">
-                        <div className="text-xs text-slate-500 mb-2 font-bold">黄金急救时间</div>
+                        <div className="text-xs text-slate-500 mb-2 font-bold">关键响应窗口</div>
                        <div className="text-6xl font-bold font-mono text-yellow-500 flex items-center justify-center">
-                          03:30
+                          {formatElapsed(elapsedSeconds)}
                        </div>
-                       <div className="text-xs text-red-400 mt-2 font-medium">刻不容缓，请立即前往！</div>
+                       <div className="text-xs text-red-400 mt-2 font-medium">请按定位提示前往患者点位</div>
                     </div>
 
                    {/* Action Buttons */}
@@ -2472,10 +2520,10 @@ export default function App() {
                     </motion.div>
 
                     <div className="mt-12 text-center z-10">
-                       <div className="text-5xl font-bold text-white font-mono">15<span className="text-2xl text-slate-500">m</span></div>
+                       <div className="text-4xl font-bold text-white font-mono">{primeToPatientDistanceLabel}</div>
                        <div className="text-emerald-500 font-bold uppercase tracking-widest mt-2 flex items-center justify-center">
                           <Navigation size={14} className="mr-2" />
-                          即将到达
+                          前往患者点位
                        </div>
                     </div>
                  </div>
@@ -2713,7 +2761,7 @@ export default function App() {
            <div className="bg-blue-600 p-6 pt-8 text-white rounded-b-3xl shadow-lg z-10">
             <h2 className="font-bold text-lg flex items-center mb-1"><Zap className="mr-2"/> AED 紧急配送</h2>
             <div className="flex items-center text-xs text-blue-100 bg-blue-700/50 self-start px-2 py-1 rounded inline-block">
-               <MapPin size={10} className="mr-1"/> 目标：二楼服务台 AED箱
+               <MapPin size={10} className="mr-1"/> 目标：{selectedAedLabel}
             </div>
            </div>
            
@@ -2730,7 +2778,7 @@ export default function App() {
                   transition={{ repeat: Infinity, repeatType: "reverse", duration: 0.8 }}
                   className="absolute top-[80px] right-[50px] transform translate-x-1/2"
                 >
-                   <div className="bg-blue-600 text-white text-[10px] px-2 py-1 rounded-md mb-1 shadow-md whitespace-nowrap">AED (二楼)</div>
+                   <div className="bg-blue-600 text-white text-[10px] px-2 py-1 rounded-md mb-1 shadow-md whitespace-nowrap">{selectedAedShortLabel}</div>
                    <MapPin size={32} className="text-blue-600 drop-shadow-lg mx-auto" fill="white" />
                 </motion.div>
                 <motion.div 
@@ -2747,10 +2795,13 @@ export default function App() {
                     <div className="font-bold text-lg text-slate-800">
                       {hasRunnerPicked(incidentState) ? '正在赶回患者位置' : '正在前往取件'}
                     </div>
+                    <div className="text-[10px] text-slate-500 mt-1">{selectedAedAccessNotes}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-mono font-bold text-blue-600">30<span className="text-sm">s</span></div>
-                    <div className="text-[10px] text-slate-400">预计到达</div>
+                    <div className="text-2xl font-mono font-bold text-blue-600">
+                      {hasRunnerPicked(incidentState) ? runnerToPatientDistanceLabel : selectedAedDistanceLabel}
+                    </div>
+                    <div className="text-[10px] text-slate-400">参考距离</div>
                   </div>
                 </div>
 
@@ -2797,7 +2848,7 @@ export default function App() {
                        <span className="text-sm font-bold text-white">120 急救车接近中</span>
                     </div>
                     <span className="text-xs font-mono text-yellow-500 bg-yellow-900/30 px-2 py-1 rounded border border-yellow-700/50">
-                       粤B·120QA
+                       演示车辆
                     </span>
                  </div>
                  
@@ -2811,7 +2862,7 @@ export default function App() {
                     ></motion.div>
                  </div>
                  <div className="flex justify-between text-[10px] text-slate-400 uppercase tracking-wider">
-                    <span>3km</span>
+                    <span>院前转运接应</span>
                     <span>即将到达</span>
                  </div>
                </div>
@@ -2850,7 +2901,7 @@ export default function App() {
               <div className="flex-1 flex flex-col items-center justify-center">
                  <div className="w-48 h-48 border-[12px] border-green-600 rounded-full flex items-center justify-center mb-8 relative">
                     <div className="text-center">
-                       <div className="text-6xl font-bold font-mono text-white">50<span className="text-2xl text-slate-400">m</span></div>
+                       <div className="text-4xl font-bold font-mono text-white">{runnerToPatientDistanceLabel}</div>
                        <div className="text-xs text-green-500 uppercase tracking-widest mt-2">接近现场</div>
                     </div>
                     {/* Tick marks */}
@@ -2859,7 +2910,7 @@ export default function App() {
 
                  <div className="text-center">
                    <h3 className="text-2xl font-bold text-white mb-2">AED 即将到达</h3>
-                   <p className="text-slate-400 text-sm">持有人: 小李 (学生)</p>
+                   <p className="text-slate-400 text-sm">持有人：{runnerDisplayName}</p>
                  </div>
               </div>
               
@@ -3600,7 +3651,7 @@ export default function App() {
           <div className="bg-slate-800/70 border border-slate-700/60 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">在线安卓终端 ({clients.length})</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">在线终端 ({clients.length})</div>
                 <div className="text-[10px] text-slate-500 mt-1">
                   每 3 秒自动刷新
                   {lastClientRefreshTs ? ` · 最近更新 ${new Date(lastClientRefreshTs).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}
@@ -3615,7 +3666,7 @@ export default function App() {
             </div>
             <div className="space-y-2">
               {clients.length === 0 && (
-                <div className="text-xs text-slate-500">暂无在线安卓终端</div>
+                <div className="text-xs text-slate-500">暂无在线终端</div>
               )}
               {clients.map((client) => (
                 <div
