@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: fa7abc1
-- Last update: 2026-05-22 08:51:25 +08:00
+- HEAD: 65260e1
+- Last update: 2026-05-22 08:54:54 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -123,7 +123,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 98. Sync public documentation wording with safer demo/evidence language. (done, pushed)
 99. Add Android HeyTap Health readiness display without invoking real SDK authorization. (done, pushed)
 100. Run post-health-readiness validation sweep. (done, checkpointing)
-101. Add Android friendly error mapping for HTTP/network/WebSocket failures. (done, checkpointing)
+101. Add Android friendly error mapping for HTTP/network/WebSocket failures. (done, pushed)
+102. Add debug-only Android cleartext network support for LAN/local backend testing. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -181,7 +182,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `docs/LONG_TASK_STATE.md`
 - `docs/LONG_TASK_BLOCKERS.md`
 - `docs/OPPO_HEALTH_INTEGRATION_CHECKLIST.md`
+- `README.md`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/AppModels.kt`
+- `lifereflex(app)/local.properties.example`
+- `lifereflex(app)/app/src/debug/AndroidManifest.xml`
+- `lifereflex(app)/app/src/debug/res/xml/debug_network_security_config.xml`
 - `server(web)/.env.example`
 - `server(web)/app/models/schemas.py`
 - `server(web)/app/api/rest.py`
@@ -500,6 +505,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android error-state hardening slice: added a shared Android `ErrorMessages` mapper for HTTP status codes, server detail payloads, timeout/DNS/connectivity/TLS/cleartext failures, and WebSocket payload/failure states; `IncidentViewModel`, `SessionViewModel`, and `WsClient` now surface actionable Chinese messages instead of raw exception text.
 - Android session validation hardening: stored sessions are only cleared when `/auth/me` explicitly returns unauthorized; transient network or certificate failures now keep the saved session and show a diagnostic message.
 - Android error-state validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning and AndroidX Security deprecation warnings remain non-blocking.
+- Git checkpoint: `65260e1` (`checkpoint: harden android error states`) created and pushed to `origin/codex/competition-hardening`.
+- Android local HTTP/debug network slice: added debug-only `networkSecurityConfig` and `usesCleartextTraffic=true` so debug APKs can connect to `http://LAN-IP:PORT` or emulator/local backends during development while release manifest remains without cleartext flags; README and Android local config template now explain HTTP/WS debug versus HTTPS/WSS public demo usage.
+- Android debug-network validation: `gradle :app:assembleDebug --no-daemon` passed; `gradle :app:processReleaseMainManifest --no-daemon` passed; `rg` confirmed cleartext/networkSecurityConfig only appears in the debug merged manifest, not release.
 
 ## Blockers Summary
 
@@ -508,7 +516,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Android error-state hardening, then continue with low-risk app hardening such as local HTTP/debug network clarity or mobile PWA cache resilience. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint Android debug-network hardening, then continue with mobile PWA cache resilience or another low-risk validation slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
