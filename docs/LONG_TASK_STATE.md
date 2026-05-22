@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: d999a0d
-- Last update: 2026-05-22 10:16:52 +08:00
+- HEAD: af1bec5 before current pre-experiment report-builder slice
+- Last update: 2026-05-22 10:51:20 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -136,9 +136,10 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 111. Add expert feedback summary and remediation-loop CSV into the evidence package. (done, pushed)
 112. Sync long-task state, handoff, and competition docs with the expert-feedback remediation loop. (done, pushed)
 113. Add multi-round evidence-package summary CLI for pre-experiment ZIP aggregation. (done, pushed)
-114. Add PPT-safe Markdown analysis report generator for round-summary CSV. (done, checkpointing)
-115. Sync expert feedback template, whitepaper, and product plan with evidence analysis toolchain and 40-test validation. (done, checkpointing)
-116. Correct analysis-report percentage scaling for role assignment completeness. (done, checkpointing)
+114. Add PPT-safe Markdown analysis report generator for round-summary CSV. (done, pushed)
+115. Sync expert feedback template, whitepaper, and product plan with evidence analysis toolchain and 40-test validation. (done, pushed)
+116. Correct analysis-report percentage scaling for role assignment completeness. (done, pushed)
+117. Add one-command pre-experiment report builder for CSV plus Markdown generation. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -568,6 +569,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `d999a0d` (`checkpoint: sync expert evidence materials`) created and pushed to `origin/codex/competition-hardening`.
 - Analysis-report percentage fix: `scripts/analyze_round_summary.py` now scales `roleAssignmentCompleteness` from the stored 0-1 ratio to a 0-100 percentage in the report table, while leaving existing percent fields unchanged. Backend test now asserts the generated report shows role assignment completeness as 100 instead of 1.
 - Analysis-report percentage validation: targeted backend test `test_round_summary_analysis_script_writes_ppt_safe_report` passed; full backend unittest discovery passed, 40 tests OK.
+- Git checkpoint: `af1bec5` (`checkpoint: fix evidence analysis percentages`) created and pushed to `origin/codex/competition-hardening`.
+- Pre-experiment report-builder slice: added `scripts/build_pre_experiment_report.py`, a standard-library CLI that accepts evidence ZIP files, directories, or glob patterns and writes both `round-summary.csv` and `round-analysis.md` into a chosen output directory. README, deployment runbook, pre-experiment protocol, and morning handoff now recommend this one-command workflow before the older two-step flow.
+- Pre-experiment report-builder validation: project `.venv` was used. `python scripts\build_pre_experiment_report.py --help` passed; `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted backend test `test_pre_experiment_report_builder_creates_summary_and_analysis` passed; full backend unittest discovery passed, 41 tests OK.
+- Resume safety check after interruption: `git status --short --branch` shows branch `codex/competition-hardening` aligned with `origin/codex/competition-hardening`; pending checkpoint files are README, deployment runbook, morning handoff, pre-experiment protocol, long-task state, the new report-builder script, and backend tests. Runtime/user files remain excluded: `server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, and `output/`.
+- Diff hygiene validation: `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -576,7 +582,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the analysis-report percentage fix if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the pre-experiment report-builder slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

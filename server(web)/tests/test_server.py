@@ -937,6 +937,45 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("不应表述为：提高真实抢救成功率", report)
         self.assertIn(bootstrapped.json()["incidentId"], report)
 
+    def test_pre_experiment_report_builder_creates_summary_and_analysis(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        output_dir = self.root / "analysis-output"
+        package_path.write_bytes(package.content)
+        scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "build_pre_experiment_report.py"),
+                str(package_path),
+                "--output-dir",
+                str(output_dir),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: summarized 1 evidence round", result.stdout)
+        summary = (output_dir / "round-summary.csv").read_text(encoding="utf-8-sig")
+        report = (output_dir / "round-analysis.md").read_text(encoding="utf-8")
+        self.assertIn("verificationStatus", summary)
+        self.assertIn(bootstrapped.json()["incidentId"], summary)
+        self.assertIn("生命反射弧预实验多轮分析摘要", report)
+        self.assertIn("角色分派完整度", report)
+
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:
             response = client.post(

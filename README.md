@@ -300,7 +300,13 @@ python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 
 校验通过会输出 `OK`；失败时会列出缺失文件、hash 不一致、路径异常或隐私边界配置问题。
 
-如果已经完成多轮系统演练，可以把多个 ZIP 放到同一目录，一次性校验并合并每轮的 `pre_experiment_round_summary.csv`：
+如果已经完成多轮系统演练，可以把多个 ZIP 放到同一目录，一键生成汇总 CSV 和 Markdown 分析摘要：
+
+```powershell
+python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
+```
+
+也可以分步执行。先一次性校验并合并每轮的 `pre_experiment_round_summary.csv`：
 
 ```powershell
 python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output "D:\path\to\round-summary.csv"
@@ -308,7 +314,7 @@ python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output 
 
 输出表会包含每个 ZIP 的 manifest 事件编号、生成时间、包 SHA-256、校验状态和单轮核心指标，方便后续导入 Excel 做描述性统计。
 
-也可以继续生成一份 PPT 安全口径的 Markdown 分析摘要：
+再生成一份 PPT 安全口径的 Markdown 分析摘要：
 
 ```powershell
 python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md"
