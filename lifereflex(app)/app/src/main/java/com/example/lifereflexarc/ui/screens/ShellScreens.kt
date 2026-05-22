@@ -28,6 +28,7 @@ import com.example.lifereflexarc.data.UserSession
 import com.example.lifereflexarc.data.AedSite
 import com.example.lifereflexarc.data.DispatchRoleDecision
 import com.example.lifereflexarc.data.GeoPoint
+import com.example.lifereflexarc.data.HealthIntegrationReadiness
 import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.ui.accentForRole
 import com.example.lifereflexarc.ui.dispatchSourceLabel
@@ -53,6 +54,7 @@ fun CommandHomeScreen(
     connected: Boolean,
     assignedRole: UserRole?,
     healthSignals: HealthSignalSummary?,
+    healthReadiness: HealthIntegrationReadiness,
     onCreateIncident: () -> Unit,
     onOpenCurrent: () -> Unit,
     onAutoJoinCurrent: (() -> Unit)?,
@@ -108,7 +110,7 @@ fun CommandHomeScreen(
             )
         }
 
-        HealthSignalSummaryCard(healthSignals = healthSignals)
+        HealthSignalSummaryCard(healthSignals = healthSignals, readiness = healthReadiness)
 
         SectionTitle("快速入口")
         IncidentQuickActionsCard(
@@ -170,6 +172,7 @@ fun IncidentScreen(
     incidentState: IncidentState?,
     assignedRole: UserRole?,
     healthSignals: HealthSignalSummary?,
+    healthReadiness: HealthIntegrationReadiness,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
     onCreateIncident: () -> Unit,
@@ -199,7 +202,7 @@ fun IncidentScreen(
         }
 
         IncidentHeaderCard(incidentState = incidentState, assignedRole = assignedRole ?: UserRole.PATIENT)
-        HealthSignalSummaryCard(healthSignals = healthSignals)
+        HealthSignalSummaryCard(healthSignals = healthSignals, readiness = healthReadiness)
         MissionPanel(
             session = session,
             incidentState = incidentState,
@@ -397,6 +400,7 @@ private fun formatMeters(value: Double?): String {
 @Composable
 private fun HealthSignalSummaryCard(
     healthSignals: HealthSignalSummary?,
+    readiness: HealthIntegrationReadiness,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
@@ -417,6 +421,7 @@ private fun HealthSignalSummaryCard(
             )
             SummaryRow("数据来源", translateHealthSource(healthSignals?.source), dark = true)
             SummaryRow("授权状态", translateHealthAuthorization(healthSignals?.authorizationStatus), dark = true)
+            SummaryRow("接入准备", readiness.statusText, dark = true)
             SummaryRow("心率", healthSignals?.heartRateBpm?.let { "$it bpm" } ?: "--", dark = true)
             SummaryRow("血氧", healthSignals?.bloodOxygenPercent?.let { "${it.toInt()}%" } ?: "--", dark = true)
             SummaryRow("压力", healthSignals?.pressureScore?.toString() ?: "--", dark = true)
@@ -429,6 +434,12 @@ private fun HealthSignalSummaryCard(
                     lineHeight = 18.sp,
                 )
             }
+            Text(
+                text = readiness.detailText,
+                color = PhoneColors.GrayText,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+            )
         }
     }
 }
@@ -547,6 +558,7 @@ fun ArchiveScreen(
 fun ProfileScreen(
     session: UserSession,
     healthSignals: HealthSignalSummary?,
+    healthReadiness: HealthIntegrationReadiness,
     location: GeoPoint?,
     locationStatus: String,
     onSyncSystemLocation: () -> Unit,
@@ -576,7 +588,7 @@ fun ProfileScreen(
             }
         }
 
-        HealthSignalSummaryCard(healthSignals = healthSignals)
+        HealthSignalSummaryCard(healthSignals = healthSignals, readiness = healthReadiness)
 
         DemoLocationCard(
             location = location,

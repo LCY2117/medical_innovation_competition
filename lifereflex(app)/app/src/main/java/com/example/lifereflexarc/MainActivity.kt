@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifereflexarc.data.AndroidSystemLocationProvider
+import com.example.lifereflexarc.data.MockOppoHealthSignalProvider
 import com.example.lifereflexarc.ui.AppRoot
 import com.example.lifereflexarc.ui.theme.LifeReflexArcTheme
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
@@ -86,6 +87,7 @@ private class IncidentViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(IncidentViewModel::class.java)) {
             return IncidentViewModel(
+                healthSignalProvider = MockOppoHealthSignalProvider(context),
                 locationProvider = AndroidSystemLocationProvider(context),
             ) as T
         }

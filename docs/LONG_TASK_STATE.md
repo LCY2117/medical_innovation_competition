@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 40cdc98
-- Last update: 2026-05-22 08:36:47 +08:00
+- HEAD: 226186a
+- Last update: 2026-05-22 08:40:39 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -120,7 +120,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 95. Tighten health-summary sample authorization and backend input boundaries. (done, pushed)
 96. Make evidence-package downloads incident-specific and tighten Web AED archive summary. (done, pushed)
 97. Surface health authorization status across Web/mobile summaries. (done, pushed)
-98. Sync public documentation wording with safer demo/evidence language. (done, checkpointing)
+98. Sync public documentation wording with safer demo/evidence language. (done, pushed)
+99. Add Android HeyTap Health readiness display without invoking real SDK authorization. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -487,6 +488,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `40cdc98` (`checkpoint: show health authorization status`) created and pushed to `origin/codex/competition-hardening`.
 - Public-doc wording sync: README, third-party resources, deployment runbook, pre-experiment protocol, product plan, technical whitepaper, and morning handoff now use safer public-facing terms such as `协同演示场景`, `疑似心脏骤停协同流程`, `事件证据包`, and `现场审阅端` while preserving legitimate `预实验` protocol wording.
 - Public-doc wording validation: targeted `rg` found no remaining `医创赛演示`, `评委浏览器`, `触发心脏骤停模拟`, `下载预实验证据包`, `导出预实验证据包`, `触发心脏骤停`, `自动呼叫急救`, `死亡真空`, `SOS Alert`, or `SCA` in README/docs excluding `LONG_TASK_STATE.md`.
+- Git checkpoint: `226186a` (`checkpoint: sync public demo wording`) created and pushed to `origin/codex/competition-hardening`.
+- Android HeyTap readiness slice: app now passes application context into the mock OPPO health provider, checks whether `com.heytap.health` or OPPO/HeyTap market packages are installed via `PackageManager`, and surfaces a readiness row/detail in Android health cards while keeping real SDK authorization blocked and sample summaries active.
+- Android HeyTap readiness validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 
 ## Blockers Summary
 
@@ -495,7 +499,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the public-doc wording sync, then continue with the next safe Android or operations hardening slice from read-only findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the Android HeyTap readiness display slice, then continue with the next safe Android error-state or operations hardening slice from read-only findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

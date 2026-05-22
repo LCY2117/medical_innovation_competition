@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lifereflexarc.BuildConfig
 import com.example.lifereflexarc.data.GeoPoint
+import com.example.lifereflexarc.data.HealthIntegrationReadiness
 import com.example.lifereflexarc.data.HealthSignalProvider
 import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.data.IncidentRepository
@@ -40,6 +41,8 @@ class IncidentViewModel(
     val assignedRole: StateFlow<String?> = _assignedRole.asStateFlow()
     private val _healthSignals = MutableStateFlow<HealthSignalSummary?>(null)
     val healthSignals: StateFlow<HealthSignalSummary?> = _healthSignals.asStateFlow()
+    private val _healthReadiness = MutableStateFlow(healthSignalProvider.readiness())
+    val healthReadiness: StateFlow<HealthIntegrationReadiness> = _healthReadiness.asStateFlow()
     private val _locationStatus = MutableStateFlow("定位未同步")
     val locationStatus: StateFlow<String> = _locationStatus.asStateFlow()
     private val _currentLocation = MutableStateFlow<GeoPoint?>(null)
@@ -202,6 +205,7 @@ class IncidentViewModel(
         viewModelScope.launch {
             try {
                 val healthSignals = healthSignalProvider.readSummary(session)
+                _healthReadiness.value = healthSignalProvider.readiness()
                 val fallbackLocation = demoLocationFor(
                     session.displayName,
                     session.professionIdentity.label,

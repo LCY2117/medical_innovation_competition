@@ -57,6 +57,7 @@ fun AppRoot(
     val incidentError by incidentViewModel.error.collectAsState(null)
     val assignedRoleRaw by incidentViewModel.assignedRole.collectAsState(null)
     val healthSignals by incidentViewModel.healthSignals.collectAsState(null)
+    val healthReadiness by incidentViewModel.healthReadiness.collectAsState()
     val locationStatus by incidentViewModel.locationStatus.collectAsState("定位未同步")
     val currentLocation by incidentViewModel.currentLocation.collectAsState(null)
     val activeUserId = session.userId.ifBlank { deviceUserId }
@@ -207,6 +208,7 @@ fun AppRoot(
                     connected = connected,
                     assignedRole = assignedRole,
                     healthSignals = healthSignals,
+                    healthReadiness = healthReadiness,
                     onCreateIncident = {
                         incidentViewModel.clearError()
                         incidentViewModel.createIncident()
@@ -236,6 +238,7 @@ fun AppRoot(
                     incidentState = incidentState,
                     assignedRole = assignedRole,
                     healthSignals = healthSignals,
+                    healthReadiness = healthReadiness,
                     deviceUserId = activeUserId,
                     incidentViewModel = incidentViewModel,
                     onCreateIncident = {
@@ -258,6 +261,7 @@ fun AppRoot(
                 MainTab.Profile -> ProfileScreen(
                     session = session,
                     healthSignals = healthSignals,
+                    healthReadiness = healthReadiness,
                     location = currentLocation,
                     locationStatus = locationStatus,
                     onSyncSystemLocation = {

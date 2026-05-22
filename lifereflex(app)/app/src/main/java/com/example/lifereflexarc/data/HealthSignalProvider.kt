@@ -1,11 +1,42 @@
 package com.example.lifereflexarc.data
 
+import android.content.Context
+import android.content.pm.PackageManager
+
 interface HealthSignalProvider {
     val providerName: String
     suspend fun readSummary(session: UserSession): HealthSignalSummary
+    fun readiness(): HealthIntegrationReadiness = HealthIntegrationReadiness(providerName = providerName)
 }
-class MockOppoHealthSignalProvider : HealthSignalProvider {
+class MockOppoHealthSignalProvider(
+    private val context: Context? = null,
+) : HealthSignalProvider {
     override val providerName: String = "OPPO_HEALTH_MOCK"
+
+    override fun readiness(): HealthIntegrationReadiness {
+        val heytapHealthInstalled = isPackageInstalled("com.heytap.health")
+        val heytapMarketAvailable = isPackageInstalled("com.heytap.market") || isPackageInstalled("com.oppo.market")
+        val statusText = if (heytapHealthInstalled) {
+            "检测到欢太健康，当前为样例接入"
+        } else {
+            "健康摘要样例接入"
+        }
+        val detailText = if (heytapHealthInstalled) {
+            "设备已安装健康应用；真实 OPPO 健康 SDK 授权仍需官方合作条件和用户授权页确认。"
+        } else if (heytapMarketAvailable) {
+            "设备可访问 OPPO/欢太应用市场；真实健康 SDK 接入前继续使用样例摘要。"
+        } else {
+            "未检测到欢太健康；当前仅使用样例摘要，不代表真实健康授权或临床监测。"
+        }
+        return HealthIntegrationReadiness(
+            providerName = providerName,
+            heytapHealthInstalled = heytapHealthInstalled,
+            heytapMarketAvailable = heytapMarketAvailable,
+            realSdkAvailable = false,
+            statusText = statusText,
+            detailText = detailText,
+        )
+    }
 
     override suspend fun readSummary(session: UserSession): HealthSignalSummary {
         val now = System.currentTimeMillis()
@@ -59,6 +90,16 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
                 updatedTs = now,
                 note = "健康摘要样例：稳定响应者",
             )
+        }
+    }
+
+    private fun isPackageInstalled(packageName: String): Boolean {
+        val packageManager = context?.packageManager ?: return false
+        return try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
         }
     }
 }

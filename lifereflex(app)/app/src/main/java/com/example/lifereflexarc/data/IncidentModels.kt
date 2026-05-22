@@ -80,6 +80,15 @@ data class HealthSignalSummary(
     val note: String? = null,
 )
 
+data class HealthIntegrationReadiness(
+    val providerName: String = "OPPO_HEALTH_MOCK",
+    val heytapHealthInstalled: Boolean = false,
+    val heytapMarketAvailable: Boolean = false,
+    val realSdkAvailable: Boolean = false,
+    val statusText: String = "健康摘要样例接入",
+    val detailText: String = "真实健康授权完成前，系统使用健康摘要样例维持协同流程闭环。",
+)
+
 data class CreateIncidentResponse(
     val incidentId: String,
 )
