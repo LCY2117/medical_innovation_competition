@@ -41,13 +41,16 @@ Acceptance:
 - [x] App 启动后校验已保存登录态，过期时提示重新登录。
 - [x] 首页强调“进入当前事件/查看任务”，避免公共站点下误点创建事件失败。
 - [x] 现场总览展示 AED 点位、调度依据、任务状态和归档结果。
-- [x] Debug APK 保持可安装；Release APK 等待发布签名决策。
+- [x] Debug APK 保持可安装；Release APK 已具备可选本地签名配置和 readiness 文档。
 - [x] Android join/action/auto-join 携带登录 token，适配公网演示口令保护。
 - [x] WebSocket incidentId 做 URL 编码，避免特殊事件 ID 破坏连接 URL。
+- [x] Android HTTP/网络/WebSocket 错误映射为可行动中文提示，避免演示时直接暴露底层异常。
+- [x] Debug-only HTTP/LAN 联调已放开，Release 继续保持 HTTPS/WSS 安全口径。
 
 Acceptance:
 
 - `gradle :app:assembleDebug --no-daemon` passes.
+- `gradle :app:assembleRelease --no-daemon` passes as a readiness check; official APK requires local release keystore values.
 - 真机或模拟器可注册/登录/进入当前事件。
 
 ### Backend/Auth
@@ -188,6 +191,7 @@ Required capabilities:
 - [x] Show AED sites, dispatch rationale, role status, and latest logs.
 - [x] Archive/summary state is understandable on mobile.
 - [x] Works from phone browser without installing APK.
+- [x] PWA service worker 缓存移动端壳、离线页和静态资源，API/WebSocket 不缓存，弱网时减少白屏。
 
 Performance requirements:
 
@@ -195,6 +199,7 @@ Performance requirements:
 - [x] Mobile implementation must avoid `motion`, large Radix UI bundles, charting, and desktop-only components.
 - [x] Mobile build chunk should be meaningfully smaller than the desktop dashboard chunk.
 - [x] Register optional mobile service worker/manifest for installable PWA behavior without blocking normal use.
+- [x] Mobile PWA update activation uses `SKIP_WAITING` and network-first shell strategy.
 - [x] Mobile first screen should render with no desktop layout overflow at 390px width.
 
 Validation:

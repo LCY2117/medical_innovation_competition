@@ -99,9 +99,12 @@ flowchart LR
 - 增加位置数据模型。
 - 支持注册终端时携带模拟位置。
 - 增加位置更新接口调用。
-- Gradle 工程可识别并列出任务。
+- Gradle 工程可生成 debug APK 和 release readiness APK。
+- 登录态使用 AndroidX Security 加密存储并兼容旧登录态迁移。
+- HTTP/网络/WebSocket 异常会映射为可行动中文提示。
+- Debug 构建支持局域网 HTTP 联调，release 构建保持 HTTPS/WSS 安全口径。
 
-当前 debug APK 已可出包。后续如需正式比赛包，应生成 release keystore 并改用 release 签名。
+当前 debug APK 已可出包，release readiness 构建已通过。后续如需正式比赛包，按 `docs/ANDROID_RELEASE_READINESS.md` 生成 release keystore、记录 SHA1，并把签名四件套放在 `local.properties` 或环境变量中。
 
 ### 5.4 文档与比赛材料
 
@@ -177,8 +180,9 @@ flowchart LR
 
 - 安装 Android SDK。
 - 生成 debug APK。
-- 固定 release keystore。
-- 配置正式包名和签名 SHA1。
+- release readiness 构建通过。
+- 固定 release keystore 并记录 SHA1。
+- 配置第三方 Android Key 的包名和签名 SHA1。
 - 真机连接云端事件。
 
 ### M3：第三方资源
@@ -222,16 +226,16 @@ flowchart LR
 
 ## 11. 当前验证结果
 
-- 后端测试：22 项通过。
+- 后端测试：37 项通过。
 - 前端 TypeScript 检查：通过。
 - 前端生产构建：通过。
 - Android Gradle 任务发现：通过。
-- Android APK 组装：debug APK 已生成，使用 Android debug 签名。
+- Android APK 组装：debug APK 已生成，使用 Android debug 签名；release readiness 构建已生成未签名检查包，等待本地 release keystore。
 
 ## 12. 下一步最优先事项
 
 1. 真机安装 debug APK，完整走通登录、连接云端事件、响应任务和现场总览。
-2. 将当前版本部署到 `lifereflex.mddcommunity.top`。
-3. 申请地图与 AI API Key，并仅写入服务器 `.env`。
+2. 生成 release keystore，记录 SHA1，并绑定地图/健康等 Android 平台 Key。
+3. 申请地图与 AI API Key，并仅写入服务器 `.env` 或未提交的本地配置。
 4. 组织 2-4 轮低成本预实验。
 5. 请急诊/护理/院前急救相关专家签署反馈表。

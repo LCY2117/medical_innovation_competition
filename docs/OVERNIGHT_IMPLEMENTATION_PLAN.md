@@ -5,6 +5,7 @@
 Build LifeReflexArc into a competition-ready medical innovation system:
 
 - installable Android APK
+- release APK readiness path without committing signing secrets
 - public cloud web console
 - complete simulated cardiac-arrest rescue workflow
 - location/AED/AI dispatch support with safe fallback
@@ -47,6 +48,7 @@ Deliverables:
 - backend dependency files for runtime and tests
 - frontend package metadata and build script
 - Android reproducible build metadata where possible
+- Android release signing inputs documented as local/env-only secrets
 - environment examples for cloud URL, AI provider, and map provider
 
 Validation:
@@ -54,6 +56,7 @@ Validation:
 - backend tests pass
 - frontend build starts from `npm install && npm run build`
 - Android build path is documented or wrapper generated if possible
+- Android debug and release readiness builds pass
 
 ## Priority 3: Core Competition Product Features
 

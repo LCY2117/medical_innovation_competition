@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: cb45832
-- Last update: 2026-05-22 09:15:46 +08:00
+- HEAD: 83a368c
+- Last update: 2026-05-22 09:20:11 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -129,6 +129,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 104. Polish Android visible safety/archive wording for presentation readiness. (done, pushed)
 105. Add Android release APK readiness and optional signing configuration. (done, pushed)
 106. Refresh morning handoff with latest checkpoints, APK artifacts, PWA, and release readiness. (done, checkpointing)
+107. Sync overnight plan, product plan, and technical whitepaper with Android release readiness, PWA cache resilience, and latest validation facts. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -527,6 +528,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android release-readiness validation: `gradle :app:assembleDebug --no-daemon` passed and produced `app-debug.apk` (~14.18 MB); `gradle :app:assembleRelease --no-daemon` passed and produced `app-release-unsigned.apk` (~9.65 MB) because release signing secrets are not configured. The previous `PhoneAppRoot.kt` safe-call warning was removed; remaining warnings are the existing `android.overridePathCheck=true` experimental notice and AndroidX Security deprecations.
 - Git checkpoint: `cb45832` (`checkpoint: add android release readiness`) created and pushed to `origin/codex/competition-hardening`.
 - Morning handoff refresh: `docs/MORNING_HANDOFF.md` now lists the latest Android error-state, debug HTTP, PWA cache, Android presentation wording, and release-readiness checkpoints; it also records debug/release APK artifact paths and sizes, PWA smoke validation, and the release keystore/SHA1 next step.
+- Git checkpoint: `83a368c` (`checkpoint: refresh morning handoff`) created and pushed to `origin/codex/competition-hardening`.
+- Documentation sync slice: `docs/OVERNIGHT_IMPLEMENTATION_PLAN.md`, `docs/PRODUCT_OPTIMIZATION_PLAN.md`, and `docs/TECHNICAL_LANDING_WHITEPAPER.md` now reflect Android release readiness, debug-only HTTP/LAN support, user-friendly Android error states, mobile PWA cache/update resilience, and current validation counts.
+- Documentation sync validation: manual diff review found no secrets and kept the medical framing at simulation/training/pre-experiment scope; targeted wording scan found no unsafe clinical efficacy claims or exposed credential values in the changed docs.
 
 ## Blockers Summary
 
@@ -535,7 +539,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint morning handoff refresh, then continue only with low-risk validation or documentation slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright install artifacts.
+Checkpoint documentation sync, then continue only with low-risk validation or documentation slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
