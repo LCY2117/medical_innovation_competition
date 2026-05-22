@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: fe8fcc1
-- Last update: 2026-05-22 08:41:50 +08:00
+- HEAD: fa7abc1
+- Last update: 2026-05-22 08:51:25 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -123,6 +123,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 98. Sync public documentation wording with safer demo/evidence language. (done, pushed)
 99. Add Android HeyTap Health readiness display without invoking real SDK authorization. (done, pushed)
 100. Run post-health-readiness validation sweep. (done, checkpointing)
+101. Add Android friendly error mapping for HTTP/network/WebSocket failures. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -194,6 +195,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `server(web)/web/src/mobile/mobile.css`
 - `server(web)/web/public/mobile-sw.js`
 - `server(web)/web/public/offline.html`
+- `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/ErrorMessages.kt`
 - `lifereflex(app)/app/src/main/AndroidManifest.xml`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/IncidentModels.kt`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/data/HealthSignalProvider.kt`
@@ -494,6 +496,10 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Android HeyTap readiness validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
 - Git checkpoint: `fe8fcc1` (`checkpoint: add android health readiness`) created and pushed to `origin/codex/competition-hardening`.
 - Latest validation sweep: backend full unittest discovery passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-B_LHHgCt.js` at `229.98 kB` raw / `69.71 kB` gzip and mobile `MobileApp-Bjui0p8t.js` at `38.89 kB` raw / `12.45 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with existing non-blocking `android.overridePathCheck=true` warning.
+- Git checkpoint: `fa7abc1` (`checkpoint: record validation sweep`) created and pushed to `origin/codex/competition-hardening`.
+- Android error-state hardening slice: added a shared Android `ErrorMessages` mapper for HTTP status codes, server detail payloads, timeout/DNS/connectivity/TLS/cleartext failures, and WebSocket payload/failure states; `IncidentViewModel`, `SessionViewModel`, and `WsClient` now surface actionable Chinese messages instead of raw exception text.
+- Android session validation hardening: stored sessions are only cleared when `/auth/me` explicitly returns unauthorized; transient network or certificate failures now keep the saved session and show a diagnostic message.
+- Android error-state validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning and AndroidX Security deprecation warnings remain non-blocking.
 
 ## Blockers Summary
 
@@ -502,7 +508,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the latest validation sweep, then continue with Android error-state hardening from read-only findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint Android error-state hardening, then continue with low-risk app hardening such as local HTTP/debug network clarity or mobile PWA cache resilience. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

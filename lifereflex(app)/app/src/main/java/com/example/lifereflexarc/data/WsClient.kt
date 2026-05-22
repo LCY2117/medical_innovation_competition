@@ -77,10 +77,10 @@ class WsClient(
                         latestState.value = gson.fromJson(envelope.get("payload"), IncidentState::class.java)
                         latestError.value = null
                     } else if (type == "ERROR") {
-                        latestError.value = envelope.get("payload")?.asString ?: "Server error"
+                        latestError.value = ErrorMessages.forWebSocketPayload(envelope.get("payload")?.asString)
                     }
                 } catch (e: Exception) {
-                    latestError.value = e.message ?: "Invalid websocket payload"
+                    latestError.value = "实时连接收到的数据格式异常，正在等待下一次同步。"
                 }
             }
 
@@ -93,7 +93,7 @@ class WsClient(
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 connected.value = false
-                latestError.value = t.message ?: "WebSocket connection failed"
+                latestError.value = ErrorMessages.forWebSocketFailure(t)
                 if (!manualClose) {
                     scheduleReconnect()
                 }

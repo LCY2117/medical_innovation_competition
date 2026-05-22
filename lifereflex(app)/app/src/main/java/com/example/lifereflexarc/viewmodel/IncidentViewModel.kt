@@ -3,6 +3,7 @@ package com.example.lifereflexarc.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lifereflexarc.BuildConfig
+import com.example.lifereflexarc.data.ErrorMessages
 import com.example.lifereflexarc.data.GeoPoint
 import com.example.lifereflexarc.data.HealthIntegrationReadiness
 import com.example.lifereflexarc.data.HealthSignalProvider
@@ -82,7 +83,7 @@ class IncidentViewModel(
                 }
                 repository.connect(current.incidentId)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             } finally {
                 _connecting.value = false
             }
@@ -102,7 +103,7 @@ class IncidentViewModel(
                 _incidentId.value = incident.incidentId
                 repository.connect(incident.incidentId)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             } finally {
                 _connecting.value = false
             }
@@ -118,7 +119,7 @@ class IncidentViewModel(
                 _incidentId.value = id
                 repository.connect(id)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -134,7 +135,7 @@ class IncidentViewModel(
                 _error.value = null
                 repository.join(_authToken.value, id, role, userId)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -154,7 +155,7 @@ class IncidentViewModel(
                 _error.value = null
                 repository.action(_authToken.value, id, action, userId)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -166,7 +167,7 @@ class IncidentViewModel(
                 _error.value = null
                 repository.sosStart(id)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -178,7 +179,7 @@ class IncidentViewModel(
                 _error.value = null
                 repository.sosCancel(id)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -190,7 +191,7 @@ class IncidentViewModel(
                 _error.value = null
                 repository.trigger(id)
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -232,7 +233,7 @@ class IncidentViewModel(
                     healthSignals = healthSignals,
                 )
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -255,7 +256,7 @@ class IncidentViewModel(
                 _currentLocation.value = location
                 _locationStatus.value = "已切换到协同点位：$label"
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -285,7 +286,7 @@ class IncidentViewModel(
                 _currentLocation.value = result.location
                 _locationStatus.value = result.message
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = operationError(e)
             }
         }
     }
@@ -326,4 +327,7 @@ class IncidentViewModel(
             provider.currentLocation(fallback)
         }
     }
+
+    private fun operationError(error: Throwable): String =
+        ErrorMessages.forHttpOrNetwork(error, fallback = "协同操作失败，请稍后重试")
 }

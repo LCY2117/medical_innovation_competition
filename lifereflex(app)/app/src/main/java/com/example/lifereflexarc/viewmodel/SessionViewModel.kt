@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.lifereflexarc.BuildConfig
 import com.example.lifereflexarc.data.AuthRepository
 import com.example.lifereflexarc.data.AuthResponse
+import com.example.lifereflexarc.data.ErrorMessages
 import com.example.lifereflexarc.data.HealthCondition
 import com.example.lifereflexarc.data.IncidentArchiveEntry
 import com.example.lifereflexarc.data.IncidentState
@@ -78,7 +79,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                 )
                 persistAuthSession(response)
             } catch (e: Exception) {
-                _error.value = e.message ?: "注册失败"
+                _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "注册失败，请稍后重试")
             } finally {
                 _loading.value = false
             }
@@ -109,7 +110,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                 )
                 persistAuthSession(response)
             } catch (e: Exception) {
-                _error.value = e.message ?: "登录失败"
+                _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "登录失败，请稍后重试")
             } finally {
                 _loading.value = false
             }
@@ -156,9 +157,13 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                     )
                 )
             } catch (e: Exception) {
-                clearStoredSession()
-                _session.value = UserSession()
-                _error.value = "登录态已失效，请重新登录"
+                if (ErrorMessages.isUnauthorized(e)) {
+                    clearStoredSession()
+                    _session.value = UserSession()
+                    _error.value = "登录态已失效，请重新登录"
+                } else {
+                    _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "暂时无法校验登录态，稍后会自动恢复")
+                }
             }
         }
     }
