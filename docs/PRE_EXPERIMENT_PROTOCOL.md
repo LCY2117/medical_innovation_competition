@@ -174,7 +174,7 @@
 - 系统导出的预实验证据包摘要：优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
 - 对照分析表：把无系统基线轮的 T1-T6、主观评分填入 `baseline_vs_system_comparison.csv`，与系统轮导出的耗时和演练后人工填写的问卷评分做差值、百分比变化；小样本只报告描述性变化，不做夸大显著性推断。
 - 调度解释案例：展示为什么某人被分配为核心施救、AED 保障、环境清障。
-- 多轮系统演练汇总：把每轮 ZIP 放到同一目录后运行 `python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output "D:\path\to\round-summary.csv"`，统一校验 manifest/SHA-256，并合并每轮 `pre_experiment_round_summary.csv` 作为 Excel 描述性统计底表。
+- 多轮系统演练汇总：把每轮 ZIP 放到同一目录后运行 `python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output "D:\path\to\round-summary.csv"`，统一校验 manifest/SHA-256，并合并每轮 `pre_experiment_round_summary.csv` 作为 Excel 描述性统计底表；随后运行 `python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md"` 生成可改写进 PPT 的谨慎分析摘要。
 
 统计原则：
 

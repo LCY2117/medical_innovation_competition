@@ -882,6 +882,60 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("OK", summary)
         self.assertIn(bootstrapped.json()["incidentId"], summary)
 
+    def test_round_summary_analysis_script_writes_ppt_safe_report(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        summary_path = self.root / "round-summary.csv"
+        report_path = self.root / "round-analysis.md"
+        package_path.write_bytes(package.content)
+        scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
+
+        summary_result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "summarize_evidence_rounds.py"),
+                str(package_path),
+                "--output",
+                str(summary_path),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        report_result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "analyze_round_summary.py"),
+                str(summary_path),
+                "--output",
+                str(report_path),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(summary_result.returncode, 0, summary_result.stderr)
+        self.assertEqual(report_result.returncode, 0, report_result.stderr)
+        report = report_path.read_text(encoding="utf-8")
+        self.assertIn("生命反射弧预实验多轮分析摘要", report)
+        self.assertIn("T1 触发到分派完成", report)
+        self.assertIn("校验通过轮次：1", report)
+        self.assertIn("不应表述为：提高真实抢救成功率", report)
+        self.assertIn(bootstrapped.json()["incidentId"], report)
+
     def test_patient_designation_rejects_unregistered_patient(self) -> None:
         with self._client() as client:
             response = client.post(

@@ -308,6 +308,14 @@ python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output 
 
 输出表会包含每个 ZIP 的 manifest 事件编号、生成时间、包 SHA-256、校验状态和单轮核心指标，方便后续导入 Excel 做描述性统计。
 
+也可以继续生成一份 PPT 安全口径的 Markdown 分析摘要：
+
+```powershell
+python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md"
+```
+
+摘要只做均值、中位数、范围等描述性统计，并内置“不宣称真实临床疗效”的表述边界。
+
 ## AI 调度说明
 
 SiliconFlow 的配置文件放在：

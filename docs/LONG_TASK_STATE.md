@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 709b7e9
-- Last update: 2026-05-22 10:06:06 +08:00
+- HEAD: 87e1941
+- Last update: 2026-05-22 10:11:45 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -135,7 +135,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 110. Refresh morning handoff with Web preflight report, evidence-package verifier, and latest 38-test backend validation. (done, pushed)
 111. Add expert feedback summary and remediation-loop CSV into the evidence package. (done, pushed)
 112. Sync long-task state, handoff, and competition docs with the expert-feedback remediation loop. (done, pushed)
-113. Add multi-round evidence-package summary CLI for pre-experiment ZIP aggregation. (done, checkpointing)
+113. Add multi-round evidence-package summary CLI for pre-experiment ZIP aggregation. (done, pushed)
+114. Add PPT-safe Markdown analysis report generator for round-summary CSV. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -556,6 +557,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Multi-round evidence summary slice: added `scripts/summarize_evidence_rounds.py`, a standard-library CLI that verifies one or more evidence-package ZIPs, merges each package's `pre_experiment_round_summary.csv`, and writes a single CSV with package path, package SHA-256, verification status, manifest incident id, generated time, phase, and round metrics. README, deployment runbook, and pre-experiment protocol now document the command for multi-round simulated experiments.
 - Multi-round evidence summary validation: project `.venv` already existed and was used. `python scripts\summarize_evidence_rounds.py --help` passed; `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py` passed; targeted backend test `test_evidence_round_summary_script_merges_packages` passed.
 - Full backend validation after multi-round summary slice: `python -m unittest discover -s tests -v` passed, 39 tests OK.
+- Git checkpoint: `87e1941` (`checkpoint: add evidence round summary tool`) created and pushed to `origin/codex/competition-hardening`.
+- Round-summary analysis slice: added `scripts/analyze_round_summary.py`, a standard-library CLI that reads the merged round-summary CSV and writes a Markdown report with sample count, verification status, phase distribution, mean/median/min/max for timing, coverage, and scenario context metrics, plus PPT-safe conclusion boundaries. README, deployment runbook, and pre-experiment protocol now document the command after `summarize_evidence_rounds.py`.
+- Round-summary analysis validation: project `.venv` already existed and was used. `python scripts\analyze_round_summary.py --help` passed; `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py` passed; targeted backend test `test_round_summary_analysis_script_writes_ppt_safe_report` passed after adding event-id traceability to the report; full backend unittest discovery passed, 40 tests OK.
 
 ## Blockers Summary
 
@@ -564,7 +568,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the multi-round evidence summary slice if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the round-summary analysis report slice if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

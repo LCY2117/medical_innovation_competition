@@ -351,3 +351,11 @@ python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output 
 ```
 
 该脚本会先复用 manifest/SHA-256 校验，再合并每个包内的 `pre_experiment_round_summary.csv`，输出包路径、包 hash、校验状态、事件编号、生成时间和 T1-T6/覆盖率/角色完整度等核心字段。若需要把异常包也写入汇总表用于排查，可追加 `--include-invalid`。
+
+汇总 CSV 生成后，可以再导出一份 Markdown 分析摘要：
+
+```powershell
+python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md"
+```
+
+该报告只做描述性统计，并给出适合 PPT 改写的谨慎结论模板；不要把它写成真实临床疗效证明。
