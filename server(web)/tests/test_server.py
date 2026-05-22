@@ -1184,6 +1184,38 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["roles"]["RUNNER"]["status"], "ASSIGNED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "ASSIGNED")
 
+    def test_auto_join_marks_existing_assignment_joined_once(self) -> None:
+        with self._client() as client:
+            client.post("/api/demo/bootstrap")
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            incident_id = dispatch.json()["incidentId"]
+            first_join = client.post(
+                "/api/incidents/current/join_auto",
+                json={"userId": "demo-prime"},
+            )
+            after_first_join = client.get(f"/api/incidents/{incident_id}").json()
+            second_join = client.post(
+                "/api/incidents/current/join_auto",
+                json={"userId": "demo-prime"},
+            )
+            after_second_join = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(dispatch.status_code, 200)
+        self.assertEqual(first_join.status_code, 200)
+        self.assertEqual(first_join.json()["role"], "PRIME")
+        self.assertEqual(second_join.status_code, 200)
+        self.assertEqual(second_join.json()["role"], "PRIME")
+        self.assertEqual(after_first_join["roles"]["PRIME"]["status"], "JOINED")
+        self.assertEqual(after_second_join["roles"]["PRIME"]["status"], "JOINED")
+        self.assertEqual(len(after_second_join["logs"]), len(after_first_join["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_second_join["logs"] if log["msg"] == "PRIME auto-joined (demo-prime)"),
+            1,
+        )
+
     def test_patient_sos_with_dispatch_delay_completes_auto_dispatch(self) -> None:
         settings = Settings(
             app_name=self.settings.app_name,

@@ -243,7 +243,7 @@ APK 发布准备和 release 签名见 `docs/ANDROID_RELEASE_READINESS.md`。签�
 - 旧接口与 `/api` 双路由兼容。
 - SQLite 持久化后重启恢复当前事件、终端和 AED 点位。
 - 管理口令、正式管理员账号、审计日志和频率限制。
-- 患者 SOS、自动分派、角色接入/CPR/AED/交接动作幂等和归档。
+- 患者 SOS、自动分派、自动接单留痕、角色接入/CPR/AED/交接动作幂等和归档。
 - 地图/推送/AI provider 不可用时的 demo fallback。
 - Web/移动端 WebSocket 过期回调保护，避免切换事件或网络抖动时旧连接覆盖当前状态。
 - Android REST 状态种子、WebSocket 单飞重连和急救动作提交态。

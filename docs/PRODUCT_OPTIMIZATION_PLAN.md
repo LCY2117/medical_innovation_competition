@@ -136,7 +136,7 @@ Implementation notes:
 
 Validation:
 
-- Backend unittest discovery: 48 tests OK after join/action idempotency and evidence verifier negative tests.
+- Backend unittest discovery: 49 tests OK after auto-join logging, join/action idempotency, and evidence verifier negative tests.
 - Web typecheck/build: passed after desktop/mobile WebSocket stale-callback guard; latest build emitted desktop `App-CCmke60w.js` and mobile `MobileApp-CEP25Ntl.js`.
 - Android debug APK build: passed after REST state seeding, single-flight WebSocket reconnect, and action pending-state patches.
 

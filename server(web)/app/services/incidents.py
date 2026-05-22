@@ -411,7 +411,13 @@ class IncidentService:
         self._touch_client(user_id)
 
         for role_name in ("PRIME", "RUNNER", "GUIDE"):
-            if getattr(current.roles, role_name).userId == user_id:
+            role_state = getattr(current.roles, role_name)
+            if role_state.userId == user_id:
+                if role_state.status == "ASSIGNED":
+                    role_state.status = "JOINED"
+                    current.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"{role_name} auto-joined ({user_id})"))
+                    self._persist()
+                    await self._broadcast_state_async(incident_id)
                 return AutoJoinResponse(incidentId=incident_id, role=role_name)
 
         available = [
