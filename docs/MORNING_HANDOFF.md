@@ -38,7 +38,7 @@
 - Android 本地归档会展示参与者视角任务总结，患者、PRIME、RUNNER、GUIDE、待命终端都有不同复盘要点。
 - 部署手册已补生产备份、SQLite 在线备份、1Panel/OpenResty 检查、数据库回滚和本地 DB 不提交的 Git 注意事项。
 - Android 首页快速入口已改为优先“进入当前事件/自动接单”，新建事件降级为“演示备用”。
-- 最终 P0/P1 验证已通过：后端 37 项测试、Web typecheck/build、Android debug APK 构建均通过。
+- 最终 P0/P1 验证已通过：后端 38 项测试、Web typecheck/build、Android debug/release readiness 构建均通过。
 - 第三方资源文档新增 provider/fallback 接入契约：地图、AI、健康、推送、短信都按真实 provider + demo fallback 设计。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
 - 后端新增 SQLite 审计日志和轻量频控：登录、demo 管理、患者指定、角色响应、现场动作、实验导出均有脱敏留痕，`/api/health/detail` 可查看安全控制状态。
@@ -54,6 +54,7 @@
 - Web 总控台与 `/mobile-demo` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
 - Web 总控台默认已降噪：首屏保留演示流程、智能分派摘要、任务单、现场拓扑和四端状态；AI 配置、调度评分、在线终端调试列表、审计和系统日志统一放入“技术详情”展开区。
 - Web 总控台新增“演示准备度”检查卡：终端数量、AED 可用性、定位覆盖、健康摘要覆盖、证据导出状态会直接显示在首屏，便于正式展示前快速排雷。
+- Web 总控台新增“自检报告/导出自检”：可下载 Markdown 演示前自检报告，汇总准备度、管理权限、前后端健康、审计/频控、provider fallback、终端任务、AED 点位、演示入口和安全边界，不写入口令、token 或 API Key。
 - Web 总控台新增“演示入口”面板：可复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接，也可同步打开 4 个手机端标签页；初始化协同演示场景后自动绑定当前 `incidentId`，方便发给队友手机或现场审阅端。
 - `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
@@ -73,7 +74,8 @@
 - 移动 Web PWA service worker 已升级：缓存 `/mobile` 壳、离线页、manifest、图标和已加载静态资源；API/WebSocket 不缓存，弱网时更少白屏。
 - Android 关键展示文案再次收敛：登录页、患者端、归档页和全屏应急态避免“本地假会话/救援成功/黄金救援时间”等粗糙或过度承诺表达，统一为协同流程、记录归档和关键响应窗口。
 - Android release 准备度已补齐：`docs/ANDROID_RELEASE_READINESS.md` 说明 release keystore、SHA1、第三方 Android Key、secret 边界和专家演示前检查；Gradle 会在本地签名四件套齐全时自动签 release。
-- 最新完整三端验证扫尾为 `cb45832`：后端 37 项测试、Web typecheck/build、Android debug APK 构建均通过；新增 release readiness 后，Android debug 与 release 构建也均通过。
+- 证据包新增独立校验脚本：`scripts/verify_evidence_package.py` 可复核 ZIP 的 `manifest.json`、SHA-256、文件清单、路径安全和公开/内部材料边界；README 和部署手册已写入使用命令。
+- 最新验证扫尾为 `8c44d97`：后端 38 项测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 - Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
 
@@ -97,7 +99,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：37 项通过。
+结果：38 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单和公开/内部材料边界可独立校验。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -137,6 +139,8 @@ gradle :app:assembleRelease --no-daemon
 结果：通过，生成 `app-release-unsigned.apk`，大小约 9.65 MB。由于本机没有配置 release keystore 四件套，当前 release 产物是未签名检查包；按 `docs/ANDROID_RELEASE_READINESS.md` 配置后会自动签名。
 
 移动 PWA 烟测：本地 Vite preview `127.0.0.1:18094` 通过。确认 `/mobile`、`/offline.html`、`/mobile-sw.js` 返回 200，浏览器 DOM 烟测可见“浏览器应急端”和“移动端暂时离线/重新连接”。service worker 评估接口在浏览器沙箱内不可读，已通过构建、脚本内容和可见页面验证替代。
+
+Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite DB、演示口令 `LCY` 通过。确认初始化演示场景后总控台出现“自检报告”和“导出自检”，并绑定当前事件编号。Codex in-app Browser 不支持下载事件捕获，因此 Markdown 下载内容以代码审阅、typecheck/build 和 DOM 烟测替代验证；临时端口和 `output/preflight-smoke` 已清理。
 
 ## 本轮新增检查点
 
@@ -205,9 +209,13 @@ gradle :app:assembleRelease --no-daemon
 - `a179220`：移动 Web PWA 缓存韧性增强，已通过 Web typecheck/build、本地 preview 和浏览器 DOM 烟测，已推送。
 - `8e683f5`：Android 演示文案进一步收敛，已通过 targeted 文案扫描和 debug APK 构建，已推送。
 - `cb45832`：Android release readiness，Gradle 可选签名配置、release 出包清单和未签名 release 检查包验证，已推送。
-- 最新验证扫尾：后端 37 项测试、Web typecheck、Web build、Android debug APK 构建均通过；Web 最近验证产物为桌面 `App-B_LHHgCt.js`、移动 `MobileApp-Bjui0p8t.js`，随后 PWA 增量构建产物为移动 `MobileApp-DSEHznZU.js`。
+- `83a368c`：刷新早晨交接报告，记录 Android 错误提示、debug HTTP、PWA cache、release readiness 和 APK artifact，已推送。
+- `fbfd9a8`：同步 release readiness、PWA cache 和 Android 错误提示到计划/白皮书文档，已推送。
+- `aa1c634`：Web 总控台新增演示自检 Markdown 报告，已通过 Web typecheck/build 和本地一体化 DOM 烟测，已推送。
+- `8c44d97`：新增证据包 manifest/SHA-256 独立校验脚本，已通过 targeted 测试和后端全量 38 项测试，已推送。
+- 最新验证扫尾：后端 38 项测试、Web typecheck、Web build、Android debug/release readiness 构建均通过；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
-## 你醒来后最该做的三件事
+## 你醒来后最该做的事
 
 1. 真机安装并走一遍 App 演示流程：
 
@@ -224,14 +232,20 @@ app\build\outputs\apk\debug\app-debug.apk
 
 2. 打开 Web 调度台时，若服务器配置了 `LRA_ADMIN_PHONES`，优先用正式管理员账号登录；否则右上角“演示口令”输入 `LCY`。之后初始化、触发、重置、导出才会成功。
 
-3. 申请第三方资源，按 `docs/THIRD_PARTY_RESOURCES.md` 走：
+3. 初始化一次协同演示场景后，点击“自检报告/导出自检”，把生成的 Markdown 作为赛前检查表；下载证据包后可运行：
+
+```powershell
+python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
+```
+
+4. 申请第三方资源，按 `docs/THIRD_PARTY_RESOURCES.md` 走：
 
 - 高德/腾讯/百度地图 Key。
 - Android 包名 + SHA1。
 - AI API Key。
 - 后续推送/短信先不强依赖。
 
-4. 如需要更正式的专家/比赛安装包，按 `docs/ANDROID_RELEASE_READINESS.md` 生成 release keystore、记录 SHA1，并把签名四件套只写入 `lifereflex(app)/local.properties` 或环境变量；不要提交 `.jks`、密码或 APK/AAB。
+5. 如需要更正式的专家/比赛安装包，按 `docs/ANDROID_RELEASE_READINESS.md` 生成 release keystore、记录 SHA1，并把签名四件套只写入 `lifereflex(app)/local.properties` 或环境变量；不要提交 `.jks`、密码或 APK/AAB。
 
 ## 演示脚本
 
@@ -242,7 +256,8 @@ app\build\outputs\apk\debug\app-debug.apk
 5. 触发患者 `demo-patient`。
 6. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
 7. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
-8. 点击“证据包”，下载 ZIP 作为低成本预实验记录。对外给专家/PPT 优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
+8. 点击“自检报告”导出演示前状态记录；点击“证据包”下载 ZIP 作为低成本预实验记录，并用 `scripts/verify_evidence_package.py` 校验。
+9. 对外给专家/PPT 优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
 
 ## 仍需谨慎表达
 

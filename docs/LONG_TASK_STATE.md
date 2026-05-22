@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: aa1c634
-- Last update: 2026-05-22 09:39:39 +08:00
+- HEAD: 8c44d97
+- Last update: 2026-05-22 09:45:21 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -131,7 +131,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 106. Refresh morning handoff with latest checkpoints, APK artifacts, PWA, and release readiness. (done, checkpointing)
 107. Sync overnight plan, product plan, and technical whitepaper with Android release readiness, PWA cache resilience, and latest validation facts. (done, checkpointing)
 108. Add Web command-center preflight Markdown report for demo readiness, provider fallback, terminal/AED state, and safe handoff notes. (done, checkpointing)
-109. Add independent evidence-package verification script for manifest SHA-256, file-list, ZIP path safety, and privacy-boundary checks. (done, checkpointing)
+109. Add independent evidence-package verification script for manifest SHA-256, file-list, ZIP path safety, and privacy-boundary checks. (done, pushed)
+110. Refresh morning handoff with Web preflight report, evidence-package verifier, and latest 38-test backend validation. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -539,6 +540,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `aa1c634` (`checkpoint: add demo preflight report`) created and pushed to `origin/codex/competition-hardening`.
 - Evidence-package verification script slice: added `scripts/verify_evidence_package.py`, a standard-library CLI that validates `manifest.json`, SHA-256 hashes, byte counts, duplicate/missing files, unsafe ZIP paths, manifest file-list consistency, and public/internal privacy guidance. README and deployment runbook now document how to run it after downloading a ZIP package.
 - Evidence-package verification validation: targeted `test_evidence_package_verification_script_accepts_current_package` passed; `python scripts\verify_evidence_package.py --help` worked; backend full unittest discovery passed, 38 tests OK. Temporary `output/preflight-smoke` artifacts were removed after smoke testing.
+- Git checkpoint: `8c44d97` (`checkpoint: add evidence package verifier`) created and pushed to `origin/codex/competition-hardening`.
+- Morning handoff refresh: `docs/MORNING_HANDOFF.md` now records the Web self-check report, evidence-package verifier, latest checkpoints `aa1c634`/`8c44d97`, backend 38-test validation, and updated wake-up/demo instructions.
 
 ## Blockers Summary
 
@@ -547,7 +550,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint evidence-package verification script, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint refreshed morning handoff, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
