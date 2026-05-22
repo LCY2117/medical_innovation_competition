@@ -1677,6 +1677,7 @@ class ServerTestCase(unittest.TestCase):
                 "/api/experiments/current/package",
                 headers={"X-Demo-Admin-Token": token},
             )
+            package_sha256 = hashlib.sha256(package.content).hexdigest()
             audit_log = client.get(
                 "/api/audit/events?limit=20",
                 headers={"X-Demo-Admin-Token": token},
@@ -1688,6 +1689,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(designated.status_code, 200)
         self.assertEqual(joined.status_code, 200)
         self.assertEqual(package.status_code, 200)
+        self.assertEqual(package.headers["X-LifeReflexArc-Package-Sha256"], package_sha256)
         self.assertEqual(audit_log.status_code, 200)
         events = audit_log.json()["events"]
         event_types = {event["eventType"] for event in events}
@@ -1696,6 +1698,10 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("patient_designated", event_types)
         self.assertIn("role_joined", event_types)
         self.assertIn("experiment_package_exported", event_types)
+        package_event = next(event for event in events if event["eventType"] == "experiment_package_exported")
+        self.assertEqual(package_event["metadata"]["packageSha256"], package_sha256)
+        self.assertEqual(package_event["metadata"]["bytes"], len(package.content))
+        self.assertTrue(str(package_event["metadata"]["filename"]).endswith(".zip"))
         self.assertTrue(all("requestHash" in event for event in events))
         self.assertGreater(health.json()["storage"]["auditEventCount"], 0)
 

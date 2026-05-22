@@ -115,6 +115,32 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         except Exception:
             pass
 
+    def experiment_package_response(
+        request: Request,
+        admin: str,
+        incident_id: str,
+        filename: str,
+        content: bytes,
+    ) -> Response:
+        package_sha256 = hashlib.sha256(content).hexdigest()
+        audit(
+            request,
+            "experiment_package_exported",
+            "admin",
+            actor_id=admin,
+            target_type="incident",
+            target_id=incident_id,
+            metadata={"bytes": len(content), "filename": filename, "packageSha256": package_sha256},
+        )
+        return Response(
+            content=content,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
+                "X-LifeReflexArc-Package-Sha256": package_sha256,
+            },
+        )
+
     def is_demo_admin_authorized(x_demo_admin_token: str | None) -> bool:
         if not settings.demo_admin_token:
             return False
@@ -426,20 +452,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     @router.get("/experiments/current/package")
     async def export_current_experiment_package(request: Request, admin: str = Depends(require_admin)) -> Response:
         filename, content = service.export_experiment_package()
-        audit(
-            request,
-            "experiment_package_exported",
-            "admin",
-            actor_id=admin,
-            target_type="incident",
-            target_id=service.get_current_incident().incidentId,
-            metadata={"bytes": len(content)},
-        )
-        return Response(
-            content=content,
-            media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
-        )
+        return experiment_package_response(request, admin, service.get_current_incident().incidentId, filename, content)
 
     @router.get("/experiments/{incident_id}/export", response_model=ExperimentExportResponse)
     async def export_experiment(
@@ -458,20 +471,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         admin: str = Depends(require_admin),
     ) -> Response:
         filename, content = service.export_experiment_package(incident_id)
-        audit(
-            request,
-            "experiment_package_exported",
-            "admin",
-            actor_id=admin,
-            target_type="incident",
-            target_id=incident_id,
-            metadata={"bytes": len(content)},
-        )
-        return Response(
-            content=content,
-            media_type="application/zip",
-            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
-        )
+        return experiment_package_response(request, admin, incident_id, filename, content)
 
     @router.post("/incidents/current/designate_patient", response_model=DispatchResponse)
     async def designate_patient(

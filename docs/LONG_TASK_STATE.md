@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a7aa77c
-- Last update: 2026-05-22 11:38:00 +08:00
+- HEAD: 07881be
+- Last update: 2026-05-22 11:42:47 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -146,7 +146,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 121. Refresh morning handoff with latest evidence-analysis checkpoints. (done, checkpointing)
 122. Add post-demo evidence-processing checklist to the Web preflight Markdown report. (done, pushed)
 123. Identify next low-risk competition hardening slice after checkpoint. (done)
-124. Polish Web/mobile competition demo visibility: remove hardcoded phone-preview values, anchor mobile CPR timing to event logs, and keep mobile next action visible. (done, validating)
+124. Polish Web/mobile competition demo visibility: remove hardcoded phone-preview values, anchor mobile CPR timing to event logs, and keep mobile next action visible. (done, pushed)
+125. Add evidence-package SHA-256 response header and audit metadata. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -604,6 +605,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Resume continuation after checkpoint: `git status --short --branch` shows only runtime/user files outside checkpoint scope (`server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, `output/`). Started scanning for the next low-risk competition-hardening slice.
 - Web/mobile visible-demo polish slice: Web command-center phone preview now avoids fixed personal names, fake status-bar values, fixed AED location, fixed ambulance plate/distance, fixed prime/runner distances, and raw `km/m` labels; it derives AED target/distance from incident/AED state when available and uses neutral role/device wording otherwise. Mobile Web CPR guidance now starts its CPR/AED cycle from the current incident's CPR or AED-shock log timestamp instead of wall-clock Unix time, and the event context strip keeps a one-line “my next action” visible across tabs.
 - Web/mobile visible-demo validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop bundle `App-Czvvf4Pu.js` and mobile bundle `MobileApp-C9dwup_s.js`; targeted `rg` scan found no remaining `在线安卓终端|自动智能分派|粤B|120QA|3km|50m|小李|二楼服务台|商场场景|心脏骤停事件|14:00|5G|100%|03:30|黄金急救时间|15<span` in Web/mobile source, with only a non-visible animation coordinate match remaining.
+- Git checkpoint: `07881be` (`checkpoint: polish web mobile demo cues`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence-package SHA-256 slice: both current and incident-specific ZIP package endpoints now compute the package body SHA-256 once, expose it as `X-LifeReflexArc-Package-Sha256`, and record `filename`, `bytes`, and `packageSha256` in the audit event metadata for `experiment_package_exported`.
+- Evidence-package SHA-256 validation: targeted audit/package test passed; full backend unittest discovery passed, 41 tests OK; `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -612,7 +616,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Web/mobile visible-demo polish slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence-package SHA-256 slice if staged diff is clean, then continue to the next low-risk evidence or Android reliability hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
