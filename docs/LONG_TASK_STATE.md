@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: c1ff709
-- Last update: 2026-05-22 14:38:30 +08:00
+- HEAD: da1655d
+- Last update: 2026-05-22 14:42:56 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -154,7 +154,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 129. Seed Android incident state from REST before waiting for WebSocket updates. (done, pushed)
 130. Make Android WebSocket reconnect scheduling single-flight under network flaps. (done, pushed)
 131. Add Android emergency action duplicate-submit guard for full-screen flow. (done, pushed)
-132. Extend Android pending-action feedback to regular task/incident mission cards. (done, checkpointing)
+132. Extend Android pending-action feedback to regular task/incident mission cards. (done, pushed)
+133. Add evidence verifier negative tests for tampered hash, unlisted files, privacy overlap, and public raw-ID leaks. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -637,6 +638,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `c1ff709` (`checkpoint: debounce android emergency actions`) created and pushed to `origin/codex/competition-hardening`.
 - Android regular mission-card pending-action slice: Tasks and Incident tabs now pass the shared pending-action state into `MissionPanel`; CPR, AED pickup/delivery, and ambulance-arrival CTAs show `提交中...` and disable while any emergency action is in flight, matching the full-screen emergency flow and reducing repeat taps in demos.
 - Android regular mission-card pending-action validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `da1655d` (`checkpoint: show android mission action pending state`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence verifier negative-test slice: backend tests now use a reusable evidence-package helper and assert the independent verifier rejects tampered manifest SHA-256 values, unlisted ZIP payload files, public/internal privacy-guidance overlap, and raw participant ID leaks in public review files.
+- Evidence verifier negative-test validation: targeted verifier tests passed; full backend unittest discovery passed, 46 tests OK.
 
 ## Blockers Summary
 
@@ -645,7 +649,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the Android regular mission-card pending-action patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence verifier negative-test patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

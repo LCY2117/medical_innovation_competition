@@ -81,10 +81,11 @@
 - 证据包新增独立校验脚本：`scripts/verify_evidence_package.py` 可复核 ZIP 的 `manifest.json`、SHA-256、文件清单、路径安全和公开/内部材料边界；README 和部署手册已写入使用命令。
 - 证据包新增专家意见汇总与整改闭环表：`expert_feedback_summary.csv` 用于合并多名专家评分、风险关注点、整改负责人、优先级、处理状态、补充证据和二次复核意见；`expert_feedback_form.md` 继续用于单名专家签字留档。
 - 证据包新增证据质量报告：`evidence_quality_report.json` 会用匿名参与者代号汇总关键节点覆盖、缺失项、指标可用性、质量分、质量等级和 provider/fallback 提醒，帮助判断本轮是否适合进入低成本预实验汇总。
+- 证据包独立校验脚本已补坏包负例测试：篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠、公开材料泄漏原始参与者 ID 都会导致校验失败。
 - 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 合并成一张 CSV，便于后续 Excel 描述性统计。
 - 新增多轮分析报告脚本：`scripts/analyze_round_summary.py` 可把汇总 CSV 转成 Markdown 分析摘要，包含均值、中位数、范围和 PPT 安全表述边界。
 - 新增一键预实验分析脚本：`scripts/build_pre_experiment_report.py` 可直接从多轮 ZIP 生成 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。
-- 最新验证扫尾为证据质量报告切片：后端 43 项测试通过；证据包生成、manifest 校验脚本、隐私泄漏扫描、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据、一键预实验分析脚本和证据质量报告测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
+- 最新验证扫尾为证据校验负例测试切片：后端 46 项测试通过；证据包生成、manifest 校验脚本、隐私泄漏扫描、篡改 hash/未列文件/隐私边界重叠坏包拦截、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据、一键预实验分析脚本和证据质量报告测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 - Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
 
@@ -108,7 +109,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：43 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
+结果：46 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；坏包负例覆盖篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠和公开材料泄漏原始参与者 ID；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv`，确认多轮系统演练可以汇总成 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown 与图表数据。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -235,7 +236,8 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `b52e5b6`：Android REST 获取事件后立即写入本地状态流，减少等待 WebSocket 首帧的空白状态，已通过 debug 构建并推送。
 - `6751516`：Android WebSocket 重连改为单飞调度，网络抖动时避免排队多个延迟重连任务，已通过 debug 构建并推送。
 - `c1ff709`：Android 全屏急救动作增加防重复提交和“提交中...”反馈，已通过 debug 构建并推送。
-- 最新验证扫尾：后端 43 项测试通过；证据包校验/汇总/分析/图表数据脚本和 `evidence_quality_report.json` 证据质量报告通过；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Web typecheck、Web build、Android release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- `da1655d`：Android 普通任务卡同步显示动作提交态，已通过 debug 构建并推送。
+- 最新验证扫尾：后端 46 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例和 `evidence_quality_report.json` 证据质量报告通过；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Web typecheck、Web build、Android release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
 
 ## 你醒来后最该做的事
 

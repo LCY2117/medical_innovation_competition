@@ -107,6 +107,29 @@ class ServerTestCase(unittest.TestCase):
         )
         return TestClient(create_app(settings))
 
+    def _demo_evidence_package_content(self) -> tuple[str, bytes]:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+        return bootstrapped.json()["incidentId"], package.content
+
+    def _run_evidence_verifier(self, package_path: Path) -> subprocess.CompletedProcess[str]:
+        script_path = Path(__file__).resolve().parents[2] / "scripts" / "verify_evidence_package.py"
+        return subprocess.run(
+            [sys.executable, str(script_path), str(package_path)],
+            cwd=script_path.parent.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     @staticmethod
     def _register_payload(
         display_name: str,
@@ -847,62 +870,77 @@ class ServerTestCase(unittest.TestCase):
         self.assertNotEqual(current_manifest["incidentId"], old_incident_id)
 
     def test_evidence_package_verification_script_accepts_current_package(self) -> None:
-        with self._client() as client:
-            bootstrapped = client.post("/api/demo/bootstrap")
-            self.assertEqual(bootstrapped.status_code, 200)
-            dispatch = client.post(
-                "/api/incidents/current/designate_patient",
-                json={"patientUserId": "demo-patient"},
-            )
-            self.assertEqual(dispatch.status_code, 200)
-            package = client.get("/api/experiments/current/package")
-            self.assertEqual(package.status_code, 200)
-
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence.zip"
-        package_path.write_bytes(package.content)
-        script_path = Path(__file__).resolve().parents[2] / "scripts" / "verify_evidence_package.py"
-        result = subprocess.run(
-            [sys.executable, str(script_path), str(package_path)],
-            cwd=script_path.parent.parent,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        package_path.write_bytes(package_content)
+        result = self._run_evidence_verifier(package_path)
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("OK: evidence package manifest", result.stdout)
 
     def test_evidence_package_verifier_rejects_public_raw_user_id_leak(self) -> None:
-        with self._client() as client:
-            bootstrapped = client.post("/api/demo/bootstrap")
-            self.assertEqual(bootstrapped.status_code, 200)
-            dispatch = client.post(
-                "/api/incidents/current/designate_patient",
-                json={"patientUserId": "demo-patient"},
-            )
-            self.assertEqual(dispatch.status_code, 200)
-            package = client.get("/api/experiments/current/package")
-            self.assertEqual(package.status_code, 200)
-
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence-leaky.zip"
-        with zipfile.ZipFile(BytesIO(package.content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
             for info in source.infolist():
                 content = source.read(info.filename)
                 if info.filename == "review_index.md":
                     content += "\nraw leak: demo-patient\n".encode("utf-8")
                 target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
 
-        script_path = Path(__file__).resolve().parents[2] / "scripts" / "verify_evidence_package.py"
-        result = subprocess.run(
-            [sys.executable, str(script_path), str(package_path)],
-            cwd=script_path.parent.parent,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = self._run_evidence_verifier(package_path)
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("public file leaks raw participant id: review_index.md", result.stderr)
+
+    def test_evidence_package_verifier_rejects_tampered_manifest_hash(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-tampered-hash.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                content = source.read(info.filename)
+                if info.filename == "manifest.json":
+                    manifest = json.loads(content.decode("utf-8"))
+                    manifest["files"][0]["sha256"] = "0" * 64
+                    content = json.dumps(manifest, ensure_ascii=False).encode("utf-8")
+                target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SHA-256 mismatch:", result.stderr)
+
+    def test_evidence_package_verifier_rejects_unlisted_file(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-unlisted-file.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                target.writestr(info.filename, source.read(info.filename), compress_type=zipfile.ZIP_DEFLATED)
+            target.writestr("unexpected.txt", "extra evidence outside manifest", compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ZIP contains file not listed in manifest: unexpected.txt", result.stderr)
+
+    def test_evidence_package_verifier_rejects_privacy_guidance_overlap(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-privacy-overlap.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                content = source.read(info.filename)
+                if info.filename == "manifest.json":
+                    manifest = json.loads(content.decode("utf-8"))
+                    manifest["privacyGuidance"]["internalReviewOnly"].append(
+                        manifest["privacyGuidance"]["publicOrExpertReview"][0]
+                    )
+                    content = json.dumps(manifest, ensure_ascii=False).encode("utf-8")
+                target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("privacy guidance marks files as both public and internal", result.stderr)
 
     def test_evidence_round_summary_script_merges_packages(self) -> None:
         with self._client() as client:
