@@ -76,7 +76,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
             while (true) {
                 nowTick.value = System.currentTimeMillis()
                 delay(500)
-                if (phase != "CREATED" || sos?.status != "ALERTING") {
+                if (phase != "CREATED" || sos.status != "ALERTING") {
                     return@LaunchedEffect
                 }
             }

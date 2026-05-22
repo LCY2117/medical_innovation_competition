@@ -3,8 +3,32 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val apiBase = providers.gradleProperty("LRA_API_BASE").orElse("https://lifereflex.mddcommunity.top/").get()
-val wsBase = providers.gradleProperty("LRA_WS_BASE").orElse("wss://lifereflex.mddcommunity.top/ws").get()
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.isFile) {
+        localFile.inputStream().use(::load)
+    }
+}
+
+fun projectLocalOrEnv(name: String): String? =
+    providers.gradleProperty(name).orNull
+        ?: localProperties.getProperty(name)
+        ?: providers.environmentVariable(name).orNull
+
+val apiBase = projectLocalOrEnv("LRA_API_BASE") ?: "https://lifereflex.mddcommunity.top/"
+val wsBase = projectLocalOrEnv("LRA_WS_BASE") ?: "wss://lifereflex.mddcommunity.top/ws"
+val releaseStoreFilePath = projectLocalOrEnv("LRA_RELEASE_STORE_FILE")
+val releaseStorePassword = projectLocalOrEnv("LRA_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = projectLocalOrEnv("LRA_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = projectLocalOrEnv("LRA_RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFilePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
 
 android {
     namespace = "com.example.lifereflexarc"
@@ -24,9 +48,23 @@ android {
         buildConfigField("String", "LRA_WS_BASE", "\"$wsBase\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFilePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

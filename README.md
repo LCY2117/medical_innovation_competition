@@ -236,6 +236,8 @@ cd "lifereflex(app)"
 gradle :app:assembleDebug --no-daemon
 ```
 
+APK 发布准备和 release 签名见 `docs/ANDROID_RELEASE_READINESS.md`。签名证书、密码和第三方 Key 只放在 `local.properties` 或环境变量中，不提交到 Git。
+
 当前测试重点覆盖：
 
 - 旧接口与 `/api` 双路由兼容。

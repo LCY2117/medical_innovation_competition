@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: a179220
-- Last update: 2026-05-22 09:04:32 +08:00
+- HEAD: 8e683f5
+- Last update: 2026-05-22 09:12:54 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -126,7 +126,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 101. Add Android friendly error mapping for HTTP/network/WebSocket failures. (done, pushed)
 102. Add debug-only Android cleartext network support for LAN/local backend testing. (done, pushed)
 103. Strengthen mobile PWA shell/resource caching and update activation. (done, pushed)
-104. Polish Android visible safety/archive wording for presentation readiness. (done, checkpointing)
+104. Polish Android visible safety/archive wording for presentation readiness. (done, pushed)
+105. Add Android release APK readiness and optional signing configuration. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -184,9 +185,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - `docs/LONG_TASK_STATE.md`
 - `docs/LONG_TASK_BLOCKERS.md`
 - `docs/OPPO_HEALTH_INTEGRATION_CHECKLIST.md`
+- `docs/ANDROID_RELEASE_READINESS.md`
 - `README.md`
 - `lifereflex(app)/app/src/main/java/com/example/lifereflexarc/ui/AppModels.kt`
 - `lifereflex(app)/local.properties.example`
+- `lifereflex(app)/app/build.gradle.kts`
 - `lifereflex(app)/app/src/debug/AndroidManifest.xml`
 - `lifereflex(app)/app/src/debug/res/xml/debug_network_security_config.xml`
 - `server(web)/.env.example`
@@ -517,6 +520,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `a179220` (`checkpoint: strengthen mobile pwa cache`) created and pushed to `origin/codex/competition-hardening`.
 - Android visible wording polish: removed remaining presentation-rough wording such as `本地假会话`, `救援记录`, `被救援记录`, `黄金救援时间`, and `心脏骤停事件已完成院前协同救援` from key Android login, emergency, archive, and phase screens; replaced with service-account/encrypted-session, cooperative record, response window, and suspected-cardiac-arrest cooperative-flow wording.
 - Android wording validation: targeted `rg` found no remaining `本地假会话|心脏骤停事件已完成|救援记录|被救援记录|黄金救援时间|急救接力|协同救援` in Android source; remaining `急救车` hits are normal 120 ambulance context. `gradle :app:assembleDebug --no-daemon` passed with existing non-blocking `android.overridePathCheck=true` and AndroidX Security deprecation warnings.
+- Git checkpoint: `8e683f5` (`checkpoint: polish android presentation wording`) created and pushed to `origin/codex/competition-hardening`.
+- Android release-readiness slice: Gradle release signing now reads `LRA_RELEASE_STORE_FILE`, `LRA_RELEASE_STORE_PASSWORD`, `LRA_RELEASE_KEY_ALIAS`, and `LRA_RELEASE_KEY_PASSWORD` from Gradle properties, untracked `local.properties`, or environment variables; if all four are present, `release` is signed, otherwise the release variant remains unsigned for readiness checks. `local.properties.example`, README, deployment runbook, and new `docs/ANDROID_RELEASE_READINESS.md` document debug APK, release keystore/SHA1, secret boundaries, build commands, and expert-demo preflight steps.
+- Android release-readiness validation: `gradle :app:assembleDebug --no-daemon` passed and produced `app-debug.apk` (~14.18 MB); `gradle :app:assembleRelease --no-daemon` passed and produced `app-release-unsigned.apk` (~9.65 MB) because release signing secrets are not configured. The previous `PhoneAppRoot.kt` safe-call warning was removed; remaining warnings are the existing `android.overridePathCheck=true` experimental notice and AndroidX Security deprecations.
 
 ## Blockers Summary
 
@@ -525,7 +531,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint Android visible wording polish, then continue with release APK readiness notes, documentation/handoff refresh, or another low-risk validation slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint Android release-readiness work, then refresh morning handoff/latest checkpoints and continue only with low-risk validation or documentation slices. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

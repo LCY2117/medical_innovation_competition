@@ -26,3 +26,14 @@ LRA_WS_BASE=wss://lifereflex.mddcommunity.top/ws
 # 7F:7A:41:ED:51:CF:0D:B5:6F:5C:D1:CC:5B:A5:BC:C4:F1:8A:C7:18
 # Keep the real key in local.properties only. Never commit secrets.
 LRA_AMAP_ANDROID_KEY=
+
+# ==============================
+# Optional release signing / 可选发布签名
+# ==============================
+# Store the real keystore outside Git, then copy these keys into local.properties
+# or provide them as environment variables before assembling release.
+# Example path only; do not commit the real .jks file or passwords.
+LRA_RELEASE_STORE_FILE=C:\\Users\\LCY\\secrets\\lifereflex-release.jks
+LRA_RELEASE_STORE_PASSWORD=
+LRA_RELEASE_KEY_ALIAS=lifereflex
+LRA_RELEASE_KEY_PASSWORD=

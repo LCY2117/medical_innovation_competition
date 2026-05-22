@@ -110,6 +110,8 @@ sdk.dir=C\:\\Users\\LCY\\AppData\\Local\\Android\\Sdk
 lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk
 ```
 
+正式展示前如需 release APK，请按 `docs/ANDROID_RELEASE_READINESS.md` 准备 release keystore、SHA1 和第三方 Android Key。Gradle 会在 `LRA_RELEASE_STORE_FILE`、`LRA_RELEASE_STORE_PASSWORD`、`LRA_RELEASE_KEY_ALIAS`、`LRA_RELEASE_KEY_PASSWORD` 四项齐全时自动签名 release；这些值只能放在 `local.properties` 或环境变量中，不提交 Git。
+
 ## 4. 服务器部署步骤
 
 ### 4.1 连接与目录
