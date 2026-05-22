@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 226186a
-- Last update: 2026-05-22 08:40:39 +08:00
+- HEAD: fe8fcc1
+- Last update: 2026-05-22 08:41:50 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -121,7 +121,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 96. Make evidence-package downloads incident-specific and tighten Web AED archive summary. (done, pushed)
 97. Surface health authorization status across Web/mobile summaries. (done, pushed)
 98. Sync public documentation wording with safer demo/evidence language. (done, pushed)
-99. Add Android HeyTap Health readiness display without invoking real SDK authorization. (done, checkpointing)
+99. Add Android HeyTap Health readiness display without invoking real SDK authorization. (done, pushed)
+100. Run post-health-readiness validation sweep. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -491,6 +492,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `226186a` (`checkpoint: sync public demo wording`) created and pushed to `origin/codex/competition-hardening`.
 - Android HeyTap readiness slice: app now passes application context into the mock OPPO health provider, checks whether `com.heytap.health` or OPPO/HeyTap market packages are installed via `PackageManager`, and surfaces a readiness row/detail in Android health cards while keeping real SDK authorization blocked and sample summaries active.
 - Android HeyTap readiness validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning remains non-blocking.
+- Git checkpoint: `fe8fcc1` (`checkpoint: add android health readiness`) created and pushed to `origin/codex/competition-hardening`.
+- Latest validation sweep: backend full unittest discovery passed, 37 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-B_LHHgCt.js` at `229.98 kB` raw / `69.71 kB` gzip and mobile `MobileApp-Bjui0p8t.js` at `38.89 kB` raw / `12.45 kB` gzip; Android `gradle :app:assembleDebug --no-daemon` passed with existing non-blocking `android.overridePathCheck=true` warning.
 
 ## Blockers Summary
 
@@ -499,7 +502,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint the Android HeyTap readiness display slice, then continue with the next safe Android error-state or operations hardening slice from read-only findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the latest validation sweep, then continue with Android error-state hardening from read-only findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 
