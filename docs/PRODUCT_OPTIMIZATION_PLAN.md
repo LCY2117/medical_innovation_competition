@@ -125,14 +125,14 @@ Implementation notes:
 - 后端新增 SQLite 审计表，记录登录、demo 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
 - `/api/audit/events` 由正式管理员 token 或演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
 - 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
-- 预实验证据包包含审阅索引、匿名化 JSON/CSV、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验，外部材料默认使用审阅索引、数据字典和匿名化文件；单名专家签字使用 `expert_feedback_form.md`，多名专家意见和后续整改状态使用 `expert_feedback_summary.csv` 汇总；多轮 ZIP 可用 `scripts/summarize_evidence_rounds.py` 汇总为 CSV，再用 `scripts/analyze_round_summary.py` 生成 PPT 安全口径 Markdown 分析摘要。
+- 预实验证据包包含审阅索引、匿名化 JSON/CSV、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验，外部材料默认使用审阅索引、数据字典和匿名化文件；单名专家签字使用 `expert_feedback_form.md`，多名专家意见和后续整改状态使用 `expert_feedback_summary.csv` 汇总；多轮 ZIP 优先用 `scripts/build_pre_experiment_report.py` 一键生成 `round-summary.csv` 和 PPT 安全口径 `round-analysis.md`，也可分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py`。
 - 后端新增 `SpatialProvider`，统一调度评分、调度解释、AED 最近点和预实验指标中的距离计算；默认 `demo` 使用内置坐标 + Haversine，配置 `LRA_MAP_PROVIDER=amap` 且填入 `LRA_AMAP_SERVICE_KEY` 后会优先调用高德 WebService 距离接口，失败或缺 Key 时结构化回退到 demo 距离。
 - Android 新增 `LocationProvider` 抽象和系统定位 provider：注册终端与“我的”页同步位置时优先使用系统最近定位，未授权、定位关闭或无最近定位时自动回退演示坐标；高德/腾讯 Android SDK 后续可作为 adapter 替换 provider，不影响 UI 和上报链路。
 - 后端新增 `NotificationProvider` 抽象，当前 `LRA_PUSH_PROVIDER=websocket` 使用既有 WebSocket 状态同步作为比赛版实时通知；若设置 `jpush`/`vendor` 等未来 provider，会在 `/api/health/detail.pushProvider` 明确显示 adapter pending 并自动回退 WebSocket，不阻塞演示。
 
 Validation:
 
-- Backend unittest discovery: 40 tests OK after evidence-summary and analysis-tool slices.
+- Backend unittest discovery: 41 tests OK after evidence-summary and one-command analysis-tool slices.
 - Web typecheck/build: passed.
 - Android debug APK build: passed after increasing Gradle heap for AndroidX Security + Compose builds.
 

@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: af1bec5 before current pre-experiment report-builder slice
-- Last update: 2026-05-22 10:51:20 +08:00
+- HEAD: ed7a17d
+- Last update: 2026-05-22 10:55:08 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -139,7 +139,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 114. Add PPT-safe Markdown analysis report generator for round-summary CSV. (done, pushed)
 115. Sync expert feedback template, whitepaper, and product plan with evidence analysis toolchain and 40-test validation. (done, pushed)
 116. Correct analysis-report percentage scaling for role assignment completeness. (done, pushed)
-117. Add one-command pre-experiment report builder for CSV plus Markdown generation. (done, checkpointing)
+117. Add one-command pre-experiment report builder for CSV plus Markdown generation. (done, pushed)
+118. Sync product plan, whitepaper, and expert template with the one-command evidence-analysis flow. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -574,6 +575,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Pre-experiment report-builder validation: project `.venv` was used. `python scripts\build_pre_experiment_report.py --help` passed; `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted backend test `test_pre_experiment_report_builder_creates_summary_and_analysis` passed; full backend unittest discovery passed, 41 tests OK.
 - Resume safety check after interruption: `git status --short --branch` shows branch `codex/competition-hardening` aligned with `origin/codex/competition-hardening`; pending checkpoint files are README, deployment runbook, morning handoff, pre-experiment protocol, long-task state, the new report-builder script, and backend tests. Runtime/user files remain excluded: `server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, and `output/`.
 - Diff hygiene validation: `git diff --check` passed with only Windows CRLF normalization warnings.
+- Git checkpoint: `ed7a17d` (`checkpoint: add pre-experiment report builder`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence-analysis documentation sync slice: `docs/PRODUCT_OPTIMIZATION_PLAN.md`, `docs/TECHNICAL_LANDING_WHITEPAPER.md`, and `docs/EXPERT_FEEDBACK_TEMPLATE.md` now point reviewers and teammates to `scripts/build_pre_experiment_report.py` as the preferred one-command multi-round ZIP analysis flow, while keeping the two-step scripts available for troubleshooting.
+- Evidence-analysis documentation validation: targeted `rg` confirmed the one-command flow, `round-summary.csv`, `round-analysis.md`, and current 41-test wording appear in public planning/review materials; safety wording scan found clinical-effectiveness terms only in cautionary or negative contexts; `git diff --check` passed with only Windows CRLF normalization warnings.
 
 ## Blockers Summary
 
@@ -582,7 +586,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the pre-experiment report-builder slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence-analysis documentation sync slice if staged diff is clean, then continue with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
