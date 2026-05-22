@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: da9fdf2
-- Last update: 2026-05-22 16:43:51 +08:00
+- HEAD: 0b127b5
+- Last update: 2026-05-22 16:53:56 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -167,7 +167,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 142. Add round-analysis quality review table for rerun/manual-review triage. (done, checkpointing)
 143. Sync Web preflight report post-demo evidence steps with quality review table. (done, pushed)
 144. Add multi-round review-action CSV for PPT/expert evidence triage. (done, pushed)
-145. Prevent non-patient demo mobile terminals from starting patient SOS. (done, validating)
+145. Prevent non-patient demo mobile terminals from starting patient SOS. (done, pushed)
+146. Surface evidence-package SHA-256 after Web/mobile downloads. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -690,6 +691,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `da9fdf2` (`checkpoint: add review action analysis output`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile demo SOS gate slice: `/mobile?demo=prime|runner|guide` now renders a read-only waiting panel instead of a patient SOS trigger, while `/mobile?demo=patient` keeps the two-step SOS confirmation. `handlePatientSos` also guards against non-patient demo personas so accidental responder-tab clicks cannot start a patient alert.
 - Mobile demo SOS gate validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-y6G93YAO.js`, mobile `MobileApp-xJvHSufN.js`, and stage `MobileDemoStage-CoUTmnw3.js`. Browser smoke on a temporary local stack `127.0.0.1:18092` confirmed patient demo has an enabled `启动 SOS` button, first click only changes it to `再次点击确认 SOS` without starting a countdown, and core-rescuer demo has no enabled SOS button plus a disabled `等待患者端启动 SOS` control. Temporary backend/frontend processes, DB, log, and pid files were stopped/removed.
+- Git checkpoint: `0b127b5` (`checkpoint: gate mobile demo sos trigger`) created and pushed to `origin/codex/competition-hardening`.
+- Evidence-package SHA display slice: Web command-center package downloads and mobile archived-flow package downloads now read `X-LifeReflexArc-Package-Sha256` and show the downloaded filename plus SHA-256 in a success message. The shared mobile download helper returns filename/hash metadata; the Web command center shows successful downloads in a green status bar rather than the red request-error area.
+- Evidence-package SHA display validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-C1o_GuN-.js`, mobile `MobileApp-D6sQFbqf.js`, and stage `MobileDemoStage-DylKZH_L.js`. Browser smoke on temporary local backend `127.0.0.1:18093` with demo token `LCY` confirmed Web header package download displays `证据包已下载` and a 64-character SHA-256 without `请求异常`; mobile `/mobile?demo=guide&incidentId=...` archived package download displays `事件证据包已下载` and a 64-character SHA-256 without error. Temporary process, DB, log, and pid files were stopped/removed.
 
 ## Blockers Summary
 
@@ -698,7 +702,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the mobile demo SOS gate slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: show evidence ZIP SHA-256 after download, make readiness warning count match visible warnings, or add bound-event status to the 4-terminal stage. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the evidence-package SHA display slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: make readiness warning count match visible warnings, add bound-event status to the 4-terminal stage, or improve copy affordance for downloaded package hash. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

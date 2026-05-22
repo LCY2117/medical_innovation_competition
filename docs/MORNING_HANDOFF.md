@@ -123,7 +123,9 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最新移动端非患者演示防误触增量构建产物为桌面 `App-y6G93YAO.js`、移动 `MobileApp-xJvHSufN.js`、4端演示台 `MobileDemoStage-CoUTmnw3.js`。
+结果：均通过。最新证据包 SHA-256 前端展示增量构建产物为桌面 `App-C1o_GuN-.js`、移动 `MobileApp-D6sQFbqf.js`、4端演示台 `MobileDemoStage-DylKZH_L.js`。
+
+证据包 SHA-256 展示烟测：使用临时本地后端 `127.0.0.1:18093`、演示口令 `LCY`、临时 SQLite DB 通过。确认 Web 总控台点击“证据包”后显示“证据包已下载”和 64 位 SHA-256，且不显示“请求异常”；移动归档页 `/mobile?demo=guide&incidentId=...` 点击“下载事件证据包”后显示文件名和 64 位 SHA-256，且无下载错误提示。
 
 移动端演示防误触烟测：使用临时本地后端/前端 `127.0.0.1:18092`、临时 SQLite DB 通过。确认 `/mobile?demo=patient` 有可用 `启动 SOS`，首次点击只进入 `再次点击确认 SOS` 且不启动倒计时；`/mobile?demo=prime` 显示“核心施救不触发患者 SOS”，只有禁用的“等待患者端启动 SOS”，没有可用 SOS 触发按钮。
 

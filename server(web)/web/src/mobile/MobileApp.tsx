@@ -1004,7 +1004,7 @@ function MobileApp() {
     };
   }, []);
 
-  async function runAction(label: string, work: () => Promise<void>, okText?: string) {
+  async function runAction(label: string, work: () => Promise<void | string>, okText?: string) {
     if (busyActionRef.current) {
       return;
     }
@@ -1012,14 +1012,15 @@ function MobileApp() {
     setBusyAction(label);
     setNotice(null);
     try {
-      await work();
+      const resultText = await work();
       if (incident) {
         const next = await fetchIncident(incident.incidentId);
         setIncident((current) => mergeIncidentState(current, next));
       }
       await loadPeripheralData();
-      if (okText) {
-        setNotice({ kind: 'ok', text: okText });
+      const successText = typeof resultText === 'string' ? resultText : okText;
+      if (successText) {
+        setNotice({ kind: 'ok', text: successText });
       }
     } catch (error) {
       setNotice({ kind: 'error', text: error instanceof Error ? error.message : '操作失败' });
@@ -1178,8 +1179,12 @@ function MobileApp() {
     }
     await runAction(
       'package',
-      () => downloadExperimentPackage(session?.token, demoAdminToken, incident.incidentId),
-      '事件证据包已开始下载。',
+      async () => {
+        const download = await downloadExperimentPackage(session?.token, demoAdminToken, incident.incidentId);
+        return download.packageSha256
+          ? `事件证据包已下载：${download.filename}；SHA-256 ${download.packageSha256}`
+          : `事件证据包已下载：${download.filename}。未读取到 SHA-256 响应头，请以 ZIP 内 manifest 为准。`;
+      },
     );
   }
 

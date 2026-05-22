@@ -919,15 +919,19 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
   return copied;
 }
 
-async function downloadResponseBlob(response: Response, fallbackFilename: string): Promise<void> {
+async function downloadResponseBlob(
+  response: Response,
+  fallbackFilename: string,
+): Promise<{ filename: string; packageSha256: string | null }> {
   if (typeof window === 'undefined') {
-    return;
+    return { filename: fallbackFilename, packageSha256: null };
   }
   const blob = await response.blob();
   const disposition = response.headers.get('Content-Disposition') ?? '';
   const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/)?.[1];
   const plain = disposition.match(/filename="?([^";]+)"?/)?.[1];
   const filename = encoded ? decodeURIComponent(encoded) : plain || fallbackFilename;
+  const packageSha256 = response.headers.get('X-LifeReflexArc-Package-Sha256');
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -936,6 +940,7 @@ async function downloadResponseBlob(response: Response, fallbackFilename: string
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+  return { filename, packageSha256 };
 }
 
 function getDispatchStartTs(state?: IncidentState | null): number | null {
@@ -1368,6 +1373,7 @@ export default function App() {
   const [liveNowMs, setLiveNowMs] = useState(Date.now());
   const [wsError, setWsError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptRef = useRef(0);
   const reconnectTimeoutRef = useRef<number | null>(null);
@@ -1968,6 +1974,7 @@ export default function App() {
   const exportExperiment = async () => {
     try {
       setErrorMessage(null);
+      setSuccessMessage(null);
       const res = await fetch(`${getApiBase()}/experiments/current/export`, {
         headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
       });
@@ -1976,6 +1983,7 @@ export default function App() {
       }
       const data = await res.json();
       downloadJson(`lifereflex-experiment-${data?.incidentId ?? 'current'}.json`, data);
+      setSuccessMessage(`实验数据已下载：lifereflex-experiment-${data?.incidentId ?? 'current'}.json`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '导出实验数据失败');
     }
@@ -1984,6 +1992,7 @@ export default function App() {
   const exportExperimentPackage = async () => {
     try {
       setErrorMessage(null);
+      setSuccessMessage(null);
       const targetIncidentId = incidentState?.incidentId ?? incidentId;
       const packagePath = targetIncidentId
         ? `/experiments/${encodeURIComponent(targetIncidentId)}/package`
@@ -1994,7 +2003,12 @@ export default function App() {
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '导出事件证据包失败'));
       }
-      await downloadResponseBlob(res, `lifereflex-experiment-${incidentId ?? 'current'}.zip`);
+      const download = await downloadResponseBlob(res, `lifereflex-experiment-${incidentId ?? 'current'}.zip`);
+      setSuccessMessage(
+        download.packageSha256
+          ? `证据包已下载：${download.filename}；SHA-256 ${download.packageSha256}`
+          : `证据包已下载：${download.filename}。未读取到 SHA-256 响应头，请以 ZIP 内 manifest 为准。`,
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '导出事件证据包失败');
     }
@@ -3403,6 +3417,11 @@ export default function App() {
           {wsError && (
             <div className="text-xs text-red-400 border border-red-900/60 bg-red-950/40 rounded-lg px-3 py-2">
               实时连接：{wsError}
+            </div>
+          )}
+          {successMessage && (
+            <div className="text-xs text-emerald-200 border border-emerald-800/70 bg-emerald-950/40 rounded-lg px-3 py-2 break-all">
+              {successMessage}
             </div>
           )}
           {errorMessage && (

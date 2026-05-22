@@ -273,11 +273,16 @@ export function openIncidentSocket(incidentId: string): WebSocket {
   return new WebSocket(`${getWsBase()}?incidentId=${encodeURIComponent(incidentId)}`);
 }
 
+export interface DownloadedPackageInfo {
+  filename: string;
+  packageSha256: string | null;
+}
+
 export async function downloadExperimentPackage(
   token?: string | null,
   demoAdminToken = getStoredDemoAdminToken(),
   incidentId?: string | null,
-): Promise<void> {
+): Promise<DownloadedPackageInfo> {
   if (typeof window === 'undefined') {
     throw new Error('下载事件证据包失败：当前环境不支持浏览器下载');
   }
@@ -295,6 +300,7 @@ export async function downloadExperimentPackage(
   const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/)?.[1];
   const plain = disposition.match(/filename="?([^";]+)"?/)?.[1];
   const filename = encoded ? decodeURIComponent(encoded) : plain || 'lifereflex-experiment-current.zip';
+  const packageSha256 = response.headers.get('X-LifeReflexArc-Package-Sha256');
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -303,4 +309,5 @@ export async function downloadExperimentPackage(
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+  return { filename, packageSha256 };
 }
