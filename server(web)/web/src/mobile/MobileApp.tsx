@@ -807,7 +807,9 @@ function MobileApp() {
       if (!incidentId) {
         return;
       }
-      wsRef.current?.close();
+      const previousSocket = wsRef.current;
+      wsRef.current = null;
+      previousSocket?.close();
       if (reconnectRef.current) {
         window.clearTimeout(reconnectRef.current);
         reconnectRef.current = null;
@@ -815,8 +817,15 @@ function MobileApp() {
       setSyncStatus('connecting');
       const socket = openIncidentSocket(incidentId);
       wsRef.current = socket;
-      socket.onopen = () => setSyncStatus('live');
+      socket.onopen = () => {
+        if (wsRef.current === socket) {
+          setSyncStatus('live');
+        }
+      };
       socket.onmessage = (event) => {
+        if (wsRef.current !== socket) {
+          return;
+        }
         try {
           const msg = JSON.parse(event.data);
           if (msg.type === 'STATE') {
@@ -826,9 +835,16 @@ function MobileApp() {
           setNotice({ kind: 'error', text: '实时消息解析失败。' });
         }
       };
-      socket.onerror = () => setSyncStatus('offline');
+      socket.onerror = () => {
+        if (wsRef.current === socket) {
+          setSyncStatus('offline');
+        }
+      };
       socket.onclose = () => {
         if (wsRef.current !== socket) {
+          return;
+        }
+        if (reconnectRef.current) {
           return;
         }
         setSyncStatus('reconnecting');
@@ -975,9 +991,12 @@ function MobileApp() {
 
   useEffect(() => {
     return () => {
-      wsRef.current?.close();
+      const socket = wsRef.current;
+      wsRef.current = null;
+      socket?.close();
       if (reconnectRef.current) {
         window.clearTimeout(reconnectRef.current);
+        reconnectRef.current = null;
       }
     };
   }, []);
@@ -1066,7 +1085,14 @@ function MobileApp() {
     saveSession(null);
     setSession(null);
     setIncident(null);
-    wsRef.current?.close();
+    const socket = wsRef.current;
+    wsRef.current = null;
+    socket?.close();
+    if (reconnectRef.current) {
+      window.clearTimeout(reconnectRef.current);
+      reconnectRef.current = null;
+    }
+    setSyncStatus('idle');
   }
 
   async function handlePatientSos() {

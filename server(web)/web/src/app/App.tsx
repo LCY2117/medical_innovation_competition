@@ -1689,10 +1689,9 @@ export default function App() {
       return;
     }
     manualCloseRef.current = false;
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    const previousWs = wsRef.current;
+    wsRef.current = null;
+    previousWs?.close();
     if (reconnectTimeoutRef.current) {
       window.clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
@@ -1702,21 +1701,34 @@ export default function App() {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      if (wsRef.current !== ws) {
+        return;
+      }
       reconnectAttemptRef.current = 0;
       setWsConnected(true);
       setWsError(null);
     };
     ws.onclose = () => {
+      if (wsRef.current !== ws) {
+        return;
+      }
       setWsConnected(false);
-      if (!manualCloseRef.current && incidentId) {
+      if (!manualCloseRef.current && id) {
         const attempt = reconnectAttemptRef.current;
         const delay = Math.min(10000, 1000 * Math.pow(2, attempt));
         reconnectAttemptRef.current += 1;
-        reconnectTimeoutRef.current = window.setTimeout(() => connectWs(incidentId), delay);
+        reconnectTimeoutRef.current = window.setTimeout(() => connectWs(id), delay);
       }
     };
-    ws.onerror = () => setWsError('WebSocket 连接异常');
+    ws.onerror = () => {
+      if (wsRef.current === ws) {
+        setWsError('WebSocket 连接异常');
+      }
+    };
     ws.onmessage = (event) => {
+      if (wsRef.current !== ws) {
+        return;
+      }
       try {
         const msg = JSON.parse(event.data);
         if (msg?.type === 'STATE') {
@@ -1747,8 +1759,9 @@ export default function App() {
         window.clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      wsRef.current?.close();
+      const ws = wsRef.current;
       wsRef.current = null;
+      ws?.close();
     };
   }, [incidentId]);
 

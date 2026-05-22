@@ -57,6 +57,7 @@
 - Web 总控台新增“自检报告/导出自检”：可下载 Markdown 演示前自检报告，汇总准备度、管理权限、前后端健康、审计/频控、provider fallback、终端任务、AED 点位、演示入口和安全边界，不写入口令、token 或 API Key。
 - Web 总控台新增“演示入口”面板：可复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接，也可同步打开 4 个手机端标签页；初始化协同演示场景后自动绑定当前 `incidentId`，方便发给队友手机或现场审阅端。
 - `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，便于专家远程或多标签复现实验。
+- Web 总控台和移动 Web 的 WebSocket 重连已补过期回调保护：切换事件、退出登录、关闭旧连接或网络抖动时，旧 socket 的 close/error/message 不会再覆盖当前连接状态或排出幽灵重连。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
 - 移动 Web “现场/协同”页已进一步分层：默认只展示 AED 位置、队友角色、在线状态和任务状态；分派评分、理由、健康摘要和风险标记收进“分派依据与健康摘要”展开区。
 - 移动 Web 演示入口和 4 端演示台进一步弱化 PRIME/RUNNER/GUIDE 辅助代号，优先展示“核心施救端、AED 保障端、清障接驳端”和具体职责。
@@ -150,6 +151,16 @@ gradle :app:assembleRelease --no-daemon
 
 移动 PWA 烟测：本地 Vite preview `127.0.0.1:18094` 通过。确认 `/mobile`、`/offline.html`、`/mobile-sw.js` 返回 200，浏览器 DOM 烟测可见“浏览器应急端”和“移动端暂时离线/重新连接”。service worker 评估接口在浏览器沙箱内不可读，已通过构建、脚本内容和可见页面验证替代。
 
+Web/mobile WebSocket 稳定性切片：
+
+```powershell
+cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)\web"
+npm run typecheck
+npm run build
+```
+
+结果：均通过。最新构建产物为桌面 `App-CCmke60w.js`、移动 `MobileApp-CEP25Ntl.js`；移动端和总控台已忽略旧 WebSocket 的过期回调，并在退出登录/卸载时清理待重连任务。
+
 Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite DB、演示口令 `LCY` 通过。确认初始化演示场景后总控台出现“自检报告”和“导出自检”，并绑定当前事件编号。Codex in-app Browser 不支持下载事件捕获，因此 Markdown 下载内容以代码审阅、typecheck/build 和 DOM 烟测替代验证；临时端口和 `output/preflight-smoke` 已清理。
 
 ## 本轮新增检查点
@@ -237,7 +248,8 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `6751516`：Android WebSocket 重连改为单飞调度，网络抖动时避免排队多个延迟重连任务，已通过 debug 构建并推送。
 - `c1ff709`：Android 全屏急救动作增加防重复提交和“提交中...”反馈，已通过 debug 构建并推送。
 - `da1655d`：Android 普通任务卡同步显示动作提交态，已通过 debug 构建并推送。
-- 最新验证扫尾：后端 46 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例和 `evidence_quality_report.json` 证据质量报告通过；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Web typecheck、Web build、Android release readiness 构建均保持上一轮通过状态；Web 最近自检报告构建产物为桌面 `App-DHwe7OoC.js`。
+- `9ced23d`：证据包 verifier 新增篡改 hash、未列文件、隐私边界重叠等坏包负例测试，后端 46 项通过并推送。
+- 最新验证扫尾：后端 46 项测试通过；证据包校验/汇总/分析/图表数据脚本、坏包负例和 `evidence_quality_report.json` 证据质量报告通过；Web `npm run typecheck` 与 `npm run build` 已通过 Web/mobile WebSocket 过期回调保护补丁验证，最新构建产物为桌面 `App-CCmke60w.js`、移动 `MobileApp-CEP25Ntl.js`；Android `gradle :app:assembleDebug --no-daemon` 已通过 REST 状态种子、WebSocket 单飞重连、全屏急救动作防重复提交和普通任务卡提交态补丁验证；Android release readiness 构建保持上一轮通过状态。
 
 ## 你醒来后最该做的事
 
