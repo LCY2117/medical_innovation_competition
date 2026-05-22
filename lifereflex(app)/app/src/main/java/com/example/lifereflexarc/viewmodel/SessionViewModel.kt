@@ -375,7 +375,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             return listOf(
                 "患者端触发或接入 SOS 协同流程",
                 "等待核心施救、AED 保障和环境清障任务到场",
-                "事件完成交接后进入匿名化预实验记录",
+                "事件完成交接后进入匿名化协同记录",
             )
         }
         return when (assignedRole) {
@@ -397,7 +397,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             UserRole.PATIENT -> listOf(
                 "患者端触发或接入 SOS 协同流程",
                 "等待核心施救、AED 保障和环境清障任务到场",
-                "事件完成交接后进入匿名化预实验记录",
+                "事件完成交接后进入匿名化协同记录",
             )
             null -> listOf(
                 "保持在线待命，接收现场协同状态",

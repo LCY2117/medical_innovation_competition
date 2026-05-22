@@ -20,7 +20,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
                 sleepQuality = "poor",
                 riskTags = listOf("tachycardia", "low_spo2", "high_pressure"),
                 updatedTs = now,
-                note = "OPPO Health mock fallback for high-risk patient demo",
+                note = "健康摘要样例：高风险患者端",
             )
 
             HealthCondition.ATHLETIC -> HealthSignalSummary(
@@ -32,7 +32,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
                 activityLevel = "high",
                 sleepQuality = "good",
                 updatedTs = now,
-                note = "OPPO Health mock fallback for high-mobility responder",
+                note = "健康摘要样例：高机动响应者",
             )
 
             HealthCondition.LIMITED_MOBILITY -> HealthSignalSummary(
@@ -45,7 +45,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
                 sleepQuality = "fair",
                 riskTags = listOf("limited_mobility"),
                 updatedTs = now,
-                note = "OPPO Health mock fallback for limited mobility responder",
+                note = "健康摘要样例：行动受限响应者",
             )
 
             HealthCondition.GENERAL -> HealthSignalSummary(
@@ -57,7 +57,7 @@ class MockOppoHealthSignalProvider : HealthSignalProvider {
                 activityLevel = "normal",
                 sleepQuality = "good",
                 updatedTs = now,
-                note = "OPPO Health mock fallback for stable responder",
+                note = "健康摘要样例：稳定响应者",
             )
         }
     }

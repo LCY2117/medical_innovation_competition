@@ -249,7 +249,7 @@ class IncidentViewModel(
                     location = location,
                 )
                 _currentLocation.value = location
-                _locationStatus.value = "已切换到演示位置：$label"
+                _locationStatus.value = "已切换到协同点位：$label"
             } catch (e: Exception) {
                 _error.value = e.message
             }

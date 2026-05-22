@@ -404,10 +404,10 @@ private fun HealthSignalSummaryCard(
         border = BorderStroke(1.dp, Color(0xFF1E293B)),
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("OPPO 健康增强", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text("健康数据增强", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 text = if (healthSignals == null) {
-                    "真实健康授权完成前，系统使用演示健康摘要维持协同演练闭环。"
+                    "真实健康授权完成前，系统使用健康摘要样例维持协同流程闭环。"
                 } else {
                     "当前健康摘要用于展示调度如何参考健康风险。"
                 },
@@ -435,7 +435,7 @@ private fun HealthSignalSummaryCard(
 
 private fun translateHealthSource(source: String?): String = when (source) {
     "oppo", "oppo_health" -> "OPPO 健康"
-    "mock" -> "演示健康数据"
+    "mock" -> "健康摘要样例"
     "manual" -> "手动录入"
     else -> "健康数据未接入"
 }

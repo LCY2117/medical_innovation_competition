@@ -3302,7 +3302,7 @@ export default function App() {
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">AED 点位库</div>
-                  <div className="text-sm text-white font-semibold mt-1">可用于调度评分与预实验记录</div>
+                  <div className="text-sm text-white font-semibold mt-1">可用于调度评分与事件证据包记录</div>
                 </div>
                 <button
                   onClick={loadAedSites}

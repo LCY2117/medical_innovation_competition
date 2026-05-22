@@ -278,12 +278,12 @@ export async function downloadExperimentPackage(
   demoAdminToken = getStoredDemoAdminToken(),
 ): Promise<void> {
   if (typeof window === 'undefined') {
-    throw new Error('下载预实验证据包失败：当前环境不支持浏览器下载');
+    throw new Error('下载事件证据包失败：当前环境不支持浏览器下载');
   }
   const headers = buildDemoAdminHeaders(demoAdminToken, buildAuthHeaders(token));
   const response = await fetch(`${getApiBase()}/experiments/current/package`, { headers });
   if (!response.ok) {
-    throw new Error(await explainResponseError(response, '下载预实验证据包失败'));
+    throw new Error(await explainResponseError(response, '下载事件证据包失败'));
   }
   const blob = await response.blob();
   const disposition = response.headers.get('Content-Disposition') ?? '';

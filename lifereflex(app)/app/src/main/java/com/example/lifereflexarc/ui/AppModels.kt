@@ -107,7 +107,7 @@ fun formatAedStatusLabel(status: String?): String? = when (status?.trim()?.upper
 
 fun formatLocationSourceLabel(source: String?): String = when (source?.trim()?.lowercase()) {
     null, "" -> "--"
-    "app-demo", "app-demo-fallback", "mobile-demo" -> "演示位置"
+    "app-demo", "app-demo-fallback", "mobile-demo" -> "协同点位"
     "manual" -> "手动录入"
     "android-gps" -> "系统 GPS 定位"
     "android-network" -> "系统网络定位"

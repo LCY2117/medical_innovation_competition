@@ -5,8 +5,8 @@
 - Status: validating
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 17e999f
-- Last update: 2026-05-22 07:56:12 +08:00
+- HEAD: 7640379
+- Last update: 2026-05-22 08:03:43 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -113,7 +113,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 88. Polish Web phone-preview inert actions and Android visible task wording. (done, pushed)
 89. Normalize dispatch-source labels across Web and Android. (done, pushed)
 90. Add mobile PWA offline fallback and event context strip. (done, pushed)
-91. Add ZIP evidence-package data dictionary and sync public review docs. (done, validating)
+91. Add ZIP evidence-package data dictionary and sync public review docs. (done, pushed)
+92. Polish visible evidence-package, health-summary, and location wording across Web/mobile/Android. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -447,6 +448,11 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence package data dictionary slice ready to checkpoint: ZIP generation now includes `data_dictionary.md`, manifest public/expert-review guidance lists it, and backend package tests assert presence, content, manifest privacy guidance, and hash manifest membership.
 - Documentation sync ready to checkpoint: README, deployment runbook, expert feedback template, pre-experiment protocol, product optimization plan, technical whitepaper, and morning handoff now list `data_dictionary.md` alongside analysis guide and public review artifacts.
 - Evidence data dictionary validation: targeted `test_demo_bootstrap_aed_dispatch_and_export` passed, 1 test OK; backend full unittest discovery passed, 37 tests OK after documentation sync.
+- Git checkpoint: `7640379` (`checkpoint: add evidence data dictionary`) created and pushed to `origin/codex/competition-hardening`.
+- Visible wording polish in progress: Web/mobile download and AED copy now says `事件证据包` instead of visible `预实验证据包`; Android archive summary says `匿名化协同记录`; Android location demo labels now present as `协同点位`; Android health card presents `健康数据增强` and `健康摘要样例` instead of visible OPPO/mock/fallback wording.
+- Visible wording validation: targeted `rg` found no remaining `下载预实验证据包`, `预实验患者端`, `匿名化预实验记录`, `已切换到演示位置`, `OPPO Health mock fallback`, `演示健康数据`, `OPPO 健康增强`, or `可用于调度评分与预实验记录` in checked Web/Android UI files.
+- Web visible wording validation: `npm run typecheck` passed; `npm run build` passed with desktop `App-hfqjqD1K.js` at `229.51 kB` raw / `69.57 kB` gzip and mobile `MobileApp-BZNCyjRt.js` at `38.76 kB` raw / `12.41 kB` gzip.
+- Android visible wording validation: `gradle :app:assembleDebug --no-daemon` passed; existing `android.overridePathCheck=true` experimental warning and AndroidX Security deprecation warnings remain non-blocking.
 
 ## Blockers Summary
 
@@ -455,7 +461,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Run pre-commit checks for the data-dictionary evidence slice, stage only related files, commit/push it, then continue the next safe competition-hardening slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
+Checkpoint the visible wording polish slice, then continue the next safe competition-hardening slice from current code inspection and read-only agent findings. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, and temp Playwright install artifacts.
 
 ## Resume Instructions
 

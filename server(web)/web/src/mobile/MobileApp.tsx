@@ -274,7 +274,7 @@ const profilePresets = [
       organization: '演示社区',
       healthCondition: '存在心脏骤停风险',
       professionIdentity: '患者侧',
-      profileBio: '冠心病病史，需要重点监护，可用于预实验患者端。',
+      profileBio: '冠心病病史，需要重点监护，可用于患者端协同流程。',
     },
   },
   {
