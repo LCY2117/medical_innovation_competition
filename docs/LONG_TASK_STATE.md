@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 9ed144d
-- Last update: 2026-05-22 10:14:33 +08:00
+- HEAD: d999a0d
+- Last update: 2026-05-22 10:16:52 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -138,6 +138,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 113. Add multi-round evidence-package summary CLI for pre-experiment ZIP aggregation. (done, pushed)
 114. Add PPT-safe Markdown analysis report generator for round-summary CSV. (done, checkpointing)
 115. Sync expert feedback template, whitepaper, and product plan with evidence analysis toolchain and 40-test validation. (done, checkpointing)
+116. Correct analysis-report percentage scaling for role assignment completeness. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -564,6 +565,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `9ed144d` (`checkpoint: add round analysis report`) created and pushed to `origin/codex/competition-hardening`.
 - Expert-material sync slice: `docs/EXPERT_FEEDBACK_TEMPLATE.md` now includes `expert_feedback_summary.csv`, `round-summary.csv`, and `round-analysis.md` in the review-material checklist and adds a dedicated evidence-chain/analysis-material feedback section. `docs/TECHNICAL_LANDING_WHITEPAPER.md` now mentions the multi-round CSV/Markdown analysis flow and 40 passing backend tests. `docs/PRODUCT_OPTIMIZATION_PLAN.md` now documents the same evidence-analysis toolchain and current 40-test validation.
 - Expert-material sync validation: targeted `rg` confirmed `round-summary.csv`, `round-analysis.md`, `summarize_evidence_rounds.py`, `analyze_round_summary.py`, `expert_feedback_summary.csv`, and current 40-test wording appear in the relevant docs; safety wording scan found only cautionary `不替代/不要写成真实临床疗效证明/不应表述为` contexts.
+- Git checkpoint: `d999a0d` (`checkpoint: sync expert evidence materials`) created and pushed to `origin/codex/competition-hardening`.
+- Analysis-report percentage fix: `scripts/analyze_round_summary.py` now scales `roleAssignmentCompleteness` from the stored 0-1 ratio to a 0-100 percentage in the report table, while leaving existing percent fields unchanged. Backend test now asserts the generated report shows role assignment completeness as 100 instead of 1.
+- Analysis-report percentage validation: targeted backend test `test_round_summary_analysis_script_writes_ppt_safe_report` passed; full backend unittest discovery passed, 40 tests OK.
 
 ## Blockers Summary
 
@@ -572,7 +576,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the expert-material sync slice if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the analysis-report percentage fix if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

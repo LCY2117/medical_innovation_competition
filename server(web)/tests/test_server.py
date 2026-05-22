@@ -933,6 +933,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("T1 触发到分派完成", report)
         self.assertIn("校验通过轮次：1", report)
+        self.assertIn("| 角色分派完整度 `roleAssignmentCompleteness` | 1 | 100 | 100 | 100 | 100 |", report)
         self.assertIn("不应表述为：提高真实抢救成功率", report)
         self.assertIn(bootstrapped.json()["incidentId"], report)
 

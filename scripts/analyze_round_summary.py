@@ -17,9 +17,9 @@ TIME_FIELDS = [
 ]
 
 COVERAGE_FIELDS = [
-    ("roleAssignmentCompleteness", "角色分派完整度"),
-    ("locationCoveragePercent", "定位覆盖率"),
-    ("healthCoveragePercent", "健康摘要覆盖率"),
+    ("roleAssignmentCompleteness", "角色分派完整度", 100.0),
+    ("locationCoveragePercent", "定位覆盖率", 1.0),
+    ("healthCoveragePercent", "健康摘要覆盖率", 1.0),
 ]
 
 CONTEXT_FIELDS = [
@@ -51,6 +51,10 @@ def _values(rows: list[dict[str, str]], field: str) -> list[float]:
     return [value for row in rows if (value := _number(row.get(field))) is not None]
 
 
+def _scaled_values(rows: list[dict[str, str]], field: str, scale: float) -> list[float]:
+    return [value * scale for value in _values(rows, field)]
+
+
 def _fmt(value: float | None) -> str:
     if value is None:
         return "-"
@@ -75,6 +79,16 @@ def _metric_table(rows: list[dict[str, str]], fields: list[tuple[str, str]], uni
     lines = [f"| 指标 | 有效轮次 | 均值{unit} | 中位数{unit} | 最小{unit} | 最大{unit} |", "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for field, label in fields:
         stat = _stats(_values(rows, field))
+        lines.append(
+            f"| {label} `{field}` | {stat['count']} | {_fmt(stat['mean'])} | {_fmt(stat['median'])} | {_fmt(stat['min'])} | {_fmt(stat['max'])} |"
+        )
+    return lines
+
+
+def _scaled_metric_table(rows: list[dict[str, str]], fields: list[tuple[str, str, float]], unit: str) -> list[str]:
+    lines = [f"| 指标 | 有效轮次 | 均值{unit} | 中位数{unit} | 最小{unit} | 最大{unit} |", "| --- | ---: | ---: | ---: | ---: | ---: |"]
+    for field, label, scale in fields:
+        stat = _stats(_scaled_values(rows, field, scale))
         lines.append(
             f"| {label} `{field}` | {stat['count']} | {_fmt(stat['mean'])} | {_fmt(stat['median'])} | {_fmt(stat['min'])} | {_fmt(stat['max'])} |"
         )
@@ -114,7 +128,7 @@ def generate_report(rows: list[dict[str, str]], *, source_name: str) -> str:
         "",
         "## 覆盖率与完整度",
         "",
-        *_metric_table(analyzed_rows, COVERAGE_FIELDS, "%"),
+        *_scaled_metric_table(analyzed_rows, COVERAGE_FIELDS, "%"),
         "",
         "## 场景上下文",
         "",
