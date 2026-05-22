@@ -105,7 +105,7 @@ flowchart LR
 - 登录态使用 AndroidX Security 加密存储并兼容旧登录态迁移。
 - HTTP/网络/WebSocket 异常会映射为可行动中文提示。
 - Debug 构建支持局域网 HTTP 联调，release 构建保持 HTTPS/WSS 安全口径。
-- 事件状态会先从 REST 快照写入本地，再等待 WebSocket 实时帧；WebSocket 重连采用单飞调度；急救动作和普通任务卡提交中会禁用按钮并显示“提交中...”，降低弱网和连点下的重复动作风险。
+- 事件状态会先从 REST 快照写入本地，再等待 WebSocket 实时帧；Android 自动接单后会再次刷新事件快照，快速呈现 JOINED/任务状态；WebSocket 重连采用单飞调度；急救动作和普通任务卡提交中会禁用按钮并显示“提交中...”，降低弱网和连点下的重复动作风险。
 
 当前 debug APK 已可出包，release readiness 构建已通过。后续如需正式比赛包，按 `docs/ANDROID_RELEASE_READINESS.md` 生成 release keystore、记录 SHA1，并把签名四件套放在 `local.properties` 或环境变量中。
 

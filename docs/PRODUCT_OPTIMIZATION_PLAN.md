@@ -44,6 +44,7 @@ Acceptance:
 - [x] 现场总览展示 AED 点位、调度依据、任务状态和归档结果。
 - [x] Debug APK 保持可安装；Release APK 已具备可选本地签名配置和 readiness 文档。
 - [x] Android join/action/auto-join 携带登录 token，适配公网演示口令保护。
+- [x] Android auto-join 成功后立即刷新事件快照，避免真机等待 WebSocket 首帧才看到 JOINED/任务状态。
 - [x] WebSocket incidentId 做 URL 编码，避免特殊事件 ID 破坏连接 URL。
 - [x] Android HTTP/网络/WebSocket 错误映射为可行动中文提示，避免演示时直接暴露底层异常。
 - [x] Debug-only HTTP/LAN 联调已放开，Release 继续保持 HTTPS/WSS 安全口径。
@@ -138,7 +139,7 @@ Validation:
 
 - Backend unittest discovery: 49 tests OK after auto-join logging, join/action idempotency, and evidence verifier negative tests.
 - Web typecheck/build: passed after mobile Web single-flight action guard; latest build emitted desktop `App-WniwvbhZ.js` and mobile `MobileApp-VrPZVJ6u.js`.
-- Android debug APK build: passed after REST state seeding, single-flight WebSocket reconnect, and action pending-state patches.
+- Android debug APK build: passed after auto-join REST refresh, REST state seeding, single-flight WebSocket reconnect, and action pending-state patches.
 
 ## Validation Commands
 

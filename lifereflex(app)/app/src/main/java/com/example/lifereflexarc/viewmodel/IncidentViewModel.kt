@@ -80,6 +80,7 @@ class IncidentViewModel(
                 if (autoJoin) {
                     val join = repository.joinCurrentAuto(_authToken.value, userId)
                     _assignedRole.value = join.role
+                    repository.getIncident(join.incidentId)
                 } else {
                     _assignedRole.value = null
                 }

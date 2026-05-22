@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: c191d41
-- Last update: 2026-05-22 15:15:56 +08:00
+- HEAD: 187f0e3
+- Last update: 2026-05-22 15:23:54 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -161,7 +161,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 136. Make backend role action endpoints idempotent for repeated completed actions. (done, pushed)
 137. Prevent repeated manual join from resetting completed role progress. (done, pushed)
 138. Mark already assigned users as JOINED when they auto-join current incident. (done, pushed)
-139. Add mobile Web ref-level single-flight guard for emergency actions. (done, checkpointing)
+139. Add mobile Web ref-level single-flight guard for emergency actions. (done, pushed)
+140. Refresh Android incident state immediately after auto-joining. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -665,6 +666,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `c191d41` (`checkpoint: record assigned auto joins`) created and pushed to `origin/codex/competition-hardening`.
 - Mobile Web single-flight slice: mobile `runAction` now uses a ref-level in-flight guard in addition to visible button disabled states. This closes the same-frame double-tap window for SOS, auto-join, role actions, location sync, and evidence package download before React state has re-rendered.
 - Mobile Web single-flight validation: `npm run typecheck` passed; `npm run build` passed with desktop bundle `App-WniwvbhZ.js`, mobile bundle `MobileApp-VrPZVJ6u.js`, and stage bundle `MobileDemoStage-BqdjEtRj.js`.
+- Git checkpoint: `187f0e3` (`checkpoint: guard mobile actions single flight`) created and pushed to `origin/codex/competition-hardening`.
+- Android auto-join refresh slice: after `connectCurrent(autoJoin=true)` calls the backend auto-join endpoint, the app now immediately fetches the joined incident snapshot before opening the WebSocket. This lets the APK show the JOINED role/task state without waiting for the first realtime frame.
+- Android auto-join refresh validation: `gradle :app:assembleDebug --no-daemon` passed; only the existing `android.overridePathCheck=true` experimental warning appeared.
 
 ## Blockers Summary
 
@@ -673,7 +677,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the mobile Web single-flight patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the Android auto-join refresh patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
