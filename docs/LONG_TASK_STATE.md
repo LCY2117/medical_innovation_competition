@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 87e1941
-- Last update: 2026-05-22 10:11:45 +08:00
+- HEAD: 9ed144d
+- Last update: 2026-05-22 10:14:33 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -137,6 +137,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 112. Sync long-task state, handoff, and competition docs with the expert-feedback remediation loop. (done, pushed)
 113. Add multi-round evidence-package summary CLI for pre-experiment ZIP aggregation. (done, pushed)
 114. Add PPT-safe Markdown analysis report generator for round-summary CSV. (done, checkpointing)
+115. Sync expert feedback template, whitepaper, and product plan with evidence analysis toolchain and 40-test validation. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -560,6 +561,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `87e1941` (`checkpoint: add evidence round summary tool`) created and pushed to `origin/codex/competition-hardening`.
 - Round-summary analysis slice: added `scripts/analyze_round_summary.py`, a standard-library CLI that reads the merged round-summary CSV and writes a Markdown report with sample count, verification status, phase distribution, mean/median/min/max for timing, coverage, and scenario context metrics, plus PPT-safe conclusion boundaries. README, deployment runbook, and pre-experiment protocol now document the command after `summarize_evidence_rounds.py`.
 - Round-summary analysis validation: project `.venv` already existed and was used. `python scripts\analyze_round_summary.py --help` passed; `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py` passed; targeted backend test `test_round_summary_analysis_script_writes_ppt_safe_report` passed after adding event-id traceability to the report; full backend unittest discovery passed, 40 tests OK.
+- Git checkpoint: `9ed144d` (`checkpoint: add round analysis report`) created and pushed to `origin/codex/competition-hardening`.
+- Expert-material sync slice: `docs/EXPERT_FEEDBACK_TEMPLATE.md` now includes `expert_feedback_summary.csv`, `round-summary.csv`, and `round-analysis.md` in the review-material checklist and adds a dedicated evidence-chain/analysis-material feedback section. `docs/TECHNICAL_LANDING_WHITEPAPER.md` now mentions the multi-round CSV/Markdown analysis flow and 40 passing backend tests. `docs/PRODUCT_OPTIMIZATION_PLAN.md` now documents the same evidence-analysis toolchain and current 40-test validation.
+- Expert-material sync validation: targeted `rg` confirmed `round-summary.csv`, `round-analysis.md`, `summarize_evidence_rounds.py`, `analyze_round_summary.py`, `expert_feedback_summary.csv`, and current 40-test wording appear in the relevant docs; safety wording scan found only cautionary `不替代/不要写成真实临床疗效证明/不应表述为` contexts.
 
 ## Blockers Summary
 
@@ -568,7 +572,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the round-summary analysis report slice if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the expert-material sync slice if staged diff is clean, then continue only with low-risk validation, documentation, or demo-hardening slices unless new user instructions arrive. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

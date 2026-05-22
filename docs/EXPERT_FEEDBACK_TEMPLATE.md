@@ -39,6 +39,7 @@
 | 专家摘要 `expert_summary.md` |  |
 | 专家现场复核清单 `expert_review_checklist.md` |  |
 | 事件级专家反馈签字表 `expert_feedback_form.md` |  |
+| 专家意见汇总与整改闭环表 `expert_feedback_summary.csv` |  |
 | 主持人/观察员跑场单 `facilitator_run_sheet.md` |  |
 | 预实验数据分析说明 `analysis_guide.md` |  |
 | 证据包数据字典 `data_dictionary.md` |  |
@@ -47,6 +48,8 @@
 | 参与者主观问卷表 `participant_questionnaire.csv` |  |
 | 基线-系统对照分析表 `baseline_vs_system_comparison.csv` |  |
 | 单轮预实验汇总表 `pre_experiment_round_summary.csv` |  |
+| 多轮汇总表 `round-summary.csv` |  |
+| 多轮 Markdown 分析摘要 `round-analysis.md` |  |
 | 证据包 `manifest.json` 校验清单 |  |
 | AI 分派解释与规则兜底说明 |  |
 
@@ -96,8 +99,13 @@
 
 反馈：
 
+### 4.5 证据链与分析材料建议
 
-### 4.5 后续改进建议
+请评价证据包、manifest 校验、多轮汇总 CSV、Markdown 分析摘要和专家整改闭环表是否足以支撑预实验复盘。
+
+反馈：
+
+### 4.6 后续改进建议
 
 请提出您认为最优先的 3 项改进。
 
