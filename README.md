@@ -310,7 +310,7 @@ python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
 ```
 
-输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。其中 `round-summary.csv` 会合并每轮 `evidence_quality_report.json` 的质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码；`round-analysis.md` 会新增证据质量小节；`round-chart-data.csv` 已按时间指标、覆盖率、证据质量和场景上下文整理均值、中位数、最小值和最大值，适合直接导入 Excel 或交给 PPT 制作者画图。
+输出目录会包含 `round-summary.csv`、`round-analysis.md` 和 `round-chart-data.csv`。其中 `round-summary.csv` 会合并每轮 `evidence_quality_report.json` 的质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码；`round-analysis.md` 会新增证据质量小节和“需复核轮次”表，优先列出需要重跑或人工补充说明的轮次；`round-chart-data.csv` 已按时间指标、覆盖率、证据质量和场景上下文整理均值、中位数、最小值和最大值，适合直接导入 Excel 或交给 PPT 制作者画图。
 
 也可以分步执行。先一次性校验并合并每轮的 `pre_experiment_round_summary.csv`：
 
@@ -326,7 +326,7 @@ python scripts\summarize_evidence_rounds.py "D:\path\to\evidence-zips" --output 
 python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output "D:\path\to\round-analysis.md" --chart-output "D:\path\to\round-chart-data.csv"
 ```
 
-摘要只做质量分、关键节点缺失、均值、中位数、范围等描述性统计，并内置“不宣称真实临床疗效”的表述边界。
+摘要只做质量分、关键节点缺失、需复核轮次、均值、中位数、范围等描述性统计，并内置“不宣称真实临床疗效”的表述边界。
 
 ## AI 调度说明
 

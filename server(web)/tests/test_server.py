@@ -1052,12 +1052,40 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("| 质量分 `qualityScore` | 1 | 51 | 51 | 51 | 51 |", report)
         self.assertIn("Critical 问题数：0", report)
         self.assertIn("缺失关键节点数：5", report)
+        self.assertIn("### 需复核轮次", report)
+        self.assertIn("| 轮次/事件 | 质量等级 | 质量分 | Critical | Warning | 缺失节点 | 主要提示代码 |", report)
+        self.assertIn("missing_cprStarted", report)
         self.assertIn("| 角色分派完整度 `roleAssignmentCompleteness` | 1 | 100 | 100 | 100 | 100 |", report)
         self.assertIn("不应表述为：提高真实抢救成功率", report)
         self.assertIn(bootstrapped.json()["incidentId"], report)
         self.assertIn("metricGroup,metricKey,metricLabel,unit,validRoundCount", chart_data)
         self.assertIn("time,dispatchSeconds,T1 触发到分派完成,seconds,1", chart_data)
+        self.assertIn("quality,qualityScore,质量分,score,1,51,51,51,51", chart_data)
         self.assertIn("coverage,roleAssignmentCompleteness,角色分派完整度,percent,1,100,100,100,100", chart_data)
+
+        legacy_summary_path = self.root / "round-summary-legacy.csv"
+        legacy_report_path = self.root / "round-analysis-legacy.md"
+        legacy_summary_path.write_text(
+            "verificationStatus,manifestIncidentId,manifestPhase,roleAssignmentCompleteness\nOK,legacy-incident,ARCHIVED,1\n",
+            encoding="utf-8-sig",
+        )
+        legacy_report_result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "analyze_round_summary.py"),
+                str(legacy_summary_path),
+                "--output",
+                str(legacy_report_path),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(legacy_report_result.returncode, 0, legacy_report_result.stderr)
+        legacy_report = legacy_report_path.read_text(encoding="utf-8")
+        self.assertIn("missing_quality_report: 1", legacy_report)
+        self.assertIn("| legacy-incident | missing_quality_report | - | - | - | - | - |", legacy_report)
 
     def test_pre_experiment_report_builder_creates_summary_and_analysis(self) -> None:
         with self._client() as client:
@@ -1100,6 +1128,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn(bootstrapped.json()["incidentId"], summary)
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("证据质量", report)
+        self.assertIn("需复核轮次", report)
         self.assertIn("角色分派完整度", report)
         self.assertIn("metricGroup", chart_data)
         self.assertIn("dispatchSeconds", chart_data)

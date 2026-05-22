@@ -191,6 +191,46 @@ def _sum_field(rows: list[dict[str, str]], field: str) -> int:
     return int(sum(_values(rows, field)))
 
 
+def _quality_review_rows(rows: list[dict[str, str]]) -> list[str]:
+    review_rows = [
+        row
+        for row in rows
+        if not row.get("qualityLevel")
+        or (
+            row.get("qualityLevel") != "ready_for_low_cost_pre_experiment_summary"
+            or _number(row.get("qualityCriticalCount")) not in (None, 0)
+            or _number(row.get("qualityWarningCount")) not in (None, 0)
+            or _number(row.get("missingKeyEventCount")) not in (None, 0)
+        )
+    ]
+    if not review_rows:
+        return ["- 暂未发现需要重跑或人工补充说明的轮次。"]
+
+    lines = [
+        "| 轮次/事件 | 质量等级 | 质量分 | Critical | Warning | 缺失节点 | 主要提示代码 |",
+        "| --- | --- | ---: | ---: | ---: | ---: | --- |",
+    ]
+    for row in review_rows:
+        round_id = row.get("roundId") or row.get("manifestIncidentId") or row.get("incidentId") or "-"
+        warning_codes = row.get("qualityWarningCodes") or "-"
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    round_id,
+                    row.get("qualityLevel") or "missing_quality_report",
+                    row.get("qualityScore") or "-",
+                    row.get("qualityCriticalCount") or "-",
+                    row.get("qualityWarningCount") or "-",
+                    row.get("missingKeyEventCount") or "-",
+                    warning_codes,
+                ]
+            )
+            + " |"
+        )
+    return lines
+
+
 def generate_report(rows: list[dict[str, str]], *, source_name: str) -> str:
     if not rows:
         raise ValueError("round summary CSV has no data rows")
@@ -222,6 +262,10 @@ def generate_report(rows: list[dict[str, str]], *, source_name: str) -> str:
         f"- 缺失关键节点数：{_sum_field(analyzed_rows, 'missingKeyEventCount')}",
         "",
         *_metric_table(analyzed_rows, QUALITY_FIELDS, ""),
+        "",
+        "### 需复核轮次",
+        "",
+        *_quality_review_rows(analyzed_rows),
         "",
         "## 关键时间指标",
         "",

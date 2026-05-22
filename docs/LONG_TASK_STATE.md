@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 5f30b14
-- Last update: 2026-05-22 16:11:56 +08:00
+- HEAD: 972faf4
+- Last update: 2026-05-22 16:18:15 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -164,6 +164,7 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 139. Add mobile Web ref-level single-flight guard for emergency actions. (done, pushed)
 140. Refresh Android incident state immediately after auto-joining. (done, checkpointing)
 141. Merge evidence quality fields into multi-round CSV/report analysis and reviewer docs. (done, checkpointing)
+142. Add round-analysis quality review table for rerun/manual-review triage. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -675,6 +676,8 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Evidence-quality analysis slice: `scripts/analyze_round_summary.py` now adds a `证据质量` Markdown section with quality-level distribution, total critical/warning/info counts, missing-key-event total, and quality-score statistics; `round-chart-data.csv` now includes quality score, critical count, warning count, and missing-key-event count rows for Excel/PPT charts.
 - Evidence-quality documentation sync: README, deployment runbook, pre-experiment protocol, morning handoff, product plan, technical whitepaper, and expert feedback template now describe that multi-round summaries include evidence quality fields for deciding which simulation rounds need rerun or manual review, while keeping clinical-effectiveness wording cautious.
 - Evidence-quality validation: `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted evidence-summary/report-builder tests passed; full backend unittest discovery passed, 49 tests OK.
+- Quality review triage slice: `scripts/analyze_round_summary.py` now adds a `需复核轮次` table that lists non-ready rounds, rounds with critical/warning/missing-key-event counts, and legacy CSV rows without quality fields as `missing_quality_report`. README, deployment runbook, pre-experiment protocol, and morning handoff now explain the table as a rerun/manual-supplement triage aid.
+- Quality review triage validation: `python -m py_compile scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted report/report-builder tests passed; full backend unittest discovery passed, 49 tests OK.
 
 ## Blockers Summary
 
@@ -683,7 +686,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the evidence-quality summary/report slice if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the quality-review triage slice if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 
