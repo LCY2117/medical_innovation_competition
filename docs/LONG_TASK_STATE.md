@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: b7e5a96
-- Last update: 2026-05-22 16:33:27 +08:00
+- HEAD: da9fdf2
+- Last update: 2026-05-22 16:43:51 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -166,7 +166,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 141. Merge evidence quality fields into multi-round CSV/report analysis and reviewer docs. (done, checkpointing)
 142. Add round-analysis quality review table for rerun/manual-review triage. (done, checkpointing)
 143. Sync Web preflight report post-demo evidence steps with quality review table. (done, pushed)
-144. Add multi-round review-action CSV for PPT/expert evidence triage. (done, validating)
+144. Add multi-round review-action CSV for PPT/expert evidence triage. (done, pushed)
+145. Prevent non-patient demo mobile terminals from starting patient SOS. (done, validating)
 
 ## Sub-Agent Ledger
 
@@ -686,6 +687,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Review-action CSV slice: `scripts/analyze_round_summary.py` can now write `round-review-actions.csv` via `--review-output`, and `scripts/build_pre_experiment_report.py` now generates it by default alongside `round-summary.csv`, `round-analysis.md`, and `round-chart-data.csv`. The CSV labels each round as usable, usable with notes, requiring rerun/manual supplement, or excluded/manual review, so PPT and expert materials can be filtered before charting.
 - Review-action CSV documentation sync: README, deployment runbook, pre-experiment protocol, product plan, technical whitepaper, expert feedback template, evidence-package internal guidance, Web self-check report, and morning handoff now mention `round-review-actions.csv` and explain that it is a pre-PPT triage aid, not clinical evidence.
 - Review-action CSV validation: `python -m py_compile scripts\verify_evidence_package.py scripts\summarize_evidence_rounds.py scripts\analyze_round_summary.py scripts\build_pre_experiment_report.py` passed; targeted evidence analysis/report-builder tests passed; full backend unittest discovery passed, 49 tests OK; Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-JkgAD_yM.js`, mobile `MobileApp-7Q1VHnBQ.js`, and stage `MobileDemoStage-DyZIJVu5.js`.
+- Git checkpoint: `da9fdf2` (`checkpoint: add review action analysis output`) created and pushed to `origin/codex/competition-hardening`.
+- Mobile demo SOS gate slice: `/mobile?demo=prime|runner|guide` now renders a read-only waiting panel instead of a patient SOS trigger, while `/mobile?demo=patient` keeps the two-step SOS confirmation. `handlePatientSos` also guards against non-patient demo personas so accidental responder-tab clicks cannot start a patient alert.
+- Mobile demo SOS gate validation: Web `npm run typecheck` passed; Web `npm run build` passed with desktop `App-y6G93YAO.js`, mobile `MobileApp-xJvHSufN.js`, and stage `MobileDemoStage-CoUTmnw3.js`. Browser smoke on a temporary local stack `127.0.0.1:18092` confirmed patient demo has an enabled `启动 SOS` button, first click only changes it to `再次点击确认 SOS` without starting a countdown, and core-rescuer demo has no enabled SOS button plus a disabled `等待患者端启动 SOS` control. Temporary backend/frontend processes, DB, log, and pid files were stopped/removed.
 
 ## Blockers Summary
 
@@ -694,7 +698,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the review-action CSV slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: show evidence ZIP SHA-256 after download, prevent non-patient demo terminals from starting patient SOS, make readiness warning count match visible warnings, or add bound-event status to the 4-terminal stage. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the mobile demo SOS gate slice if staged diff is clean, then continue with another low-risk Web/mobile demo quality slice. Good next candidates from sidecar review: show evidence ZIP SHA-256 after download, make readiness warning count match visible warnings, or add bound-event status to the 4-terminal stage. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

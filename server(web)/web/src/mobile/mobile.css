@@ -171,12 +171,21 @@
   background: var(--mobile-ok-soft);
 }
 
+.mobile-emergency-panel.readonly {
+  border-color: color-mix(in srgb, var(--mobile-border) 72%, var(--mobile-cta));
+  background: var(--mobile-surface);
+}
+
 .mobile-emergency-panel svg {
   color: var(--mobile-danger);
 }
 
 .mobile-emergency-panel.responder svg {
   color: var(--mobile-ok);
+}
+
+.mobile-emergency-panel.readonly svg {
+  color: var(--mobile-cta);
 }
 
 .mobile-emergency-panel h2,
@@ -191,6 +200,10 @@
 
 .mobile-emergency-panel.responder p {
   color: var(--mobile-ok-text);
+}
+
+.mobile-emergency-panel.readonly p {
+  color: var(--mobile-muted);
 }
 
 .mobile-topbar,
@@ -660,6 +673,10 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px;
   gap: 8px;
+}
+
+.mobile-emergency-actions.single {
+  grid-template-columns: 1fr;
 }
 
 .mobile-role-card {

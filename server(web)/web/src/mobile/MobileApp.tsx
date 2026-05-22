@@ -762,6 +762,8 @@ function MobileApp() {
   const user = session?.user ?? null;
   const userRole = useMemo(() => findUserRole(incident, user?.userId), [incident, user?.userId]);
   const isPatient = Boolean(incident?.patientUserId && incident.patientUserId === user?.userId);
+  const isDemoResponder = Boolean(session?.demoPersona && session.demoPersona !== 'patient');
+  const demoResponderLabel = session?.demoPersona ? demoPersonas.find((item) => item.key === session.demoPersona)?.label : null;
   const currentClient = useMemo(
     () => clients.find((client) => client.userId === user?.userId) ?? null,
     [clients, user?.userId],
@@ -985,10 +987,10 @@ function MobileApp() {
   }, []);
 
   useEffect(() => {
-    if (!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING') {
+    if (!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING' || isDemoResponder) {
       setSosConfirming(false);
     }
-  }, [incident?.incidentId, incident?.phase, incident?.sos?.status]);
+  }, [incident?.incidentId, incident?.phase, incident?.sos?.status, isDemoResponder]);
 
   useEffect(() => {
     return () => {
@@ -1103,6 +1105,11 @@ function MobileApp() {
 
   async function handlePatientSos() {
     if (!incident || !session) {
+      return;
+    }
+    if (isDemoResponder) {
+      setSosConfirming(false);
+      setNotice({ kind: 'info', text: `${demoResponderLabel ?? '当前演示端'}仅响应分派任务，请等待患者端启动 SOS。` });
       return;
     }
     if (!sosConfirming) {
@@ -1286,13 +1293,17 @@ function MobileApp() {
               </button>
             </section>
           ) : (
-            <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''}`}>
+            <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''} ${isDemoResponder ? 'readonly' : ''}`}>
               <div>
-                <Siren size={28} />
-                <p className="mobile-kicker">高优先级</p>
-                <h2>{isPatient ? '患者应急模式' : '患者 SOS'}</h2>
+                {isDemoResponder ? <Shield size={28} /> : <Siren size={28} />}
+                <p className="mobile-kicker">{isDemoResponder ? '演示待命' : '高优先级'}</p>
+                <h2>{isDemoResponder ? '等待患者端' : isPatient ? '患者应急模式' : '患者 SOS'}</h2>
                 <p>
-                  {sosRemaining !== null
+                  {isDemoResponder
+                    ? incident?.sos?.status === 'ALERTING'
+                      ? '患者端已启动 SOS，保持在线，等待系统分派本轮任务'
+                      : `${demoResponderLabel ?? '当前演示端'}不触发患者 SOS，现场演示请从患者端启动`
+                    : sosRemaining !== null
                     ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
                     : isPatient && incident?.phase !== 'CREATED'
                       ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
@@ -1301,22 +1312,30 @@ function MobileApp() {
                       : '当前事件已进入协同处置'}
                 </p>
               </div>
-              <div className="mobile-emergency-actions">
-                <button
-                  className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
-                  onClick={handlePatientSos}
-                  disabled={!incident || incident.phase !== 'CREATED' || busyAction === 'sos'}
-                >
-                  {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
-                </button>
-                <button
-                  className="mobile-ghost-button"
-                  onClick={cancelPatientSos}
-                  disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatient || busyAction === 'sosCancel'}
-                >
-                  取消
-                </button>
-              </div>
+              {isDemoResponder ? (
+                <div className="mobile-emergency-actions single">
+                  <button className="mobile-ghost-button" type="button" disabled>
+                    等待患者端启动 SOS
+                  </button>
+                </div>
+              ) : (
+                <div className="mobile-emergency-actions">
+                  <button
+                    className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
+                    onClick={handlePatientSos}
+                    disabled={!incident || incident.phase !== 'CREATED' || busyAction === 'sos'}
+                  >
+                    {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
+                  </button>
+                  <button
+                    className="mobile-ghost-button"
+                    onClick={cancelPatientSos}
+                    disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatient || busyAction === 'sosCancel'}
+                  >
+                    取消
+                  </button>
+                </div>
+              )}
             </section>
           )}
 

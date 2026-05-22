@@ -123,7 +123,9 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最新 Web 自检报告/复核行动清单提示增量构建产物为桌面 `App-JkgAD_yM.js`、移动 `MobileApp-7Q1VHnBQ.js`、4端演示台 `MobileDemoStage-DyZIJVu5.js`。
+结果：均通过。最新移动端非患者演示防误触增量构建产物为桌面 `App-y6G93YAO.js`、移动 `MobileApp-xJvHSufN.js`、4端演示台 `MobileDemoStage-CoUTmnw3.js`。
+
+移动端演示防误触烟测：使用临时本地后端/前端 `127.0.0.1:18092`、临时 SQLite DB 通过。确认 `/mobile?demo=patient` 有可用 `启动 SOS`，首次点击只进入 `再次点击确认 SOS` 且不启动倒计时；`/mobile?demo=prime` 显示“核心施救不触发患者 SOS”，只有禁用的“等待患者端启动 SOS”，没有可用 SOS 触发按钮。
 
 浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-demo?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?demo=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
 
