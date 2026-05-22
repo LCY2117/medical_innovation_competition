@@ -126,6 +126,7 @@ Implementation notes:
 - Android 使用 AndroidX Security 的 `EncryptedSharedPreferences` 存储 session/token，并将旧版 `lra_session` 明文登录态迁移到 `lra_session_secure`；若个别设备 Keystore 不可用，则不落盘 token，重启后要求重新登录。
 - 后端新增最小 RBAC：`LRA_ADMIN_PHONES` 配置正式管理员手机号白名单，白名单用户通过普通登录获得 Bearer token，`/auth/me` 返回 `privileges=["admin"]`，管理接口接受管理员 token 或旧版 `X-Demo-Admin-Token`。只配置白名单不配置演示口令时，未登录的管理接口仍保持关闭。
 - 后端新增 SQLite 审计表，记录登录、demo 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
+- 后端现场动作接口保持幂等：重复提交已经完成的 CPR、AED、救护车到达或交接动作时，会返回当前阶段但不重复追加日志，避免弱网重试污染证据包时间线。
 - `/api/audit/events` 由正式管理员 token 或演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
 - 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
 - 预实验证据包包含审阅索引、匿名化 JSON/CSV、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验，外部材料默认使用审阅索引、数据字典和匿名化文件；单名专家签字使用 `expert_feedback_form.md`，多名专家意见和后续整改状态使用 `expert_feedback_summary.csv` 汇总；多轮 ZIP 优先用 `scripts/build_pre_experiment_report.py` 一键生成 `round-summary.csv`、PPT 安全口径 `round-analysis.md` 和图表底表 `round-chart-data.csv`，也可分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py`。
@@ -135,7 +136,7 @@ Implementation notes:
 
 Validation:
 
-- Backend unittest discovery: 46 tests OK after evidence verifier negative tests.
+- Backend unittest discovery: 47 tests OK after action idempotency and evidence verifier negative tests.
 - Web typecheck/build: passed after desktop/mobile WebSocket stale-callback guard; latest build emitted desktop `App-CCmke60w.js` and mobile `MobileApp-CEP25Ntl.js`.
 - Android debug APK build: passed after REST state seeding, single-flight WebSocket reconnect, and action pending-state patches.
 

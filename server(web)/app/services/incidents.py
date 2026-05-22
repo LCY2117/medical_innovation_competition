@@ -464,12 +464,16 @@ class IncidentService:
 
         if normalized_action == "CPR_STARTED":
             self._ensure_role_actor(state, "PRIME", user_id)
+            if self._is_role_action_already_recorded(state, "PRIME", normalized_action):
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.PRIME.status, {"ASSIGNED", "JOINED", "CPR_STARTED"}, "PRIME")
             state.phase = "CPR"
             state.roles.PRIME.status = "CPR_STARTED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"CPR started by {user_id}"))
         elif normalized_action == "AED_ANALYSIS_STARTED":
             self._ensure_role_actor(state, "PRIME", user_id)
+            if self._is_role_action_already_recorded(state, "PRIME", normalized_action):
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(
                 state.roles.PRIME.status,
                 {"CPR_STARTED", "AED_ANALYZING", "AED_SHOCK_DELIVERED"},
@@ -481,6 +485,8 @@ class IncidentService:
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED analysis started by {user_id}"))
         elif normalized_action == "AED_SHOCK_DELIVERED":
             self._ensure_role_actor(state, "PRIME", user_id)
+            if self._is_role_action_already_recorded(state, "PRIME", normalized_action):
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.PRIME.status, {"AED_ANALYZING", "AED_SHOCK_DELIVERED"}, "PRIME")
             self._ensure_role_status(state.roles.RUNNER.status, {"AED_DELIVERED"}, "RUNNER")
             state.phase = "SHOCK_DELIVERED"
@@ -488,18 +494,24 @@ class IncidentService:
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED shock delivered by {user_id}"))
         elif normalized_action == "AED_PICKED":
             self._ensure_role_actor(state, "RUNNER", user_id)
+            if self._is_role_action_already_recorded(state, "RUNNER", normalized_action):
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.RUNNER.status, {"ASSIGNED", "JOINED", "AED_PICKED"}, "RUNNER")
             state.phase = "AED_PICKED"
             state.roles.RUNNER.status = "AED_PICKED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED picked by {user_id}"))
         elif normalized_action == "AED_DELIVERED":
             self._ensure_role_actor(state, "RUNNER", user_id)
+            if self._is_role_action_already_recorded(state, "RUNNER", normalized_action):
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.RUNNER.status, {"AED_PICKED", "AED_DELIVERED"}, "RUNNER")
             state.phase = "AED_DELIVERED"
             state.roles.RUNNER.status = "AED_DELIVERED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED delivered by {user_id}"))
         elif normalized_action == "AMBULANCE_ARRIVED":
             self._ensure_role_actor(state, "GUIDE", user_id)
+            if self._is_role_action_already_recorded(state, "GUIDE", normalized_action):
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(
                 state.roles.GUIDE.status,
                 {"ASSIGNED", "JOINED", "AMBULANCE_ARRIVED"},
@@ -521,6 +533,8 @@ class IncidentService:
             }
             if user_id not in participants:
                 raise HTTPException(status_code=403, detail="Only active participants can complete handover")
+            if state.phase == "ARCHIVED" and state.roles.GUIDE.status == "HANDOVER_COMPLETED":
+                return MutationResponse(incidentId=incident_id, phase=state.phase)
             state.phase = "ARCHIVED"
             state.roles.GUIDE.status = "HANDOVER_COMPLETED"
             state.logs.append(
@@ -2575,6 +2589,14 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
                 status_code=409,
                 detail=f"{role_name} cannot perform this action from status {normalized_status}",
             )
+
+    @staticmethod
+    def _is_role_action_already_recorded(state: IncidentState, role_name: str, action: str) -> bool:
+        completed_status_by_action = {
+            "AED_ANALYSIS_STARTED": "AED_ANALYZING",
+        }
+        completed_status = completed_status_by_action.get(action, action)
+        return getattr(state.roles, role_name).status == completed_status
 
     @staticmethod
     def _is_patient_candidate(health_condition: str, profile_bio: str) -> bool:

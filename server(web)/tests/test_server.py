@@ -1826,6 +1826,63 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["roles"]["PRIME"]["status"], "CPR_STARTED")
         self.assertEqual(payload["roles"]["RUNNER"]["status"], "AED_PICKED")
 
+    def test_repeated_role_action_is_idempotent_and_does_not_duplicate_logs(self) -> None:
+        with self._client() as client:
+            incident_id = client.post("/api/incidents").json()["incidentId"]
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            first = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            after_first = client.get(f"/api/incidents/{incident_id}").json()
+            second = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            after_second = client.get(f"/api/incidents/{incident_id}").json()
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
+            )
+            analysis_first = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_ANALYSIS_STARTED", "userId": "prime-user"},
+            )
+            after_analysis_first = client.get(f"/api/incidents/{incident_id}").json()
+            analysis_second = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_ANALYSIS_STARTED", "userId": "prime-user"},
+            )
+            after_analysis_second = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(after_second["phase"], "CPR")
+        self.assertEqual(len(after_second["logs"]), len(after_first["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_second["logs"] if log["msg"] == "CPR started by prime-user"),
+            1,
+        )
+        self.assertEqual(analysis_first.status_code, 200)
+        self.assertEqual(analysis_second.status_code, 200)
+        self.assertEqual(after_analysis_second["phase"], "AED_ANALYZING")
+        self.assertEqual(len(after_analysis_second["logs"]), len(after_analysis_first["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_analysis_second["logs"] if log["msg"] == "AED analysis started by prime-user"),
+            1,
+        )
+
     def test_runner_cannot_deliver_before_pickup(self) -> None:
         with self._client() as client:
             incident_id = client.post("/api/incidents").json()["incidentId"]

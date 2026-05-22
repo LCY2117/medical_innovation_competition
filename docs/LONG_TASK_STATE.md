@@ -5,8 +5,8 @@
 - Status: checkpointing
 - Task: OPPO Health data enhancement phase 1
 - Branch: codex/competition-hardening
-- HEAD: 6b967cb
-- Last update: 2026-05-22 14:51:54 +08:00
+- HEAD: 594a410
+- Last update: 2026-05-22 14:55:29 +08:00
 - Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
 
 ## Goal
@@ -157,7 +157,8 @@ Complete OPPO Health data enhancement phase 1: application/material verification
 132. Extend Android pending-action feedback to regular task/incident mission cards. (done, pushed)
 133. Add evidence verifier negative tests for tampered hash, unlisted files, privacy overlap, and public raw-ID leaks. (done, pushed)
 134. Harden Web and mobile WebSocket reconnect against stale socket close/error callbacks. (done, pushed)
-135. Sync public product, deployment, README, and whitepaper docs with latest reliability and validation facts. (done, checkpointing)
+135. Sync public product, deployment, README, and whitepaper docs with latest reliability and validation facts. (done, pushed)
+136. Make backend role action endpoints idempotent for repeated completed actions. (done, checkpointing)
 
 ## Sub-Agent Ledger
 
@@ -649,6 +650,9 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 - Git checkpoint: `6b967cb` (`checkpoint: guard web websocket stale callbacks`) created and pushed to `origin/codex/competition-hardening`.
 - Public documentation sync slice: README, deployment runbook, product plan, and technical whitepaper now mention Web/mobile WebSocket stale-callback protection, Android pending-action guards, evidence verifier bad-package negative tests, 46 passing backend tests, and the latest Web build artifacts. This keeps teammate/PPT-facing materials aligned with the current branch.
 - Public documentation sync validation: `git diff --check` passed; targeted scan found remaining clinical-effectiveness wording only in cautionary contexts and no newly exposed credential values.
+- Git checkpoint: `594a410` (`checkpoint: sync reliability validation docs`) created and pushed to `origin/codex/competition-hardening`.
+- Backend action idempotency slice: repeated completed role actions now return the current incident phase without appending duplicate logs. Covered completed states include CPR started, AED analysis, AED shock, AED picked/delivered, ambulance arrived, and archived handover completion. This keeps evidence timelines clean if a client retries after weak network or rapid taps.
+- Backend action idempotency validation: targeted role-action tests passed; full backend unittest discovery passed, 47 tests OK.
 
 ## Blockers Summary
 
@@ -657,7 +661,7 @@ Current working tree was already dirty before OPPO phase 1. Treat existing chang
 
 ## Next Unblocked Action
 
-Checkpoint and push the public documentation sync patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
+Checkpoint and push the backend action idempotency patch if staged diff is clean, then continue with another low-risk Android reliability, Web/mobile UX, or evidence-tooling slice. Keep excluding SQLite runtime DB, OPPO SDK doc, `output/`, APK/AAB build outputs, keystores, local.properties, and temp Playwright/browser artifacts.
 
 ## Resume Instructions
 

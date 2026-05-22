@@ -81,6 +81,7 @@ flowchart LR
 - AI 不可用时规则兜底仍可运行。
 - 增加可选演示管理员口令，保护公网演示的创建、重置、触发、导出和 AED 管理接口。
 - 终端位置更新复用登录态，避免任意 userId 伪造位置污染调度输入。
+- 现场动作接口具备幂等保护，重复提交已完成动作不会追加重复日志，保证预实验证据时间线稳定。
 - 后端单元测试覆盖 demo bootstrap、AED、location、export、dispatch rationale。
 
 ### 5.2 Web 调度台
@@ -231,7 +232,7 @@ flowchart LR
 
 ## 11. 当前验证结果
 
-- 后端测试：46 项通过。
+- 后端测试：47 项通过。
 - 前端 TypeScript 检查：通过。
 - 前端生产构建：通过，最新 Web/mobile WebSocket 稳定性切片产物为桌面 `App-CCmke60w.js`、移动 `MobileApp-CEP25Ntl.js`。
 - Android Gradle 任务发现：通过。
