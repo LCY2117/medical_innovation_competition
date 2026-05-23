@@ -1,5 +1,63 @@
 # Long Task State
 
+## Current Session Override - 2026-05-24 National Final `/mobile` Redesign
+
+- Status: done
+- Task: Complete the Web `/mobile` national-final UI redesign.
+- Branch: codex/competition-hardening
+- HEAD at start: 14d74f7
+- Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
+- User instruction: treat as a long task; sub-agents are allowed; acceptance is completing the Web `/mobile` experience.
+
+### Acceptance Criteria
+
+- `/mobile` is redesigned as a focused emergency collaboration terminal rather than a compressed dashboard.
+- Patient, responder, scene/AED, logs, and profile/health states have clear hierarchy and large touch-friendly controls.
+- The visual language is closer to the Android app while avoiding its current heavy/ugly parts.
+- Web `typecheck` and `build` pass.
+- Browser verification covers common mobile width and confirms no horizontal overflow.
+
+### Active Work Plan
+
+1. Establish plan/state/git baseline. (done)
+2. Run parallel read-only audits for current `/mobile` and Android app visual tokens. (done)
+3. Refactor `/mobile` TypeScript structure and CSS. (done)
+4. Validate with Web build/typecheck and browser layout checks. (done)
+5. Record final state, blockers, and handoff. (done)
+
+### Sub-Agent Ledger For This Session
+
+- Leibniz: read-only `/mobile` structure/UI audit. Status: completed.
+- Helmholtz: read-only Android visual-token extraction. Status: completed.
+
+### Safety Notes
+
+- Preserve existing dirty/user files: `server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, and `output/`.
+- Do not commit secrets, local properties, APK/AAB artifacts, keystores, runtime DBs, or generated screenshots.
+- Do not deploy to production unless the user explicitly asks for this session.
+- Keep edits scoped to `/mobile`, directly shared mobile styles, task docs/state, and validation artifacts that are intentionally untracked.
+
+### Progress Update
+
+- Created `docs/MOBILE_WEB_UI_REDESIGN_PLAN.md` as the local source of truth for this UI task.
+- Checked git baseline: branch `codex/competition-hardening`, start HEAD `14d74f7`, existing dirty runtime/user files recorded above.
+- Sub-agent audits completed:
+  - `/mobile` audit recommended a stronger cross-tab emergency header, lower first-screen cognitive load, clearer offline/reconnecting status, weaker demo-only controls, and fixing `.mobile-manual-toggle` layout.
+  - Android visual-token audit recommended keeping the calm dark command-terminal base, role colors, large primary buttons, status chips, and metric cards while avoiding heavy red-black gradients, fake phone chrome, emoji-like cues, and overlarge numbers.
+- First implementation slice completed in `server(web)/web/src/mobile/MobileApp.tsx` and `server(web)/web/src/mobile/mobile.css`: added a command header, clearer sync/phase labels, event/AED/online facts, terminal identity card, compact health metrics, role-tinted action panels, and larger touch controls.
+- Validation so far: Web `npm run typecheck` passed after the first JSX/CSS slice.
+- Final implementation slice completed:
+  - patient demo terminals are treated as patient terminals even when connected to an already-dispatched event;
+  - long-running demo incident durations are formatted as days/hours instead of huge minute counts;
+  - responder home state directly shows the assigned role action;
+  - manual-role fallback toggle now has explicit flex layout.
+- Final validation:
+  - `npm run typecheck` passed.
+  - `npm run build` passed with mobile bundle `MobileApp-C5X2RwQM.js` and CSS `MobileApp-AjNmK5FG.css`.
+  - Local Vite on `127.0.0.1:5174` plus local FastAPI on `127.0.0.1:8080` were used for DOM checks, then stopped.
+  - Browser DOM checks at 390 x 844 confirmed no horizontal overflow for patient and runner demo flows.
+- Git status at finish still includes expected runtime/user files outside commit scope: `server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, and `output/`.
+
 ## Current Session Override - 2026-05-23 National Final UI/App Polish
 
 - Status: done

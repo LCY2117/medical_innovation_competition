@@ -483,6 +483,70 @@ function translateDispatchSource(source?: string): string {
   }
 }
 
+function formatElapsedLabel(startTs: number | null | undefined, now: number): string {
+  if (!startTs) {
+    return '未开始';
+  }
+  const totalSec = Math.max(0, Math.floor((now - startTs) / 1000));
+  const days = Math.floor(totalSec / 86400);
+  if (days > 0) {
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    return `${days}d ${hours}h`;
+  }
+  const hours = Math.floor(totalSec / 3600);
+  if (hours > 0) {
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  }
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  if (minutes <= 0) {
+    return `${seconds}s`;
+  }
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+}
+
+function compactAedLabel(site?: AedSite | null): string {
+  if (!site) {
+    return '待同步';
+  }
+  const floor = site.location.floor ? ` · ${site.location.floor}` : '';
+  return `${site.name}${floor}`;
+}
+
+function mobileToneClass(role: RoleName | null, isPatient: boolean, isDemoResponder: boolean): string {
+  if (isPatient) {
+    return 'patient';
+  }
+  if (role) {
+    return `role-${role.toLowerCase()}`;
+  }
+  if (isDemoResponder) {
+    return 'standby';
+  }
+  return 'neutral';
+}
+
+function healthStatItems(summary?: HealthSignalSummary | null): Array<{ label: string; value: string; tone?: 'danger' | 'ok' }> {
+  return [
+    {
+      label: '心率',
+      value: summary?.heartRateBpm ? `${summary.heartRateBpm}` : '--',
+      tone: summary?.heartRateBpm && summary.heartRateBpm >= 110 ? 'danger' : undefined,
+    },
+    {
+      label: '血氧',
+      value: summary?.bloodOxygenPercent ? `${summary.bloodOxygenPercent}%` : '--',
+      tone: summary?.bloodOxygenPercent && summary.bloodOxygenPercent < 95 ? 'danger' : 'ok',
+    },
+    {
+      label: '压力',
+      value: summary?.pressureScore !== undefined && summary?.pressureScore !== null ? `${summary.pressureScore}` : '--',
+      tone: summary?.pressureScore && summary.pressureScore >= 70 ? 'danger' : undefined,
+    },
+  ];
+}
+
 function translateLogMessage(message: string, clients: ClientInfo[]): string {
   const displayUser = (userId?: string | null) => {
     const client = clients.find((item) => item.userId === userId);
@@ -762,6 +826,7 @@ function MobileApp() {
   const user = session?.user ?? null;
   const userRole = useMemo(() => findUserRole(incident, user?.userId), [incident, user?.userId]);
   const isPatient = Boolean(incident?.patientUserId && incident.patientUserId === user?.userId);
+  const isPatientTerminal = isPatient || session?.demoPersona === 'patient';
   const isDemoResponder = Boolean(session?.demoPersona && session.demoPersona !== 'patient');
   const demoResponderLabel = session?.demoPersona ? demoPersonas.find((item) => item.key === session.demoPersona)?.label : null;
   const currentClient = useMemo(
@@ -1222,13 +1287,55 @@ function MobileApp() {
   const assignedUsers = clients.filter((client) => client.assignedRole);
   const action = activeRole ? roleAction(activeRole, incident) : null;
   const primeStep = activeRole === 'PRIME' ? primeNextStep(incident) : null;
-  const nextActionSummary = isPatient
+  const phaseLabel = incident ? translatePhaseLabel(incident.phase) : '未接入事件';
+  const syncLabel =
+    syncStatus === 'live'
+      ? '实时在线'
+      : syncStatus === 'connecting'
+        ? '连接中'
+        : syncStatus === 'reconnecting'
+          ? '恢复连接中'
+          : syncStatus === 'offline'
+            ? '连接离线'
+            : '待连接';
+  const roleLabel = isPatientTerminal
+    ? '患者端'
+    : activeRole
+      ? translateRoleLabel(activeRole)
+      : demoResponderLabel ?? '待命终端';
+  const nextActionSummary = isPatientTerminal
     ? '保持当前位置，等待协同成员到场'
     : activeRole && action
       ? `${translateRoleLabel(activeRole)}：${action.label}`
       : incident
         ? '保持在线，等待本轮任务'
         : '打开或加入事件';
+  const commandTitle =
+    activeRole && action && !isPatientTerminal
+      ? action.label
+      : isDemoResponder
+        ? '等待患者端启动'
+        : isPatientTerminal && sosRemaining !== null
+          ? `SOS 倒计时 ${sosRemaining}s`
+          : isPatientTerminal
+            ? '患者应急模式'
+            : incident
+              ? '保持在线待命'
+              : '接入当前事件';
+  const commandBody =
+    activeRole && action && !isPatientTerminal
+      ? action.hint
+      : isDemoResponder
+        ? '响应端不触发 SOS。请保持页面在线，等待患者端启动后自动进入任务。'
+        : isPatientTerminal && incident?.phase === 'CREATED'
+          ? '如出现异常，先触发 SOS；系统会在倒计时结束后分派核心施救、AED 保障和环境清障。'
+          : isPatientTerminal
+            ? '保持当前位置，等待协同成员到场并完成交接。'
+            : '移动端会同步当前事件、角色分派、AED 点位和现场日志。';
+  const incidentStartedAt = incident?.logs?.[0]?.ts ?? null;
+  const incidentElapsedLabel = formatElapsedLabel(incidentStartedAt, now);
+  const commandTone = mobileToneClass(activeRole, isPatientTerminal, isDemoResponder);
+  const healthStats = healthStatItems(currentClient?.healthSignals);
   const visibleClients = clients.slice(0, 5);
   const incidentShortId = incident?.incidentId ? incident.incidentId.slice(0, 8) : null;
   const viewTabs: Array<{ key: MobileView; label: string; icon: React.ReactNode }> = [
@@ -1255,19 +1362,44 @@ function MobileApp() {
         </div>
       </header>
 
-      <section className="mobile-status-strip">
-        <div>
+      <section className={`mobile-command-header ${commandTone}`}>
+        <div className="mobile-command-status">
           <span className={`sync-dot ${syncStatus}`} />
-          <span>{syncStatus === 'live' ? '实时在线' : syncStatus === 'connecting' ? '连接中' : syncStatus === 'reconnecting' ? '恢复连接中' : '待连接'}</span>
+          <span>{syncLabel}</span>
+          <strong>{phaseLabel}</strong>
         </div>
-        <strong>{incident ? translatePhaseLabel(incident.phase) : '未接入事件'}</strong>
+        <div className="mobile-command-main">
+          <div>
+            <p className="mobile-kicker">{roleLabel}</p>
+            <h2>{commandTitle}</h2>
+            <p>{commandBody}</p>
+          </div>
+          <div className="mobile-command-metric">
+            <span>用时</span>
+            <strong>{incidentElapsedLabel}</strong>
+          </div>
+        </div>
+        <div className="mobile-command-facts" aria-label="事件关键信息">
+          <div>
+            <span>事件</span>
+            <strong>{incidentShortId ?? '--'}</strong>
+          </div>
+          <div>
+            <span>AED</span>
+            <strong>{compactAedLabel(primaryAed)}</strong>
+          </div>
+          <div>
+            <span>在线</span>
+            <strong>{clients.filter((client) => client.online).length}/{clients.length}</strong>
+          </div>
+        </div>
       </section>
 
       {incident && (
         <section className="mobile-context-strip" aria-label="当前事件状态">
           <BadgeInfo size={15} />
           <span>事件 {incidentShortId}</span>
-          <span>{syncStatus === 'live' ? '实时同步中' : syncStatus === 'reconnecting' ? '正在恢复连接' : '最近状态已保留'}</span>
+          <span>{syncStatus === 'live' ? '实时同步中' : syncStatus === 'reconnecting' ? '正在恢复连接' : syncStatus === 'offline' ? '连接离线，保留最近状态' : '最近状态已保留'}</span>
           <strong>{nextActionSummary}</strong>
         </section>
       )}
@@ -1285,14 +1417,20 @@ function MobileApp() {
 
       {activeView === 'home' && (
         <>
-          {activeRole && action && !isPatient ? (
-            <section className="mobile-emergency-panel responder">
+          {activeRole && action && !isPatientTerminal ? (
+            <section className={`mobile-emergency-panel responder role-${activeRole.toLowerCase()}`}>
               <div>
                 {activeRole === 'PRIME' ? <HeartPulse size={28} /> : activeRole === 'RUNNER' ? <Zap size={28} /> : <Shield size={28} />}
                 <p className="mobile-kicker">当前动作</p>
                 <h2>{action.label}</h2>
                 <p>{action.hint}</p>
               </div>
+              {primeStep && (
+                <div className={`mobile-next-step ${primeStep.tone}`}>
+                  <strong>{primeStep.title}</strong>
+                  <p>{primeStep.body}</p>
+                </div>
+              )}
               <button className="mobile-primary-button" onClick={executeRoleAction} disabled={action.disabled || Boolean(busyAction)}>
                 {busyAction ? '提交中...' : action.label}
               </button>
@@ -1302,7 +1440,7 @@ function MobileApp() {
               <div>
                 {isDemoResponder ? <Shield size={28} /> : <Siren size={28} />}
                 <p className="mobile-kicker">{isDemoResponder ? '演示待命' : '高优先级'}</p>
-                <h2>{isDemoResponder ? '等待患者端' : isPatient ? '患者应急模式' : '患者 SOS'}</h2>
+                <h2>{isDemoResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
                 <p>
                   {isDemoResponder
                     ? incident?.sos?.status === 'ALERTING'
@@ -1310,7 +1448,7 @@ function MobileApp() {
                       : `${demoResponderLabel ?? '当前演示端'}不触发患者 SOS，现场演示请从患者端启动`
                     : sosRemaining !== null
                     ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
-                    : isPatient && incident?.phase !== 'CREATED'
+                    : isPatientTerminal && incident?.phase !== 'CREATED'
                       ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
                     : incident?.phase === 'CREATED'
                       ? '如你是患者端，可直接触发当前事件'
@@ -1335,7 +1473,7 @@ function MobileApp() {
                   <button
                     className="mobile-ghost-button"
                     onClick={cancelPatientSos}
-                    disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatient || busyAction === 'sosCancel'}
+                    disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatientTerminal || busyAction === 'sosCancel'}
                   >
                     取消
                   </button>
@@ -1344,18 +1482,32 @@ function MobileApp() {
             </section>
           )}
 
-          <section className="mobile-panel mobile-user-panel" id="top">
-            <div className="mobile-user-avatar">
-              <UserRound size={22} />
-            </div>
-            <div>
-              <strong>{user.displayName}</strong>
-              <p>{user.organization} · {user.professionIdentity}</p>
-              <p>{formatLocationLabel(location)}</p>
-              <div className="mobile-health-line">
-                <HeartPulse size={14} />
-                <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
+          <section className="mobile-identity-card" id="top">
+            <div className="mobile-identity-main">
+              <div className="mobile-user-avatar">
+                <UserRound size={22} />
               </div>
+              <div>
+                <p className="mobile-kicker">当前终端</p>
+                <strong>{user.displayName}</strong>
+                <p>{user.organization} · {user.professionIdentity}</p>
+              </div>
+            </div>
+            <div className="mobile-health-stats">
+              {healthStats.map((item) => (
+                <div key={item.label} className={item.tone ? `tone-${item.tone}` : ''}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+            <div className="mobile-health-line">
+              <HeartPulse size={14} />
+              <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
+            </div>
+            <div className="mobile-location-line">
+              <MapPin size={14} />
+              <span>{formatLocationLabel(location)}</span>
             </div>
           </section>
 
@@ -1401,6 +1553,7 @@ function MobileApp() {
             <div className="mobile-role-title">
               {activeRole === 'PRIME' ? <HeartPulse size={24} /> : activeRole === 'RUNNER' ? <Zap size={24} /> : <Shield size={24} />}
               <div>
+                <p className="mobile-kicker">当前任务</p>
                 <h3>{translateRoleLabel(activeRole)}</h3>
                 <p>{translateRoleStatus(incident?.roles?.[activeRole]?.status)}</p>
               </div>
