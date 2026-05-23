@@ -176,7 +176,7 @@ class IncidentViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
-                repository.sosStart(id)
+                repository.patientSosStart(_authToken.value, id)
             } catch (e: Exception) {
                 _error.value = operationError(e)
             }
@@ -188,7 +188,7 @@ class IncidentViewModel(
         viewModelScope.launch {
             try {
                 _error.value = null
-                repository.sosCancel(id)
+                repository.patientSosCancel(_authToken.value, id)
             } catch (e: Exception) {
                 _error.value = operationError(e)
             }

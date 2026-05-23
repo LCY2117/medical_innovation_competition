@@ -14,6 +14,7 @@ enum class MainTab(val label: String) {
     Incident("事件"),
     Archive("归档"),
     Profile("我的"),
+    Settings("设置"),
 }
 
 fun userRoleFromBackendRole(role: String): UserRole = when (role) {

@@ -1,5 +1,52 @@
 # Long Task State
 
+## Current Session Override - 2026-05-23 National Final UI/App Polish
+
+- Status: running
+- Task: Polish public `/mobile-demo` and Android app completeness for national final preparation
+- Branch: codex/competition-hardening
+- HEAD at start: 8499857
+- Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
+- User instruction: continue unattended, use sub-agents/parallel agents if useful, improve `/mobile-demo` visible UI and Android app functionality; deploy/verify where feasible.
+
+### Acceptance Criteria
+
+- `/mobile-demo` is visually cleaner, lower load, closer to Android app style, and browser-verified at desktop and narrower widths.
+- Android app gains practical complete-app affordances around login/home/settings/user/profile/status without touching secrets or real OPPO SDK approval paths.
+- Relevant validation commands pass or blockers are recorded.
+- Public deployment is updated if the Web build is stable.
+
+### Active Work Plan
+
+1. Inspect current `/mobile-demo`, Android app structure, git state, and long-task blockers. (done)
+2. Improve `/mobile-demo` layout, hierarchy, labels, responsive behavior, and iframe presentation. (done, validating)
+3. Improve Android app completeness with low-risk settings/profile/status surfaces. (done, validating)
+4. Validate Web typecheck/build, Android debug build, and targeted backend tests if touched. (done with one Android unit-test environment note)
+5. Deploy to public server using the existing Git/PM2 flow after successful Web build. (next)
+6. Capture screenshots and update this state file with validation/deployment results. (in progress)
+
+### Sub-Agent Ledger For This Session
+
+- `/mobile-demo` explorer: started read-only to identify low-risk UI polish opportunities.
+- Android completeness explorer: started read-only to identify missing app functions and safe implementation paths.
+
+### Safety Notes
+
+- Preserve existing dirty files: `server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, and `output/`.
+- Do not commit secrets, local properties, APK/AAB artifacts, keystores, runtime DBs, or generated screenshots.
+- Do not attempt real OPPO Health approval, secret copying, legal acceptance, or account actions unattended.
+- Keep edits scoped to Web `/mobile-demo`, Android UI/functionality, docs/state, and directly required supporting code.
+
+### Progress Update
+
+- `/mobile-demo` redesigned as a lighter app-style four-device stage: shallow background, compact app bar, status strip, six-step guide, and phone-like panels.
+- Browser screenshot validation with Edge succeeded at `1440x900` and `390x844`; screenshots saved under `output/playwright/` and intentionally left untracked.
+- Android app now has a `设置` tab with service status, endpoint diagnostics, device capability status, local preferences, demo boundary copy, version/build info, and logout.
+- Added local app settings (`语音指引`, `震动提醒`, `演示安全确认`) with SharedPreferences persistence; PRIME voice prompts now respect the voice-guidance setting.
+- Android patient SOS now uses authenticated user endpoints `/patient_sos_start` and `/patient_sos_cancel` instead of admin-only SOS endpoints.
+- Validation passed: Web `npm run typecheck`; Web `npm run build`; Android `gradle :app:assembleDebug --no-daemon`; backend `python -m unittest discover -s tests -v` with 54 tests OK.
+- Validation note: Android `gradle :app:testDebugUnitTest --no-daemon` currently fails on the pre-existing template `ExampleUnitTest` with `ClassNotFoundException`; debug APK build is healthy, and no app logic failure was observed.
+
 ## Current Status
 
 - Status: running

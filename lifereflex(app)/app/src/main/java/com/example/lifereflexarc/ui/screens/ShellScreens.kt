@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -30,6 +31,7 @@ import com.example.lifereflexarc.data.DispatchRoleDecision
 import com.example.lifereflexarc.data.GeoPoint
 import com.example.lifereflexarc.data.HealthIntegrationReadiness
 import com.example.lifereflexarc.data.HealthSignalSummary
+import com.example.lifereflexarc.data.AppSettings
 import com.example.lifereflexarc.ui.accentForRole
 import com.example.lifereflexarc.ui.dispatchSourceLabel
 import com.example.lifereflexarc.ui.components.EmptyStateCard
@@ -43,6 +45,7 @@ import com.example.lifereflexarc.ui.formatLocationSourceLabel
 import com.example.lifereflexarc.ui.roleStatusLabel
 import com.example.lifereflexarc.ui.theme.PhoneColors
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
+import com.example.lifereflexarc.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -628,6 +631,185 @@ fun ProfileScreen(
             onClick = onLogout,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7F1D1D), contentColor = Color.White),
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+fun SettingsScreen(
+    session: UserSession,
+    incidentState: IncidentState?,
+    connected: Boolean,
+    connecting: Boolean,
+    healthReadiness: HealthIntegrationReadiness,
+    appSettings: AppSettings,
+    location: GeoPoint?,
+    locationStatus: String,
+    archiveCount: Int,
+    onOpenCurrent: () -> Unit,
+    onSyncSystemLocation: () -> Unit,
+    onVoiceGuidanceChanged: (Boolean) -> Unit,
+    onVibrationAlertChanged: (Boolean) -> Unit,
+    onDemoSafetyChanged: (Boolean) -> Unit,
+    onLogout: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        SectionTitle("设置")
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF111C34)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            border = BorderStroke(1.dp, Color(0xFF22304A)),
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("应用状态", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "这里集中查看连接、事件、定位和演示边界，便于赛前检查。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+                SummaryRow("登录用户", session.displayName, dark = true)
+                SummaryRow("服务连接", connectionStatusLabel(connected, connecting), dark = true)
+                SummaryRow("当前事件", incidentState?.incidentId?.take(8) ?: "未接入", dark = true)
+                SummaryRow("事件阶段", incidentState?.phase?.let { com.example.lifereflexarc.ui.phaseTitle(it) } ?: "待同步", dark = true)
+                SummaryRow("本机归档", "${archiveCount} 条", dark = true)
+            }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color(0xFF1E293B)),
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("服务端点", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                SummaryRow("REST", BuildConfig.LRA_API_BASE, dark = true)
+                SummaryRow("WebSocket", BuildConfig.LRA_WS_BASE, dark = true)
+                Text(
+                    text = "发布版构建会阻止 HTTP/WS 本地端点，避免比赛或专家演示时误连测试服务。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                )
+                PressableButton(
+                    text = "重新同步当前事件",
+                    onClick = onOpenCurrent,
+                    colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Blue, contentColor = Color.White),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color(0xFF1E293B)),
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("本机偏好", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                SettingsSwitchRow(
+                    title = "语音指引",
+                    body = "核心施救任务中播放简短语音提示。",
+                    checked = appSettings.voiceGuidanceEnabled,
+                    onCheckedChange = onVoiceGuidanceChanged,
+                )
+                SettingsSwitchRow(
+                    title = "震动提醒",
+                    body = "为后续真机告警预留震动提醒开关。",
+                    checked = appSettings.vibrationAlertEnabled,
+                    onCheckedChange = onVibrationAlertChanged,
+                )
+                SettingsSwitchRow(
+                    title = "演示安全确认",
+                    body = "在比赛与预实验中明确当前流程仅用于模拟展示。",
+                    checked = appSettings.demoSafetyAcknowledged,
+                    onCheckedChange = onDemoSafetyChanged,
+                )
+            }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color(0xFF1E293B)),
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("设备能力", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                SummaryRow("健康接入", healthReadiness.statusText, dark = true)
+                SummaryRow("真实 SDK", if (healthReadiness.realSdkAvailable) "可用" else "未启用", dark = true)
+                SummaryRow("定位状态", locationStatus, dark = true)
+                SummaryRow("当前位置", location?.label ?: "未同步", dark = true)
+                Text(
+                    text = healthReadiness.detailText,
+                    color = PhoneColors.GrayText,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                )
+                PressableButton(
+                    text = "同步系统定位",
+                    onClick = onSyncSystemLocation,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF047857), contentColor = Color.White),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color(0xFF1E293B)),
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("演示边界", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "当前版本用于医创赛演示和低成本预实验模拟。健康摘要、AED 点位和调度解释应作为系统能力展示，不作为真实医疗诊断依据。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+                SummaryRow("应用版本", BuildConfig.VERSION_NAME, dark = true)
+                SummaryRow("构建号", BuildConfig.VERSION_CODE.toString(), dark = true)
+            }
+        }
+
+        PressableButton(
+            text = "退出登录",
+            onClick = onLogout,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7F1D1D), contentColor = Color.White),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+private fun connectionStatusLabel(connected: Boolean, connecting: Boolean): String = when {
+    connecting -> "同步中"
+    connected -> "实时同步"
+    else -> "离线"
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    title: String,
+    body: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(body, color = PhoneColors.GrayText, fontSize = 12.sp, lineHeight = 18.sp)
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
         )
     }
 }

@@ -79,15 +79,27 @@ interface ApiService {
     @POST("/incidents/{id}/sos_start")
     suspend fun sosStart(
         @Path("id") incidentId: String,
-    )
+    ): MutationResponse
 
     @POST("/incidents/{id}/sos_cancel")
     suspend fun sosCancel(
         @Path("id") incidentId: String,
-    )
+    ): MutationResponse
+
+    @POST("/incidents/{id}/patient_sos_start")
+    suspend fun patientSosStart(
+        @Header("Authorization") authorization: String?,
+        @Path("id") incidentId: String,
+    ): MutationResponse
+
+    @POST("/incidents/{id}/patient_sos_cancel")
+    suspend fun patientSosCancel(
+        @Header("Authorization") authorization: String?,
+        @Path("id") incidentId: String,
+    ): MutationResponse
 
     @POST("/incidents/{id}/trigger")
     suspend fun triggerIncident(
         @Path("id") incidentId: String,
-    )
+    ): MutationResponse
 }

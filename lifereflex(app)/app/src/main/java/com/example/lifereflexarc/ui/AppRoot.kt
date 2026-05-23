@@ -27,7 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifereflexarc.viewmodel.IncidentViewModel
+import com.example.lifereflexarc.viewmodel.AppSettingsViewModel
 import com.example.lifereflexarc.viewmodel.SessionViewModel
 import com.example.lifereflexarc.ui.components.ActiveIncidentBanner
 import com.example.lifereflexarc.ui.components.AppTopBar
@@ -38,6 +40,7 @@ import com.example.lifereflexarc.ui.screens.CommandHomeScreen
 import com.example.lifereflexarc.ui.screens.IncidentScreen
 import com.example.lifereflexarc.ui.screens.LoginScreen
 import com.example.lifereflexarc.ui.screens.ProfileScreen
+import com.example.lifereflexarc.ui.screens.SettingsScreen
 import com.example.lifereflexarc.ui.screens.TasksScreen
 import com.example.lifereflexarc.data.isArchived
 
@@ -48,6 +51,8 @@ fun AppRoot(
     deviceUserId: String,
 ) {
     val session by sessionViewModel.session.collectAsState()
+    val settingsViewModel: AppSettingsViewModel = viewModel()
+    val appSettings by settingsViewModel.settings.collectAsState()
     val sessionError by sessionViewModel.error.collectAsState()
     val sessionLoading by sessionViewModel.loading.collectAsState()
     val archives by sessionViewModel.archives.collectAsState()
@@ -137,6 +142,7 @@ fun AppRoot(
             deviceUserId = activeUserId,
             incidentViewModel = incidentViewModel,
             pendingAction = pendingAction,
+            voiceGuidanceEnabled = appSettings.voiceGuidanceEnabled,
             onExitEmergency = {
                 dismissedArchivedIncidentId = currentIncidentId
                 activeTab = MainTab.Archive
@@ -279,6 +285,38 @@ fun AppRoot(
                     onDemoLocationSelected = { label, latitude, longitude ->
                         incidentViewModel.updateDemoLocation(activeUserId, label, latitude, longitude)
                     },
+                    onLogout = {
+                        incidentViewModel.disconnect()
+                        sessionViewModel.signOut()
+                        activeTab = MainTab.Home
+                    },
+                )
+                MainTab.Settings -> SettingsScreen(
+                    session = session,
+                    incidentState = incidentState,
+                    connected = connected,
+                    connecting = connecting,
+                    healthReadiness = healthReadiness,
+                    appSettings = appSettings,
+                    location = currentLocation,
+                    locationStatus = locationStatus,
+                    archiveCount = archives.size,
+                    onOpenCurrent = {
+                        incidentViewModel.clearError()
+                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
+                        activeTab = MainTab.Incident
+                    },
+                    onSyncSystemLocation = {
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            )
+                        )
+                    },
+                    onVoiceGuidanceChanged = settingsViewModel::setVoiceGuidanceEnabled,
+                    onVibrationAlertChanged = settingsViewModel::setVibrationAlertEnabled,
+                    onDemoSafetyChanged = settingsViewModel::setDemoSafetyAcknowledged,
                     onLogout = {
                         incidentViewModel.disconnect()
                         sessionViewModel.signOut()

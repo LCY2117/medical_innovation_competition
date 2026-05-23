@@ -1,20 +1,20 @@
-import { ArrowLeft, ExternalLink, RefreshCw, Smartphone } from 'lucide-react';
+import { ArrowLeft, ExternalLink, RefreshCw, ShieldCheck, Smartphone } from 'lucide-react';
 import './mobile-demo-stage.css';
 
 const demoFrames = [
-  { key: 'patient', label: '患者端', caption: '触发 SOS' },
-  { key: 'prime', label: '核心施救', caption: 'CPR 与 AED 分析' },
-  { key: 'runner', label: 'AED 保障', caption: '取送设备' },
-  { key: 'guide', label: '清障接驳', caption: '通道与救护车接应' },
+  { key: 'patient', label: '患者', caption: 'SOS 触发', tone: 'patient' },
+  { key: 'prime', label: '施救', caption: 'CPR / AED', tone: 'prime' },
+  { key: 'runner', label: 'AED', caption: '取送设备', tone: 'runner' },
+  { key: 'guide', label: '接应', caption: '通道清障', tone: 'guide' },
 ];
 
 const runbookSteps = [
-  '患者端启动 SOS',
-  '等待智能分派',
-  '核心施救开始 CPR',
-  'AED 保障取送设备',
-  '清障接驳完成交接',
-  '归档并下载证据包',
+  'SOS',
+  '分派',
+  'CPR',
+  'AED',
+  '接应',
+  '归档',
 ];
 
 function MobileDemoStage() {
@@ -41,32 +41,31 @@ function MobileDemoStage() {
           <Smartphone size={20} />
           <div>
             <p>生命反射弧</p>
-            <h1>4端协同演示台</h1>
+            <h1>四端协同演示台</h1>
           </div>
         </div>
-        <button className="mobile-demo-stage-icon-button" onClick={reloadAll} aria-label="刷新四端">
+        <button className="mobile-demo-stage-icon-button" onClick={reloadAll} aria-label="刷新四端" title="刷新四端">
           <RefreshCw size={18} />
         </button>
       </header>
 
-      <section
-        className={`mobile-demo-stage-context ${incidentId ? 'is-bound' : 'is-unbound'}`}
-        aria-label="当前演示事件绑定状态"
-      >
-        <div>
-          <strong>{incidentStatus}</strong>
-          <span title={incidentId || undefined}>事件编号：{shortIncidentId}</span>
+      <section className="mobile-demo-stage-strip" aria-label="演示状态">
+        <div className={`mobile-demo-stage-context ${incidentId ? 'is-bound' : 'is-unbound'}`}>
+          <ShieldCheck size={16} />
+          <div>
+            <strong>{incidentStatus}</strong>
+            <span title={incidentId || undefined}>{shortIncidentId}</span>
+          </div>
         </div>
         <p>{incidentHint}</p>
-      </section>
-
-      <section className="mobile-demo-stage-runbook" aria-label="演示导播步骤">
-        {runbookSteps.map((step, index) => (
-          <div className="mobile-demo-stage-runbook-step" key={step}>
-            <span>{index + 1}</span>
-            <strong>{step}</strong>
-          </div>
-        ))}
+        <ol className="mobile-demo-stage-runbook" aria-label="演示导播步骤">
+          {runbookSteps.map((step, index) => (
+            <li className="mobile-demo-stage-runbook-step" key={step}>
+              <span>{index + 1}</span>
+              <strong>{step}</strong>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="mobile-demo-stage-grid">
@@ -77,18 +76,19 @@ function MobileDemoStage() {
           }
           const src = `/mobile?${params.toString()}`;
           return (
-            <article className="mobile-demo-stage-panel" key={frame.key}>
+            <article className={`mobile-demo-stage-panel is-${frame.tone}`} key={frame.key}>
               <div className="mobile-demo-stage-panel-head">
                 <div>
                   <strong>{frame.label}</strong>
                   <span>{frame.caption}</span>
-                  <em>{incidentId ? `共享事件 ${shortIncidentId}` : '等待总控绑定事件'}</em>
                 </div>
                 <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${frame.label}`}>
                   <ExternalLink size={16} />
                 </a>
               </div>
-              <iframe className="mobile-demo-stage-frame" title={frame.label} src={src} />
+              <div className="mobile-demo-stage-device">
+                <iframe className="mobile-demo-stage-frame" title={frame.label} src={src} loading="eager" />
+              </div>
             </article>
           );
         })}

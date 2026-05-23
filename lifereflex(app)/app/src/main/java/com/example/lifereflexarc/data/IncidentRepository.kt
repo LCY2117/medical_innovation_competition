@@ -161,6 +161,20 @@ class IncidentRepository(
         apiService.sosCancel(incidentId)
     }
 
+    suspend fun patientSosStart(authToken: String?, incidentId: String) {
+        apiService.patientSosStart(
+            authorization = authToken?.let { "Bearer $it" },
+            incidentId = incidentId,
+        )
+    }
+
+    suspend fun patientSosCancel(authToken: String?, incidentId: String) {
+        apiService.patientSosCancel(
+            authorization = authToken?.let { "Bearer $it" },
+            incidentId = incidentId,
+        )
+    }
+
     suspend fun trigger(incidentId: String) {
         apiService.triggerIncident(incidentId)
     }

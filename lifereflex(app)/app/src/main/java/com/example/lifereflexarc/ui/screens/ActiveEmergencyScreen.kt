@@ -61,13 +61,16 @@ fun ActiveEmergencyScreen(
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
     pendingAction: String?,
+    voiceGuidanceEnabled: Boolean = true,
     onExitEmergency: () -> Unit,
 ) {
-    PrimeVoicePrompt(
-        incidentState = incidentState,
-        assignedRole = assignedRole,
-        isPatient = incidentState.patientUserId == deviceUserId,
-    )
+    if (voiceGuidanceEnabled) {
+        PrimeVoicePrompt(
+            incidentState = incidentState,
+            assignedRole = assignedRole,
+            isPatient = incidentState.patientUserId == deviceUserId,
+        )
+    }
     when {
         incidentState.phase == "ARCHIVED" -> ArchivedFullScreen(
             session = session,

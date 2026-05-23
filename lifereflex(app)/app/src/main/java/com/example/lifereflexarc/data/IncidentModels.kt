@@ -93,6 +93,11 @@ data class CreateIncidentResponse(
     val incidentId: String,
 )
 
+data class MutationResponse(
+    val incidentId: String,
+    val phase: String,
+)
+
 data class JoinRequest(
     val role: String,
     val userId: String,
