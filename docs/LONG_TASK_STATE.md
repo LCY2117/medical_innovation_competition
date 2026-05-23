@@ -46,6 +46,8 @@
 - Android patient SOS now uses authenticated user endpoints `/patient_sos_start` and `/patient_sos_cancel` instead of admin-only SOS endpoints.
 - Validation passed: Web `npm run typecheck`; Web `npm run build`; Android `gradle :app:assembleDebug --no-daemon`; backend `python -m unittest discover -s tests -v` with 54 tests OK.
 - Validation note: Android `gradle :app:testDebugUnitTest --no-daemon` currently fails on the pre-existing template `ExampleUnitTest` with `ClassNotFoundException`; debug APK build is healthy, and no app logic failure was observed.
+- Second app-completeness slice: backend now supports authenticated `PATCH /auth/me`; Android profile page can edit display name, organization, health condition, profession identity, and bio, then persists the refreshed session locally.
+- Profile update validation passed: targeted backend profile tests; full backend unittest discovery with 55 tests OK; Android `gradle :app:assembleDebug --no-daemon`; Web `npm run typecheck`; Web `npm run build`.
 
 ## Current Status
 

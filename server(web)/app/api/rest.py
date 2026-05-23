@@ -20,6 +20,7 @@ from app.models.schemas import (
     AuthMeResponse,
     AuthLoginReq,
     AuthDemoReq,
+    AuthProfileUpdateReq,
     AuthResponse,
     AuthRegisterReq,
     AutoJoinReq,
@@ -300,6 +301,33 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     @router.get("/auth/me", response_model=AuthMeResponse)
     async def auth_me(authorization: str | None = Header(default=None)) -> AuthMeResponse:
         return auth_service.me(authorization)
+
+    @router.patch("/auth/me", response_model=AuthMeResponse)
+    async def update_auth_me(
+        req: AuthProfileUpdateReq,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> AuthMeResponse:
+        user = auth_service.require_user(authorization)
+        rate_limit(request, "actor", settings.rate_limit_actor_per_minute, user.user_id)
+        response = auth_service.update_profile(
+            authorization=authorization,
+            display_name=req.displayName,
+            organization=req.organization,
+            health_condition=req.healthCondition,
+            profession_identity=req.professionIdentity,
+            profile_bio=req.profileBio,
+        )
+        audit(
+            request,
+            "auth_profile_updated",
+            "user",
+            actor_id=user.user_id,
+            target_type="user",
+            target_id=user.user_id,
+            metadata={"credentialStatus": response.user.credentialStatus},
+        )
+        return response
 
     @router.post("/auth/logout", response_model=SimpleOkResponse)
     async def logout(request: Request, authorization: str | None = Header(default=None)) -> SimpleOkResponse:

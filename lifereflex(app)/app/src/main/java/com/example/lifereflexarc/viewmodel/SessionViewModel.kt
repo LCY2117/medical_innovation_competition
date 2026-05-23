@@ -130,6 +130,52 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         _loading.value = false
     }
 
+    fun updateProfile(
+        displayName: String,
+        organization: String,
+        healthCondition: HealthCondition,
+        professionIdentity: ProfessionIdentity,
+        bio: String,
+    ) {
+        val current = _session.value
+        if (!current.isLoggedIn || current.authToken.isBlank()) {
+            _error.value = "请先登录后再修改资料"
+            return
+        }
+        val validationError = validateProfile(displayName, bio)
+        if (validationError != null) {
+            _error.value = validationError
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                _error.value = null
+                val response = repository.updateProfile(
+                    authToken = current.authToken,
+                    displayName = displayName.trim(),
+                    organization = organization.trim().ifBlank { "生命反射弧网络" },
+                    healthCondition = healthCondition.label,
+                    professionIdentity = professionIdentity.label,
+                    profileBio = bio.trim(),
+                )
+                persistAuthSession(
+                    AuthResponse(
+                        ok = response.ok,
+                        token = current.authToken,
+                        user = response.user,
+                        tokenExpiresAt = response.tokenExpiresAt,
+                    )
+                )
+            } catch (e: Exception) {
+                _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "资料保存失败，请稍后重试")
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
     fun clearError() {
         _error.value = null
     }
@@ -425,6 +471,19 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         }
         if (password.length < 4) {
             return "密码至少 4 位"
+        }
+        if (bio.trim().length < 8) {
+            return "个人介绍至少 8 个字，便于智能调度"
+        }
+        return null
+    }
+
+    private fun validateProfile(
+        displayName: String,
+        bio: String,
+    ): String? {
+        if (displayName.isBlank()) {
+            return "请输入姓名"
         }
         if (bio.trim().length < 8) {
             return "个人介绍至少 8 个字，便于智能调度"

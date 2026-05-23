@@ -377,6 +377,53 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(login_payload["user"]["phone"], "13800138000")
         self.assertEqual(me.json()["user"]["phone"], "13800138000")
 
+    def test_auth_profile_can_be_updated_by_owner(self) -> None:
+        with self._client() as client:
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="张医生",
+                    phone="13800138110",
+                    organization="市医院急救科",
+                    health_condition="身体状态一般",
+                    profession_identity="医生 / 专业急救人员",
+                    profile_bio="急救科医生，熟悉 CPR 和 AED 处置",
+                ),
+            )
+            token = register.json()["token"]
+            updated = client.patch(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "displayName": "李医生",
+                    "organization": "国赛演示医院",
+                    "healthCondition": "身体素质良好",
+                    "professionIdentity": "系统培训过的急救者",
+                    "profileBio": "完成急救培训，熟悉国赛演示流程和 AED 协同。",
+                },
+            )
+            me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+            denied = client.patch(
+                "/api/auth/me",
+                json={
+                    "displayName": "无凭证",
+                    "organization": "测试",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "有一定急救常识",
+                    "profileBio": "缺少登录凭证的资料更新测试",
+                },
+            )
+
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(denied.status_code, 401)
+        self.assertEqual(updated.json()["user"]["displayName"], "李医生")
+        self.assertEqual(updated.json()["user"]["organization"], "国赛演示医院")
+        self.assertEqual(updated.json()["user"]["healthCondition"], "身体素质良好")
+        self.assertEqual(updated.json()["user"]["professionIdentity"], "系统培训过的急救者")
+        self.assertEqual(me.json()["user"]["displayName"], "李医生")
+        self.assertEqual(me.json()["user"]["phone"], "13800138110")
+
     def test_demo_auth_personas_issue_reusable_sessions(self) -> None:
         with self._client() as client:
             patient = client.post("/api/auth/demo", json={"persona": "patient"})

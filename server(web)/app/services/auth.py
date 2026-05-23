@@ -132,6 +132,31 @@ class AuthService:
         user = self._require_user_by_token(token)
         return AuthMeResponse(user=self._to_auth_user(user), tokenExpiresAt=self.store.get_token_expires_at(token))
 
+    def update_profile(
+        self,
+        authorization: str | None,
+        display_name: str,
+        organization: str,
+        health_condition: str,
+        profession_identity: str,
+        profile_bio: str,
+    ) -> AuthMeResponse:
+        token = self._extract_token(authorization)
+        user = self._require_user_by_token(token)
+        self._validate_profile(display_name, profile_bio)
+        updated = self.store.update_user_profile(
+            user_id=user.user_id,
+            display_name=display_name.strip(),
+            organization=organization.strip() or "生命反射弧网络",
+            health_condition=health_condition.strip(),
+            profession_identity=profession_identity.strip(),
+            profile_bio=profile_bio.strip(),
+            credential_status=self._credential_status(health_condition, profession_identity),
+        )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="用户不存在")
+        return AuthMeResponse(user=self._to_auth_user(updated), tokenExpiresAt=self.store.get_token_expires_at(token))
+
     def logout(self, authorization: str | None) -> SimpleOkResponse:
         token = self._extract_token(authorization)
         self.store.delete_token(token)
@@ -162,6 +187,13 @@ class AuthService:
             raise HTTPException(status_code=400, detail="请输入有效手机号")
         if len(password) < 4:
             raise HTTPException(status_code=400, detail="密码至少 4 位")
+        if len(profile_bio.strip()) < 8:
+            raise HTTPException(status_code=400, detail="个人介绍至少 8 个字")
+
+    @staticmethod
+    def _validate_profile(display_name: str, profile_bio: str) -> None:
+        if not display_name.strip():
+            raise HTTPException(status_code=400, detail="请输入姓名")
         if len(profile_bio.strip()) < 8:
             raise HTTPException(status_code=400, detail="个人介绍至少 8 个字")
 

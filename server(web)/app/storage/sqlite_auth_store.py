@@ -81,6 +81,51 @@ class SqliteAuthStore:
             ).fetchone()
         return self._row_to_user(row)
 
+    def update_user_profile(
+        self,
+        user_id: str,
+        display_name: str,
+        organization: str,
+        health_condition: str,
+        profession_identity: str,
+        profile_bio: str,
+        credential_status: str,
+    ) -> UserRecord | None:
+        with closing(self._connect()) as conn, self._lock:
+            conn.execute(
+                """
+                UPDATE users
+                SET display_name = ?,
+                    organization = ?,
+                    health_condition = ?,
+                    profession_identity = ?,
+                    profile_bio = ?,
+                    credential_status = ?
+                WHERE user_id = ?
+                """,
+                (
+                    display_name,
+                    organization,
+                    health_condition,
+                    profession_identity,
+                    profile_bio,
+                    credential_status,
+                    user_id,
+                ),
+            )
+            conn.commit()
+            row = conn.execute(
+                """
+                SELECT user_id, display_name, phone, password_hash, organization,
+                       health_condition, profession_identity, profile_bio, credential_status, created_at
+                FROM users
+                WHERE user_id = ?
+                LIMIT 1
+                """,
+                (user_id,),
+            ).fetchone()
+        return self._row_to_user(row)
+
     def save_token(self, token: str, user_id: str, issued_at: int, expires_at: int | None) -> None:
         with closing(self._connect()) as conn, self._lock:
             conn.execute(

@@ -3,6 +3,7 @@ package com.example.lifereflexarc.data
 import retrofit2.http.Header
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -20,6 +21,12 @@ interface ApiService {
     @GET("/auth/me")
     suspend fun me(
         @Header("Authorization") authorization: String?,
+    ): AuthMeResponse
+
+    @PATCH("/auth/me")
+    suspend fun updateMe(
+        @Header("Authorization") authorization: String?,
+        @Body body: AuthProfileUpdateRequest,
     ): AuthMeResponse
 
     @POST("/auth/logout")

@@ -60,6 +60,26 @@ class AuthRepository(
         return apiService.me("Bearer $authToken")
     }
 
+    suspend fun updateProfile(
+        authToken: String,
+        displayName: String,
+        organization: String,
+        healthCondition: String,
+        professionIdentity: String,
+        profileBio: String,
+    ): AuthMeResponse {
+        return apiService.updateMe(
+            authorization = "Bearer $authToken",
+            body = AuthProfileUpdateRequest(
+                displayName = displayName,
+                organization = organization,
+                healthCondition = healthCondition,
+                professionIdentity = professionIdentity,
+                profileBio = profileBio,
+            ),
+        )
+    }
+
     suspend fun logout(authToken: String) {
         apiService.logout("Bearer $authToken")
     }

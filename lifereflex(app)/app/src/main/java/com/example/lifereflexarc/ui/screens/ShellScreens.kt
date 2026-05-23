@@ -1,7 +1,11 @@
 package com.example.lifereflexarc.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,8 +19,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,12 +39,15 @@ import com.example.lifereflexarc.data.UserSession
 import com.example.lifereflexarc.data.AedSite
 import com.example.lifereflexarc.data.DispatchRoleDecision
 import com.example.lifereflexarc.data.GeoPoint
+import com.example.lifereflexarc.data.HealthCondition
 import com.example.lifereflexarc.data.HealthIntegrationReadiness
 import com.example.lifereflexarc.data.HealthSignalSummary
 import com.example.lifereflexarc.data.AppSettings
+import com.example.lifereflexarc.data.ProfessionIdentity
 import com.example.lifereflexarc.ui.accentForRole
 import com.example.lifereflexarc.ui.dispatchSourceLabel
 import com.example.lifereflexarc.ui.components.EmptyStateCard
+import com.example.lifereflexarc.ui.components.InlineErrorCard
 import com.example.lifereflexarc.ui.components.MetricCard
 import com.example.lifereflexarc.ui.components.PressableButton
 import com.example.lifereflexarc.ui.components.SectionTitle
@@ -564,14 +577,35 @@ fun ArchiveScreen(
 @Composable
 fun ProfileScreen(
     session: UserSession,
+    sessionError: String?,
+    sessionLoading: Boolean,
     healthSignals: HealthSignalSummary?,
     healthReadiness: HealthIntegrationReadiness,
     location: GeoPoint?,
     locationStatus: String,
     onSyncSystemLocation: () -> Unit,
     onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+    onProfileUpdate: (String, String, HealthCondition, ProfessionIdentity, String) -> Unit,
+    onInputChanged: () -> Unit,
     onLogout: () -> Unit,
 ) {
+    var editing by rememberSaveable { mutableStateOf(false) }
+    var displayName by rememberSaveable { mutableStateOf(session.displayName) }
+    var organization by rememberSaveable { mutableStateOf(session.organization) }
+    var selectedHealth by rememberSaveable { mutableStateOf(session.healthCondition) }
+    var selectedIdentity by rememberSaveable { mutableStateOf(session.professionIdentity) }
+    var bio by rememberSaveable { mutableStateOf(session.bio) }
+
+    LaunchedEffect(session.userId, session.displayName, session.organization, session.healthCondition, session.professionIdentity, session.bio) {
+        if (!editing) {
+            displayName = session.displayName
+            organization = session.organization
+            selectedHealth = session.healthCondition
+            selectedIdentity = session.professionIdentity
+            bio = session.bio
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -592,6 +626,123 @@ fun ProfileScreen(
                 SummaryRow("职业身份", session.professionIdentity.label, dark = true)
                 SummaryRow("认证状态", session.credentialStatus, dark = true)
                 SummaryRow("个人画像", session.profileSummary, dark = true)
+            }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            border = BorderStroke(1.dp, Color(0xFF1E293B)),
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("资料管理", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = if (editing) "编辑中" else "可更新",
+                        color = if (editing) PhoneColors.YellowSoft else PhoneColors.GreenSoft,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Text(
+                    text = "更新后的画像会重新同步到协同云端，用于后续任务分派。",
+                    color = PhoneColors.GrayText,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                )
+
+                if (editing) {
+                    com.example.lifereflexarc.ui.components.LraOutlinedTextField(
+                        value = displayName,
+                        onValueChange = {
+                            displayName = it
+                            onInputChanged()
+                        },
+                        label = "姓名",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    com.example.lifereflexarc.ui.components.LraOutlinedTextField(
+                        value = organization,
+                        onValueChange = {
+                            organization = it
+                            onInputChanged()
+                        },
+                        label = "组织 / 场景",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    ProfileChoiceSection(
+                        title = "身体状况",
+                        options = HealthCondition.entries.map { item ->
+                            Triple(item.label, item.subtitle, item == selectedHealth)
+                        },
+                        onSelected = { index ->
+                            selectedHealth = HealthCondition.entries[index]
+                            onInputChanged()
+                        },
+                    )
+                    ProfileChoiceSection(
+                        title = "职业身份",
+                        options = ProfessionIdentity.entries.map { item ->
+                            Triple(item.label, item.subtitle, item == selectedIdentity)
+                        },
+                        onSelected = { index ->
+                            selectedIdentity = ProfessionIdentity.entries[index]
+                            onInputChanged()
+                        },
+                    )
+                    com.example.lifereflexarc.ui.components.LraOutlinedTextField(
+                        value = bio,
+                        onValueChange = {
+                            bio = it
+                            onInputChanged()
+                        },
+                        label = "个人介绍",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    if (!sessionError.isNullOrBlank()) {
+                        InlineErrorCard(message = sessionError)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        PressableButton(
+                            text = "取消",
+                            onClick = {
+                                displayName = session.displayName
+                                organization = session.organization
+                                selectedHealth = session.healthCondition
+                                selectedIdentity = session.professionIdentity
+                                bio = session.bio
+                                editing = false
+                                onInputChanged()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155), contentColor = Color.White),
+                            modifier = Modifier.weight(1f),
+                            enabled = !sessionLoading,
+                        )
+                        PressableButton(
+                            text = if (sessionLoading) "保存中..." else "保存资料",
+                            onClick = {
+                                onProfileUpdate(displayName, organization, selectedHealth, selectedIdentity, bio)
+                                editing = false
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Blue, contentColor = Color.White),
+                            modifier = Modifier.weight(1f),
+                            enabled = !sessionLoading,
+                        )
+                    }
+                } else {
+                    SummaryRow("姓名", session.displayName, dark = true)
+                    SummaryRow("组织 / 场景", session.organization, dark = true)
+                    SummaryRow("调度画像", session.profileSummary, dark = true)
+                    PressableButton(
+                        text = "编辑资料",
+                        onClick = { editing = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Blue, contentColor = Color.White),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
 
@@ -790,6 +941,46 @@ private fun connectionStatusLabel(connected: Boolean, connecting: Boolean): Stri
     connecting -> "同步中"
     connected -> "实时同步"
     else -> "离线"
+}
+
+@Composable
+private fun ProfileChoiceSection(
+    title: String,
+    options: List<Triple<String, String, Boolean>>,
+    onSelected: (Int) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        options.forEachIndexed { index, option ->
+            val selected = option.third
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                    .background(if (selected) Color(0xFF172554) else Color(0xFF0B1223))
+                    .border(
+                        width = 1.dp,
+                        color = if (selected) Color(0xFF3B82F6) else Color(0xFF1E293B),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    )
+                    .clickable { onSelected(index) }
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 3.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(if (selected) Color(0xFF60A5FA) else Color(0xFF334155))
+                        .padding(5.dp),
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(option.first, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(option.second, color = PhoneColors.GrayText, fontSize = 12.sp, lineHeight = 17.sp)
+                }
+            }
+        }
+    }
 }
 
 @Composable

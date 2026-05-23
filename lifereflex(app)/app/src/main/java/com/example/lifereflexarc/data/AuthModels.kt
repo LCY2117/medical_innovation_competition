@@ -15,6 +15,14 @@ data class AuthLoginRequest(
     val password: String,
 )
 
+data class AuthProfileUpdateRequest(
+    val displayName: String,
+    val organization: String,
+    val healthCondition: String,
+    val professionIdentity: String,
+    val profileBio: String,
+)
+
 data class AuthResponse(
     val ok: Boolean,
     val token: String,

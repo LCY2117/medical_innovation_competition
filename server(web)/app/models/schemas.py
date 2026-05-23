@@ -96,6 +96,14 @@ class AuthLoginReq(BaseModel):
     password: str
 
 
+class AuthProfileUpdateReq(BaseModel):
+    displayName: str
+    organization: str
+    healthCondition: str
+    professionIdentity: str
+    profileBio: str
+
+
 class AuthDemoReq(BaseModel):
     persona: str
 

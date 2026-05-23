@@ -270,6 +270,8 @@ fun AppRoot(
                 )
                 MainTab.Profile -> ProfileScreen(
                     session = session,
+                    sessionError = sessionError,
+                    sessionLoading = sessionLoading,
                     healthSignals = healthSignals,
                     healthReadiness = healthReadiness,
                     location = currentLocation,
@@ -285,6 +287,16 @@ fun AppRoot(
                     onDemoLocationSelected = { label, latitude, longitude ->
                         incidentViewModel.updateDemoLocation(activeUserId, label, latitude, longitude)
                     },
+                    onProfileUpdate = { displayName, organization, healthCondition, professionIdentity, bio ->
+                        sessionViewModel.updateProfile(
+                            displayName = displayName,
+                            organization = organization,
+                            healthCondition = healthCondition,
+                            professionIdentity = professionIdentity,
+                            bio = bio,
+                        )
+                    },
+                    onInputChanged = sessionViewModel::clearError,
                     onLogout = {
                         incidentViewModel.disconnect()
                         sessionViewModel.signOut()
