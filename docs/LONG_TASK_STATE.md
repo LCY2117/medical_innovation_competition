@@ -2,7 +2,7 @@
 
 ## Current Session Override - 2026-05-23 National Final UI/App Polish
 
-- Status: running
+- Status: done
 - Task: Polish public `/mobile-demo` and Android app completeness for national final preparation
 - Branch: codex/competition-hardening
 - HEAD at start: 8499857
@@ -23,7 +23,7 @@
 3. Improve Android app completeness with low-risk settings/profile/status surfaces. (done, validating)
 4. Validate Web typecheck/build, Android debug build, and targeted backend tests if touched. (done with one Android unit-test environment note)
 5. Deploy to public server using the existing Git/PM2 flow after successful Web build. (next)
-6. Capture screenshots and update this state file with validation/deployment results. (in progress)
+6. Capture screenshots and update this state file with validation/deployment results. (done)
 
 ### Sub-Agent Ledger For This Session
 
@@ -48,6 +48,10 @@
 - Validation note: Android `gradle :app:testDebugUnitTest --no-daemon` currently fails on the pre-existing template `ExampleUnitTest` with `ClassNotFoundException`; debug APK build is healthy, and no app logic failure was observed.
 - Second app-completeness slice: backend now supports authenticated `PATCH /auth/me`; Android profile page can edit display name, organization, health condition, profession identity, and bio, then persists the refreshed session locally.
 - Profile update validation passed: targeted backend profile tests; full backend unittest discovery with 55 tests OK; Android `gradle :app:assembleDebug --no-daemon`; Web `npm run typecheck`; Web `npm run build`.
+- Git checkpoints pushed: `1d8d541` (`Polish mobile demo stage and Android settings`) and `0f6a5fd` (`Add editable Android profile flow`).
+- Public deployment completed on `https://lifereflex.mddcommunity.top/`; server HEAD is `0f6a5fd`, PM2 process `mspc-backend` restarted and online.
+- Public API smoke passed: `PATCH /api/auth/me` updated a test account profile; `/api/health/detail` reports `ok: true` and frontend assets ready.
+- Remaining untracked/dirty items intentionally excluded: local runtime DB, OPPO SDK document, `output/` screenshots/artifacts, and server-side unrelated `server(web)/web/package-lock.json`.
 
 ## Current Status
 
