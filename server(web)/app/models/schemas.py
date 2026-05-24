@@ -96,6 +96,32 @@ class AuthLoginReq(BaseModel):
     password: str
 
 
+class AuthCodeRequestReq(BaseModel):
+    phone: str
+
+
+class AuthCodeLoginReq(BaseModel):
+    phone: str
+    code: str
+
+
+class AuthCodeRegisterReq(BaseModel):
+    phone: str
+    code: str
+    displayName: str
+    organization: str
+    healthCondition: str
+    professionIdentity: str
+    profileBio: str
+
+
+class AuthCodeRequestResponse(BaseModel):
+    ok: bool = True
+    channel: str = "mock"
+    expiresInSec: int = 300
+    demoCode: str | None = None
+
+
 class AuthProfileUpdateReq(BaseModel):
     displayName: str
     organization: str
@@ -118,6 +144,15 @@ class AuthUser(BaseModel):
     profileBio: str
     credentialStatus: str
     privileges: list[str] = Field(default_factory=list)
+
+
+class AuthCodeLoginResponse(BaseModel):
+    ok: bool = True
+    needsProfileSetup: bool
+    token: str | None = None
+    user: AuthUser | None = None
+    tokenExpiresAt: int | None = None
+    phone: str | None = None
 
 
 class AuthResponse(BaseModel):

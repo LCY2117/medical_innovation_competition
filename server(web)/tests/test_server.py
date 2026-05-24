@@ -377,6 +377,62 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(login_payload["user"]["phone"], "13800138000")
         self.assertEqual(me.json()["user"]["phone"], "13800138000")
 
+    def test_auth_code_login_supports_existing_and_new_users(self) -> None:
+        with self._client() as client:
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="AED 志愿者",
+                    phone="13800138090",
+                    organization="国赛演示队",
+                    health_condition="身体状态一般",
+                    profession_identity="有一定急救常识",
+                    profile_bio="完成校内急救培训，可参与协同演示",
+                ),
+            )
+            code_request = client.post("/api/auth/code/request", json={"phone": "13800138090"})
+            code_login = client.post(
+                "/api/auth/code/login",
+                json={"phone": "13800138090", "code": "123456"},
+            )
+            new_phone_login = client.post(
+                "/api/auth/code/login",
+                json={"phone": "13800138091", "code": "LCY"},
+            )
+            code_register = client.post(
+                "/api/auth/code/register",
+                json={
+                    "phone": "13800138091",
+                    "code": "LCY",
+                    "displayName": "新志愿者",
+                    "organization": "国赛演示队",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "有一定急救常识",
+                    "profileBio": "",
+                },
+            )
+            denied = client.post(
+                "/api/auth/code/login",
+                json={"phone": "13800138090", "code": "000000"},
+            )
+
+        self.assertEqual(register.status_code, 200)
+        self.assertEqual(code_request.status_code, 200)
+        self.assertEqual(code_request.json()["channel"], "mock")
+        self.assertEqual(code_request.json()["demoCode"], "123456")
+        self.assertEqual(code_login.status_code, 200)
+        self.assertFalse(code_login.json()["needsProfileSetup"])
+        self.assertTrue(code_login.json()["token"])
+        self.assertEqual(code_login.json()["user"]["phone"], "13800138090")
+        self.assertEqual(new_phone_login.status_code, 200)
+        self.assertTrue(new_phone_login.json()["needsProfileSetup"])
+        self.assertEqual(new_phone_login.json()["phone"], "13800138091")
+        self.assertIsNone(new_phone_login.json()["token"])
+        self.assertEqual(code_register.status_code, 200)
+        self.assertEqual(code_register.json()["user"]["displayName"], "新志愿者")
+        self.assertEqual(code_register.json()["user"]["phone"], "13800138091")
+        self.assertEqual(denied.status_code, 401)
+
     def test_auth_profile_can_be_updated_by_owner(self) -> None:
         with self._client() as client:
             register = client.post(

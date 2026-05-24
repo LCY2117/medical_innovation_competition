@@ -17,6 +17,11 @@ from app.models.schemas import (
     AuditLogResponse,
     AedSiteListResponse,
     AedSiteUpsertReq,
+    AuthCodeLoginReq,
+    AuthCodeLoginResponse,
+    AuthCodeRegisterReq,
+    AuthCodeRequestReq,
+    AuthCodeRequestResponse,
     AuthMeResponse,
     AuthLoginReq,
     AuthDemoReq,
@@ -281,6 +286,68 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             audit(request, "auth_login", "anonymous", outcome="denied", metadata={"statusCode": exc.status_code})
             raise
         audit(request, "auth_login", "user", actor_id=response.user.userId, target_type="user", target_id=response.user.userId)
+        return response
+
+    @router.post("/auth/code/request", response_model=AuthCodeRequestResponse)
+    async def request_login_code(req: AuthCodeRequestReq, request: Request) -> AuthCodeRequestResponse:
+        rate_limit(request, "auth", settings.rate_limit_auth_per_minute)
+        try:
+            response = auth_service.request_login_code(req.phone)
+        except HTTPException as exc:
+            audit(request, "auth_code_requested", "anonymous", outcome="denied", metadata={"statusCode": exc.status_code})
+            raise
+        audit(
+            request,
+            "auth_code_requested",
+            "anonymous",
+            metadata={"channel": response.channel, "mock": response.demoCode is not None},
+        )
+        return response
+
+    @router.post("/auth/code/login", response_model=AuthCodeLoginResponse)
+    async def login_with_code(req: AuthCodeLoginReq, request: Request) -> AuthCodeLoginResponse:
+        rate_limit(request, "auth", settings.rate_limit_auth_per_minute)
+        try:
+            response = auth_service.login_with_code(req.phone, req.code)
+        except HTTPException as exc:
+            audit(request, "auth_code_login", "anonymous", outcome="denied", metadata={"statusCode": exc.status_code})
+            raise
+        audit(
+            request,
+            "auth_code_login",
+            "user" if response.user else "anonymous",
+            actor_id=response.user.userId if response.user else None,
+            target_type="user" if response.user else "phone",
+            target_id=response.user.userId if response.user else response.phone,
+            metadata={"needsProfileSetup": response.needsProfileSetup},
+        )
+        return response
+
+    @router.post("/auth/code/register", response_model=AuthResponse)
+    async def complete_code_registration(req: AuthCodeRegisterReq, request: Request) -> AuthResponse:
+        rate_limit(request, "auth", settings.rate_limit_auth_per_minute)
+        try:
+            response = auth_service.complete_code_registration(
+                phone=req.phone,
+                code=req.code,
+                display_name=req.displayName,
+                organization=req.organization,
+                health_condition=req.healthCondition,
+                profession_identity=req.professionIdentity,
+                profile_bio=req.profileBio,
+            )
+        except HTTPException as exc:
+            audit(request, "auth_code_register", "anonymous", outcome="denied", metadata={"statusCode": exc.status_code})
+            raise
+        audit(
+            request,
+            "auth_code_register",
+            "user",
+            actor_id=response.user.userId,
+            target_type="user",
+            target_id=response.user.userId,
+            metadata={"credentialStatus": response.user.credentialStatus},
+        )
         return response
 
     @router.post("/auth/demo", response_model=AuthResponse)
