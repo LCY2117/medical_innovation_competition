@@ -2,7 +2,7 @@
 
 ## Current Session - 2026-05-26 Medical Innovation National Web Delivery
 
-- Status: running
+- Status: done
 - Task: Build the Web command center + `/mobile` four-terminal flow + evidence/material chain into a national-round medical innovation competition deliverable.
 - Branch: codex/competition-hardening
 - HEAD at start: b8e8c6d
@@ -11,12 +11,12 @@
 
 ### Active Work Plan
 
-1. Establish this session's plan, blocker queue, Git baseline, and sub-agent ledger. (in progress)
-2. Audit Web command center, `/mobile` four-terminal flow, and evidence/material chain. (in progress)
-3. Implement P0 national-round demonstration and evidence-chain improvements. (pending)
-4. Validate locally with build/tests/browser checks appropriate to changed areas. (pending)
-5. Deploy through Git/SSH/deploy workflow and verify public readiness. (pending)
-6. Record final handoff, validation evidence, blockers, and resume instructions. (pending)
+1. Establish this session's plan, blocker queue, Git baseline, and sub-agent ledger. (done)
+2. Audit Web command center, `/mobile` four-terminal flow, and evidence/material chain. (done)
+3. Implement P0 national-round demonstration and evidence-chain improvements. (done)
+4. Validate locally with build/tests/browser checks appropriate to changed areas. (done)
+5. Deploy through Git/SSH/deploy workflow and verify public readiness. (done)
+6. Record final handoff, validation evidence, blockers, and resume instructions. (done)
 
 ### Sub-Agent Ledger For This Session
 
@@ -50,6 +50,12 @@
   Expected output: Chinese competition-facing runbook/checklist, no fabricated results.
   Status: closed
   Result: Added a 5-minute Web demo runbook and blind-review/evidence checklist; content preserves simulation-only and no-clinical-efficacy boundaries.
+- 019e6069-af47-7112-ba38-feb900f52405 / Galileo: public deployment read-only verification.
+  Permission: read-only
+  Owned scope: `https://lifereflex.mddcommunity.top/`, `/mobile-demo`, `/api/health/detail`, deployed JS bundles
+  Expected output: Public smoke conclusion and risk notes only; no file edits or service changes.
+  Status: closed
+  Result: Verified public HTML, `/mobile-demo`, and `/api/health/detail` are reachable; noted readiness is named `demoReadiness`; parent confirmed `App-CqevobQC.js` contains the national 5-minute copy.
 
 ### Current Safety Notes
 
@@ -68,6 +74,29 @@
 - Added `firstResponderResponseSeconds` as T2 to metrics, evidence package CSVs, quality coverage, analysis chart output, and competition-facing evidence text.
 - Merged `/mobile-demo` dynamic stage and created national demo runbook / blind-review checklist through closed sub-agents.
 - Validation so far: Web `npm run typecheck` passed; Web `npm run build` passed; backend `.venv` unittest discovery passed, 57 tests OK; evidence scripts `py_compile` passed.
+- Git checkpoint created and pushed: `5786280 checkpoint: harden national web delivery` on `codex/competition-hardening`.
+- Server deploy completed through `deploy@104.248.151.6` at `/opt/lifereflex/medical_innovation_competition`, HEAD `5786280`.
+- Server-side source was fast-forwarded from `b8e8c6d` to `5786280`; existing remote dirty `server(web)/web/package-lock.json` was preserved.
+- Server Node is `v18.19.1`, while current Vite requires Node `20.19+` or `22.12+`; local Node `v24.15.0` was used to build Web `dist`, then the build artifact was uploaded. Do not treat this as a user blocker; future server builds should either use a project-local Node 20/22 or continue artifact upload.
+- Server Web `dist` backup preserved at `/opt/lifereflex/medical_innovation_competition/server(web)/web/dist.backup.20260525183120`.
+- Uvicorn on port `8029` was restarted; active process after restart: `/opt/lifereflex/medical_innovation_competition/server(web)/venv/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8029`.
+- Public health verified: `https://lifereflex.mddcommunity.top/api/health` returned `{"ok":true}`; `/api/health/detail` returned `frontend.ok=true`, `version=competition-hardening`, `mapProvider.mode=amap`, `demoReadiness.ready=true`, `healthProvider.mode=mock`, `demoAdminAuthEnabled=true`.
+- Public bundle verified: `/` references `assets/index-Du7C57ZQ.js`; lazy chunks include `App-CqevobQC.js`, `MobileApp-BFiYGBIX.js`, and `MobileDemoStage-CWuZ-INL.js`; deployed `App-CqevobQC.js` contains national 5-minute demo copy.
+- Public demo flow verified with token `LCY`: `/api/demo/bootstrap` -> `/api/incidents/current/designate_patient` -> role joins -> premature GUIDE handover returns `409 Handover requires CPR started and AED delivered` -> CPR/AED pickup/AED delivery/AED analysis/shock/handover/archive all completed.
+- Public export metrics verified on archived incident `af2e1835-fe85-4a96-83ad-c62cb14e1fea`: `dispatchSeconds=1`, `firstResponderResponseSeconds=2`, `cprStartSeconds=5`, `aedPickupSeconds=6`, `aedDeliverySeconds=6`, `ambulanceArriveSeconds=8`, `roleAssignmentCompleteness=1.0`.
+- Public evidence ZIP verified: `/api/experiments/current/package` returned `application/zip`, ZIP magic `PK`, 32982 bytes, and SHA-256 header `bdd610c63f11eebb6872fc5f0144c6b80a12376007350ae02a21dd226cca5390`.
+- Public screenshots generated under `output/browser-check/`: `public-dashboard-after-deploy.png`, `public-mobile-demo-after-deploy.png`, and `public-mobile-prime-after-deploy.png`. These are validation artifacts and should remain untracked.
+- Remote residual state after deploy: `server(web)/web/package-lock.json` remains dirty on server from a pre-existing npm optional `libc` diff; `server(web)/web/dist.backup.20260525183120/` is an intentional remote rollback backup. Do not commit either without a separate decision.
+- Local residual dirty state after deploy remains unrelated/user or runtime work: Android app files, `server(web)/data/lifereflexarc.db`, `OPPO健康SDK文档.md`, and `output/`.
+
+### Final Handoff - 2026-05-26 Public National Web Milestone
+
+- Public command center: `https://lifereflex.mddcommunity.top/` is deployed and loading the current national-round bundle.
+- Public four-terminal stage: `https://lifereflex.mddcommunity.top/mobile-demo?incidentId=af2e1835-fe85-4a96-83ad-c62cb14e1fea` is reachable and shows the archived four-terminal demonstration stage.
+- Public mobile terminal example: `https://lifereflex.mddcommunity.top/mobile?demo=prime&slot=prime&incidentId=af2e1835-fe85-4a96-83ad-c62cb14e1fea` is reachable and shows the app-like mobile Web terminal.
+- Demo admin token remains `LCY`.
+- Current Git branch is `codex/competition-hardening`; latest committed/pushed task checkpoint is `5786280`.
+- Remaining true blockers are only the team/external items in `docs/LONG_TASK_BLOCKERS.md`: real AED location confirmation, expert feedback/signature, and final PPT/team wording decisions.
 
 ## Current Session Acceptance Standard - Medical Innovation National Web Delivery
 
