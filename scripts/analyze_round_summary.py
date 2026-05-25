@@ -10,6 +10,7 @@ from pathlib import Path
 
 TIME_FIELDS = [
     ("dispatchSeconds", "T1 触发到分派完成"),
+    ("firstResponderResponseSeconds", "T2 触发到核心施救响应"),
     ("cprStartSeconds", "T3 触发到 CPR 开始"),
     ("aedPickupSeconds", "T4 触发到 AED 取到"),
     ("aedDeliverySeconds", "T5 触发到 AED 送达"),

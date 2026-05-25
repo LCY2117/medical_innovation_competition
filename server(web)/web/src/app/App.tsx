@@ -1415,6 +1415,7 @@ export default function App() {
   const isPrimeAnalyzing = isAedAnalyzing(incidentState);
   const isPrimeShockDelivered = isShockDelivered(incidentState);
   const isAedOnsite = hasRunnerDelivered(incidentState);
+  const handoverReady = Boolean(isCprActive && isAedOnsite);
   const responderCount = incidentState
     ? Object.values(incidentState.roles).filter((role) => isRoleJoined(role.status)).length
     : 0;
@@ -1432,6 +1433,8 @@ export default function App() {
     : archivedIncident
       ? '本轮事件已归档'
       : undefined;
+  const ambulanceActionDisabled = actionsDisabled || !handoverReady;
+  const ambulanceActionTitle = actionDisabledTitle ?? (!handoverReady ? '需先启动 CPR 并送达 AED，才能记录救护接管' : undefined);
   const incidentStartTs = incidentState?.logs?.[0]?.ts ?? null;
   const archiveDurationLabel = formatArchiveDurationLabel(incidentState, liveNowMs);
   const archiveRoleCountLabel = formatArchiveRoleCount(incidentState);
@@ -2922,11 +2925,11 @@ export default function App() {
 
                <button
                  onClick={() => postAction('AMBULANCE_ARRIVED')}
-                 disabled={actionsDisabled}
-                 title={actionDisabledTitle}
+                 disabled={ambulanceActionDisabled}
+                 title={ambulanceActionTitle}
                  className="w-full bg-yellow-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-yellow-900/30 hover:bg-yellow-400 transition-colors"
                >
-                 救护车已到达
+                 {handoverReady ? '救护车已到达' : '等待 CPR 与 AED 送达'}
                </button>
                {incidentState?.phase === 'HANDOVER' && (
                  <button
@@ -3328,6 +3331,54 @@ export default function App() {
                 {visibleReadinessWarnings.slice(0, 3).join('；')}
               </div>
             )}
+          </div>
+          <div className="rounded-xl border border-violet-800/50 bg-violet-950/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] text-violet-300 uppercase tracking-wider font-bold">国赛 5 分钟演示路径</div>
+                <div className="text-sm text-white font-semibold mt-1">医学问题、AI 分派、四端协同、证据导出和安全边界一条线讲清楚</div>
+              </div>
+              <div className="rounded-lg border border-violet-700/60 bg-violet-900/40 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-violet-100">
+                AI 创新设计 · 实验设计
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+              {[
+                { title: '0:00 医学问题', body: '公共场所疑似心脏骤停时，第一目击者、AED 取送者和通道接应容易串行沟通。', ready: Boolean(incidentState) },
+                { title: '0:45 AI 分派', body: dispatchSummaryLabel, ready: hasRoleAssignments || incidentState?.phase === 'DISPATCHING' },
+                { title: '1:40 四端协同', body: `核心施救 ${translateRoleStatus(incidentState?.roles.PRIME.status)}；AED ${translateRoleStatus(incidentState?.roles.RUNNER.status)}；接应 ${translateRoleStatus(incidentState?.roles.GUIDE.status)}`, ready: responderCount >= 1 },
+                { title: '3:00 T1-T6 证据', body: `日志 ${incidentState?.logs.length ?? 0} 条，T2 已进入 metrics / round-summary / chart-data。`, ready: Boolean(incidentState?.logs.length) },
+                { title: '3:50 证据包', body: archivedIncident ? '事件已归档，可导出 ZIP、manifest 和 SHA-256。' : '可先导出当前轮材料，完整演示建议归档后再下载。', ready: Boolean(incidentState) },
+                { title: '4:30 安全边界', body: '仅用于模拟演练、训练复盘和预实验，不宣称临床疗效或替代 120/AED/医护判断。', ready: true },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className={cn(
+                    "rounded-lg border px-3 py-3",
+                    item.ready ? "border-violet-700/50 bg-slate-950/30" : "border-slate-700 bg-slate-900/50",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {item.ready ? <CheckCircle2 size={15} className="text-emerald-300" /> : <Clock size={15} className="text-slate-500" />}
+                    <div className="text-xs font-semibold text-white">{item.title}</div>
+                  </div>
+                  <div className="mt-2 text-[11px] leading-4 text-slate-400">{item.body}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                { label: '可行性', value: readinessReady ? '演示就绪' : '待自检' },
+                { label: '创新性', value: dispatchMeta?.configured ? '智能分派' : '规则兜底' },
+                { label: '应用性', value: visibleAedSites.length ? `${visibleAedSites.length} 个 AED 点` : '待点位' },
+                { label: '实验记录', value: archivedIncident ? '已归档' : '采集中' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-2">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">{item.label}</div>
+                  <div className="mt-1 text-xs font-semibold text-violet-100">{item.value}</div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="rounded-xl border border-blue-800/50 bg-blue-950/20 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

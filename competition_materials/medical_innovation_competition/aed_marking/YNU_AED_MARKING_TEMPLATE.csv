@@ -1,0 +1,4 @@
+siteId,name,latitude,longitude,accuracyMeters,label,floor,source,status,accessNotes
+ynu-aed-001,云南大学AED-示例点位1,,,,,呈贡校区 示例楼栋 1F,1F,manual,AVAILABLE,示例：大厅服务台旁，按现场标识取用
+ynu-aed-002,云南大学AED-示例点位2,,,,,呈贡校区 示例楼栋 2F,2F,manual,AVAILABLE,示例：电梯口右侧 AED 箱
+

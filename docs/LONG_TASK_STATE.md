@@ -1,5 +1,171 @@
 # Long Task State
 
+## Current Session - 2026-05-26 Medical Innovation National Web Delivery
+
+- Status: running
+- Task: Build the Web command center + `/mobile` four-terminal flow + evidence/material chain into a national-round medical innovation competition deliverable.
+- Branch: codex/competition-hardening
+- HEAD at start: b8e8c6d
+- Workspace: D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧
+- User instruction: start the long task; sub-agents are allowed; acceptance is the detailed national-round Web delivery standard below.
+
+### Active Work Plan
+
+1. Establish this session's plan, blocker queue, Git baseline, and sub-agent ledger. (in progress)
+2. Audit Web command center, `/mobile` four-terminal flow, and evidence/material chain. (in progress)
+3. Implement P0 national-round demonstration and evidence-chain improvements. (pending)
+4. Validate locally with build/tests/browser checks appropriate to changed areas. (pending)
+5. Deploy through Git/SSH/deploy workflow and verify public readiness. (pending)
+6. Record final handoff, validation evidence, blockers, and resume instructions. (pending)
+
+### Sub-Agent Ledger For This Session
+
+- 019e6045-2e4a-7261-b763-02de2d8edc52 / Bacon: Web command-center read-only audit.
+  Permission: read-only
+  Owned scope: `server(web)/web/src/app/**`, shared API/types as needed
+  Expected output: P0/P1/P2 findings, suggested files, validation ideas
+  Status: closed
+  Result: P0 findings: command center needs a 5-minute defense path; `/mobile-demo` needs dynamic incident/role/AED/evidence status. P1 findings: score evidence matrix, AED point edit/import, clearer dispatch explanation, friendlier errors, evidence-package boundary prompt.
+- 019e6045-6300-75d3-9d36-cc4b891a5b90 / Cicero: `/mobile` four-terminal read-only audit.
+  Permission: read-only
+  Owned scope: `server(web)/web/src/mobile/**`, shared API/types as needed
+  Expected output: P0/P1/P2 findings, suggested files, validation ideas
+  Status: closed
+  Result: P0 finding: GUIDE can advance to ambulance handover before CPR/AED flow is ready; fix backend and mobile action guard. P1 findings: old-incident auto-join uses current incident, manual role override can break persona roles, guide stage needs dynamic status, projection readability risks.
+- 019e6045-9a01-7583-b0e7-8f7ea36bdcf2 / Kierkegaard: evidence package and competition-material read-only audit.
+  Permission: read-only
+  Owned scope: `server(web)/app/services/incidents.py`, `scripts/*evidence*`, `competition_materials/medical_innovation_competition/**`
+  Expected output: P0/P1/P2 findings, suggested files, validation ideas
+  Status: closed
+  Result: P0 findings: formal multi-round evidence data is missing; T2 first-responder response is not in automatic metrics/summary; official abstract/PPT/experiment/expert materials remain mostly templates. P1 findings: route metrics can be misleading if coordinates are mismatched; add blind-review checklist and AI evidence page support.
+- 019e604b-3d0c-7251-b670-e2c3a7a1ab37 / Popper: `/mobile-demo` dynamic stage implementation.
+  Permission: write
+  Owned scope: `server(web)/web/src/mobile/MobileDemoStage.tsx`, `server(web)/web/src/mobile/mobile-demo-stage.css`
+  Expected output: Dynamic incident/role/AED/evidence stage status and projection-friendly runbook.
+  Status: closed
+  Result: Implemented a polling incident dashboard, dynamic runbook status, role/AED/evidence summaries, recent logs, and projection-friendly stage CSS; parent refined status mappings and validated with Web typecheck/build.
+- 019e604b-7756-76a2-80ca-d41be453998f / Dirac: national demo runbook and blind-review/evidence checklist.
+  Permission: write
+  Owned scope: `competition_materials/medical_innovation_competition/NATIONAL_DEMO_RUNBOOK.md`, `competition_materials/medical_innovation_competition/BLIND_REVIEW_AND_EVIDENCE_CHECKLIST.md`
+  Expected output: Chinese competition-facing runbook/checklist, no fabricated results.
+  Status: closed
+  Result: Added a 5-minute Web demo runbook and blind-review/evidence checklist; content preserves simulation-only and no-clinical-efficacy boundaries.
+
+### Current Safety Notes
+
+- Current scope is Web national-round delivery. OPPO SDK and Android APK are not current blockers.
+- Preserve unrelated dirty files and runtime DBs. Do not revert user work.
+- Real AED points, expert signatures, and final PPT decisions remain external/team tasks.
+- Do not commit secrets, `.env`, tokens, keystores, DB runtime artifacts, screenshots, or bulky generated output.
+
+### Current Progress
+
+- Created `competition_materials/medical_innovation_competition/NATIONAL_WEB_DELIVERY_TASK_PLAN.md`.
+- Updated `docs/LONG_TASK_BLOCKERS.md` so this round's active blockers are real AED data, expert feedback/signature, and final PPT/team decisions.
+- Spawned three read-only audit agents for command center, `/mobile`, and evidence/material chain.
+- Integrated and closed three read-only audit agents. First implementation priorities: fix GUIDE premature handover, add T2 response metric, make `/mobile-demo` dynamic, and add command-center competition evidence path.
+- Implemented backend handover guard: GUIDE cannot report ambulance arrival until CPR has started and AED has been delivered. Added regression coverage.
+- Added `firstResponderResponseSeconds` as T2 to metrics, evidence package CSVs, quality coverage, analysis chart output, and competition-facing evidence text.
+- Merged `/mobile-demo` dynamic stage and created national demo runbook / blind-review checklist through closed sub-agents.
+- Validation so far: Web `npm run typecheck` passed; Web `npm run build` passed; backend `.venv` unittest discovery passed, 57 tests OK; evidence scripts `py_compile` passed.
+
+## Current Session Acceptance Standard - Medical Innovation National Web Delivery
+
+The current long task is ready to start once the user confirms. Its acceptance standard is:
+
+Build "生命反射弧" into a competition-ready Web product for the 12th National Undergraduate Medical Innovation Competition national round. The declared direction is undergraduate group, experimental design type, interdisciplinary track, subgroup 4 "AI Innovation Design". The product must be publicly accessible, support desktop-based four-terminal simulation, complete a simulated emergency collaboration flow, export evidence materials, and support the national-round defense narrative.
+
+Competition-specific framing:
+
+- Official deliverables include abstract, PPT, and experiment records.
+- Experimental-design abstracts should cover: rationale, design idea, experiment content, materials, preliminary experiment result, feasibility, and innovation.
+- The track requires a clear medical application scenario, a medical real-world problem, medical-related validation data or clinical/expert feedback, and AI integration into the research process. Avoid presenting the work as a pure software/AI technical project.
+- The current safe claim is "low-cost simulation pre-experiment + expert feedback", not clinical efficacy or real patient validation.
+- Blind-review materials and experiment records must avoid school names, student names, advisor names, photos, logos, and other identifying information.
+- Defense PPT should support a 5-minute Chinese presentation, match submitted abstract/PPT content, use 16:9 layout, and avoid school/team-identifying content except the allowed team number/title format.
+
+Scoring-aligned acceptance goals:
+
+- Feasibility 15 points: show medical rationale, technical route, preliminary simulation result, and low-cost budget.
+- Innovation 20 points: make the AI innovation explicit, original, and critical; AI should be role dispatch/explanation/fallback integration, not only generic chat or a UI label.
+- Application 10 points: show value for campus, community, public venue, training, drills, and reviewable emergency coordination.
+- Experiment record 5 points: produce traceable system/experiment records and post-competition-progress style materials.
+- Defense 30 points: support clear PPT logic, attractive screenshots, accurate Q&A, and basic medical/AI reasoning.
+- Teamwork 20 points: make system, PPT, pre-experiment, expert feedback, compliance, and data-analysis contributions easy to map to team roles.
+
+Detailed acceptance criteria:
+
+1. Public Web entry is usable for presentation:
+   - `https://lifereflex.mddcommunity.top/` loads as the command-center entry.
+   - The command center can initialize or reset a demo scenario with the demo admin token `LCY`.
+   - The command center clearly shows scenario status, terminal readiness, role dispatch, AED sites, event logs, evidence/export actions, and demo links.
+   - The page is suitable for projection: no cramped first screen, no unexplained technical noise, no status flicker that distracts judges.
+   - The visible copy should support a Chinese 5-minute defense: concise, judge-facing, and aligned with "AI-assisted emergency coordination" rather than developer/debug wording.
+
+2. Desktop four-terminal demo works without real phones:
+   - One computer can open four `/mobile` terminals for patient, prime responder, AED runner, and guide/clearance roles.
+   - Each terminal can bind to the same incident while keeping its own session identity through `slot` or equivalent isolation.
+   - The four terminals do not cross-login, overwrite each other's state, or trigger the wrong role action.
+   - The command center provides a practical way to open or share the four terminal links.
+   - The four-terminal route should support screenshots or video capture for PPT page 6 "system implementation display".
+
+3. Simulated emergency collaboration flow is complete:
+   - The demo can represent patient alert, dispatch, role acceptance, CPR start, AED pickup, AED delivery, AED analysis, shock/handover, and archive/completion.
+   - AI dispatch may use cloud reasoning when available, but the demo must have a fast deterministic/static fallback so presentation does not depend on a third-party model.
+   - Actions should be idempotent or guarded against duplicate clicks where practical.
+   - Errors must be understandable to presenters instead of producing blank screens or unexplained failures.
+   - The flow should expose enough timestamps or state transitions to support T1-T6 style pre-experiment metrics.
+
+4. Evidence materials are exportable and competition-safe:
+   - The system can export a ZIP evidence package for a completed or current incident.
+   - The evidence package should include structured event data, timeline/logs, participant/role summary, AED/site information, experiment-ready records, and review-friendly materials.
+   - Exported public/review-facing materials should avoid leaking secrets, raw tokens, API keys, private certificates, or unnecessary personal data.
+   - SHA-256 or manifest verification should remain available where implemented.
+   - Evidence should support official experiment-record requirements: experiment date, content, materials/methods, results with tables/figures, discussion/analysis, project name, and design idea.
+   - Materials should support blind-review safety by excluding school/student/advisor identifiers from public/review-facing files.
+
+5. Low-cost desktop simulation experiment is supported:
+   - The workflow should support running multiple simulated rounds from one computer.
+   - Materials under `competition_materials/medical_innovation_competition` should explain how to run the simulation, record observations, summarize rounds, and prepare PPT-safe data.
+   - The system should not require real OPPO SDK, Android APK, SMS, push notification, or real multi-device hardware for this phase.
+   - At minimum, the workflow should make 2-3 simulation rounds feasible; the ideal plan still supports 3-5 rounds if the team has time.
+   - The output should support T1-T6 time indicators, participant subjective scores, observer notes, and a cautious preliminary-result paragraph.
+
+6. National-round defense narrative is supported:
+   - The Web product and materials should make the AI innovation design value visible: role dispatch logic, location/AED consideration, health-summary concept, collaboration timeline, evidence loop, and fallback safety.
+   - The deliverable should help presenters explain "what problem it solves", "how AI participates", "how a low-cost experiment can verify the workflow", and "what remains as future clinical/field validation".
+   - Avoid claiming clinical efficacy from simulated data. Keep language framed as workflow simulation, training, coordination, and pre-experiment evidence.
+   - The narrative must answer why the work belongs to "AI Innovation Design": clear medical scenario, real emergency coordination problem, AI/algorithm contribution, medical-related validation or expert feedback, and AI integrated into the research workflow.
+   - The narrative should explicitly distinguish the product from 120 calling, AED maps, chatbots, and generic notification groups.
+   - Materials should include or support Q&A for likely questions: AI failure fallback, AED/location accuracy, safety boundary, privacy, small sample size, and future real-world validation.
+
+7. Abstract, PPT, and official-material compatibility:
+   - Abstract content should map to experimental-design fields: rationale, design idea, experiment content, materials, preliminary result, feasibility, and innovation.
+   - PPT mainline should fit a 5-minute Chinese defense and roughly follow: medical problem -> AI design -> system implementation -> pre-experiment -> innovation/application/safety.
+   - PPT/screenshots should avoid school names, logos, student/advisor names, student photos, chat notifications, and other blind-review risks.
+   - Suggested PPT evidence should include: system architecture, AI dispatch logic, command center, four `/mobile` terminals, dispatch explanation, evidence package export, pre-experiment charts, and safety/future-work slide.
+
+8. Engineering and deployment readiness:
+   - Local code should build/typecheck/test according to the risk of changed areas during the long task.
+   - Public deployment should be updated through the Git/SSH/deploy workflow when changes are ready.
+   - Server-side changes should preserve the `deploy` user workflow, `/opt` project layout, SSH Git remote, and existing 1Panel/OpenResty setup.
+   - Dirty or unrelated files must not be reverted or accidentally committed.
+   - Demo should have network/presentation fallback options: static/fast dispatch fallback, understandable degraded-state messages, and enough screenshot/video/evidence backup for defense if live network is unstable.
+
+9. Teamwork and contribution evidence:
+   - The final materials should make it easy for the team to claim real contributions: system development, AI dispatch design, pre-experiment organization, data analysis, PPT narrative, expert feedback, and compliance/anonymous-material checking.
+   - Do not invent team contributions, signatures, expert opinions, or real-world experiment results. Provide templates and reminders where external work is required.
+
+10. Final handoff must be concrete:
+   - Report changed files, deployed URL/status, validation commands and results, screenshots or exported evidence when useful, remaining agent-owned tasks, and true user/external blockers.
+   - Update `docs/LONG_TASK_STATE.md` and `docs/LONG_TASK_BLOCKERS.md` or the competition-material equivalents so a future resumed thread can continue without relying on chat memory.
+
+## Standing Rule - Pre-Long-Task Test Scope
+
+- Before a long task starts, only validate resource, permission, environment, and tooling availability.
+- Website business-flow tests, UI tests, and feature acceptance tests belong inside the long-task development/validation phase.
+- Do not expand preflight into a full product smoke test unless the user explicitly asks for that specific test.
+
 ## Current Session Override - 2026-05-24 National Final `/mobile` Redesign
 
 - Status: done

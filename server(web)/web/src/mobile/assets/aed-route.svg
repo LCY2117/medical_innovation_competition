@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">AED route map</title>
+  <desc id="desc">A simplified campus route map connecting a responder, AED location, and patient area.</desc>
+  <defs>
+    <linearGradient id="bg" x1="42" x2="592" y1="28" y2="336" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ecf7f8"/>
+      <stop offset="1" stop-color="#cfe2e6"/>
+    </linearGradient>
+    <linearGradient id="route" x1="146" x2="502" y1="254" y2="92" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563eb"/>
+      <stop offset=".5" stop-color="#0c9f71"/>
+      <stop offset="1" stop-color="#dc2740"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#163941" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="640" height="360" rx="42" fill="url(#bg)"/>
+  <g opacity=".88">
+    <path d="M89 246l117-68 116 68-117 68-116-68Z" fill="#fff" opacity=".76"/>
+    <path d="M260 152l126-72 133 76-126 72-133-76Z" fill="#fff" opacity=".82"/>
+    <path d="M284 278l96-56 95 55-96 55-95-54Z" fill="#fff" opacity=".72"/>
+    <path d="M112 245l94-54 93 54-94 54-93-54ZM294 153l93-54 99 56-93 54-99-56ZM311 278l69-39 67 38-68 39-68-38Z" fill="none" stroke="#b5c9ce" stroke-width="3"/>
+  </g>
+  <path d="M147 249c73-56 128-67 166-33 33 29 76 15 128-43 17-19 38-42 63-69" fill="none" stroke="#ffffff" stroke-width="25" stroke-linecap="round" stroke-linejoin="round" opacity=".78"/>
+  <path d="M147 249c73-56 128-67 166-33 33 29 76 15 128-43 17-19 38-42 63-69" fill="none" stroke="url(#route)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 18"/>
+  <g filter="url(#shadow)">
+    <circle cx="147" cy="249" r="31" fill="#2563eb"/>
+    <circle cx="147" cy="249" r="13" fill="#fff"/>
+    <path d="M131 284c10-18 22-27 36-27s26 9 36 27" fill="none" stroke="#2563eb" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="284" y="169" width="82" height="74" rx="20" fill="#0c9f71"/>
+    <path d="M325 188v36M307 206h36" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M302 232h45" stroke="#d8fff3" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g filter="url(#shadow)">
+    <circle cx="504" cy="104" r="35" fill="#dc2740"/>
+    <path d="M483 106h14l8-17 17 34 11-21h18" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g opacity=".62">
+    <path d="M93 96h102M93 123h76M431 254h111M452 281h70" stroke="#82959a" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="552" cy="252" r="7" fill="#82959a"/>
+    <circle cx="82" cy="178" r="6" fill="#82959a"/>
+    <circle cx="558" cy="76" r="5" fill="#82959a"/>
+  </g>
+</svg>

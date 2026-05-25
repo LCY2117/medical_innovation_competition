@@ -4,13 +4,11 @@ This file records user-only actions that should not stop independent engineering
 
 ## Active Blockers
 
-- OPPO Health service cooperation and data permission approval may require legal agreement acceptance, manual submission, real-name/company/school verification, or OPPO-side review. Do not complete those unattended.
-- If OPPO login expires and asks for SMS/email/QR/slider verification, record the exact page/action and continue local mock/fallback work.
-- If OPPO console displays clientId/clientSecret or asks to create/copy secrets, do not expose or commit them.
-- Current Android package remains com.example.lifereflexarc; changing to a formal package name would require re-binding third-party keys and is out of scope unless explicitly requested.
-- True OPPO Health data validation requires compatible phone/HeyTap Health app/account and wearable/history data. If unavailable, keep demo on mock/fallback provider.
-- Real SDK dependency activation remains blocked until OPPO cooperation approval, SDK repository access, privacy disclosure, and user-triggered authorization flow are confirmed.
+- Real Yunnan University AED locations require team-side field confirmation or manual marking. The system should remain configurable and work with demo/default AED points until the CSV is provided.
+- Expert feedback, clinical/medical teacher comments, and signatures are team/external actions. Codex should provide templates, summaries, and reminders, but must not invent expert opinions or signatures.
+- Final PPT visual style, team member contribution wording, team number, and final submission files require team confirmation.
 
 ## Resolved Blockers
 
 - Chrome extension browser control is available and OPPO console login state was valid during readiness check.
+- OPPO Health SDK application and real SDK integration have been cut from the current national-round Web delivery scope.

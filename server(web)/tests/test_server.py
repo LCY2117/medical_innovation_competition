@@ -743,6 +743,7 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(exported["patientUserId"], "demo-patient")
             self.assertEqual(exported["assignments"]["RUNNER"], "demo-runner")
             self.assertIn("dispatchSeconds", exported["metrics"])
+            self.assertIn("firstResponderResponseSeconds", exported["metrics"])
             self.assertEqual(exported["metrics"]["participantCount"], 4)
             self.assertEqual(exported["metrics"]["aedSiteCount"], 2)
             self.assertEqual(exported["metrics"]["clientsWithHealthSignals"], 4)
@@ -791,6 +792,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertNotIn("OPPO Health mock", experiment_json)
                 metrics_csv = archive.read("metrics.csv").decode("utf-8-sig")
                 self.assertIn("healthCoveragePercent", metrics_csv)
+                self.assertIn("firstResponderResponseSeconds", metrics_csv)
                 self.assertIn("runnerRouteMeters", metrics_csv)
                 timeline_csv = archive.read("timeline.csv").decode("utf-8-sig")
                 self.assertIn("tsIso", timeline_csv)
@@ -881,10 +883,12 @@ class ServerTestCase(unittest.TestCase):
                 comparison = archive.read("baseline_vs_system_comparison.csv").decode("utf-8-sig")
                 self.assertIn("baselineRoundId", comparison)
                 self.assertIn("systemRoundId", comparison)
+                self.assertIn("firstResponderResponseSecondsDelta", comparison)
                 self.assertIn("cprStartSecondsDelta", comparison)
                 self.assertIn("aedDeliverySecondsChangePercent", comparison)
                 round_summary = archive.read("pre_experiment_round_summary.csv").decode("utf-8-sig")
                 self.assertIn("roundId", round_summary)
+                self.assertIn("firstResponderResponseSeconds", round_summary)
                 self.assertIn("roleAssignmentCompleteness", round_summary)
                 self.assertIn("healthCoveragePercent", round_summary)
                 feedback_summary = archive.read("expert_feedback_summary.csv").decode("utf-8-sig")
@@ -1170,6 +1174,7 @@ class ServerTestCase(unittest.TestCase):
         review_actions = review_path.read_text(encoding="utf-8-sig")
         self.assertIn("生命反射弧预实验多轮分析摘要", report)
         self.assertIn("T1 触发到分派完成", report)
+        self.assertIn("T2 触发到核心施救响应", report)
         self.assertIn("校验通过轮次：1", report)
         self.assertIn("## 证据质量", report)
         self.assertIn("needs_rerun_or_manual_review: 1", report)
@@ -1184,6 +1189,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn(bootstrapped.json()["incidentId"], report)
         self.assertIn("metricGroup,metricKey,metricLabel,unit,validRoundCount", chart_data)
         self.assertIn("time,dispatchSeconds,T1 触发到分派完成,seconds,1", chart_data)
+        self.assertIn("time,firstResponderResponseSeconds,T2 触发到核心施救响应,seconds,0", chart_data)
         self.assertIn("quality,qualityScore,质量分,score,1,51,51,51,51", chart_data)
         self.assertIn("coverage,roleAssignmentCompleteness,角色分派完整度,percent,1,100,100,100,100", chart_data)
         self.assertIn("roundId,incidentId,verificationStatus,qualityLevel,qualityScore,reviewDecision", review_actions)
@@ -1267,6 +1273,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("角色分派完整度", report)
         self.assertIn("metricGroup", chart_data)
         self.assertIn("dispatchSeconds", chart_data)
+        self.assertIn("firstResponderResponseSeconds", chart_data)
         self.assertIn("reviewDecision", review_actions)
         self.assertIn("rerun_or_manual_supplement", review_actions)
 
@@ -2330,7 +2337,27 @@ class ServerTestCase(unittest.TestCase):
             incident_id = client.post("/api/incidents").json()["incidentId"]
             client.post(
                 f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
                 json={"role": "GUIDE", "userId": "guide-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
             )
 
             arrived = client.post(
@@ -2348,6 +2375,54 @@ class ServerTestCase(unittest.TestCase):
         payload = current.json()
         self.assertEqual(payload["phase"], "ARCHIVED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
+
+    def test_guide_cannot_report_ambulance_before_cpr_and_aed_delivery(self) -> None:
+        with self._client() as client:
+            incident_id = client.post("/api/incidents").json()["incidentId"]
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "GUIDE", "userId": "guide-user"},
+            )
+
+            too_early = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            before_aed = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
+            )
+            ready = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+            current = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(too_early.status_code, 409)
+        self.assertIn("Handover requires CPR started and AED delivered", too_early.text)
+        self.assertEqual(before_aed.status_code, 409)
+        self.assertEqual(ready.status_code, 200)
+        self.assertEqual(current["phase"], "HANDOVER")
 
     def test_completed_demo_package_quality_report_is_ready(self) -> None:
         with self._client() as client:
@@ -2383,6 +2458,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertGreaterEqual(report["qualityScore"], 85)
         self.assertEqual(report["missingKeyEvents"], [])
         self.assertEqual({item["code"] for item in report["warnings"]}, {"dispatch_fallback_used"})
+        self.assertTrue(report["metricCoverage"]["firstResponderResponseSeconds"])
         self.assertTrue(report["metricCoverage"]["cprStartSeconds"])
         self.assertTrue(report["metricCoverage"]["aedPickupSeconds"])
         self.assertTrue(report["metricCoverage"]["aedDeliverySeconds"])

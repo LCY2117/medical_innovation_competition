@@ -64,6 +64,9 @@ import {
   translateRoleStatus,
 } from '@/shared/domain';
 import type { AedSite, AuthUser, ClientInfo, GeoPoint, HealthSignalSummary, IncidentState, RoleName } from '@/shared/types';
+import aedRouteUrl from './assets/aed-route.svg';
+import emergencySceneUrl from './assets/emergency-scene.svg';
+import responseRolesUrl from './assets/response-roles.svg';
 import './mobile.css';
 
 type AuthMode = 'login' | 'register';
@@ -388,8 +391,14 @@ function roleAction(role: RoleName, state: IncidentState | null): { label: strin
   if (!state || !isRoleJoined(state.roles.GUIDE?.status)) {
     return { label: '响应清障接驳', action: 'JOIN', hint: '确认接单后疏通通道' };
   }
+  const guideCanReportAmbulance = hasPrimeStarted(state) && hasRunnerDelivered(state);
   if (state.roles.GUIDE?.status !== 'AMBULANCE_ARRIVED' && state.phase !== 'HANDOVER' && state.phase !== 'ARCHIVED') {
-    return { label: '救护车已到场', action: 'AMBULANCE_ARRIVED', hint: '完成接驳后点击' };
+    return {
+      label: guideCanReportAmbulance ? '救护车已到场' : '等待 CPR / AED 完成',
+      action: 'AMBULANCE_ARRIVED',
+      disabled: !guideCanReportAmbulance,
+      hint: guideCanReportAmbulance ? '确认 CPR 已启动且 AED 已送达后点击' : '需核心施救端开始 CPR，且 AED 保障端送达设备后才能接管',
+    };
   }
   if (state.phase !== 'ARCHIVED') {
     return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
@@ -1379,6 +1388,9 @@ function MobileApp() {
             <strong>{incidentElapsedLabel}</strong>
           </div>
         </div>
+        <div className="mobile-hero-visual" aria-hidden="true">
+          <img src={emergencySceneUrl} alt="" loading="eager" />
+        </div>
         <div className="mobile-command-facts" aria-label="事件关键信息">
           <div>
             <span>事件</span>
@@ -1419,11 +1431,14 @@ function MobileApp() {
         <>
           {activeRole && action && !isPatientTerminal ? (
             <section className={`mobile-emergency-panel responder role-${activeRole.toLowerCase()}`}>
-              <div>
-                {activeRole === 'PRIME' ? <HeartPulse size={28} /> : activeRole === 'RUNNER' ? <Zap size={28} /> : <Shield size={28} />}
-                <p className="mobile-kicker">当前动作</p>
-                <h2>{action.label}</h2>
-                <p>{action.hint}</p>
+              <div className="mobile-action-row">
+                <div>
+                  {activeRole === 'PRIME' ? <HeartPulse size={28} /> : activeRole === 'RUNNER' ? <Zap size={28} /> : <Shield size={28} />}
+                  <p className="mobile-kicker">当前动作</p>
+                  <h2>{action.label}</h2>
+                  <p>{action.hint}</p>
+                </div>
+                <img className="mobile-action-illustration" src={responseRolesUrl} alt="" loading="lazy" aria-hidden="true" />
               </div>
               {primeStep && (
                 <div className={`mobile-next-step ${primeStep.tone}`}>
@@ -1437,23 +1452,26 @@ function MobileApp() {
             </section>
           ) : (
             <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''} ${isDemoResponder ? 'readonly' : ''}`}>
-              <div>
-                {isDemoResponder ? <Shield size={28} /> : <Siren size={28} />}
-                <p className="mobile-kicker">{isDemoResponder ? '演示待命' : '高优先级'}</p>
-                <h2>{isDemoResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
-                <p>
-                  {isDemoResponder
-                    ? incident?.sos?.status === 'ALERTING'
-                      ? '患者端已启动 SOS，保持在线，等待系统分派本轮任务'
-                      : `${demoResponderLabel ?? '当前演示端'}不触发患者 SOS，现场演示请从患者端启动`
-                    : sosRemaining !== null
-                    ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
-                    : isPatientTerminal && incident?.phase !== 'CREATED'
-                      ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
-                    : incident?.phase === 'CREATED'
-                      ? '如你是患者端，可直接触发当前事件'
-                      : '当前事件已进入协同处置'}
-                </p>
+              <div className="mobile-action-row">
+                <div>
+                  {isDemoResponder ? <Shield size={28} /> : <Siren size={28} />}
+                  <p className="mobile-kicker">{isDemoResponder ? '演示待命' : '高优先级'}</p>
+                  <h2>{isDemoResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
+                  <p>
+                    {isDemoResponder
+                      ? incident?.sos?.status === 'ALERTING'
+                        ? '患者端已启动 SOS，保持在线，等待系统分派本轮任务'
+                        : `${demoResponderLabel ?? '当前演示端'}不触发患者 SOS，现场演示请从患者端启动`
+                      : sosRemaining !== null
+                      ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
+                      : isPatientTerminal && incident?.phase !== 'CREATED'
+                        ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
+                      : incident?.phase === 'CREATED'
+                        ? '如你是患者端，可直接触发当前事件'
+                        : '当前事件已进入协同处置'}
+                  </p>
+                </div>
+                <img className="mobile-action-illustration" src={isDemoResponder ? responseRolesUrl : emergencySceneUrl} alt="" loading="lazy" aria-hidden="true" />
               </div>
               {isDemoResponder ? (
                 <div className="mobile-emergency-actions single">
@@ -1550,6 +1568,7 @@ function MobileApp() {
         </div>
         {activeRole && action ? (
           <div className={`mobile-role-card role-${activeRole.toLowerCase()}`}>
+            <img className="mobile-card-visual" src={responseRolesUrl} alt="" loading="lazy" aria-hidden="true" />
             <div className="mobile-role-title">
               {activeRole === 'PRIME' ? <HeartPulse size={24} /> : activeRole === 'RUNNER' ? <Zap size={24} /> : <Shield size={24} />}
               <div>
@@ -1622,6 +1641,7 @@ function MobileApp() {
             上报位置
           </button>
         </div>
+        <img className="mobile-card-visual mobile-route-visual" src={aedRouteUrl} alt="" loading="lazy" aria-hidden="true" />
         {primaryAed ? (
           <div className="mobile-aed-card">
             <MapPin size={20} />

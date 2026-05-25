@@ -550,6 +550,7 @@ class IncidentService:
                 {"ASSIGNED", "JOINED", "AMBULANCE_ARRIVED"},
                 "GUIDE",
             )
+            self._ensure_handover_prerequisites(state)
             state.phase = "HANDOVER"
             state.roles.GUIDE.status = "AMBULANCE_ARRIVED"
             state.logs.append(
@@ -1049,6 +1050,15 @@ class IncidentService:
         return None
 
     @staticmethod
+    def _first_log_ts_any(state: IncidentState, keywords: list[str]) -> int | None:
+        lowered = [keyword.lower() for keyword in keywords]
+        for entry in state.logs:
+            message = entry.msg.lower()
+            if any(keyword in message for keyword in lowered):
+                return entry.ts
+        return None
+
+    @staticmethod
     def _iso_timestamp(ts: int | None) -> str | None:
         if ts is None:
             return None
@@ -1107,6 +1117,14 @@ class IncidentService:
     ) -> dict[str, int | float | None]:
         designated_ts = self._latest_log_ts(state, "Patient designated") or self._latest_log_ts(state, "SOS alerting started")
         dispatch_done_ts = self._latest_log_ts(state, "assigned")
+        first_responder_ts = self._first_log_ts_any(
+            state,
+            [
+                "PRIME joined",
+                "PRIME auto-joined",
+                "CPR started",
+            ],
+        )
         cpr_ts = self._latest_log_ts(state, "CPR started")
         aed_picked_ts = self._latest_log_ts(state, "AED picked")
         aed_delivered_ts = self._latest_log_ts(state, "AED delivered")
@@ -1131,6 +1149,7 @@ class IncidentService:
 
         return {
             "dispatchSeconds": delta_seconds(designated_ts, dispatch_done_ts),
+            "firstResponderResponseSeconds": delta_seconds(designated_ts, first_responder_ts),
             "cprStartSeconds": delta_seconds(designated_ts, cpr_ts),
             "aedPickupSeconds": delta_seconds(designated_ts, aed_picked_ts),
             "aedDeliverySeconds": delta_seconds(designated_ts, aed_delivered_ts),
@@ -1182,6 +1201,7 @@ class IncidentService:
     def _baseline_vs_system_comparison_fields() -> list[str]:
         metrics = [
             "dispatchSeconds",
+            "firstResponderResponseSeconds",
             "cprStartSeconds",
             "aedPickupSeconds",
             "aedDeliverySeconds",
@@ -1224,6 +1244,7 @@ class IncidentService:
             "guideCode",
             "dispatchSource",
             "dispatchSeconds",
+            "firstResponderResponseSeconds",
             "cprStartSeconds",
             "aedPickupSeconds",
             "aedDeliverySeconds",
@@ -1260,6 +1281,7 @@ class IncidentService:
                 "guideCode": participant_map.get(export.assignments.get("GUIDE") or "", export.assignments.get("GUIDE") or ""),
                 "dispatchSource": export.dispatchSource or "",
                 "dispatchSeconds": metrics.get("dispatchSeconds"),
+                "firstResponderResponseSeconds": metrics.get("firstResponderResponseSeconds"),
                 "cprStartSeconds": metrics.get("cprStartSeconds"),
                 "aedPickupSeconds": metrics.get("aedPickupSeconds"),
                 "aedDeliverySeconds": metrics.get("aedDeliverySeconds"),
@@ -1420,6 +1442,7 @@ class IncidentService:
             },
             "metricCoverage": {
                 "dispatchSeconds": metrics.get("dispatchSeconds") is not None,
+                "firstResponderResponseSeconds": metrics.get("firstResponderResponseSeconds") is not None,
                 "cprStartSeconds": metrics.get("cprStartSeconds") is not None,
                 "aedPickupSeconds": metrics.get("aedPickupSeconds") is not None,
                 "aedDeliverySeconds": metrics.get("aedDeliverySeconds") is not None,
@@ -1513,6 +1536,10 @@ class IncidentService:
                 "systemDispatchSeconds": metrics.get("dispatchSeconds"),
                 "dispatchSecondsDelta": "",
                 "dispatchSecondsChangePercent": "",
+                "baselineFirstResponderResponseSeconds": "",
+                "systemFirstResponderResponseSeconds": metrics.get("firstResponderResponseSeconds"),
+                "firstResponderResponseSecondsDelta": "",
+                "firstResponderResponseSecondsChangePercent": "",
                 "baselineCprStartSeconds": "",
                 "systemCprStartSeconds": metrics.get("cprStartSeconds"),
                 "cprStartSecondsDelta": "",
@@ -1555,6 +1582,7 @@ class IncidentService:
             ("scenario_location", "", ""),
             ("observer_name", "", ""),
             ("trigger_to_dispatch_seconds", metrics.get("dispatchSeconds"), ""),
+            ("trigger_to_first_responder_response_seconds", metrics.get("firstResponderResponseSeconds"), ""),
             ("trigger_to_cpr_seconds", metrics.get("cprStartSeconds"), ""),
             ("trigger_to_aed_pickup_seconds", metrics.get("aedPickupSeconds"), ""),
             ("trigger_to_aed_delivery_seconds", metrics.get("aedDeliverySeconds"), ""),
@@ -1980,6 +2008,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 指标 | 本轮记录 |
 | --- | --- |
 | T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} |
+| T2 触发到核心施救响应 | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} |
 | T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} |
 | T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} |
 | T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |
@@ -2131,6 +2160,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 ## 关键耗时
 
 - 调度耗时：{self._format_metric(metrics.get("dispatchSeconds"))}
+- 核心施救响应耗时：{self._format_metric(metrics.get("firstResponderResponseSeconds"))}
 - CPR 开始耗时：{self._format_metric(metrics.get("cprStartSeconds"))}
 - AED 取出耗时：{self._format_metric(metrics.get("aedPickupSeconds"))}
 - AED 送达耗时：{self._format_metric(metrics.get("aedDeliverySeconds"))}
@@ -2182,7 +2212,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 指标 | 当前系统轮记录 | 建议解释 |
 | --- | --- | --- |
 | T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} | 越短表示系统越快完成并行任务组织 |
-| T2 触发到核心施救响应 | 由 `timeline.csv` 与角色加入记录补算 | 用于观察施救者是否能及时接单 |
+| T2 触发到核心施救响应 | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} | 用于观察核心施救者是否能及时接单或启动处置 |
 | T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} | 反映核心施救动作启动速度 |
 | T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} | 反映 AED 保障者找到并取出 AED 的速度 |
 | T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} | 反映 AED 取送链路总效率 |
@@ -2190,7 +2220,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 ## 四、基线轮与系统轮对照
 
-`baseline_vs_system_comparison.csv` 已填入系统轮事件编号和系统轮 T1/T3/T4/T5/T6 数据。请把无系统基线轮观察到的时间和主观评分补入 baseline 列，再用 Excel 计算：
+`baseline_vs_system_comparison.csv` 已填入系统轮事件编号和系统轮 T1/T2/T3/T4/T5/T6 数据。请把无系统基线轮观察到的时间和主观评分补入 baseline 列，再用 Excel 计算：
 
 - `delta = system - baseline`
 - `changePercent = (system - baseline) / baseline * 100`
@@ -2252,6 +2282,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 字段 | 当前值 | 含义 | 解释边界 |
 | --- | --- | --- | --- |
 | `dispatchSeconds` | {self._format_metric(metrics.get("dispatchSeconds"))} | T1，患者触发到三类任务分派完成的秒数 | 仅表示系统流程耗时 |
+| `firstResponderResponseSeconds` | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} | T2，患者触发到核心施救端接单或启动处置的秒数 | 不等同真实到达患者身边 |
 | `cprStartSeconds` | {self._format_metric(metrics.get("cprStartSeconds"))} | T3，患者触发到核心施救端记录 CPR 开始的秒数 | 不等同真实高质量 CPR |
 | `aedPickupSeconds` | {self._format_metric(metrics.get("aedPickupSeconds"))} | T4，患者触发到 AED 保障端记录取到 AED 的秒数 | 取决于演练路径和道具点位 |
 | `aedDeliverySeconds` | {self._format_metric(metrics.get("aedDeliverySeconds"))} | T5，患者触发到 AED 送达患者位置的秒数 | 不代表真实除颤完成 |
@@ -2327,6 +2358,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 指标 | 系统记录 |
 | --- | --- |
 | 调度耗时 | {self._format_metric(metrics.get("dispatchSeconds"))} |
+| 核心施救响应耗时 | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} |
 | CPR 开始耗时 | {self._format_metric(metrics.get("cprStartSeconds"))} |
 | AED 取出耗时 | {self._format_metric(metrics.get("aedPickupSeconds"))} |
 | AED 送达耗时 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |
@@ -2388,7 +2420,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 指标 | 系统记录 | 专家备注 |
 | --- | --- | --- |
 | T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} |  |
-| T2 触发到核心施救响应 | 需结合 `timeline.csv` 补算 |  |
+| T2 触发到核心施救响应 | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} |  |
 | T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} |  |
 | T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} |  |
 | T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |  |
@@ -2521,6 +2553,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 指标 | 当前系统记录 | 观察员补充 |
 | --- | --- | --- |
 | T1 触发到分派完成 | {self._format_metric(metrics.get("dispatchSeconds"))} |  |
+| T2 触发到核心施救响应 | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} |  |
 | T3 触发到 CPR 开始 | {self._format_metric(metrics.get("cprStartSeconds"))} |  |
 | T4 触发到 AED 取到 | {self._format_metric(metrics.get("aedPickupSeconds"))} |  |
 | T5 触发到 AED 送达 | {self._format_metric(metrics.get("aedDeliverySeconds"))} |  |
@@ -2629,6 +2662,16 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
             raise HTTPException(
                 status_code=409,
                 detail=f"{role_name} cannot perform this action from status {normalized_status}",
+            )
+
+    @staticmethod
+    def _ensure_handover_prerequisites(state: IncidentState) -> None:
+        prime_ready = state.roles.PRIME.status in {"CPR_STARTED", "AED_ANALYZING", "AED_SHOCK_DELIVERED"}
+        aed_ready = state.roles.RUNNER.status == "AED_DELIVERED"
+        if not prime_ready or not aed_ready:
+            raise HTTPException(
+                status_code=409,
+                detail="Handover requires CPR started and AED delivered",
             )
 
     @staticmethod
