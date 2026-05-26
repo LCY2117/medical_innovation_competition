@@ -1,0 +1,2 @@
+feedbackId,事件编号,轮次编号,expertCode,expertSpecialty,reviewDate,scenarioFitScore,medicalF低SafetyScore,角色DivisionScore,dispatchExplainabilityScore,mobileUsabilityScore,evidencePackageScore,safetyBoundaryScore,overallRecommendation,keyPositiveFeedback,keyRiskOrConcern,requiredImprovement,owner,priority,状态,targetFol低UpDate,fol低UpEvidence,secondReviewComment
+EF001,b0643d89-24cc-49bd-9807-bc742be19a2e,R003,E01,,,,,,,,,,,,,,,,pending_review,,,

@@ -1,0 +1,5 @@
+﻿userId,displayName,organization,healthCondition,professionIdentity,deviceType,online,assignedRole,patientCandidate,isPatient,locationLabel,locationFloor,locationSource,latitude,longitude,healthSource,healthAuthorizationStatus,heartRateBpm,bloodOxygenPercent,pressureScore,activityLevel,sleepQuality,riskTags,healthNote
+demo-patient,冠心病患者,模拟社区,存在心脏骤停风险,患者侧,MOBILE_WEB,True,,True,True,教学楼 A 座 2 层走廊,2F,mobile-demo,39.90412,116.40721,mock,sample,118,92.0,82,low,poor,tachycardia；low_spo2；high_pressure,演示健康摘要：患者端风险样例
+demo-guide,安保老王,校园安保,身体状态一般,安保 / 物业 / 场地协调人员,MOBILE_WEB,True,GUIDE,False,False,校门岗亭,1F,mobile-demo,39.9045,116.40762,mock,sample,80,98.0,44,normal,good,,演示健康摘要：移动浏览器端
+demo-runner,体育生小李,大学校园,身体素质良好,有一定急救常识,MOBILE_WEB,True,RUNNER,False,False,操场入口,1F,mobile-demo,39.90392,116.40702,mock,sample,84,99.0,28,high,good,,演示健康摘要：AED 保障端体能样例
+demo-prime,张医生,市医院急救科,身体状态一般,医生 / 专业急救人员,MOBILE_WEB,True,PRIME,False,False,教学楼 A 座 1 层大厅,1F,mobile-demo,39.90421,116.40726,mock,sample,76,98.0,35,normal,good,,演示健康摘要：移动浏览器端

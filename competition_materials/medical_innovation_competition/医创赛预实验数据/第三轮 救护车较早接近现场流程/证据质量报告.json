@@ -1,0 +1,83 @@
+{
+  "结构版本": 1,
+  "事件编号": "b0643d89-24cc-49bd-9807-bc742be19a2e",
+  "生成时间": "2026-05-26T04:22:15.249000+00:00",
+  "事件阶段": "已归档",
+  "质量等级": "可用于低成本预实验汇总",
+  "质量分": 97,
+  "scope": "simulation_training_pre_experiment_only",
+  "participantSummary": {
+    "参与终端数": 4,
+    "患者代号": "P001",
+    "角色Codes": {
+      "核心施救": "R003-核心施救",
+      "AED取送": "R002-AED取送",
+      "救护接驳": "R003-救护接驳",
+      "患者": "P001"
+    }
+  },
+  "metricCoverage": {
+    "触发到分派完成秒数": 是,
+    "触发到核心施救响应秒数": 是,
+    "触发到CPR开始秒数": 是,
+    "触发到AED取到秒数": 是,
+    "触发到AED送达秒数": 是,
+    "触发到救护接管秒数": 是,
+    "角色分派完整度": 1.0,
+    "定位覆盖率": 100.0,
+    "健康摘要覆盖率": 100.0,
+    "可用AED点位数": 2,
+    "AED保障路线距离米Available": 是
+  },
+  "eventCoverage": [
+    {
+      "key": "patientTrigger",
+      "位置标签": "患者触发或指定",
+      "covered": 是
+    },
+    {
+      "key": "角色Assignment",
+      "位置标签": "角色分派或接单",
+      "covered": 是
+    },
+    {
+      "key": "cprStarted",
+      "位置标签": "CPR 开始记录",
+      "covered": 是
+    },
+    {
+      "key": "aedPicked",
+      "位置标签": "AED 取到记录",
+      "covered": 是
+    },
+    {
+      "key": "aedDelivered",
+      "位置标签": "AED 送达记录",
+      "covered": 是
+    },
+    {
+      "key": "ambulanceArrived",
+      "位置标签": "救护接管记录",
+      "covered": 是
+    },
+    {
+      "key": "handoverCompleted",
+      "位置标签": "交接归档记录",
+      "covered": 是
+    }
+  ],
+  "缺失关键节点": [],
+  "提示": [
+    {
+      "code": "使用规则备用分派",
+      "severity": "info",
+      "message": "本轮使用规则或备用分派路径，适合演示闭环但不代表第三方 AI/地图能力已接入。",
+      "suggestedAction": "在 PPT 和专家材料中注明当前 提供方 状态。"
+    }
+  ],
+  "recommendedUse": [
+    "用于低成本预实验流程可行性、协同清晰度和专家反馈材料整理。",
+    "如存在 warning 或 critical 项，应在观察员记录或 PPT 备注中说明。",
+    "不得作为真实临床疗效、抢救成功率或患者预后改善证据。"
+  ]
+}

@@ -1,0 +1,2 @@
+﻿feedbackId,incidentId,roundId,expertCode,expertSpecialty,reviewDate,scenarioFitScore,medicalFlowSafetyScore,roleDivisionScore,dispatchExplainabilityScore,mobileUsabilityScore,evidencePackageScore,safetyBoundaryScore,overallRecommendation,keyPositiveFeedback,keyRiskOrConcern,requiredImprovement,owner,priority,status,targetFollowUpDate,followUpEvidence,secondReviewComment
+EF001,b0643d89-24cc-49bd-9807-bc742be19a2e,R003,E01,,,,,,,,,,,,,,,,pending_review,,,

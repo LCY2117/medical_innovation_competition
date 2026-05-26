@@ -1,0 +1,6 @@
+﻿externalRoundId,roundCode,scenarioName,scenarioLabel,evidenceZip,incidentId,phase,dispatchSource,dispatchSeconds,firstResponderResponseSeconds,cprStartSeconds,aedPickupSeconds,aedDeliverySeconds,ambulanceArriveSeconds,runnerRouteMeters,qualityLevel,qualityScore,qualityIssueCount,qualityCriticalCount,qualityWarningCount,qualityInfoCount
+round_01,R001,campus_standard_handover,校园标准交接流程,round_01_evidence.zip,64902970-d038-4730-8a89-de69a310b7cd,ARCHIVED,fallback,5,18,18,42,78,126,41.6,ready_for_low_cost_pre_experiment_summary,97,1,0,0,1
+round_02,R002,fast_aed_route,AED 取送链路较快流程,round_02_evidence.zip,1336423b-d296-46a9-a3f9-9f0a7fa16e34,ARCHIVED,fallback,4,13,13,31,63,116,41.6,ready_for_low_cost_pre_experiment_summary,97,1,0,0,1
+round_03,R003,ambulance_early_arrival,救护车较早接近现场流程,round_03_evidence.zip,b0643d89-24cc-49bd-9807-bc742be19a2e,ARCHIVED,fallback,5,16,16,37,98,83,41.6,ready_for_low_cost_pre_experiment_summary,97,1,0,0,1
+round_04,R004,coordination_delay,现场协同稍慢流程,round_04_evidence.zip,0a4df7a4-d506-420e-975f-f936735222c2,ARCHIVED,fallback,6,27,27,55,94,146,41.6,ready_for_low_cost_pre_experiment_summary,97,1,0,0,1
+round_05,R005,aed_analysis_complete,含 AED 分析与除颤确认流程,round_05_evidence.zip,11a8d320-52b6-422e-b673-ce016679008d,ARCHIVED,fallback,5,20,20,40,82,131,41.6,ready_for_low_cost_pre_experiment_summary,97,1,0,0,1

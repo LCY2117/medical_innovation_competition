@@ -1,0 +1,18 @@
+﻿metricGroup,metricKey,metricLabel,unit,validRoundCount,mean,median,min,max,chartHint,pptSafeUse
+time,dispatchSeconds,T1 触发到分派完成,seconds,5,5,5,4,6,时间指标,descriptive_pre_experiment_only
+time,firstResponderResponseSeconds,T2 触发到核心施救响应,seconds,5,18.80,18,13,27,时间指标,descriptive_pre_experiment_only
+time,cprStartSeconds,T3 触发到 CPR 开始,seconds,5,18.80,18,13,27,时间指标,descriptive_pre_experiment_only
+time,aedPickupSeconds,T4 触发到 AED 取到,seconds,5,41,40,31,55,时间指标,descriptive_pre_experiment_only
+time,aedDeliverySeconds,T5 触发到 AED 送达,seconds,5,83,82,63,98,时间指标,descriptive_pre_experiment_only
+time,ambulanceArriveSeconds,T6 触发到救护接管,seconds,5,120.40,126,83,146,时间指标,descriptive_pre_experiment_only
+coverage,roleAssignmentCompleteness,角色分派完整度,percent,5,100,100,100,100,覆盖率与完整度,descriptive_pre_experiment_only
+coverage,locationCoveragePercent,定位覆盖率,percent,5,100,100,100,100,覆盖率与完整度,descriptive_pre_experiment_only
+coverage,healthCoveragePercent,健康摘要覆盖率,percent,5,100,100,100,100,覆盖率与完整度,descriptive_pre_experiment_only
+quality,qualityScore,质量分,score,5,97,97,97,97,证据质量,descriptive_pre_experiment_only
+quality,qualityCriticalCount,Critical 问题数,count,5,0,0,0,0,证据质量,descriptive_pre_experiment_only
+quality,qualityWarningCount,Warning 问题数,count,5,0,0,0,0,证据质量,descriptive_pre_experiment_only
+quality,missingKeyEventCount,缺失关键节点数,count,5,0,0,0,0,证据质量,descriptive_pre_experiment_only
+context,participantCount,参与终端数,count,5,4,4,4,4,场景上下文,descriptive_pre_experiment_only
+context,aedSiteCount,AED 点位数,count,5,2,2,2,2,场景上下文,descriptive_pre_experiment_only
+context,availableAedSiteCount,可用 AED 点位数,count,5,2,2,2,2,场景上下文,descriptive_pre_experiment_only
+context,runnerRouteMeters,AED 保障路线距离,meters,5,41.60,41.60,41.60,41.60,场景上下文,descriptive_pre_experiment_only

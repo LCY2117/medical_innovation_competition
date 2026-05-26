@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "packageType": "LifeReflexArc pre-experiment evidence package",
+  "incidentId": "1b6545bb-c46d-4add-baae-9143a6a18324",
+  "generatedAt": 1779759553827,
+  "generatedAtIso": "2026-05-26T01:39:13.827000+00:00",
+  "phase": "SHOCK_DELIVERED",
+  "privacyGuidance": {
+    "publicOrExpertReview": [
+      "experiment_anonymized.json",
+      "clients_anonymized.csv",
+      "timeline.csv",
+      "metrics.csv",
+      "dispatch_rationale.csv",
+      "review_index.md",
+      "expert_summary.md",
+      "expert_review_checklist.md",
+      "expert_feedback_form.md",
+      "facilitator_run_sheet.md",
+      "analysis_guide.md",
+      "data_dictionary.md",
+      "participant_consent_safety_brief.md",
+      "evidence_quality_report.json",
+      "observer_record_form.csv",
+      "participant_questionnaire.csv",
+      "baseline_vs_system_comparison.csv",
+      "pre_experiment_round_summary.csv",
+      "expert_feedback_summary.csv"
+    ],
+    "internalReviewOnly": [
+      "experiment.json",
+      "clients.csv"
+    ],
+    "note": "Use anonymized files for PPT, expert feedback, and externally shared materials."
+  },
+  "verification": {
+    "algorithm": "SHA-256",
+    "covers": "all package files except manifest.json"
+  },
+  "fileCountExcludingManifest": 23,
+  "files": [
+    {
+      "fileName": "README.md",
+      "bytes": 4207,
+      "sha256": "365f5c6a8d1a43eb649f4071c141b1ad0b87b12b57b85e9a7a5d92c9920e89a1",
+      "lineCount": 46
+    },
+    {
+      "fileName": "aed_sites.csv",
+      "bytes": 409,
+      "sha256": "cab4bcfa660665e6b71f85e86db47c2c5bfe6b4a9ea17421c3f8b41a6cacaaa7",
+      "lineCount": 4
+    },
+    {
+      "fileName": "analysis_guide.md",
+      "bytes": 3850,
+      "sha256": "6de1cb54f6581d7c16c7df3541ad7d8c6d58ffa0800c57f45cb749dada397880",
+      "lineCount": 78
+    },
+    {
+      "fileName": "baseline_vs_system_comparison.csv",
+      "bytes": 1579,
+      "sha256": "630084daa840ff77f8b104e6e549ef45d858d3e8dfc1b23a0a0f21f33b107bf3",
+      "lineCount": 3
+    },
+    {
+      "fileName": "clients.csv",
+      "bytes": 1361,
+      "sha256": "1f15ee007684f8535935d704fb8d433ca079975ad20b293bdfbc06392da8dabb",
+      "lineCount": 6
+    },
+    {
+      "fileName": "clients_anonymized.csv",
+      "bytes": 1043,
+      "sha256": "a4278da26c7c75d09cddb6e4df27be348cfff381fcfbf7f087d2f6560aff9e92",
+      "lineCount": 6
+    },
+    {
+      "fileName": "data_dictionary.md",
+      "bytes": 5255,
+      "sha256": "ec4e301b25bd9ff6864bb64befeb0ef8f4802206ebc954af35e406716dd90b04",
+      "lineCount": 70
+    },
+    {
+      "fileName": "dispatch_rationale.csv",
+      "bytes": 687,
+      "sha256": "551bc0c1b2c9a00f010a5465e6aac41d16d9979b63e7be5d331fa0e12a61a9c9",
+      "lineCount": 5
+    },
+    {
+      "fileName": "evidence_quality_report.json",
+      "bytes": 2907,
+      "sha256": "19011fabcca5caa81adb330d286cdc382c11ea89c0623b41cd376717dddaeb10",
+      "lineCount": 100
+    },
+    {
+      "fileName": "experiment.json",
+      "bytes": 9232,
+      "sha256": "98aca563216cdd93a66ec406949162cc4ab83aa43b8f11e2cf83ccbffe9b34bd",
+      "lineCount": 321
+    },
+    {
+      "fileName": "experiment_anonymized.json",
+      "bytes": 10030,
+      "sha256": "960df08fbe855ecff32e6ab3b9a4a255ab5a06399ad8022861e729aa092e34a3",
+      "lineCount": 367
+    },
+    {
+      "fileName": "expert_feedback_form.md",
+      "bytes": 3720,
+      "sha256": "fcc34ba041bbf3db5a5c6833aead472fd6ca1bdba340ed442910af5abcb11cd9",
+      "lineCount": 106
+    },
+    {
+      "fileName": "expert_feedback_summary.csv",
+      "bytes": 463,
+      "sha256": "29519e1363e8bee742da0bffe881c6ae8555046b9ec484a2236be3b06eaf38ad",
+      "lineCount": 3
+    },
+    {
+      "fileName": "expert_review_checklist.md",
+      "bytes": 2060,
+      "sha256": "1c4acddbc699e7372dc112d457a9f0e933b357e4447cf7809e1abc9a64a6811f",
+      "lineCount": 47
+    },
+    {
+      "fileName": "expert_summary.md",
+      "bytes": 806,
+      "sha256": "276619fbbc6ba5872befca1953f033470215d20482a9c747057767483a31f8ea",
+      "lineCount": 31
+    },
+    {
+      "fileName": "facilitator_run_sheet.md",
+      "bytes": 3962,
+      "sha256": "77fe5ee4a8670e231650f60e6da8538b9f5e49379f553950948786808b19a72a",
+      "lineCount": 71
+    },
+    {
+      "fileName": "metrics.csv",
+      "bytes": 426,
+      "sha256": "d26f07d515370a678086395e7c99df9c1cc5a8e4d3c3d014bf5eaf54abec2ffa",
+      "lineCount": 19
+    },
+    {
+      "fileName": "observer_record_form.csv",
+      "bytes": 1395,
+      "sha256": "799cd1c7e6321b1b6d76feee8cf475ad8cbbccc316b70a90f9e8ce68867d5e96",
+      "lineCount": 20
+    },
+    {
+      "fileName": "participant_consent_safety_brief.md",
+      "bytes": 1913,
+      "sha256": "dfb2ac78c404be80bd7a4a98bf0d561d78ad1369c8ba4608538881a727224f66",
+      "lineCount": 36
+    },
+    {
+      "fileName": "participant_questionnaire.csv",
+      "bytes": 3508,
+      "sha256": "8f8bd63eeeb353e45c8f1c59cf41833e41a5fa7a061c182cc4b38cde22d00222",
+      "lineCount": 26
+    },
+    {
+      "fileName": "pre_experiment_round_summary.csv",
+      "bytes": 721,
+      "sha256": "5b8ffc77f532b983888959e1495f21795ede00100eba4096863c96808add6dee",
+      "lineCount": 3
+    },
+    {
+      "fileName": "review_index.md",
+      "bytes": 4047,
+      "sha256": "c394d26cb7fcbbfb7dbc88ee1db5bbe6101e0758dcb300a3200c5c7d6c310024",
+      "lineCount": 77
+    },
+    {
+      "fileName": "timeline.csv",
+      "bytes": 1796,
+      "sha256": "7086b5909918bb210a2ef31544a7c7377e31abaeb0fee170d2c7006ff6200d49",
+      "lineCount": 17
+    }
+  ]
+}

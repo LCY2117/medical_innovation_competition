@@ -1,0 +1,367 @@
+{
+  "incidentId": "1b6545bb-c46d-4add-baae-9143a6a18324",
+  "generatedAt": 1779759553827,
+  "phase": "SHOCK_DELIVERED",
+  "patientUserId": "P001",
+  "dispatchSource": "fallback",
+  "assignments": {
+    "PRIME": "R001-PRIME",
+    "RUNNER": "R002-RUNNER",
+    "GUIDE": "R003-GUIDE"
+  },
+  "metrics": {
+    "dispatchSeconds": 1,
+    "firstResponderResponseSeconds": 0,
+    "cprStartSeconds": 2,
+    "aedPickupSeconds": 6,
+    "aedDeliverySeconds": 9,
+    "ambulanceArriveSeconds": 12,
+    "logCount": 15,
+    "participantCount": 4,
+    "aedSiteCount": 2,
+    "availableAedSiteCount": 2,
+    "roleAssignmentCompleteness": 1.0,
+    "clientsWithLocation": 4,
+    "locationCoveragePercent": 100.0,
+    "clientsWithHealthSignals": 4,
+    "healthCoveragePercent": 100.0,
+    "runnerRouteMeters": 41.6,
+    "dispatchSourceIsFallback": 1
+  },
+  "timeline": [
+    {
+      "ts": 1779756672732,
+      "msg": "Incident reset"
+    },
+    {
+      "ts": 1779756675601,
+      "msg": "Patient SOS alerting started (P001)"
+    },
+    {
+      "ts": 1779756680634,
+      "msg": "Patient SOS confirmed (P001)"
+    },
+    {
+      "ts": 1779756680649,
+      "msg": "Patient designated by patient SOS (P001)"
+    },
+    {
+      "ts": 1779756680649,
+      "msg": "AI dispatching started"
+    },
+    {
+      "ts": 1779756681040,
+      "msg": "PRIME joined (R001-PRIME)"
+    },
+    {
+      "ts": 1779756681412,
+      "msg": "PRIME assigned (R001-PRIME) via fallback"
+    },
+    {
+      "ts": 1779756681426,
+      "msg": "RUNNER assigned (R002-RUNNER) via fallback"
+    },
+    {
+      "ts": 1779756681438,
+      "msg": "GUIDE assigned (R003-GUIDE) via fallback"
+    },
+    {
+      "ts": 1779756682919,
+      "msg": "CPR started by R001-PRIME"
+    },
+    {
+      "ts": 1779756686949,
+      "msg": "AED picked by R002-RUNNER"
+    },
+    {
+      "ts": 1779756689537,
+      "msg": "AED delivered by R002-RUNNER"
+    },
+    {
+      "ts": 1779756692341,
+      "msg": "Ambulance arrived (reported by R003-GUIDE)"
+    },
+    {
+      "ts": 1779756693004,
+      "msg": "AED analysis started by R001-PRIME"
+    },
+    {
+      "ts": 1779756694792,
+      "msg": "AED shock delivered by R001-PRIME"
+    }
+  ],
+  "clients": [
+    {
+      "userId": "P001",
+      "displayName": "P001",
+      "organization": "REDACTED",
+      "healthCondition": "存在心脏骤停风险",
+      "professionIdentity": "患者侧",
+      "profileBio": "REDACTED",
+      "deviceType": "MOBILE_WEB",
+      "online": true,
+      "lastSeenTs": 1779757659935,
+      "assignedRole": null,
+      "patientCandidate": true,
+      "isPatient": true,
+      "location": {
+        "latitude": 39.90412,
+        "longitude": 116.40721,
+        "accuracyMeters": 25.0,
+        "label": "教学楼 A 座 2 层走廊",
+        "floor": "2F",
+        "source": "mobile-demo",
+        "updatedTs": null
+      },
+      "healthSignals": {
+        "source": "mock",
+        "authorizationStatus": "sample",
+        "provider": "OPPO_HEALTH",
+        "heartRateBpm": 118,
+        "bloodOxygenPercent": 92.0,
+        "pressureScore": 82,
+        "activityLevel": "low",
+        "sleepQuality": "poor",
+        "riskTags": [
+          "tachycardia",
+          "low_spo2",
+          "high_pressure"
+        ],
+        "updatedTs": 1779757659967,
+        "note": null
+      },
+      "participantCode": "P001"
+    },
+    {
+      "userId": "R003-GUIDE",
+      "displayName": "R003-GUIDE",
+      "organization": "REDACTED",
+      "healthCondition": "身体状态一般",
+      "professionIdentity": "安保 / 物业 / 场地协调人员",
+      "profileBio": "REDACTED",
+      "deviceType": "MOBILE_WEB",
+      "online": true,
+      "lastSeenTs": 1779757663836,
+      "assignedRole": "GUIDE",
+      "patientCandidate": false,
+      "isPatient": false,
+      "location": {
+        "latitude": 39.9045,
+        "longitude": 116.40762,
+        "accuracyMeters": 20.0,
+        "label": "校门岗亭",
+        "floor": "1F",
+        "source": "mobile-demo",
+        "updatedTs": null
+      },
+      "healthSignals": {
+        "source": "mock",
+        "authorizationStatus": "sample",
+        "provider": "OPPO_HEALTH",
+        "heartRateBpm": 80,
+        "bloodOxygenPercent": 98.0,
+        "pressureScore": 44,
+        "activityLevel": "normal",
+        "sleepQuality": "good",
+        "riskTags": [],
+        "updatedTs": 1779757660040,
+        "note": null
+      },
+      "participantCode": "R003-GUIDE"
+    },
+    {
+      "userId": "R002-RUNNER",
+      "displayName": "R002-RUNNER",
+      "organization": "REDACTED",
+      "healthCondition": "身体素质良好",
+      "professionIdentity": "有一定急救常识",
+      "profileBio": "REDACTED",
+      "deviceType": "MOBILE_WEB",
+      "online": true,
+      "lastSeenTs": 1779757659984,
+      "assignedRole": "RUNNER",
+      "patientCandidate": false,
+      "isPatient": false,
+      "location": {
+        "latitude": 39.90392,
+        "longitude": 116.40702,
+        "accuracyMeters": 18.0,
+        "label": "操场入口",
+        "floor": "1F",
+        "source": "mobile-demo",
+        "updatedTs": null
+      },
+      "healthSignals": {
+        "source": "mock",
+        "authorizationStatus": "sample",
+        "provider": "OPPO_HEALTH",
+        "heartRateBpm": 84,
+        "bloodOxygenPercent": 99.0,
+        "pressureScore": 28,
+        "activityLevel": "high",
+        "sleepQuality": "good",
+        "riskTags": [],
+        "updatedTs": 1779757660016,
+        "note": null
+      },
+      "participantCode": "R002-RUNNER"
+    },
+    {
+      "userId": "R001-PRIME",
+      "displayName": "R001-PRIME",
+      "organization": "REDACTED",
+      "healthCondition": "身体状态一般",
+      "professionIdentity": "医生 / 专业急救人员",
+      "profileBio": "REDACTED",
+      "deviceType": "MOBILE_WEB",
+      "online": true,
+      "lastSeenTs": 1779757659958,
+      "assignedRole": "PRIME",
+      "patientCandidate": false,
+      "isPatient": false,
+      "location": {
+        "latitude": 39.90421,
+        "longitude": 116.40726,
+        "accuracyMeters": 18.0,
+        "label": "教学楼 A 座 1 层大厅",
+        "floor": "1F",
+        "source": "mobile-demo",
+        "updatedTs": null
+      },
+      "healthSignals": {
+        "source": "mock",
+        "authorizationStatus": "sample",
+        "provider": "OPPO_HEALTH",
+        "heartRateBpm": 76,
+        "bloodOxygenPercent": 98.0,
+        "pressureScore": 35,
+        "activityLevel": "normal",
+        "sleepQuality": "good",
+        "riskTags": [],
+        "updatedTs": 1779757659992,
+        "note": null
+      },
+      "participantCode": "R001-PRIME"
+    }
+  ],
+  "aedSites": [
+    {
+      "siteId": "demo-aed-1",
+      "name": "二楼服务台 AED",
+      "location": {
+        "latitude": 39.90403,
+        "longitude": 116.40692,
+        "accuracyMeters": null,
+        "label": "二楼服务台 AED 箱",
+        "floor": "2F",
+        "source": "demo",
+        "updatedTs": 1779756384963
+      },
+      "status": "AVAILABLE",
+      "accessNotes": "教学楼 A 座服务台左侧红色 AED 箱",
+      "lastCheckedTs": 1779756384963
+    },
+    {
+      "siteId": "demo-aed-2",
+      "name": "校门值班室 AED",
+      "location": {
+        "latitude": 39.90456,
+        "longitude": 116.4077,
+        "accuracyMeters": null,
+        "label": "校门值班室 AED 箱",
+        "floor": "1F",
+        "source": "demo",
+        "updatedTs": 1779756384986
+      },
+      "status": "AVAILABLE",
+      "accessNotes": "校门岗亭内，安保可协助取用",
+      "lastCheckedTs": 1779756384986
+    }
+  ],
+  "dispatchRationale": {
+    "PRIME": {
+      "userId": "R001-PRIME",
+      "score": 34.0,
+      "reasons": [
+        "距离患者约 11 米",
+        "具备医护或专业急救身份",
+        "画像显示掌握 CPR/AED 急救技能"
+      ],
+      "warnings": [],
+      "distanceToPatientMeters": 10.878465730137206,
+      "nearestAedSiteId": "demo-aed-1",
+      "distanceToAedMeters": 35.237971686026725,
+      "aedToPatientMeters": 26.684587690751123
+    },
+    "RUNNER": {
+      "userId": "R002-RUNNER",
+      "score": 30.0,
+      "reasons": [
+        "距离患者约 28 米",
+        "距离最近 AED 点约 15 米",
+        "体能和移动能力适合 AED 取送"
+      ],
+      "warnings": [],
+      "distanceToPatientMeters": 27.5179669606645,
+      "nearestAedSiteId": "demo-aed-1",
+      "distanceToAedMeters": 14.912040182637217,
+      "aedToPatientMeters": 26.684587690751123
+    },
+    "GUIDE": {
+      "userId": "R003-GUIDE",
+      "score": 25.0,
+      "reasons": [
+        "距离患者约 55 米",
+        "适合现场通道协调和救护车接驳",
+        "熟悉场地路线"
+      ],
+      "warnings": [],
+      "distanceToPatientMeters": 54.84982411885389,
+      "nearestAedSiteId": "demo-aed-2",
+      "distanceToAedMeters": 9.543461688327588,
+      "aedToPatientMeters": 64.3482574614877
+    }
+  },
+  "participantMap": [
+    {
+      "participantCode": "P001",
+      "role": "PATIENT",
+      "deviceType": "MOBILE_WEB",
+      "professionIdentity": "患者侧",
+      "healthCondition": "存在心脏骤停风险",
+      "healthSource": "mock",
+      "riskTags": [
+        "tachycardia",
+        "low_spo2",
+        "high_pressure"
+      ]
+    },
+    {
+      "participantCode": "R003-GUIDE",
+      "role": "GUIDE",
+      "deviceType": "MOBILE_WEB",
+      "professionIdentity": "安保 / 物业 / 场地协调人员",
+      "healthCondition": "身体状态一般",
+      "healthSource": "mock",
+      "riskTags": []
+    },
+    {
+      "participantCode": "R002-RUNNER",
+      "role": "RUNNER",
+      "deviceType": "MOBILE_WEB",
+      "professionIdentity": "有一定急救常识",
+      "healthCondition": "身体素质良好",
+      "healthSource": "mock",
+      "riskTags": []
+    },
+    {
+      "participantCode": "R001-PRIME",
+      "role": "PRIME",
+      "deviceType": "MOBILE_WEB",
+      "professionIdentity": "医生 / 专业急救人员",
+      "healthCondition": "身体状态一般",
+      "healthSource": "mock",
+      "riskTags": []
+    }
+  ]
+}

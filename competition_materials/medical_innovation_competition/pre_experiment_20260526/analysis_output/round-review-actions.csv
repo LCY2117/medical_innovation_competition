@@ -1,0 +1,6 @@
+﻿roundId,incidentId,verificationStatus,qualityLevel,qualityScore,reviewDecision,reviewReason,criticalCount,warningCount,missingKeyEventCount,missingKeyEvents,warningCodes,recommendedAction,pptUseBoundary
+R001,64902970-d038-4730-8a89-de69a310b7cd,OK,ready_for_low_cost_pre_experiment_summary,97,use_for_summary,关键节点和质量检查已满足低成本预实验汇总要求。,0,0,0,,dispatch_fallback_used,可进入多轮描述性统计和 PPT 图表底表。,descriptive_pre_experiment_only
+R002,1336423b-d296-46a9-a3f9-9f0a7fa16e34,OK,ready_for_low_cost_pre_experiment_summary,97,use_for_summary,关键节点和质量检查已满足低成本预实验汇总要求。,0,0,0,,dispatch_fallback_used,可进入多轮描述性统计和 PPT 图表底表。,descriptive_pre_experiment_only
+R003,b0643d89-24cc-49bd-9807-bc742be19a2e,OK,ready_for_low_cost_pre_experiment_summary,97,use_for_summary,关键节点和质量检查已满足低成本预实验汇总要求。,0,0,0,,dispatch_fallback_used,可进入多轮描述性统计和 PPT 图表底表。,descriptive_pre_experiment_only
+R004,0a4df7a4-d506-420e-975f-f936735222c2,OK,ready_for_low_cost_pre_experiment_summary,97,use_for_summary,关键节点和质量检查已满足低成本预实验汇总要求。,0,0,0,,dispatch_fallback_used,可进入多轮描述性统计和 PPT 图表底表。,descriptive_pre_experiment_only
+R005,11a8d320-52b6-422e-b673-ce016679008d,OK,ready_for_low_cost_pre_experiment_summary,97,use_for_summary,关键节点和质量检查已满足低成本预实验汇总要求。,0,0,0,,dispatch_fallback_used,可进入多轮描述性统计和 PPT 图表底表。,descriptive_pre_experiment_only

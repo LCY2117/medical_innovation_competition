@@ -19,7 +19,7 @@
 
 ## 2. 5 分钟 PPT 主线
 
-建议控制在 10 页左右。5 分钟汇报中，前 2 页讲立项依据，第 3-6 页讲经典使用和系统方案，第 7 页播放 40-60 秒演示视频，第 8-10 页讲工程成果、验证体系和国赛推进。每页尽量只承载一个判断，避免把网页功能压缩成说明书。
+建议控制在 9 页左右。删除原“完整流程说明页”，避免与第 7 页演示视频重复；5 分钟汇报中，前 2 页讲立项依据，第 3 页讲边界定位，第 4-6 页讲系统形态、AI 创新和工程成果，第 7 页播放 40-60 秒演示视频，第 8-9 页讲验证体系、应用价值和国赛推进。每页尽量只承载一个判断，避免把网页功能压缩成说明书。
 
 ### 第 1 页：封面与一句话定位
 
@@ -66,27 +66,7 @@
 
 系统定位是训练、预实验和实验设计原型。它的创新点不是替代医疗判断，而是在急救空窗期提供组织化协同和可复盘记录。
 
-### 第 4 页：典型使用场景：一条完整生命反射弧
-
-页面视觉：
-
-横向流程图：
-
-患者 SOS -> AI 识别现场资源 -> 分派 PRIME/RUNNER/GUIDE -> CPR 与 AED 并行推进 -> 救护车接应 -> 交接归档 -> 导出证据包
-
-页面文字：
-
-- 患者端：触发 SOS，提供位置和健康摘要样例
-- 核心施救者：接单、到场、CPR、AED 分析记录
-- AED 保障者：取 AED、送达患者身边
-- 清障接驳者：疏通通道、接应救护车、完成交接归档
-- 总控台：查看分派解释、协同进度和证据导出
-
-讲稿要点：
-
-这页是整套 PPT 的主线。后面的系统截图、视频和实验数据都服务于这个经典使用闭环，而不是散讲功能。
-
-### 第 5 页：系统形态：一套云端 + 四类终端
+### 第 4 页：系统形态：一套云端 + 四类终端
 
 页面视觉：
 
@@ -103,7 +83,7 @@
 
 本轮国赛主展示为网页端和 `/mobile` 四端协同。Android 原型作为长期扩展和备用端，不作为当前答辩依赖。
 
-### 第 6 页：AI 创新设计：多角色急救分派
+### 第 5 页：AI 创新设计：多角色急救分派
 
 页面视觉：
 
@@ -128,6 +108,24 @@
 
 我们的 AI 创新不在“聊天生成答案”，而在把急救场景中的多因素约束转化为可解释角色分派。同时保留静态兜底分派，避免 AI 接口异常影响演示和预实验。
 
+### 第 6 页：工程化成果：已经能公网演示和导出证据
+
+页面视觉：
+
+四宫格截图或成果列表：公网总控台、移动任务页、AED 点位/调度解释、中文证据包目录。
+
+页面文字：
+
+- 公网部署：支持公开访问和现场演示
+- 移动 Web：支持四端协同和演示模式，无需安装 App
+- 调度闭环：AI 分派、规则兜底、可解释结果
+- 数据闭环：时间线、中文证据包、匿名化材料、专家反馈模板
+- 工程加固：权限口令、实时同步、异常状态修复、构建部署流程
+
+讲稿要点：
+
+这一页证明“作品已经落地成可运行系统”，为下一页视频做铺垫。不要把流程再讲一遍，流程交给视频；这里只讲已经完成的工程能力和可交付材料。
+
 ### 第 7 页：核心演示视频
 
 页面视觉：
@@ -151,55 +149,38 @@
 
 视频页是全场记忆点。它要证明“这不是 PPT 概念，而是已经能完成四端协同、归档和导出的网页端作品”。
 
-### 第 8 页：工程化成果
+### 第 8 页：验证体系：上一版志愿者预实验 + 当前五轮系统级预实验
 
 页面视觉：
 
-四宫格截图或成果列表：总控台、移动任务页、地图/AED 点位、证据包目录。
+左侧为上一版志愿者预实验/早期试用观察，右侧为当前五轮系统级预实验数据，中间用箭头表示“从人工协同观察到系统闭环验证”的迭代关系。
 
 页面文字：
 
-- 公网部署：支持公开访问和现场演示
-- 移动 Web：支持四端协同和演示模式
-- 调度闭环：AI 分派、规则兜底、可解释结果
-- 数据闭环：时间线、证据包、匿名化材料、专家反馈模板
-- 工程加固：权限口令、实时同步、异常状态修复、构建部署流程
+上一版志愿者预实验：
+
+- 用志愿者/团队成员跑通患者、施救者、AED 取送者、救护接驳者的早期流程
+- 观察分工理解、任务压力、口头协同卡点和页面可用性问题
+- 作为需求修正依据：减少页面文字负载、强化角色任务、增加归档与证据导出
+
+当前五轮系统级预实验：
+
+- 电脑四端稳定复现患者端、核心施救端、AED 保障端、清障接驳端
+- 5 轮均完成到交接归档，生成中文证据包和多轮分析报告
+- 记录 T1-T6：分派完成、核心响应、CPR 开始、AED 取到、AED 送达、救护接管
+- 形成图表底表、观察员记录表、参与者问卷和专家反馈模板
 
 讲稿要点：
 
-这一页讲“我们已经做出来了什么”。不要写成需求清单，要写成已经可展示、可复盘、可继续国赛打磨的工程成果。
+这一页不要把“电脑跑数据”讲成临床实验。正确口径是：上一版志愿者预实验帮助我们发现协同和交互问题，当前五轮系统级预实验证明改进后的平台能稳定闭环、可追踪、可导出，为专家反馈和后续真实场景扩展提供材料基础。若没有完整原始志愿者记录，PPT 中写“早期志愿者试用观察”，不要写成正式统计数据。
 
-### 第 9 页：验证体系：工程测试 + 急救场景模拟预实验
-
-页面视觉：
-
-左侧为工程可靠性验证，右侧为急救场景模拟预实验。
-
-页面文字：
-
-工程可靠性验证：
-
-- 功能测试：SOS、分派、接单、CPR/AED、归档、导出
-- 性能测试：分派耗时、同步延迟、证据包生成时间
-- 稳定性测试：刷新、重复点击、弱网、多人并发、异常状态自愈
-
-急救场景模拟预实验：
-
-- 电脑四端模拟患者端、核心施救端、AED 保障端、清障接驳端
-- 记录 T0-T6：SOS 触发、分派完成、接单、CPR 开始、AED 取到、AED 送达、交接归档
-- 导出匿名化证据包、观察员记录表、参与者问卷和专家反馈表
-
-讲稿要点：
-
-我们不是做临床实验，而是做“工程可靠性验证 + 系统级急救场景模拟预实验”。计算机部分证明系统稳定能跑，医学相关部分证明流程具备协同价值、数据记录能力和专家反馈基础。
-
-### 第 10 页：应用价值、边界与国赛推进
+### 第 9 页：应用价值、边界与国赛推进
 
 页面文字：
 
 - 应用价值：校园、社区、园区、体育馆、大型活动现场的急救协同训练和流程复盘
 - 安全边界：不宣称临床疗效，不替代 120、专业医护或 AED 设备说明
-- 国赛计划：补充真实 AED 点位、跑多轮系统级模拟预实验、整理 T0-T6 数据、邀请专家反馈、优化 `/mobile` 交互
+- 国赛计划：补充真实 AED 点位、完善志愿者预实验记录、整理 T1-T6 数据、邀请专家反馈、优化 `/mobile` 交互
 
 讲稿要点：
 
@@ -240,7 +221,7 @@
 
 摘要：
 
-立论依据：院外或公共场所疑似心脏骤停事件具有时间敏感性，现场第一目击者、AED 取送者和环境接应者往往缺乏快速分工和统一指挥，导致关键动作容易串行化、口头化和不可追踪。设计思路：本项目提出“生命反射弧”AI 急救协同调度系统，将患者端、核心施救者、AED 保障者、环境清障者和指挥端纳入同一事件状态机，通过 AI/规则混合分派生成可解释任务链。实验内容：系统完成 Web 调度台、`/mobile` 手机网页端、云端事件服务、WebSocket 实时同步、AED 点位管理、角色分派、事件归档和预实验证据包导出；Android 原型作为长期扩展与备用端，不作为本轮演示必需条件。材料：采用公网服务器、移动网页终端、模拟 AED 点位、匿名参与者编号、观察记录表和参与者问卷开展低成本模拟预实验。预实验结果：在模拟心脏骤停场景中，系统能够跑通从事件触发、角色分派、CPR/AED 流程提示、救护接应到数据导出的闭环，并形成 T1-T6 时间指标、主观评分和调度解释记录；后续将结合更多轮次和专家反馈完善数据。可行性：项目技术路线清晰，成本主要由服务器、打印材料和系统级预实验材料构成，符合本科生科研实际。创新性：项目将 AI 从单点医学问答拓展到院外急救协同调度，强调可解释分派、规则兜底和医学安全边界，为校园、社区和公共场所急救协同训练提供可复盘的数字化工具。
+立论依据：院外或公共场所疑似心脏骤停事件具有时间敏感性，现场第一目击者、AED 取送者和环境接应者往往缺乏快速分工和统一指挥，导致关键动作容易串行化、口头化和不可追踪。设计思路：本项目提出“生命反射弧”AI 急救协同调度系统，将患者端、核心施救者、AED 保障者、环境清障者和指挥端纳入同一事件状态机，通过 AI/规则混合分派生成可解释任务链。实验内容：系统完成 Web 调度台、`/mobile` 手机网页端、云端事件服务、WebSocket 实时同步、AED 点位管理、角色分派、事件归档和预实验证据包导出；Android 原型作为长期扩展与备用端，不作为本轮演示必需条件。材料：采用公网服务器、移动网页终端、模拟 AED 点位、匿名参与者编号、早期志愿者试用观察记录、五轮系统级预实验数据和专家反馈表开展低成本预实验。预实验结果：早期志愿者试用帮助团队发现任务理解、页面信息负载和协同卡点；改进后的系统在五轮系统级预实验中均完成从事件触发、角色分派、CPR/AED 流程提示、救护接应到数据导出的闭环，并形成 T1-T6 时间指标、中文证据包和调度解释记录。可行性：项目技术路线清晰，成本主要由服务器、打印材料和系统级预实验材料构成，符合本科生科研实际。创新性：项目将 AI 从单点医学问答拓展到院外急救协同调度，强调可解释分派、规则兜底和医学安全边界，为校园、社区和公共场所急救协同训练提供可复盘的数字化工具。
 
 关键词：
 
@@ -254,7 +235,7 @@ Title: Design and Preliminary Simulation Evaluation of an AI-assisted Emergency 
 
 Abstract:
 
-Rationale: Suspected out-of-hospital cardiac arrest in public spaces requires rapid coordination among bystanders, AED runners, on-site guides, and command staff. In many simulated first-response scenarios, task allocation is verbal, sequential, and difficult to review. Design: We developed LifeReflexArc, an AI-assisted emergency coordination prototype that organizes patient-side alerts, primary responders, AED runners, guide roles, and a web command console within a shared incident state machine. Methods: The system integrates a web dashboard, a dedicated `/mobile` browser client, cloud event service, WebSocket synchronization, AED site management, AI/rule-based role dispatch, incident archiving, and exportable evidence packages. The Android prototype is retained as a future extension and backup endpoint, but the current competition demonstration focuses on the web and mobile-browser workflow. Materials: A public cloud server, mobile-browser terminals, simulated AED locations, anonymized participant identifiers, observer forms, and participant questionnaires were used for a low-cost simulation-based pre-experiment. Preliminary results: In simulated cardiac arrest scenarios, the prototype completed the workflow from incident triggering and role dispatch to CPR/AED task prompts, handover, and data export. It generated T1-T6 time indicators, subjective ratings, and dispatch explanations for review. Feasibility: The technical route is implementable with low-cost infrastructure and undergraduate-level research resources. Innovation: The project applies AI to explainable emergency role allocation rather than isolated medical question answering, with rule-based fallback and explicit safety boundaries for training and simulation contexts.
+Rationale: Suspected out-of-hospital cardiac arrest in public spaces requires rapid coordination among bystanders, AED runners, on-site guides, and command staff. In many simulated first-response scenarios, task allocation is verbal, sequential, and difficult to review. Design: We developed LifeReflexArc, an AI-assisted emergency coordination prototype that organizes patient-side alerts, primary responders, AED runners, guide roles, and a web command console within a shared incident state machine. Methods: The system integrates a web dashboard, a dedicated `/mobile` browser client, cloud event service, WebSocket synchronization, AED site management, AI/rule-based role dispatch, incident archiving, and exportable evidence packages. The Android prototype is retained as a future extension and backup endpoint, but the current competition demonstration focuses on the web and mobile-browser workflow. Materials: A public cloud server, mobile-browser terminals, simulated AED locations, anonymized participant identifiers, early volunteer-trial observations, five system-level pre-experiment rounds, and expert feedback forms were used for a low-cost pre-experiment. Preliminary results: Early volunteer-based observations helped identify task-comprehension, interface-load, and coordination bottlenecks. After iterative improvement, five computer-run system-level pre-experiment rounds completed the workflow from incident triggering and role dispatch to CPR/AED task prompts, handover, data export, and Chinese evidence-package generation. The system generated T1-T6 time indicators and dispatch explanations for review. Feasibility: The technical route is implementable with low-cost infrastructure and undergraduate-level research resources. Innovation: The project applies AI to explainable emergency role allocation rather than isolated medical question answering, with rule-based fallback and explicit safety boundaries for training and simulation contexts.
 
 Keywords:
 
@@ -470,7 +451,7 @@ AED 模拟点位：
 
 谨慎结论模板：
 
-本轮模拟预实验显示，生命反射弧能够在模拟心脏骤停场景中完成多角色分派、任务同步、流程提示和数据导出。与无系统口头分工相比，系统轮在分工明确度、任务可理解性和记录完整性方面表现更稳定。由于样本量较小，当前结果仅作为工程可行性和医学相关性的初步验证，后续需要扩大样本、完善专家评审并接入更真实的 AED 和定位数据。
+本轮系统级预实验显示，生命反射弧能够在模拟心脏骤停场景中完成多角色分派、任务同步、流程提示、救护接管和数据导出。结合早期志愿者试用观察，系统迭代后在分工明确度、任务可理解性和记录完整性方面更稳定。由于样本量较小，当前结果仅作为工程可行性和医学相关性的初步验证，后续需要扩大样本、完善专家评审并接入更真实的 AED 和定位数据。
 
 问题与改进：
 

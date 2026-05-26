@@ -1,0 +1,45 @@
+# 生命反射弧预实验证据包
+
+事件编号：64902970-d038-4730-8a89-de69a310b7cd
+导出时间戳：1779769334379
+事件阶段：ARCHIVED
+患者终端：demo-patient
+调度来源：fallback
+
+## 文件说明
+
+- `review_index.md`：专家/评委快速审阅索引，建议先打开，用于理解每份材料的用途和公开边界。
+- `experiment.json`：完整结构化导出，保留事件、终端、AED、调度依据和健康摘要。
+- `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
+- `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
+- `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
+- `expert_feedback_form.md`：事件级专家反馈与签字表，便于专家对本轮预实验给出评分、意见和签字确认。
+- `facilitator_run_sheet.md`：主持人/观察员跑场单，用于按步骤完成预实验流程、记录关键时间点和导出材料。
+- `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
+- `data_dictionary.md`：证据包数据字典，解释关键指标、CSV 字段、角色代码和对外表述边界。
+- `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于预实验前说明和签署记录。
+- `evidence_quality_report.json`：本轮证据质量报告，标记关键节点覆盖、缺失项、质量分和可否进入低成本预实验汇总。
+- `timeline.csv`：事件时间线，适合直接导入 Excel。
+- `clients.csv`：参与终端画像、位置、角色和健康摘要，仅建议内部复核使用。
+- `clients_anonymized.csv`：匿名化参与者表，隐藏 userId、姓名、组织和个人简介。
+- `aed_sites.csv`：AED 点位与访问备注。
+- `dispatch_rationale.csv`：AI/规则分派评分、理由、距离和风险提示。
+- `metrics.csv`：响应耗时、AED 取送、交接等预实验指标。
+- `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
+- `participant_questionnaire.csv`：参与者主观问卷表，用于记录可理解性、协同减负、移动端提示和安全边界评分。
+- `baseline_vs_system_comparison.csv`：无系统基线轮与系统轮对照分析模板，用于计算 T1-T6 差值、百分比变化和主观评分差异。
+- `pre_experiment_round_summary.csv`：单轮预实验汇总行，便于把多轮 ZIP 的核心指标合并到 Excel 做描述性统计。
+- `expert_feedback_summary.csv`：多名专家意见汇总和整改闭环表，用于记录评分、风险点、负责人、处理状态和二次复核意见。
+- `manifest.json`：文件清单、SHA256 校验、生成时间、匿名化使用建议和内部复核文件说明。
+
+## 使用建议
+
+该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`evidence_quality_report.json`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。
+
+多轮系统级预实验结束后，把每轮 ZIP 放到同一目录，在项目根目录运行：
+
+```powershell
+python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"
+```
+
+脚本会先校验证据包 manifest/SHA-256，再生成 `round-summary.csv`、`round-analysis.md`、`round-chart-data.csv` 与 `round-review-actions.csv`。健康摘要如标记为样例接入或演示来源，只能作为预实验模拟数据说明，不应被表述为真实临床诊断或疗效依据；进入 PPT 图表前请先按复核行动清单筛掉需要重跑或人工补充说明的轮次。
