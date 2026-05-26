@@ -476,6 +476,10 @@ function selectPrimaryAed(state: IncidentState | null, aedSites: AedSite[], role
   return sites.find((site) => site.siteId === targetId) ?? sites[0];
 }
 
+function isIncidentReadyForResponderTask(state: IncidentState | null): boolean {
+  return Boolean(state && state.phase !== 'CREATED' && state.phase !== 'DISPATCHING');
+}
+
 function shortId(value?: string | null): string {
   if (!value) {
     return '未记录';
@@ -846,7 +850,9 @@ function MobileApp() {
     () => clients.find((client) => client.userId === user?.userId) ?? null,
     [clients, user?.userId],
   );
-  const activeRole = userRole ?? (currentClient?.assignedRole as RoleName | null) ?? null;
+  const candidateRole = userRole ?? (currentClient?.assignedRole as RoleName | null) ?? null;
+  const responderTaskReady = isIncidentReadyForResponderTask(incident);
+  const activeRole = responderTaskReady ? candidateRole : null;
   const primaryAed = useMemo(() => selectPrimaryAed(incident, aedSites, activeRole), [incident, aedSites, activeRole]);
   const elapsedSec = incident?.sos?.startTs ? Math.max(0, Math.floor((now - incident.sos.startTs) / 1000)) : 0;
   const sosRemaining =
@@ -1223,6 +1229,10 @@ function MobileApp() {
     if (!session) {
       return;
     }
+    if (!isIncidentReadyForResponderTask(incident)) {
+      setNotice({ kind: 'info', text: '请先从患者端启动 SOS，系统分派任务后再接单。' });
+      return;
+    }
     await runAction('autoJoin', async () => {
       const joined = await autoJoinCurrent(session.user.userId, session.token);
       setIncidentIdInput(joined.incidentId);
@@ -1297,7 +1307,7 @@ function MobileApp() {
   }
 
   const logs = [...(incident?.logs ?? [])].slice(-8).reverse();
-  const assignedUsers = clients.filter((client) => client.assignedRole);
+  const assignedUsers = responderTaskReady ? clients.filter((client) => client.assignedRole) : [];
   const action = activeRole ? roleAction(activeRole, incident) : null;
   const primeStep = activeRole === 'PRIME' ? primeNextStep(incident) : null;
   const phaseLabel = incident ? translatePhaseLabel(incident.phase) : '未接入事件';
@@ -1315,7 +1325,7 @@ function MobileApp() {
     ? '患者端'
     : activeRole
       ? translateRoleLabel(activeRole)
-      : demoResponderLabel ?? '待命终端';
+      : '待命终端';
   const nextActionSummary = isPatientTerminal
     ? '保持当前位置，等待协同成员到场'
     : activeRole && action
@@ -1459,13 +1469,13 @@ function MobileApp() {
               <div className="mobile-action-row">
                 <div>
                   {isDemoResponder ? <Shield size={28} /> : <Siren size={28} />}
-                  <p className="mobile-kicker">{isDemoResponder ? '演示待命' : '高优先级'}</p>
+                  <p className="mobile-kicker">{isDemoResponder ? '待命终端' : '高优先级'}</p>
                   <h2>{isDemoResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
                   <p>
                     {isDemoResponder
                       ? incident?.sos?.status === 'ALERTING'
                         ? '患者端已启动 SOS，保持在线，等待系统分派本轮任务'
-                        : `${demoResponderLabel ?? '当前演示端'}不触发患者 SOS，现场演示请从患者端启动`
+                        : `${demoResponderLabel ?? '当前终端'}不触发患者 SOS，现场请从患者端启动`
                       : sosRemaining !== null
                       ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
                       : isPatientTerminal && incident?.phase !== 'CREATED'
@@ -1480,7 +1490,7 @@ function MobileApp() {
               {isDemoResponder ? (
                 <div className="mobile-emergency-actions single">
                   <button className="mobile-ghost-button" type="button" disabled>
-                    等待患者端启动 SOS
+                    {incident?.sos?.status === 'ALERTING' ? '等待任务分派' : '等待患者端启动 SOS'}
                   </button>
                 </div>
               ) : (
@@ -1565,9 +1575,9 @@ function MobileApp() {
             <p className="mobile-kicker">任务</p>
             <h2>我的任务</h2>
           </div>
-          <button className="mobile-small-button" onClick={autoJoin} disabled={busyAction === 'autoJoin'}>
+          <button className="mobile-small-button" onClick={autoJoin} disabled={!responderTaskReady || busyAction === 'autoJoin'}>
             <Radio size={14} />
-            自动接单
+            {responderTaskReady ? '自动接单' : '待启动'}
           </button>
         </div>
         {activeRole && action ? (
@@ -1604,7 +1614,7 @@ function MobileApp() {
         ) : (
           <div className="mobile-empty-state">
             <Radio size={28} />
-            <p>尚未分配到你的任务。保持在线，或在演示模式下点击自动接单。</p>
+            <p>{responderTaskReady ? '尚未分配到你的任务。保持在线，必要时可点击自动接单。' : '患者端启动 SOS 并完成分派后，本终端会显示对应任务。'}</p>
           </div>
         )}
 
@@ -1615,13 +1625,13 @@ function MobileApp() {
             onClick={() => setShowManualJoin((visible) => !visible)}
             aria-expanded={showManualJoin}
           >
-            <span>演示备用：手动选择角色</span>
+            <span>备用：手动选择角色</span>
             <ChevronDown size={16} />
           </button>
           {showManualJoin && (
             <div className="mobile-role-grid">
               {(['PRIME', 'RUNNER', 'GUIDE'] as RoleName[]).map((role) => (
-                <button key={role} onClick={() => joinRole(role)} disabled={!incident || Boolean(busyAction)}>
+                <button key={role} onClick={() => joinRole(role)} disabled={!incident || !responderTaskReady || Boolean(busyAction)}>
                   <strong>{translateRoleLabel(role)}</strong>
                   <span>{translateRoleStatus(incident?.roles?.[role]?.status)}</span>
                 </button>
@@ -1674,8 +1684,8 @@ function MobileApp() {
               <span className={client.online ? 'online' : ''} />
               <div>
                 <strong>{client.displayName}</strong>
-                <p>{client.isPatient ? '患者端' : translateRoleLabel(client.assignedRole)} · {formatLocationLabel(client.location)}</p>
-                <p className="mobile-health-copy">{client.online ? '保持在线' : '等待重连'} · {translateRoleStatus(client.assignedRole ? incident?.roles?.[client.assignedRole]?.status : null)}</p>
+                <p>{client.isPatient ? '患者端' : translateRoleLabel(responderTaskReady ? client.assignedRole : null)} · {formatLocationLabel(client.location)}</p>
+                <p className="mobile-health-copy">{client.online ? '保持在线' : '等待重连'} · {translateRoleStatus(responderTaskReady && client.assignedRole ? incident?.roles?.[client.assignedRole]?.status : null)}</p>
               </div>
             </div>
           ))}

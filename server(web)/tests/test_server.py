@@ -150,6 +150,12 @@ class ServerTestCase(unittest.TestCase):
             "profileBio": profile_bio,
         }
 
+    def _create_dispatchable_incident(self, client: TestClient) -> str:
+        incident_id = client.post("/api/incidents").json()["incidentId"]
+        triggered = client.post(f"/api/incidents/{incident_id}/trigger")
+        self.assertEqual(triggered.status_code, 200)
+        return incident_id
+
     def test_dual_api_prefixes_work(self) -> None:
         with self._client() as client:
             old_health = client.get("/health")
@@ -164,6 +170,7 @@ class ServerTestCase(unittest.TestCase):
         with self._client() as client:
             created = client.post("/api/incidents")
             incident_id = created.json()["incidentId"]
+            triggered = client.post(f"/api/incidents/{incident_id}/trigger")
 
             joined = client.post(
                 f"/api/incidents/{incident_id}/join",
@@ -171,6 +178,7 @@ class ServerTestCase(unittest.TestCase):
             )
 
         self.assertEqual(created.status_code, 200)
+        self.assertEqual(triggered.status_code, 200)
         self.assertEqual(joined.status_code, 200)
 
         with self._client() as second_client:
@@ -953,6 +961,28 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(len(clients.json()["clients"]), 4)
         self.assertEqual(len(aed_sites.json()["aedSites"]), 2)
         self.assertEqual(dispatch.json()["assignments"]["PRIME"], "demo-prime")
+
+    def test_responders_cannot_join_before_patient_sos_dispatch(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            incident_id = bootstrapped.json()["incidentId"]
+
+            manual_join = client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "demo-prime"},
+            )
+            self.assertEqual(manual_join.status_code, 409)
+            self.assertIn("患者端启动 SOS", manual_join.json()["detail"])
+
+            auto_join = client.post("/api/incidents/current/join_auto", json={"userId": "demo-prime"})
+            self.assertEqual(auto_join.status_code, 409)
+            self.assertIn("患者端启动 SOS", auto_join.json()["detail"])
+
+            state = client.get(f"/api/incidents/{incident_id}").json()
+            self.assertEqual(state["phase"], "CREATED")
+            self.assertIsNone(state["roles"]["PRIME"]["userId"])
+            self.assertEqual(state["roles"]["PRIME"]["status"], "")
 
     def test_historical_export_uses_target_incident_roles(self) -> None:
         with self._client() as client:
@@ -1939,17 +1969,18 @@ class ServerTestCase(unittest.TestCase):
                 headers={"X-Demo-Admin-Token": token},
                 json={"patientUserId": "demo-patient"},
             )
+            current_incident_id = allowed_designate.json()["incidentId"]
             denied_join = client.post(
-                f"/api/incidents/{allowed_create.json()['incidentId']}/join",
+                f"/api/incidents/{current_incident_id}/join",
                 json={"role": "PRIME", "userId": "demo-web-prime"},
             )
             allowed_join = client.post(
-                f"/api/incidents/{allowed_create.json()['incidentId']}/join",
+                f"/api/incidents/{current_incident_id}/join",
                 headers={"X-Demo-Admin-Token": token},
                 json={"role": "PRIME", "userId": "demo-web-prime"},
             )
             allowed_action = client.post(
-                f"/api/incidents/{allowed_create.json()['incidentId']}/actions",
+                f"/api/incidents/{current_incident_id}/actions",
                 headers={"X-Demo-Admin-Token": token},
                 json={"action": "CPR_STARTED", "userId": "demo-web-prime"},
             )
@@ -2004,6 +2035,11 @@ class ServerTestCase(unittest.TestCase):
             admin_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {admin_token}"})
             denied = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {user_token}"})
             bootstrapped = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {admin_token}"})
+            designated = client.post(
+                "/api/incidents/current/designate_patient",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"patientUserId": "demo-patient"},
+            )
             role_join = client.post(
                 f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
                 headers={"Authorization": f"Bearer {admin_token}"},
@@ -2017,6 +2053,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("admin", admin_me.json()["user"]["privileges"])
         self.assertEqual(denied.status_code, 403)
         self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(designated.status_code, 200)
         self.assertEqual(role_join.status_code, 200)
         self.assertEqual(audit_log.status_code, 200)
         event_types = {event["eventType"] for event in audit_log.json()["events"]}
@@ -2119,7 +2156,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_role_progress_does_not_reset_prime_after_runner_update(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
 
             client.post(
                 f"/api/incidents/{incident_id}/join",
@@ -2150,7 +2187,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_repeated_join_does_not_reset_completed_role_progress(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             joined = client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -2179,7 +2216,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_repeated_role_action_is_idempotent_and_does_not_duplicate_logs(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -2236,7 +2273,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_runner_cannot_deliver_before_pickup(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "RUNNER", "userId": "runner-user"},
@@ -2250,7 +2287,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_prime_can_complete_aed_analysis_and_shock_after_delivery(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -2291,7 +2328,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_prime_can_start_second_aed_analysis_after_shock(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -2334,7 +2371,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_handover_can_be_completed_and_archived(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -2378,7 +2415,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_handover_completion_repairs_arrived_phase_drift(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -2426,7 +2463,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_guide_cannot_report_ambulance_before_cpr_and_aed_delivery(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},

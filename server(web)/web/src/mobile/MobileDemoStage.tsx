@@ -33,6 +33,16 @@ const runbookSteps = [
 ];
 
 const roleNames: RoleName[] = ['PRIME', 'RUNNER', 'GUIDE'];
+const activeResponderPhases = new Set([
+  'DISPATCHED',
+  'CPR',
+  'AED_PICKED',
+  'AED_DELIVERED',
+  'AED_ANALYZING',
+  'SHOCK_DELIVERED',
+  'HANDOVER',
+  'ARCHIVED',
+]);
 
 const phaseLabels: Record<string, string> = {
   CREATED: '事件创建',
@@ -72,7 +82,7 @@ function translatePhase(phase?: string | null): string {
 
 function translateRoleStatus(status?: string | null): string {
   if (!status) {
-    return '待响应';
+    return '待分派';
   }
   return roleStatusLabels[status] ?? status;
 }
@@ -90,7 +100,7 @@ function hasAnyResponder(state: IncidentState | null): boolean {
 }
 
 function hasAssignedRoles(state: IncidentState | null): boolean {
-  return Boolean(state && roleNames.some((role) => state.roles?.[role]?.userId || state.roles?.[role]?.status));
+  return Boolean(state && activeResponderPhases.has(state.phase) && roleNames.some((role) => state.roles?.[role]?.userId || state.roles?.[role]?.status));
 }
 
 function hasPrimeStarted(state: IncidentState | null): boolean {
@@ -160,7 +170,7 @@ function getRunbookIndex(state: IncidentState | null): number {
   if (state.phase === 'DISPATCHING' || state.phase === 'DISPATCHED' || hasAssignedRoles(state)) {
     return 1;
   }
-  return 0;
+  return state.sos?.status === 'ALERTING' || state.patientUserId ? 0 : -1;
 }
 
 function formatLogTime(ts: number): string {
@@ -215,6 +225,9 @@ function getTerminalStatus(frame: (typeof demoFrames)[number], state: IncidentSt
   if (!frame.role) {
     return state.sos?.status === 'ALERTING' ? 'SOS 倒计时中' : translatePhase(state.phase);
   }
+  if (state.phase === 'CREATED' || state.phase === 'DISPATCHING') {
+    return '待患者端启动';
+  }
   return translateRoleStatus(state.roles?.[frame.role]?.status);
 }
 
@@ -233,7 +246,9 @@ function MobileDemoStage() {
   const roleSummary = roleNames.map((role) => ({
     role,
     label: role === 'PRIME' ? '施救' : role === 'RUNNER' ? 'AED' : '接应',
-    status: translateRoleStatus(incident?.roles?.[role]?.status),
+    status: incident && incident.phase !== 'CREATED' && incident.phase !== 'DISPATCHING'
+      ? translateRoleStatus(incident.roles?.[role]?.status)
+      : '待分派',
   }));
   const lastUpdatedLabel = lastUpdatedAt ? formatLogTime(lastUpdatedAt) : '--:--:--';
 
@@ -309,7 +324,7 @@ function MobileDemoStage() {
         <p>{incidentHint}</p>
         <div className="mobile-demo-stage-safety">
           <ShieldCheck size={15} />
-          <span>安全边界：仅使用模拟数据与演示终端，不触发真实急救调度。</span>
+          <span>安全边界：仅用于协同训练与预实验展示，不触发真实急救调度。</span>
         </div>
         <ol className="mobile-demo-stage-runbook" aria-label="演示导播步骤">
           {runbookSteps.map((step, index) => (

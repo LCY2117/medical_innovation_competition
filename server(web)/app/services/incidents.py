@@ -433,6 +433,8 @@ class IncidentService:
     async def join_current_auto(self, user_id: str) -> AutoJoinResponse:
         current = self.get_current_incident()
         incident_id = current.incidentId
+        if current.phase in {"CREATED", "DISPATCHING"}:
+            raise HTTPException(status_code=409, detail="请先由患者端启动 SOS，系统分派任务后再接单")
         self._touch_client(user_id)
 
         for role_name in ("PRIME", "RUNNER", "GUIDE"):
@@ -470,6 +472,8 @@ class IncidentService:
 
     async def join_incident(self, incident_id: str, role: str, user_id: str) -> MutationResponse:
         state = self._require_incident(incident_id)
+        if state.phase in {"CREATED", "DISPATCHING"}:
+            raise HTTPException(status_code=409, detail="请先由患者端启动 SOS，系统分派任务后再接单")
 
         normalized_role = role.upper()
         if normalized_role not in {"PRIME", "RUNNER", "GUIDE"}:
@@ -667,7 +671,7 @@ class IncidentService:
             ),
         }
 
-        self.register_client("demo-patient", "冠心病患者", "模拟社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"], demo_health["patient"])
+        self.register_client("demo-patient", "冠心病患者", "示范社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"], demo_health["patient"])
         self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"], demo_health["doctor"])
         self.register_client("demo-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", demo_locations["runner"], demo_health["runner"])
         self.register_client("demo-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])

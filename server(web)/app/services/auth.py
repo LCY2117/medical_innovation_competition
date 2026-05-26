@@ -18,7 +18,7 @@ class AuthService:
             "user_id": "demo-patient",
             "display_name": "冠心病患者",
             "phone": "13900001001",
-            "organization": "模拟社区",
+            "organization": "示范社区",
             "health_condition": "存在心脏骤停风险",
             "profession_identity": "患者侧",
             "profile_bio": "多年冠心病病史，需要重点监护，可用于预实验患者端。",
