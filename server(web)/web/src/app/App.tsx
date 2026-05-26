@@ -1152,7 +1152,7 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => {
           <div className="flex items-center justify-center space-x-2 text-sm text-slate-500 uppercase tracking-widest mt-2">
             <span>方案验证</span>
             <span>•</span>
-            <span>场景演练</span>
+            <span>场景预实验</span>
           </div>
         </div>
 
@@ -1188,7 +1188,7 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => {
             onClick={onStart}
             className="group flex items-center bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-red-900/50"
           >
-            开始全流程演练
+            开始全流程预实验
             <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
@@ -2161,10 +2161,10 @@ export default function App() {
       '',
       ...demoFlowSteps.map((step, index) => `${index + 1}. ${step.title}：${step.detail}（${step.complete ? '已完成' : step.active ? '当前步骤' : '待执行'}）`),
       '',
-      '## 九、演练后证据处理',
+      '## 九、预实验后证据处理',
       '',
       '1. 下载事件证据包 ZIP 后，先运行 `python scripts\\verify_evidence_package.py "D:\\path\\to\\lifereflex-experiment.zip"` 校验 manifest、SHA-256、文件清单和公开/内部材料边界。',
-      '2. 多轮系统演练结束后，把每轮 ZIP 放到同一目录，运行 `python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"`。',
+      '2. 多轮系统级预实验结束后，把每轮 ZIP 放到同一目录，运行 `python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"`。',
       '3. 输出目录会包含 `round-summary.csv`、`round-analysis.md`、`round-chart-data.csv` 和 `round-review-actions.csv`，分别用于 Excel 汇总、PPT 安全口径摘要、图表底表和复核行动清单。',
       '4. 先打开 `round-analysis.md` 的“证据质量”和“需复核轮次”小节，并按 `round-review-actions.csv` 筛掉需要重跑或人工补充说明的轮次，再交给 PPT 制作者取图表。',
       '5. 对外展示优先使用匿名化文件、`review_index.md`、`expert_summary.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`round-analysis.md`、`round-chart-data.csv` 和 `round-review-actions.csv`。',
@@ -3362,7 +3362,7 @@ export default function App() {
                 { title: '1:40 四端协同', body: `核心施救 ${translateRoleStatus(incidentState?.roles.PRIME.status)}；AED ${translateRoleStatus(incidentState?.roles.RUNNER.status)}；接应 ${translateRoleStatus(incidentState?.roles.GUIDE.status)}`, ready: responderCount >= 1 },
                 { title: '3:00 T1-T6 证据', body: `日志 ${incidentState?.logs.length ?? 0} 条，T2 已进入 metrics / round-summary / chart-data。`, ready: Boolean(incidentState?.logs.length) },
                 { title: '3:50 证据包', body: archivedIncident ? '事件已归档，可导出 ZIP、manifest 和 SHA-256。' : '可先导出当前轮材料，完整演示建议归档后再下载。', ready: Boolean(incidentState) },
-                { title: '4:30 安全边界', body: '仅用于模拟演练、训练复盘和预实验，不宣称临床疗效或替代 120/AED/医护判断。', ready: true },
+                { title: '4:30 安全边界', body: '仅用于急救协同训练、训练复盘和系统级预实验，不宣称临床疗效或替代 120/AED/医护判断。', ready: true },
               ].map((item) => (
                 <div
                   key={item.title}

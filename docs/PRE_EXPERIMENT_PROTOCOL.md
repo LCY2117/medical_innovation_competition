@@ -88,9 +88,9 @@
 3. 系统自动给核心施救、AED 保障、环境清障角色下发任务。
 4. 各终端按任务操作，依次记录加入、CPR 开始、AED 取到、AED 送达、AED 分析、救护接管。
 5. Web 调度台下载“预实验证据包”ZIP，先打开包内 `review_index.md`，并记录 `manifest.json` 的生成时间与文件校验信息。
-6. 主持人/观察员使用包内 `facilitator_run_sheet.md` 跑完整轮演练，按 T1-T6 记录关键节点。
+6. 主持人/观察员使用包内 `facilitator_run_sheet.md` 跑完整轮预实验，按 T1-T6 记录关键节点。
 7. 数据整理同学先阅读包内 `data_dictionary.md`，统一 T1-T6、角色代码、CSV 字段和禁止夸大表述。
-8. 演练前使用包内 `participant_consent_safety_brief.md` 完成参与者安全边界说明；演练后让参与者填写 `participant_questionnaire.csv`。
+8. 预实验前使用包内 `participant_consent_safety_brief.md` 完成参与者安全边界说明；预实验后让参与者填写 `participant_questionnaire.csv`。
 9. 观察员打开包内 `observer_record_form.csv`，补充记录无法由系统自动采集的行为、评分和开放反馈。
 10. 如有专家现场参与，可让专家对照包内 `expert_review_checklist.md` 逐项复核，并使用 `expert_feedback_form.md` 完成评分、100-300 字意见和签字留档。
 11. 多名专家或多轮复核后，使用 `expert_feedback_summary.csv` 汇总评分、肯定意见、风险关注点、需整改事项、负责人、优先级、处理状态、补充证据和二次复核意见，形成“专家反馈 -> 工程整改 -> 再验证”的闭环记录。
@@ -155,7 +155,7 @@
 | 系统降低了多人协同的混乱感 |  |  |  |  |  |
 | AED 取送任务提示清楚 |  |  |  |  |  |
 | CPR/AED 流程提示有帮助 |  |  |  |  |  |
-| 我愿意在培训或演练中继续使用该系统 |  |  |  |  |  |
+| 我愿意在培训或预实验中继续使用该系统 |  |  |  |  |  |
 
 开放问题：
 
@@ -172,9 +172,9 @@
 - 使用系统前后 T1-T6 的均值、中位数和范围。
 - 参与者问卷均值和典型反馈。
 - 系统导出的预实验证据包摘要：优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`timeline.csv`、`metrics.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`。
-- 对照分析表：把无系统基线轮的 T1-T6、主观评分填入 `baseline_vs_system_comparison.csv`，与系统轮导出的耗时和演练后人工填写的问卷评分做差值、百分比变化；小样本只报告描述性变化，不做夸大显著性推断。
+- 对照分析表：把无系统基线轮的 T1-T6、主观评分填入 `baseline_vs_system_comparison.csv`，与系统轮导出的耗时和预实验后人工填写的问卷评分做差值、百分比变化；小样本只报告描述性变化，不做夸大显著性推断。
 - 调度解释案例：展示为什么某人被分配为核心施救、AED 保障、环境清障。
-- 多轮系统演练汇总：把每轮 ZIP 放到同一目录后优先运行 `python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"`，统一校验 manifest/SHA-256，生成 `round-summary.csv`、`round-analysis.md`、`round-chart-data.csv` 和 `round-review-actions.csv`；也可分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py`。其中 `round-summary.csv` 会合并每轮证据质量等级、质量分、问题计数、缺失关键节点和提示代码，`round-analysis.md` 会输出证据质量小节和“需复核轮次”表，`round-chart-data.csv` 可直接作为 Excel/PPT 图表底表，`round-review-actions.csv` 用于决定每轮可直接采用、带备注采用、重跑或人工补充。
+- 多轮系统级预实验汇总：把每轮 ZIP 放到同一目录后优先运行 `python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"`，统一校验 manifest/SHA-256，生成 `round-summary.csv`、`round-analysis.md`、`round-chart-data.csv` 和 `round-review-actions.csv`；也可分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py`。其中 `round-summary.csv` 会合并每轮证据质量等级、质量分、问题计数、缺失关键节点和提示代码，`round-analysis.md` 会输出证据质量小节和“需复核轮次”表，`round-chart-data.csv` 可直接作为 Excel/PPT 图表底表，`round-review-actions.csv` 用于决定每轮可直接采用、带备注采用、重跑或人工补充。
 
 统计原则：
 
@@ -226,4 +226,4 @@
 
 ## 10. 可写入摘要/PPT的谨慎结论模板
 
-本预实验基于模拟心脏骤停场景，验证了生命反射弧从事件触发、AI/规则分派、多人终端协同、AED 取送、CPR/AED 流程提示到实验数据导出的完整闭环。初步结果显示，系统能够形成可解释的角色分派和结构化时间线，为校园/社区急救演练提供低成本数字化工具。后续将扩大样本量，引入医学专家评审和更真实的 AED/CPR 培训环境，进一步优化安全提示、定位精度和调度策略。
+本预实验基于模拟心脏骤停场景，验证了生命反射弧从事件触发、AI/规则分派、多人终端协同、AED 取送、CPR/AED 流程提示到实验数据导出的完整闭环。初步结果显示，系统能够形成可解释的角色分派和结构化时间线，为校园/社区急救协同训练提供低成本数字化工具。后续将扩大样本量，引入医学专家评审和更真实的 AED/CPR 培训环境，进一步优化安全提示、定位精度和调度策略。

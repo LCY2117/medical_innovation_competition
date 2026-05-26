@@ -35,7 +35,7 @@
 - Android “我的”页新增位置同步：可申请系统定位权限、同步系统最近定位，并显示位置来源、经纬度和精度；未授权或没有定位时自动回退演示坐标。
 - 预实验方案已补 S01-S08 系统截图清单和 3-5 分钟专家/PPT 演示脚本。
 - `/api/health/detail` 可检查前端构建产物：index、assets 数量、mobile chunk、desktop chunk、最新资源时间。
-- Web 总控和移动端已加入简短安全边界：仅用于模拟演练、训练复盘和预实验，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。
+- Web 总控和移动端已加入简短安全边界：仅用于急救协同训练、训练复盘和系统级预实验，不替代 120、AED 语音提示、专业医护判断或真实医疗诊断。
 - Android 本地归档会展示参与者视角任务总结，患者、PRIME、RUNNER、GUIDE、待命终端都有不同复盘要点。
 - 部署手册已补生产备份、SQLite 在线备份、1Panel/OpenResty 检查、数据库回滚和本地 DB 不提交的 Git 注意事项。
 - Android 首页快速入口已改为优先“进入当前事件/自动接单”，新建事件降级为“演示备用”。
@@ -88,7 +88,7 @@
 - 新增多轮证据包汇总脚本：`scripts/summarize_evidence_rounds.py` 可批量校验多轮 ZIP，并把每轮 `pre_experiment_round_summary.csv` 与 `evidence_quality_report.json` 合并成一张 CSV，包含质量等级、质量分、critical/warning/info 数量、缺失关键节点和提示代码，便于后续 Excel 描述性统计。
 - 新增多轮分析报告脚本：`scripts/analyze_round_summary.py` 可把汇总 CSV 转成 Markdown 分析摘要，包含证据质量小节、“需复核轮次”表、均值、中位数、范围和 PPT 安全表述边界，并可同步输出 `round-review-actions.csv` 复核行动清单。
 - 新增一键预实验分析脚本：`scripts/build_pre_experiment_report.py` 可直接从多轮 ZIP 生成 `round-summary.csv`、`round-analysis.md`、`round-chart-data.csv` 和 `round-review-actions.csv`。
-- Web 自检报告已同步最新证据质量流程：演练后证据处理步骤会提醒先查看 `round-analysis.md` 的“证据质量”和“需复核轮次”小节，并按 `round-review-actions.csv` 筛掉需要重跑或人工补充说明的轮次，再把图表底表交给 PPT 制作者。
+- Web 自检报告已同步最新证据质量流程：预实验后证据处理步骤会提醒先查看 `round-analysis.md` 的“证据质量”和“需复核轮次”小节，并按 `round-review-actions.csv` 筛掉需要重跑或人工补充说明的轮次，再把图表底表交给 PPT 制作者。
 - 最新验证扫尾为后端 auto-join/join/action 幂等切片：后端 49 项测试通过；证据包生成、manifest 校验脚本、隐私泄漏扫描、篡改 hash/未列文件/隐私边界重叠坏包拦截、专家意见汇总表、多轮 ZIP 汇总脚本、Markdown 分析报告脚本、Excel/PPT 图表数据、一键预实验分析脚本、证据质量报告、自动接单留痕、重复动作不追加日志和重复 join 不回退角色进度测试通过；Web 自检报告切片已通过 typecheck/build 和本地一体化 DOM 烟测；Android debug/release readiness 构建仍保持已通过状态。
 - Debug APK 已生成：`lifereflex(app)/app/build/outputs/apk/debug/app-debug.apk`。
 - Release readiness 已验证生成未签名检查包：`lifereflex(app)/app/build/outputs/apk/release/app-release-unsigned.apk`；未配置 release keystore 前不要把它当正式发布包。
@@ -113,7 +113,7 @@ cd "D:\WARE_HOUSE\desktop_file\LSM\软著\生命反射弧\server(web)"
 & "..\.venv\Scripts\python.exe" -m unittest discover -s tests -v
 ```
 
-结果：49 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；坏包负例覆盖篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠和公开材料泄漏原始参与者 ID；AI 已分派终端首次自动接单会写入 JOINED 时间线；现场动作重复提交保持幂等，不会追加重复日志污染时间线；同一终端重复 join 已推进角色不会把 CPR/AED 等进度重置为 JOINED；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv` 和 `evidence_quality_report.json`，确认多轮系统演练可以汇总成带质量等级、质量分和缺失关键节点计数的 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、证据质量、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv` 和 `round-review-actions.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown、图表数据与复核行动清单。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
+结果：49 项通过。新增覆盖：生成真实证据包 ZIP 后调用 `scripts/verify_evidence_package.py`，确认 manifest、SHA-256、文件清单、公开/内部材料边界和公开文件原始参与者 ID 泄漏扫描可独立校验；坏包负例覆盖篡改 SHA-256、ZIP 多出未列文件、公开/内部隐私边界重叠和公开材料泄漏原始参与者 ID；AI 已分派终端首次自动接单会写入 JOINED 时间线；现场动作重复提交保持幂等，不会追加重复日志污染时间线；同一终端重复 join 已推进角色不会把 CPR/AED 等进度重置为 JOINED；再调用 `scripts/summarize_evidence_rounds.py` 合并 `pre_experiment_round_summary.csv` 和 `evidence_quality_report.json`，确认多轮系统级预实验可以汇总成带质量等级、质量分和缺失关键节点计数的 CSV；调用 `scripts/analyze_round_summary.py` 生成带事件编号、证据质量、描述性统计和谨慎结论边界的 Markdown 分析摘要，并可同步生成 `round-chart-data.csv` 和 `round-review-actions.csv`；最后调用 `scripts/build_pre_experiment_report.py` 一键生成 CSV、Markdown、图表数据与复核行动清单。最新证据包还会生成 `evidence_quality_report.json`，用于判断本轮是否完成关键节点、是否存在缺失项、是否适合进入低成本预实验汇总。
 
 地图 provider 增量目标测试：4 项通过，覆盖 `/api/health/detail`、`/api/dispatch/meta`、高德缺 Key 回退和演示导出距离指标。
 
@@ -292,7 +292,7 @@ app\build\outputs\apk\debug\app-debug.apk
 python scripts\verify_evidence_package.py "D:\path\to\lifereflex-experiment.zip"
 ```
 
-多轮系统演练结束后，把多个 ZIP 放到同一目录，一键生成汇总表、分析摘要、图表底表和复核行动清单：
+多轮系统级预实验结束后，把多个 ZIP 放到同一目录，一键生成汇总表、分析摘要、图表底表和复核行动清单：
 
 ```powershell
 python scripts\build_pre_experiment_report.py "D:\path\to\evidence-zips" --output-dir "D:\path\to\analysis-output"

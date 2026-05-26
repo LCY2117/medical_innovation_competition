@@ -1631,12 +1631,12 @@ class IncidentService:
     ) -> list[dict]:
         assigned_tasks = self._participant_assigned_tasks(export)
         questions = [
-            ("Q01", "我能快速理解自己在本轮演练中的任务。"),
+            ("Q01", "我能快速理解自己在本轮预实验中的任务。"),
             ("Q02", "系统降低了多人协同和现场沟通的混乱感。"),
             ("Q03", "移动端或 App 的当前动作提示足够清楚。"),
-            ("Q04", "AED 点位、取送或 CPR/AED 下一步提示对演练有帮助。"),
+            ("Q04", "AED 点位、取送或 CPR/AED 下一步提示对预实验有帮助。"),
             ("Q05", "系统的安全边界提示清楚，没有让我误以为它能替代真实急救。"),
-            ("Q06", "我愿意在后续急救培训或模拟演练中继续使用该系统。"),
+            ("Q06", "我愿意在后续急救协同训练或系统级预实验中继续使用该系统。"),
         ]
         rows: list[dict] = []
         for client in sorted(export.clients, key=lambda item: participant_map.get(item.userId, item.userId)):
@@ -1945,11 +1945,11 @@ class IncidentService:
 - `experiment_anonymized.json`：匿名化结构化导出，用于专家反馈、PPT 和对外材料。
 - `expert_summary.md`：专家/指导教师可快速阅读的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖医学场景、流程安全、AI 分派和数据边界。
-- `expert_feedback_form.md`：事件级专家反馈与签字表，便于专家对本轮演练给出评分、意见和签字确认。
-- `facilitator_run_sheet.md`：主持人/观察员跑场单，用于按步骤完成演练、记录关键时间点和导出材料。
+- `expert_feedback_form.md`：事件级专家反馈与签字表，便于专家对本轮预实验给出评分、意见和签字确认。
+- `facilitator_run_sheet.md`：主持人/观察员跑场单，用于按步骤完成预实验流程、记录关键时间点和导出材料。
 - `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `data_dictionary.md`：证据包数据字典，解释关键指标、CSV 字段、角色代码和对外表述边界。
-- `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明和签署记录。
+- `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于预实验前说明和签署记录。
 - `evidence_quality_report.json`：本轮证据质量报告，标记关键节点覆盖、缺失项、质量分和可否进入低成本预实验汇总。
 - `timeline.csv`：事件时间线，适合直接导入 Excel。
 - `clients.csv`：参与终端画像、位置、角色和健康摘要，仅建议内部复核使用。
@@ -1968,7 +1968,7 @@ class IncidentService:
 
 该包用于医创赛低成本预实验记录、PPT 截图依据和专家反馈前的材料整理。对外材料优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`evidence_quality_report.json`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；完整 `experiment.json` 与 `clients.csv` 仅建议内部复核使用。
 
-多轮系统演练结束后，把每轮 ZIP 放到同一目录，在项目根目录运行：
+多轮系统级预实验结束后，把每轮 ZIP 放到同一目录，在项目根目录运行：
 
 ```powershell
 python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"
@@ -1995,7 +1995,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 ## 一、建议 3 分钟打开顺序
 
 1. `expert_summary.md`：先看项目场景、分派结果、T1-T6 指标和安全边界。
-2. `facilitator_run_sheet.md`：确认这轮演练是否按预实验流程执行，特别是 T0-T6 记录点。
+2. `facilitator_run_sheet.md`：确认这轮预实验是否按预实验流程执行，特别是 T0-T6 记录点。
 3. `timeline.csv` 与 `metrics.csv`：核对自动记录的事件时间线和核心耗时。
 4. `dispatch_rationale.csv`：查看核心施救、AED 保障、环境清障的分派依据。
 5. `expert_feedback_form.md`：填写专家评分、意见和签字。
@@ -2004,17 +2004,17 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 | 材料 | 建议读者 | 主要证明什么 | 公开边界 |
 | --- | --- | --- | --- |
-| `expert_summary.md` | 专家、指导教师、PPT 制作者 | 这轮演练的医学场景、协同流程、指标和谨慎结论 | 可外部展示 |
+| `expert_summary.md` | 专家、指导教师、PPT 制作者 | 这轮预实验的医学场景、协同流程、指标和谨慎结论 | 可外部展示 |
 | `expert_review_checklist.md` | 专家、指导教师 | 医学安全边界、AI 分派、数据记录是否可接受 | 可外部展示 |
 | `expert_feedback_form.md` | 专家 | 事件级评分、改进意见和签字材料 | 可外部展示 |
 | `expert_feedback_summary.csv` | 项目负责人、指导教师 | 汇总专家意见、风险点和整改闭环 | 可外部展示，需去除专家联系方式 |
-| `facilitator_run_sheet.md` | 主持人、观察员 | 现场跑场流程、T0-T6 记录提示、演练后整理步骤 | 可外部展示 |
+| `facilitator_run_sheet.md` | 主持人、观察员 | 现场跑场流程、T0-T6 记录提示、预实验后整理步骤 | 可外部展示 |
 | `analysis_guide.md` | 数据整理同学、PPT 制作者 | 如何解释 T1-T6、问卷、基线对照和不可夸大结论 | 可外部展示 |
 | `data_dictionary.md` | 数据整理同学、专家、PPT 制作者 | 指标、CSV 字段、角色代码和数据边界说明 | 可外部展示 |
 | `observer_record_form.csv` | 观察员 | 系统无法自动采集的现场行为、错误、理解度 | 可外部展示 |
 | `participant_questionnaire.csv` | 参与者、数据整理同学 | 参与者主观评分和反馈 | 可外部展示，需匿名 |
 | `baseline_vs_system_comparison.csv` | 数据整理同学 | 无系统基线轮与系统轮的描述性对照 | 可外部展示 |
-| `pre_experiment_round_summary.csv` | 数据整理同学 | 多轮演练合并统计的一行摘要 | 可外部展示 |
+| `pre_experiment_round_summary.csv` | 数据整理同学 | 多轮预实验合并统计的一行摘要 | 可外部展示 |
 | `manifest.json` | 复核者 | 文件清单、SHA-256 校验和隐私边界 | 可外部展示 |
 
 ## 三、自动指标快照
@@ -2183,7 +2183,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 ## 数据使用边界
 
-本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。健康摘要若为样例接入或演示来源，仅代表演练闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
+本摘要用于医创赛低成本预实验、专家反馈和产品可行性讨论。健康摘要若为样例接入或演示来源，仅代表预实验闭环中的模拟健康摘要，不可用于真实医疗诊断或疗效结论。
 """
 
     def _analysis_guide(self, export: ExperimentExportResponse) -> str:
@@ -2197,7 +2197,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 建议按以下顺序整理材料：
 
-1. `pre_experiment_round_summary.csv`：每轮系统演练的核心指标汇总。
+1. `pre_experiment_round_summary.csv`：每轮系统预实验的核心指标汇总。
 2. `baseline_vs_system_comparison.csv`：把无系统基线轮与系统轮配对，计算差值和百分比变化。
 3. `participant_questionnaire.csv`：参与者主观评分，建议按题号计算均值、中位数和典型反馈。
 4. `observer_record_form.csv`：观察员补充记录，用于解释系统日志无法覆盖的迟疑、误触和沟通问题。
@@ -2206,7 +2206,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 ## 二、多轮 ZIP 一键汇总
 
-多轮系统演练结束后，把每轮下载的 ZIP 放到同一目录，在项目根目录运行：
+多轮系统级预实验结束后，把每轮下载的 ZIP 放到同一目录，在项目根目录运行：
 
 ```powershell
 python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --output-dir "D:\\path\\to\\analysis-output"
@@ -2298,7 +2298,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | `dispatchSeconds` | {self._format_metric(metrics.get("dispatchSeconds"))} | T1，患者触发到三类任务分派完成的秒数 | 仅表示系统流程耗时 |
 | `firstResponderResponseSeconds` | {self._format_metric(metrics.get("firstResponderResponseSeconds"))} | T2，患者触发到核心施救端接单或启动处置的秒数 | 不等同真实到达患者身边 |
 | `cprStartSeconds` | {self._format_metric(metrics.get("cprStartSeconds"))} | T3，患者触发到核心施救端记录 CPR 开始的秒数 | 不等同真实高质量 CPR |
-| `aedPickupSeconds` | {self._format_metric(metrics.get("aedPickupSeconds"))} | T4，患者触发到 AED 保障端记录取到 AED 的秒数 | 取决于演练路径和道具点位 |
+| `aedPickupSeconds` | {self._format_metric(metrics.get("aedPickupSeconds"))} | T4，患者触发到 AED 保障端记录取到 AED 的秒数 | 取决于预实验路径和道具点位 |
 | `aedDeliverySeconds` | {self._format_metric(metrics.get("aedDeliverySeconds"))} | T5，患者触发到 AED 送达患者位置的秒数 | 不代表真实除颤完成 |
 | `ambulanceArriveSeconds` | {self._format_metric(metrics.get("ambulanceArriveSeconds"))} | T6，患者触发到清障接驳端记录救护接管的秒数 | 可由观察员补充真实口令时间 |
 | `roleAssignmentCompleteness` | {metrics.get("roleAssignmentCompleteness", "--")} | PRIME/RUNNER/GUIDE 三类角色是否完整分派，1.0 表示三类均有终端 | 仅表示任务分派完整性 |
@@ -2384,7 +2384,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 ## 三、专家重点判断
 
 - [ ] 医学场景是否聚焦公共场所疑似心脏骤停的真实协同问题。
-- [ ] CPR/AED/救护接应提示是否适合演练和培训语境，是否存在不安全或过度医疗化表述。
+- [ ] CPR/AED/救护接应提示是否适合预实验和培训语境，是否存在不安全或过度医疗化表述。
 - [ ] PRIME/RUNNER/GUIDE 三类角色分工是否能降低现场混乱。
 - [ ] AI/规则分派是否合理体现人员能力、距离、AED 可达性和健康风险。
 - [ ] 调度解释是否足够清晰，能否被非技术评委和医学专家理解。
@@ -2429,7 +2429,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 联系方式（可选） |  |
 | 审阅日期 |  |
 
-## 二、本轮演练关键记录
+## 二、本轮预实验关键记录
 
 | 指标 | 系统记录 | 专家备注 |
 | --- | --- | --- |
@@ -2461,13 +2461,13 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | 评价项 | 1 | 2 | 3 | 4 | 5 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 医学应用场景明确，聚焦公共场所疑似心脏骤停协同问题 |  |  |  |  |  |  |
-| CPR/AED/救护接应提示适合训练或演练场景 |  |  |  |  |  |  |
+| CPR/AED/救护接应提示适合训练或预实验场景 |  |  |  |  |  |  |
 | 核心施救、AED 保障、环境清障的角色分工合理 |  |  |  |  |  |  |
 | AI/规则分派解释能体现能力、距离、AED 和风险因素 |  |  |  |  |  |  |
 | 移动端任务提示在紧张情境下可读、可执行 |  |  |  |  |  |  |
 | 证据包可支持低成本预实验记录、匿名化审阅和后续统计 |  |  |  |  |  |  |
 | 安全边界、免责说明和数据使用边界清楚 |  |  |  |  |  |  |
-| 具备进一步用于校园/社区急救演练试点的潜力 |  |  |  |  |  |  |
+| 具备进一步用于校园/社区急救协同训练试点的潜力 |  |  |  |  |  |  |
 
 ## 五、开放反馈
 
@@ -2485,7 +2485,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 反馈：
 
 
-### 5.3 界面与演练可用性
+### 5.3 界面与预实验可用性
 
 请评价 Web 总控台、移动 Web、Android App 在模拟急救情境中的可理解性、信息负载和误触风险。
 
@@ -2508,7 +2508,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 ## 七、安全与合规声明
 
-本人知悉本反馈基于模拟心脏骤停演练、系统演示和预实验材料审阅，仅用于学生创新竞赛、训练复盘和产品迭代参考。本表不构成真实临床疗效证明、医疗器械注册证明、急救培训资质证明，也不替代拨打 120、AED 语音提示或专业医护判断。
+本人知悉本反馈基于模拟心脏骤停预实验、系统演示和预实验材料审阅，仅用于学生创新竞赛、训练复盘和产品迭代参考。本表不构成真实临床疗效证明、医疗器械注册证明、急救培训资质证明，也不替代拨打 120、AED 语音提示或专业医护判断。
 
 专家签字：
 
@@ -2541,20 +2541,20 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 
 本跑场单给主持人、观察员或指导教师使用，用于 3-5 分钟课堂/答辩演示，或 8-16 人低成本预实验。它只服务模拟急救协同和训练复盘，不用于真实患者处置。
 
-## 二、演练前 5 分钟检查
+## 二、预实验前 5 分钟检查
 
 - [ ] Web 总控台可访问，演示口令或管理员账号可用。
 - [ ] 点击“初始化医创赛演示场景”，确认 4 类终端和 AED 点位出现。
 - [ ] 在“演示入口”面板复制或打开患者端、核心施救端、AED 保障端、清障接驳端和 4 端导播台链接。
 - [ ] 参与者已阅读 `participant_consent_safety_brief.md`，不做真实胸外按压、不做真实电击。
-- [ ] 观察员准备填写 `observer_record_form.csv`，参与者演练后填写 `participant_questionnaire.csv`。
+- [ ] 观察员准备填写 `observer_record_form.csv`，参与者预实验后填写 `participant_questionnaire.csv`。
 - [ ] 如专家在场，提前发放 `expert_review_checklist.md` 和 `expert_feedback_form.md`。
 
 ## 三、现场口令与动作顺序
 
 | 顺序 | 主持人口令 | 系统/参与者动作 | 记录重点 |
 | --- | --- | --- | --- |
-| 1 | “演练开始，患者端进入走廊场景。” | 患者端保持当前位置，其他端待命 | 记录场景、人数和 AED 道具状态 |
+| 1 | “预实验开始，患者端进入走廊场景。” | 患者端保持当前位置，其他端待命 | 记录场景、人数和 AED 道具状态 |
 | 2 | “患者出现异常，启动 SOS。” | 患者端点击 SOS 并完成二次确认 | 记 T0：患者触发时间 |
 | 3 | “等待系统分派。” | Web 展示 AI/规则分派，三类角色收到任务 | 记 T1：分派完成时间 |
 | 4 | “核心施救者响应并前往患者。” | 核心施救端接单，到达后开始 CPR | 记 T2/T3：响应与 CPR 开始 |
@@ -2584,7 +2584,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 - 系统分派理由是否能被非技术参与者理解。
 - 安全边界提示是否清楚，是否有人误以为可替代真实 120 或 AED 语音提示。
 
-## 六、演练后 10 分钟整理
+## 六、预实验后 10 分钟整理
 
 1. 下载 ZIP 证据包，优先对外使用匿名化文件。
 2. 核对 `manifest.json` 生成时间和 SHA-256 文件清单。
@@ -2620,17 +2620,17 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 事件编号：{export.incidentId}
 导出时间：{generated_at}
 
-## 一、演练目的
+## 一、预实验目的
 
-本轮演练用于医创赛低成本预实验，目标是观察“生命反射弧”在模拟心脏骤停场景下对多人协同分工、AED 取送、CPR/AED 流程提示和数据留痕的支持效果。演练结果仅用于学生创新竞赛、产品迭代和专家反馈准备。
+本轮预实验用于医创赛低成本预实验，目标是观察“生命反射弧”在模拟心脏骤停场景下对多人协同分工、AED 取送、CPR/AED 流程提示和数据留痕的支持效果。预实验结果仅用于学生创新竞赛、产品迭代和专家反馈准备。
 
 ## 二、安全边界
 
-- 本演练不纳入真实患者，不用于真实医疗诊断、治疗或疗效评价。
+- 本预实验不纳入真实患者，不用于真实医疗诊断、治疗或疗效评价。
 - 不在真人身上进行真实胸外按压，不进行真实电击；如使用 AED，仅使用训练机、模型或空盒道具。
 - 系统提示不能替代拨打 120、AED 语音提示、专业医护判断或正式急救培训。
 - 参与者可随时暂停或退出，不影响后续学习、评价或团队关系。
-- 如出现身体不适、焦虑、眩晕、跌倒风险或现场安全问题，应立即停止演练。
+- 如出现身体不适、焦虑、眩晕、跌倒风险或现场安全问题，应立即停止预实验。
 
 ## 三、数据与隐私
 
@@ -2644,9 +2644,9 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | --- | --- | --- | --- |
 {participant_table}
 
-## 五、演练后反馈
+## 五、预实验后反馈
 
-演练结束后，请配合填写 `participant_questionnaire.csv` 中对应自己代号的问卷行；观察员另行填写 `observer_record_form.csv`，专家可对照 `expert_review_checklist.md` 复核。
+预实验结束后，请配合填写 `participant_questionnaire.csv` 中对应自己代号的问卷行；观察员另行填写 `observer_record_form.csv`，专家可对照 `expert_review_checklist.md` 复核。
 """
 
     def _assigned_role_for(self, user_id: str) -> str | None:

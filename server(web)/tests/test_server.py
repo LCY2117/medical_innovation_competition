@@ -846,7 +846,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("不构成真实临床疗效证明", expert_feedback)
                 run_sheet = archive.read("facilitator_run_sheet.md").decode("utf-8")
                 self.assertIn("生命反射弧预实验主持人跑场单", run_sheet)
-                self.assertIn("演练前 5 分钟检查", run_sheet)
+                self.assertIn("预实验前 5 分钟检查", run_sheet)
                 self.assertIn("不用于真实患者处置", run_sheet)
                 analysis_guide = archive.read("analysis_guide.md").decode("utf-8")
                 self.assertIn("预实验数据分析说明", analysis_guide)

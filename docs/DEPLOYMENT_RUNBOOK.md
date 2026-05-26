@@ -302,7 +302,7 @@ Git 注意事项：
 6. 展示 AI/规则分派过程和调度解释。
 7. 在 Android App 或 Web 端完成 CPR、AED、接应动作。
 8. 点击“证据包”，展示 `review_index.md`、`timeline.csv`、`metrics.csv`、`dispatch_rationale.csv`、`experiment_anonymized.json`、`expert_summary.md` 和 `expert_feedback_form.md`。
-9. 总结：系统价值是缩短协同组织链路、明确角色任务、记录演练数据，不直接宣称临床疗效。
+9. 总结：系统价值是缩短协同组织链路、明确角色任务、记录预实验数据，不直接宣称临床疗效。
 
 ## 9. 预实验证据包说明
 
@@ -324,15 +324,15 @@ ZIP 包当前包含：
 - `expert_summary.md`：给专家/指导教师快速审阅的预实验摘要。
 - `expert_review_checklist.md`：专家现场复核清单，覆盖演示材料、关键指标、医学流程、AI 分派和安全边界。
 - `expert_feedback_form.md`：事件级专家反馈与签字表，用于专家评分、100-300 字意见和签字留档。
-- `facilitator_run_sheet.md`：主持人/观察员跑场单，用于按步骤完成演练、记录 T1-T6 并导出证据包。
+- `facilitator_run_sheet.md`：主持人/观察员跑场单，用于按步骤完成预实验流程、记录 T1-T6 并导出证据包。
 - `analysis_guide.md`：预实验数据分析说明，解释 T1-T6、问卷、基线对照和谨慎结论写法。
 - `data_dictionary.md`：证据包数据字典，解释核心指标、CSV 字段、角色代码和对外表述边界。
-- `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于演练前说明、签名或口头确认记录。
+- `participant_consent_safety_brief.md`：参与者知情与安全边界简表，用于预实验前说明、签名或口头确认记录。
 - `evidence_quality_report.json`：证据质量报告，标出关键节点覆盖、缺失项、质量分、质量等级和建议用途。
 - `observer_record_form.csv`：观察员补充记录表，用于填写系统无法自动采集的现场行为、评分和开放反馈。
 - `participant_questionnaire.csv`：参与者主观问卷表，用于收集任务理解、协同减负、移动端提示和安全边界评分。
 - `baseline_vs_system_comparison.csv`：无系统基线轮与系统轮对照分析模板，用于汇总 T1-T6 差值、百分比变化和主观评分差异。
-- `pre_experiment_round_summary.csv`：单轮预实验汇总行，适合多轮演练合并到 Excel 做描述性统计。
+- `pre_experiment_round_summary.csv`：单轮预实验汇总行，适合多轮预实验合并到 Excel 做描述性统计。
 - `expert_feedback_summary.csv`：专家意见汇总与整改闭环表，用于合并多名专家评分、风险点、负责人、处理状态和二次复核意见。
 - `README.md`：证据包使用说明。
 - `manifest.json`：文件清单、SHA256 校验、生成时间和事件编号。
