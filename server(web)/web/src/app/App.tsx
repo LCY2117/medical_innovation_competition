@@ -1428,7 +1428,6 @@ export default function App() {
   const isPrimeAnalyzing = isAedAnalyzing(incidentState);
   const isPrimeShockDelivered = isShockDelivered(incidentState);
   const isAedOnsite = hasRunnerDelivered(incidentState);
-  const handoverReady = Boolean(isCprActive && isAedOnsite);
   const responderCount = incidentState
     ? Object.values(incidentState.roles).filter((role) => isRoleJoined(role.status)).length
     : 0;
@@ -1446,8 +1445,6 @@ export default function App() {
     : archivedIncident
       ? '本轮事件已归档'
       : undefined;
-  const ambulanceActionDisabled = actionsDisabled || !handoverReady;
-  const ambulanceActionTitle = actionDisabledTitle ?? (!handoverReady ? '需先启动 CPR 并送达 AED，才能记录救护接管' : undefined);
   const incidentStartTs = incidentState?.logs?.[0]?.ts ?? null;
   const archiveDurationLabel = formatArchiveDurationLabel(incidentState, liveNowMs);
   const archiveRoleCountLabel = formatArchiveRoleCount(incidentState);
@@ -2938,11 +2935,11 @@ export default function App() {
 
                <button
                  onClick={() => postAction('AMBULANCE_ARRIVED')}
-                 disabled={ambulanceActionDisabled}
-                 title={ambulanceActionTitle}
+                 disabled={actionsDisabled}
+                 title={actionDisabledTitle}
                  className="w-full bg-yellow-500 text-black py-4 rounded-xl font-bold shadow-lg shadow-yellow-900/30 hover:bg-yellow-400 transition-colors"
                >
-                 {handoverReady ? '救护车已到达' : '等待 CPR 与 AED 送达'}
+                 确认救护车已到达
                </button>
                {incidentState?.phase === 'HANDOVER' && (
                  <button

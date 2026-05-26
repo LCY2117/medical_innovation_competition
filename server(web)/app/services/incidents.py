@@ -504,7 +504,7 @@ class IncidentService:
             if self._is_role_action_already_recorded(state, "PRIME", normalized_action):
                 return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.PRIME.status, {"ASSIGNED", "JOINED", "CPR_STARTED"}, "PRIME")
-            state.phase = "CPR"
+            self._advance_phase(state, "CPR")
             state.roles.PRIME.status = "CPR_STARTED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"CPR started by {user_id}"))
         elif normalized_action == "AED_ANALYSIS_STARTED":
@@ -517,7 +517,7 @@ class IncidentService:
                 "PRIME",
             )
             self._ensure_role_status(state.roles.RUNNER.status, {"AED_DELIVERED"}, "RUNNER")
-            state.phase = "AED_ANALYZING"
+            self._advance_phase(state, "AED_ANALYZING")
             state.roles.PRIME.status = "AED_ANALYZING"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED analysis started by {user_id}"))
         elif normalized_action == "AED_SHOCK_DELIVERED":
@@ -526,7 +526,7 @@ class IncidentService:
                 return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.PRIME.status, {"AED_ANALYZING", "AED_SHOCK_DELIVERED"}, "PRIME")
             self._ensure_role_status(state.roles.RUNNER.status, {"AED_DELIVERED"}, "RUNNER")
-            state.phase = "SHOCK_DELIVERED"
+            self._advance_phase(state, "SHOCK_DELIVERED")
             state.roles.PRIME.status = "AED_SHOCK_DELIVERED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED shock delivered by {user_id}"))
         elif normalized_action == "AED_PICKED":
@@ -534,7 +534,7 @@ class IncidentService:
             if self._is_role_action_already_recorded(state, "RUNNER", normalized_action):
                 return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.RUNNER.status, {"ASSIGNED", "JOINED", "AED_PICKED"}, "RUNNER")
-            state.phase = "AED_PICKED"
+            self._advance_phase(state, "AED_PICKED")
             state.roles.RUNNER.status = "AED_PICKED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED picked by {user_id}"))
         elif normalized_action == "AED_DELIVERED":
@@ -542,14 +542,13 @@ class IncidentService:
             if self._is_role_action_already_recorded(state, "RUNNER", normalized_action):
                 return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(state.roles.RUNNER.status, {"AED_PICKED", "AED_DELIVERED"}, "RUNNER")
-            state.phase = "AED_DELIVERED"
+            self._advance_phase(state, "AED_DELIVERED")
             state.roles.RUNNER.status = "AED_DELIVERED"
             state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg=f"AED delivered by {user_id}"))
         elif normalized_action == "AMBULANCE_ARRIVED":
             self._ensure_role_actor(state, "GUIDE", user_id)
             if self._is_role_action_already_recorded(state, "GUIDE", normalized_action):
                 if state.phase not in {"HANDOVER", "ARCHIVED"}:
-                    self._ensure_handover_prerequisites(state)
                     state.phase = "HANDOVER"
                     state.logs.append(
                         IncidentLogEntry(ts=self._now_ms(), msg=f"Ambulance handover state repaired by {user_id}")
@@ -562,8 +561,7 @@ class IncidentService:
                 {"ASSIGNED", "JOINED", "AMBULANCE_ARRIVED"},
                 "GUIDE",
             )
-            self._ensure_handover_prerequisites(state)
-            state.phase = "HANDOVER"
+            self._advance_phase(state, "HANDOVER")
             state.roles.GUIDE.status = "AMBULANCE_ARRIVED"
             state.logs.append(
                 IncidentLogEntry(ts=self._now_ms(), msg=f"Ambulance arrived (reported by {user_id})")
@@ -580,7 +578,6 @@ class IncidentService:
             if state.phase not in {"HANDOVER", "ARCHIVED"}:
                 if state.roles.GUIDE.status != "AMBULANCE_ARRIVED":
                     raise HTTPException(status_code=409, detail="Handover not ready")
-                self._ensure_handover_prerequisites(state)
                 state.phase = "HANDOVER"
                 state.logs.append(
                     IncidentLogEntry(ts=self._now_ms(), msg=f"Ambulance handover state repaired before archive by {user_id}")
@@ -2699,6 +2696,27 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
         }
         completed_status = completed_status_by_action.get(action, action)
         return getattr(state.roles, role_name).status == completed_status
+
+    @staticmethod
+    def _phase_rank(phase: str | None) -> int:
+        order = {
+            "CREATED": 0,
+            "DISPATCHING": 1,
+            "DISPATCHED": 2,
+            "CPR": 3,
+            "AED_PICKED": 4,
+            "AED_DELIVERED": 5,
+            "AED_ANALYZING": 6,
+            "SHOCK_DELIVERED": 7,
+            "HANDOVER": 8,
+            "ARCHIVED": 9,
+        }
+        return order.get(phase or "", -1)
+
+    def _advance_phase(self, state: IncidentState, next_phase: str) -> None:
+        if state.phase in {"HANDOVER", "ARCHIVED"} and self._phase_rank(next_phase) < self._phase_rank(state.phase):
+            return
+        state.phase = next_phase
 
     @staticmethod
     def _is_patient_candidate(health_condition: str, profile_bio: str) -> bool:

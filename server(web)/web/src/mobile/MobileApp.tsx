@@ -399,21 +399,17 @@ function roleAction(role: RoleName, state: IncidentState | null): RoleAction {
   if (!state || !isRoleJoined(state.roles.GUIDE?.status)) {
     return { title: '清障接驳待响应', buttonLabel: '确认响应', action: 'JOIN', hint: '确认接单后疏通通道' };
   }
-  const guideCanReportAmbulance = hasPrimeStarted(state) && hasRunnerDelivered(state);
   if (state.phase === 'HANDOVER') {
     return { title: '现场交接中', buttonLabel: '确认完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
   }
   if (state.phase !== 'ARCHIVED') {
     return {
-      title: guideCanReportAmbulance ? '等待救护车接应' : '等待 CPR / AED 完成',
+      title: '等待救护车接应',
       buttonLabel: '确认救护车已到场',
       action: 'AMBULANCE_ARRIVED',
-      disabled: !guideCanReportAmbulance,
       hint: state.roles.GUIDE?.status === 'AMBULANCE_ARRIVED'
         ? '正在同步交接状态，请再次确认救护车到场'
-        : guideCanReportAmbulance
-          ? '确认 CPR 已启动且 AED 已送达后点击'
-          : '需核心施救端开始 CPR，且 AED 保障端送达设备后才能接管',
+        : '救护车到场是外部事实，可随时确认并进入现场交接',
     };
   }
   return { title: '已完成归档', buttonLabel: '流程已结束', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };

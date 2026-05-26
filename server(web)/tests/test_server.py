@@ -2461,7 +2461,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["phase"], "ARCHIVED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
 
-    def test_guide_cannot_report_ambulance_before_cpr_and_aed_delivery(self) -> None:
+    def test_guide_can_report_ambulance_before_cpr_and_aed_delivery(self) -> None:
         with self._client() as client:
             incident_id = self._create_dispatchable_incident(client)
             client.post(
@@ -2481,33 +2481,38 @@ class ServerTestCase(unittest.TestCase):
                 f"/api/incidents/{incident_id}/actions",
                 json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
             )
-            client.post(
+            current_after_arrival = client.get(f"/api/incidents/{incident_id}").json()
+            cpr_after_arrival = client.post(
                 f"/api/incidents/{incident_id}/actions",
                 json={"action": "CPR_STARTED", "userId": "prime-user"},
             )
-            before_aed = client.post(
-                f"/api/incidents/{incident_id}/actions",
-                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
-            )
-            client.post(
+            aed_pickup_after_arrival = client.post(
                 f"/api/incidents/{incident_id}/actions",
                 json={"action": "AED_PICKED", "userId": "runner-user"},
             )
-            client.post(
-                f"/api/incidents/{incident_id}/actions",
-                json={"action": "AED_DELIVERED", "userId": "runner-user"},
-            )
-            ready = client.post(
+            current_after_followup_actions = client.get(f"/api/incidents/{incident_id}").json()
+            repeated_arrival = client.post(
                 f"/api/incidents/{incident_id}/actions",
                 json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
             )
+            completed = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "HANDOVER_COMPLETED", "userId": "guide-user"},
+            )
             current = client.get(f"/api/incidents/{incident_id}").json()
 
-        self.assertEqual(too_early.status_code, 409)
-        self.assertIn("Handover requires CPR started and AED delivered", too_early.text)
-        self.assertEqual(before_aed.status_code, 409)
-        self.assertEqual(ready.status_code, 200)
-        self.assertEqual(current["phase"], "HANDOVER")
+        self.assertEqual(too_early.status_code, 200)
+        self.assertEqual(current_after_arrival["phase"], "HANDOVER")
+        self.assertEqual(current_after_arrival["roles"]["GUIDE"]["status"], "AMBULANCE_ARRIVED")
+        self.assertEqual(cpr_after_arrival.status_code, 200)
+        self.assertEqual(aed_pickup_after_arrival.status_code, 200)
+        self.assertEqual(current_after_followup_actions["phase"], "HANDOVER")
+        self.assertEqual(current_after_followup_actions["roles"]["PRIME"]["status"], "CPR_STARTED")
+        self.assertEqual(current_after_followup_actions["roles"]["RUNNER"]["status"], "AED_PICKED")
+        self.assertEqual(repeated_arrival.status_code, 200)
+        self.assertEqual(completed.status_code, 200)
+        self.assertEqual(current["phase"], "ARCHIVED")
+        self.assertEqual(current["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
 
     def test_completed_demo_package_quality_report_is_ready(self) -> None:
         with self._client() as client:
