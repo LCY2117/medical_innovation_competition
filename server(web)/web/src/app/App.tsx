@@ -157,23 +157,36 @@ function isRoleJoined(status?: string | null): boolean {
     'AED_PICKED',
     'AED_DELIVERED',
     'CPR_STARTED',
+    'AED_ANALYZING',
+    'AED_SHOCK_DELIVERED',
     'AMBULANCE_ARRIVED',
+    'HANDOVER_COMPLETED',
     'CPR',
   ]);
   return joinedStatuses.has(status);
 }
 
 function hasPrimeStarted(state?: IncidentState | null): boolean {
-  return state?.roles?.PRIME?.status === 'CPR_STARTED';
+  return (
+    ['CPR_STARTED', 'AED_ANALYZING', 'AED_SHOCK_DELIVERED'].includes(state?.roles?.PRIME?.status ?? '') ||
+    ['CPR', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED'].includes(state?.phase ?? '')
+  );
 }
 
 function hasRunnerPicked(state?: IncidentState | null): boolean {
   const status = state?.roles?.RUNNER?.status;
-  return status === 'AED_PICKED' || status === 'AED_DELIVERED';
+  return (
+    status === 'AED_PICKED' ||
+    status === 'AED_DELIVERED' ||
+    ['AED_PICKED', 'AED_DELIVERED', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED'].includes(state?.phase ?? '')
+  );
 }
 
 function hasRunnerDelivered(state?: IncidentState | null): boolean {
-  return state?.roles?.RUNNER?.status === 'AED_DELIVERED';
+  return (
+    state?.roles?.RUNNER?.status === 'AED_DELIVERED' ||
+    ['AED_DELIVERED', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED'].includes(state?.phase ?? '')
+  );
 }
 
 function hasGuideCompleted(state?: IncidentState | null): boolean {

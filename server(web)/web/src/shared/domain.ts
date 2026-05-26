@@ -15,6 +15,26 @@ const phaseRank: Record<string, number> = {
   ARCHIVED: 9,
 };
 
+const roleParticipatingStatuses = new Set([
+  'ASSIGNED',
+  'JOINED',
+  'CPR_STARTED',
+  'AED_PICKED',
+  'AED_DELIVERED',
+  'AED_ANALYZING',
+  'AED_SHOCK_DELIVERED',
+  'AMBULANCE_ARRIVED',
+  'HANDOVER_COMPLETED',
+  'CPR',
+]);
+
+const primeStartedStatuses = new Set(['CPR_STARTED', 'AED_ANALYZING', 'AED_SHOCK_DELIVERED']);
+const primeStartedPhases = new Set(['CPR', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED']);
+const runnerPickedStatuses = new Set(['AED_PICKED', 'AED_DELIVERED']);
+const runnerPickedPhases = new Set(['AED_PICKED', 'AED_DELIVERED', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED']);
+const runnerDeliveredStatuses = new Set(['AED_DELIVERED']);
+const runnerDeliveredPhases = new Set(['AED_DELIVERED', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED']);
+
 export function getStateLatestTs(state?: IncidentState | null): number {
   return Math.max(0, ...(state?.logs ?? []).map((entry) => entry.ts));
 }
@@ -75,28 +95,23 @@ export function isRoleJoined(status?: string | null): boolean {
   if (!status) {
     return false;
   }
-  return new Set([
-    'ASSIGNED',
-    'JOINED',
-    'AED_PICKED',
-    'AED_DELIVERED',
-    'CPR_STARTED',
-    'AMBULANCE_ARRIVED',
-    'CPR',
-  ]).has(status);
+  return roleParticipatingStatuses.has(status);
 }
 
 export function hasPrimeStarted(state?: IncidentState | null): boolean {
-  return state?.roles?.PRIME?.status === 'CPR_STARTED';
+  return (
+    primeStartedStatuses.has(state?.roles?.PRIME?.status ?? '') ||
+    primeStartedPhases.has(state?.phase ?? '')
+  );
 }
 
 export function hasRunnerPicked(state?: IncidentState | null): boolean {
   const status = state?.roles?.RUNNER?.status;
-  return status === 'AED_PICKED' || status === 'AED_DELIVERED';
+  return runnerPickedStatuses.has(status ?? '') || runnerPickedPhases.has(state?.phase ?? '');
 }
 
 export function hasRunnerDelivered(state?: IncidentState | null): boolean {
-  return state?.roles?.RUNNER?.status === 'AED_DELIVERED';
+  return runnerDeliveredStatuses.has(state?.roles?.RUNNER?.status ?? '') || runnerDeliveredPhases.has(state?.phase ?? '');
 }
 
 export function hasGuideCompleted(state?: IncidentState | null): boolean {

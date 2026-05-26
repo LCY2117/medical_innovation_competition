@@ -94,15 +94,27 @@ function hasAssignedRoles(state: IncidentState | null): boolean {
 }
 
 function hasPrimeStarted(state: IncidentState | null): boolean {
-  return state?.roles?.PRIME?.status === 'CPR_STARTED' || logContains(state, 'CPR started');
+  return (
+    ['CPR_STARTED', 'AED_ANALYZING', 'AED_SHOCK_DELIVERED'].includes(state?.roles?.PRIME?.status ?? '') ||
+    ['CPR', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED'].includes(state?.phase ?? '') ||
+    logContains(state, 'CPR started')
+  );
 }
 
 function hasRunnerPicked(state: IncidentState | null): boolean {
-  return state?.roles?.RUNNER?.status === 'AED_PICKED' || logContains(state, 'AED picked');
+  return (
+    ['AED_PICKED', 'AED_DELIVERED'].includes(state?.roles?.RUNNER?.status ?? '') ||
+    ['AED_PICKED', 'AED_DELIVERED', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED'].includes(state?.phase ?? '') ||
+    logContains(state, 'AED picked')
+  );
 }
 
 function hasRunnerDelivered(state: IncidentState | null): boolean {
-  return state?.roles?.RUNNER?.status === 'AED_DELIVERED' || logContains(state, 'AED delivered');
+  return (
+    state?.roles?.RUNNER?.status === 'AED_DELIVERED' ||
+    ['AED_DELIVERED', 'AED_ANALYZING', 'SHOCK_DELIVERED', 'HANDOVER', 'ARCHIVED'].includes(state?.phase ?? '') ||
+    logContains(state, 'AED delivered')
+  );
 }
 
 function hasGuideCompleted(state: IncidentState | null): boolean {
