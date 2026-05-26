@@ -392,16 +392,20 @@ function roleAction(role: RoleName, state: IncidentState | null): { label: strin
     return { label: '响应清障接驳', action: 'JOIN', hint: '确认接单后疏通通道' };
   }
   const guideCanReportAmbulance = hasPrimeStarted(state) && hasRunnerDelivered(state);
-  if (state.roles.GUIDE?.status !== 'AMBULANCE_ARRIVED' && state.phase !== 'HANDOVER' && state.phase !== 'ARCHIVED') {
+  if (state.phase === 'HANDOVER') {
+    return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
+  }
+  if (state.phase !== 'ARCHIVED') {
     return {
       label: guideCanReportAmbulance ? '救护车已到场' : '等待 CPR / AED 完成',
       action: 'AMBULANCE_ARRIVED',
       disabled: !guideCanReportAmbulance,
-      hint: guideCanReportAmbulance ? '确认 CPR 已启动且 AED 已送达后点击' : '需核心施救端开始 CPR，且 AED 保障端送达设备后才能接管',
+      hint: state.roles.GUIDE?.status === 'AMBULANCE_ARRIVED'
+        ? '正在同步交接状态，请再次确认救护车到场'
+        : guideCanReportAmbulance
+          ? '确认 CPR 已启动且 AED 已送达后点击'
+          : '需核心施救端开始 CPR，且 AED 保障端送达设备后才能接管',
     };
-  }
-  if (state.phase !== 'ARCHIVED') {
-    return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
   }
   return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
 }

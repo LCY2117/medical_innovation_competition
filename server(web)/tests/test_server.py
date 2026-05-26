@@ -2376,6 +2376,54 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["phase"], "ARCHIVED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
 
+    def test_handover_completion_repairs_arrived_phase_drift(self) -> None:
+        with self._client() as client:
+            incident_id = client.post("/api/incidents").json()["incidentId"]
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "GUIDE", "userId": "guide-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+
+            service = client.app.state.incident_service
+            state = service.incidents[incident_id]
+            state.phase = "AED_DELIVERED"
+            service._persist()
+
+            completed = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "HANDOVER_COMPLETED", "userId": "guide-user"},
+            )
+            current = client.get(f"/api/incidents/{incident_id}")
+
+        self.assertEqual(completed.status_code, 200)
+        payload = current.json()
+        self.assertEqual(payload["phase"], "ARCHIVED")
+        self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
+
     def test_guide_cannot_report_ambulance_before_cpr_and_aed_delivery(self) -> None:
         with self._client() as client:
             incident_id = client.post("/api/incidents").json()["incidentId"]

@@ -544,6 +544,14 @@ class IncidentService:
         elif normalized_action == "AMBULANCE_ARRIVED":
             self._ensure_role_actor(state, "GUIDE", user_id)
             if self._is_role_action_already_recorded(state, "GUIDE", normalized_action):
+                if state.phase not in {"HANDOVER", "ARCHIVED"}:
+                    self._ensure_handover_prerequisites(state)
+                    state.phase = "HANDOVER"
+                    state.logs.append(
+                        IncidentLogEntry(ts=self._now_ms(), msg=f"Ambulance handover state repaired by {user_id}")
+                    )
+                    self._persist()
+                    await self._broadcast_state_async(incident_id)
                 return MutationResponse(incidentId=incident_id, phase=state.phase)
             self._ensure_role_status(
                 state.roles.GUIDE.status,
@@ -557,8 +565,6 @@ class IncidentService:
                 IncidentLogEntry(ts=self._now_ms(), msg=f"Ambulance arrived (reported by {user_id})")
             )
         elif normalized_action == "HANDOVER_COMPLETED":
-            if state.phase not in {"HANDOVER", "ARCHIVED"}:
-                raise HTTPException(status_code=409, detail="Handover not ready")
             participants = {
                 state.patientUserId,
                 state.roles.PRIME.userId,
@@ -567,6 +573,14 @@ class IncidentService:
             }
             if user_id not in participants:
                 raise HTTPException(status_code=403, detail="Only active participants can complete handover")
+            if state.phase not in {"HANDOVER", "ARCHIVED"}:
+                if state.roles.GUIDE.status != "AMBULANCE_ARRIVED":
+                    raise HTTPException(status_code=409, detail="Handover not ready")
+                self._ensure_handover_prerequisites(state)
+                state.phase = "HANDOVER"
+                state.logs.append(
+                    IncidentLogEntry(ts=self._now_ms(), msg=f"Ambulance handover state repaired before archive by {user_id}")
+                )
             if state.phase == "ARCHIVED" and state.roles.GUIDE.status == "HANDOVER_COMPLETED":
                 return MutationResponse(incidentId=incident_id, phase=state.phase)
             state.phase = "ARCHIVED"
