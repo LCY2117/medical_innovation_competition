@@ -354,50 +354,59 @@ function saveSession(session: StoredSession | null): void {
   }
 }
 
-function roleAction(role: RoleName, state: IncidentState | null): { label: string; action: string; disabled?: boolean; hint: string } {
+type RoleAction = {
+  title: string;
+  buttonLabel: string;
+  action: string;
+  disabled?: boolean;
+  hint: string;
+};
+
+function roleAction(role: RoleName, state: IncidentState | null): RoleAction {
   if (state?.phase === 'ARCHIVED') {
-    return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
+    return { title: '已完成归档', buttonLabel: '流程已结束', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
   }
   if (role === 'PRIME') {
     if (!state || !isRoleJoined(state.roles.PRIME?.status)) {
-      return { label: '响应核心施救', action: 'JOIN', hint: '确认接单后立即前往患者位置' };
+      return { title: '核心施救待响应', buttonLabel: '确认响应', action: 'JOIN', hint: '确认接单后立即前往患者位置' };
     }
     if (!state.roles.PRIME?.status || state.roles.PRIME.status === 'ASSIGNED' || state.roles.PRIME.status === 'JOINED') {
-      return { label: '开始 CPR', action: 'CPR_STARTED', hint: '打开按压节拍与 30:2 提示' };
+      return { title: '到达患者并准备 CPR', buttonLabel: '确认开始 CPR', action: 'CPR_STARTED', hint: '打开按压节拍与 30:2 提示' };
     }
     if (hasRunnerDelivered(state) && !isAedAnalyzing(state) && !isShockDelivered(state)) {
-      return { label: '启动 AED 分析', action: 'AED_ANALYSIS_STARTED', hint: '确认电极片贴附后操作' };
+      return { title: '准备 AED 分析', buttonLabel: '确认启动 AED 分析', action: 'AED_ANALYSIS_STARTED', hint: '确认电极片贴附后操作' };
     }
     if (isAedAnalyzing(state)) {
-      return { label: '记录一次除颤', action: 'AED_SHOCK_DELIVERED', hint: '仅在 AED 建议电击后记录' };
+      return { title: '等待 AED 电击建议', buttonLabel: '记录一次除颤', action: 'AED_SHOCK_DELIVERED', hint: '仅在 AED 建议电击后记录' };
     }
     if (isShockDelivered(state)) {
-      return { label: '二轮 AED 分析', action: 'AED_ANALYSIS_STARTED', hint: '继续 CPR 后可再次分析' };
+      return { title: '继续 CPR 并准备二轮分析', buttonLabel: '确认二轮 AED 分析', action: 'AED_ANALYSIS_STARTED', hint: '继续 CPR 后可再次分析' };
     }
-    return { label: '等待 AED 到场', action: 'WAIT', disabled: true, hint: 'AED 保障送达后才能进入分析' };
+    return { title: '等待 AED 到场', buttonLabel: '等待 AED', action: 'WAIT', disabled: true, hint: 'AED 保障送达后才能进入分析' };
   }
   if (role === 'RUNNER') {
     if (!state || !isRoleJoined(state.roles.RUNNER?.status)) {
-      return { label: '响应 AED 保障', action: 'JOIN', hint: '确认接单后前往最近 AED 点位' };
+      return { title: 'AED 保障待响应', buttonLabel: '确认响应', action: 'JOIN', hint: '确认接单后前往最近 AED 点位' };
     }
     if (!hasRunnerPicked(state)) {
-      return { label: '已取到 AED', action: 'AED_PICKED', hint: '到达 AED 箱后点击' };
+      return { title: '前往 AED 点位', buttonLabel: '确认已取到 AED', action: 'AED_PICKED', hint: '到达 AED 箱并取出设备后点击' };
     }
     if (!hasRunnerDelivered(state)) {
-      return { label: 'AED 已送达', action: 'AED_DELIVERED', hint: '回到患者身边后点击' };
+      return { title: '送回患者位置', buttonLabel: '确认 AED 已送达', action: 'AED_DELIVERED', hint: '回到患者身边并交给施救者后点击' };
     }
-    return { label: 'AED 已完成送达', action: 'WAIT', disabled: true, hint: '保持通信，协助核心施救' };
+    return { title: 'AED 已完成送达', buttonLabel: '保持待命', action: 'WAIT', disabled: true, hint: '保持通信，协助核心施救' };
   }
   if (!state || !isRoleJoined(state.roles.GUIDE?.status)) {
-    return { label: '响应清障接驳', action: 'JOIN', hint: '确认接单后疏通通道' };
+    return { title: '清障接驳待响应', buttonLabel: '确认响应', action: 'JOIN', hint: '确认接单后疏通通道' };
   }
   const guideCanReportAmbulance = hasPrimeStarted(state) && hasRunnerDelivered(state);
   if (state.phase === 'HANDOVER') {
-    return { label: '完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
+    return { title: '现场交接中', buttonLabel: '确认完成交接归档', action: 'HANDOVER_COMPLETED', hint: '急救人员接管后归档' };
   }
   if (state.phase !== 'ARCHIVED') {
     return {
-      label: guideCanReportAmbulance ? '救护车已到场' : '等待 CPR / AED 完成',
+      title: guideCanReportAmbulance ? '等待救护车接应' : '等待 CPR / AED 完成',
+      buttonLabel: '确认救护车已到场',
       action: 'AMBULANCE_ARRIVED',
       disabled: !guideCanReportAmbulance,
       hint: state.roles.GUIDE?.status === 'AMBULANCE_ARRIVED'
@@ -407,7 +416,7 @@ function roleAction(role: RoleName, state: IncidentState | null): { label: strin
           : '需核心施救端开始 CPR，且 AED 保障端送达设备后才能接管',
     };
   }
-  return { label: '已完成归档', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
+  return { title: '已完成归档', buttonLabel: '流程已结束', action: 'WAIT', disabled: true, hint: '本轮协同流程已结束' };
 }
 
 function primeNextStep(state: IncidentState | null): { title: string; body: string; tone: 'wait' | 'ready' | 'danger' } | null {
@@ -1329,13 +1338,13 @@ function MobileApp() {
   const nextActionSummary = isPatientTerminal
     ? '保持当前位置，等待协同成员到场'
     : activeRole && action
-      ? `${translateRoleLabel(activeRole)}：${action.label}`
+      ? `${translateRoleLabel(activeRole)}：${action.title}`
       : incident
         ? '保持在线，等待本轮任务'
         : '打开或加入事件';
   const commandTitle =
     activeRole && action && !isPatientTerminal
-      ? action.label
+      ? action.title
       : isDemoResponder
         ? '等待患者端启动'
         : isPatientTerminal && sosRemaining !== null
@@ -1449,7 +1458,7 @@ function MobileApp() {
                 <div>
                   {activeRole === 'PRIME' ? <HeartPulse size={28} /> : activeRole === 'RUNNER' ? <Zap size={28} /> : <Shield size={28} />}
                   <p className="mobile-kicker">当前动作</p>
-                  <h2>{action.label}</h2>
+                  <h2>{action.title}</h2>
                   <p>{action.hint}</p>
                 </div>
                 <img className="mobile-action-illustration" src={responseRolesUrl} alt="" loading="lazy" aria-hidden="true" />
@@ -1461,7 +1470,7 @@ function MobileApp() {
                 </div>
               )}
               <button className="mobile-primary-button" onClick={executeRoleAction} disabled={action.disabled || Boolean(busyAction)}>
-                {busyAction ? '提交中...' : action.label}
+                {busyAction ? '提交中...' : action.buttonLabel}
               </button>
             </section>
           ) : (
@@ -1608,7 +1617,7 @@ function MobileApp() {
               </div>
             )}
             <button className="mobile-primary-button" onClick={executeRoleAction} disabled={action.disabled || Boolean(busyAction)}>
-              {busyAction ? '提交中...' : action.label}
+              {busyAction ? '提交中...' : action.buttonLabel}
             </button>
           </div>
         ) : (
