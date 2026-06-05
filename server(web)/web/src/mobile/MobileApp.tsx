@@ -1217,6 +1217,15 @@ function MobileApp() {
       setNotice({ kind: 'info', text: `${demoResponderLabel ?? '当前演示端'}仅响应分派任务，请等待患者端启动 SOS。` });
       return;
     }
+    if (session.demoPersona === 'patient') {
+      setSosConfirming(false);
+      await runAction(
+        'sos',
+        async () => patientSosStart(incident.incidentId, session.token),
+        'SOS 已启动，系统会自动确认并分派任务。',
+      );
+      return;
+    }
     if (!sosConfirming) {
       setSosConfirming(true);
       setNotice({ kind: 'info', text: '再次点击确认启动 SOS。' });
@@ -1518,7 +1527,7 @@ function MobileApp() {
                   <button
                     className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
                     onClick={handlePatientSos}
-                    disabled={!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING' || busyAction === 'sos'}
+                    disabled={!incident || busyAction === 'sos'}
                   >
                     {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
                   </button>
