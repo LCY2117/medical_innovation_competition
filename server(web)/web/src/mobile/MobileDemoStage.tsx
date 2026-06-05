@@ -395,10 +395,7 @@ function MobiledemoStage() {
 
       <section className="mobile-demo-stage-grid">
         {demoFrames.map((frame) => {
-          const params = new URLSearchParams({ slot: frame.key });
-          if (frame.key === 'patient') {
-            params.set('demo', 'patient');
-          }
+          const params = new URLSearchParams({ demo: frame.key, slot: frame.key });
           if (boundIncidentId) {
             params.set('incidentId', boundIncidentId);
           }
