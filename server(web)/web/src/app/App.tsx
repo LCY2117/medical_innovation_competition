@@ -1530,7 +1530,7 @@ export default function App() {
       : betaAdminRequired
       ? '需要权限'
       : '本地免口令';
-  const buildbetaUrl = (path: '/mobile' | '/mobile-beta', params?: Record<string, string>): string => {
+  const buildbetaUrl = (path: '/mobile' | '/mobile-demo', params?: Record<string, string>): string => {
     if (typeof window === 'undefined') {
       return path;
     }
@@ -1550,7 +1550,7 @@ export default function App() {
       key: 'stage',
       label: '4端导播台',
       caption: '一屏预览患者与三类任务端',
-      url: buildbetaUrl('/mobile-beta'),
+      url: buildbetaUrl('/mobile-demo'),
     },
     ...mobilebetaEntries.map((entry) => ({
       ...entry,
@@ -1985,11 +1985,11 @@ export default function App() {
     if (typeof window === 'undefined') {
       return;
     }
-    const url = new URL('/mobile-beta', window.location.origin);
+    const url = new URL('/mobile-demo', window.location.origin);
     if (incidentId) {
       url.searchParams.set('incidentId', incidentId);
     }
-    const opened = window.open(url.toString(), 'lifereflex-mobile-beta-stage');
+    const opened = window.open(url.toString(), 'lifereflex-mobile-demo-stage');
     if (!opened) {
       setErrorMessage('浏览器拦截了 4端演示台，请允许本站弹出窗口后重试。');
       return;
@@ -2361,7 +2361,7 @@ export default function App() {
     if (typeof window === 'undefined') {
       return;
     }
-    const opened = window.open(url, key === 'stage' ? 'lifereflex-mobile-beta-stage' : '_blank');
+    const opened = window.open(url, key === 'stage' ? 'lifereflex-mobile-demo-stage' : '_blank');
     if (!opened) {
       setErrorMessage('浏览器拦截了演示入口，请允许本站弹出窗口后重试。');
       return;

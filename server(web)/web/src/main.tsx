@@ -5,14 +5,19 @@ import "./styles/index.css";
 
 const DesktopApp = React.lazy(() => import("./app/App"));
 const MobileApp = React.lazy(() => import("./mobile/MobileApp"));
-const MobilebetaStage = React.lazy(() => import("./mobile/MobilebetaStage"));
+const MobilebetaStage = React.lazy(() => import("./mobile/MobileDemoStage"));
 
 function isMobileRoute() {
   return window.location.pathname === "/mobile" || window.location.pathname.startsWith("/mobile/");
 }
 
 function isMobilebetaRoute() {
-  return window.location.pathname === "/mobile-beta" || window.location.pathname.startsWith("/mobile-beta/");
+  return (
+    window.location.pathname === "/mobile-demo" ||
+    window.location.pathname.startsWith("/mobile-demo/") ||
+    window.location.pathname === "/mobile-beta" ||
+    window.location.pathname.startsWith("/mobile-beta/")
+  );
 }
 
 function Root() {

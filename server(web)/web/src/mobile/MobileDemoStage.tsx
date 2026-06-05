@@ -11,9 +11,9 @@ import {
   Smartphone,
   Zap,
 } from 'lucide-react';
-import { fetchIncident } from '@/shared/api';
+import { fetchCurrentIncident, fetchIncident } from '@/shared/api';
 import type { IncidentState, RoleName } from '../shared/types';
-import './mobile-beta-stage.css';
+import './mobile-demo-stage.css';
 
 const betaFrames = [
   { key: 'patient', label: '患者', caption: 'SOS 触发', tone: 'patient', role: null },
@@ -232,7 +232,7 @@ function getTerminalStatus(frame: (typeof betaFrames)[number], state: IncidentSt
 }
 
 function MobilebetaStage() {
-  const incidentId = new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
+  const [incidentId, setIncidentId] = useState(() => new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '');
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [loadError, setLoadError] = useState('');
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
@@ -257,15 +257,16 @@ function MobilebetaStage() {
     let timer: number | undefined;
 
     const loadIncident = async () => {
-      if (!incidentId) {
-        setIncident(null);
-        setLoadError('');
-        return;
-      }
       try {
-        const state = await fetchIncident(incidentId);
+        const state = incidentId ? await fetchIncident(incidentId) : await fetchCurrentIncident();
         if (!cancelled) {
           setIncident(state);
+          if (!incidentId && state.incidentId) {
+            setIncidentId(state.incidentId);
+            const url = new URL(window.location.href);
+            url.searchParams.set('incidentId', state.incidentId);
+            window.history.replaceState(null, '', url.toString());
+          }
           setLoadError('');
           setLastUpdatedAt(Date.now());
         }
