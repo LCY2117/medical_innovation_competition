@@ -1207,6 +1207,11 @@ function MobileApp() {
     if (!incident || !session) {
       return;
     }
+    if (incident.phase !== 'CREATED') {
+      setSosConfirming(false);
+      setNotice({ kind: 'info', text: '当前事件已进入协同处置，不能重复启动 SOS。' });
+      return;
+    }
     if (isdemoResponder) {
       setSosConfirming(false);
       setNotice({ kind: 'info', text: `${demoResponderLabel ?? '当前演示端'}仅响应分派任务，请等待患者端启动 SOS。` });
@@ -1513,7 +1518,7 @@ function MobileApp() {
                   <button
                     className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
                     onClick={handlePatientSos}
-                    disabled={!incident || incident.phase !== 'CREATED' || busyAction === 'sos'}
+                    disabled={!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING' || busyAction === 'sos'}
                   >
                     {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
                   </button>
