@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             LifeReflexArcTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    DemoApp(modifier = Modifier.padding(innerPadding))
+                    betaApp(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DemoApp(modifier: Modifier = Modifier) {
+fun betaApp(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val incidentViewModel: IncidentViewModel = viewModel(
         factory = remember(context) {
@@ -62,7 +62,7 @@ fun DemoApp(modifier: Modifier = Modifier) {
 @Composable
 fun AppPreview() {
     LifeReflexArcTheme {
-        DemoApp()
+        betaApp()
     }
 }
 

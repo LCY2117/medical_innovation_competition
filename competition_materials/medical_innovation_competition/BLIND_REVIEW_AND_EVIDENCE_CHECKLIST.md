@@ -67,8 +67,8 @@ PPT 和答辩中必须至少出现一次明确边界：
 | --- | --- |
 | 单轮模拟证据包 | `lifereflex_evidence_round_01_YYYYMMDD.zip` |
 | 汇总表 | `lifereflex_pre_experiment_summary_YYYYMMDD.xlsx` |
-| 截图包 | `lifereflex_demo_screenshots_YYYYMMDD.zip` |
-| 录屏 | `lifereflex_web_demo_5min_YYYYMMDD.mp4` |
+| 截图包 | `lifereflex_beta_screenshots_YYYYMMDD.zip` |
+| 录屏 | `lifereflex_web_beta_5min_YYYYMMDD.mp4` |
 
 ## 5. 系统级模拟预实验记录检查
 
@@ -144,7 +144,7 @@ PPT 和答辩中必须至少出现一次明确边界：
 
 | 事项 | 负责人 | 输出物 | 状态 |
 | --- | --- | --- | --- |
-| 录制 5 分钟网页端演示视频 | 待分配 | `lifereflex_web_demo_5min_YYYYMMDD.mp4` | 待完成 |
+| 录制 5 分钟网页端演示视频 | 待分配 | `lifereflex_web_beta_5min_YYYYMMDD.mp4` | 待完成 |
 | 截取总控台和四端页面图 | 待分配 | 6 张以上 PPT 截图 | 待完成 |
 | 跑 3-5 轮系统级模拟预实验 | 待分配 | 预实验记录表和证据包 | 待完成 |
 | 整理导出证据包 | 待分配 | zip / xlsx / 截图包 | 待完成 |

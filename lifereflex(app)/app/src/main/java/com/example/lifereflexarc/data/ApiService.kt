@@ -18,6 +18,21 @@ interface ApiService {
         @Body body: AuthLoginRequest,
     ): AuthResponse
 
+    @POST("/auth/code/request")
+    suspend fun requestLoginCode(
+        @Body body: AuthCodeRequest,
+    ): AuthCodeRequestResponse
+
+    @POST("/auth/code/login")
+    suspend fun loginWithCode(
+        @Body body: AuthCodeLoginRequest,
+    ): AuthCodeLoginResponse
+
+    @POST("/auth/code/register")
+    suspend fun completeCodeRegistration(
+        @Body body: AuthCodeRegisterRequest,
+    ): AuthResponse
+
     @GET("/auth/me")
     suspend fun me(
         @Header("Authorization") authorization: String?,

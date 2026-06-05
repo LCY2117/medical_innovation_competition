@@ -3,7 +3,7 @@
 事件编号：b0643d89-24cc-49bd-9807-bc742be19a2e
 导出时间戳：1779769335249
 事件阶段：ARCHIVED
-患者终端：demo-patient
+患者终端：beta-patient
 调度来源：fallback
 
 ## 文件说明

@@ -16,7 +16,7 @@ enum class LocationProviderStatus {
     PROVIDER_DISABLED,
     LAST_KNOWN_MISSING,
     UNAVAILABLE,
-    DEMO_FALLBACK,
+    beta_FALLBACK,
 }
 
 data class LocationProviderResult(
@@ -29,11 +29,11 @@ interface LocationProvider {
     suspend fun currentLocation(fallback: GeoPoint): LocationProviderResult
 }
 
-class DemoLocationProvider : LocationProvider {
+class betaLocationProvider : LocationProvider {
     override suspend fun currentLocation(fallback: GeoPoint): LocationProviderResult {
         return LocationProviderResult(
             location = fallback,
-            status = LocationProviderStatus.DEMO_FALLBACK,
+            status = LocationProviderStatus.beta_FALLBACK,
             message = "使用演示坐标",
         )
     }
@@ -137,7 +137,7 @@ class AndroidSystemLocationProvider(
         message: String,
     ): LocationProviderResult {
         return LocationProviderResult(
-            location = fallback.copy(source = "app-demo-fallback"),
+            location = fallback.copy(source = "app-beta-fallback"),
             status = status,
             message = message,
         )

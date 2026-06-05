@@ -13,9 +13,9 @@ from app.storage.sqlite_auth_store import SqliteAuthStore, UserRecord
 
 
 class AuthService:
-    DEMO_PERSONAS = {
+    beta_PERSONAS = {
         "patient": {
-            "user_id": "demo-patient",
+            "user_id": "beta-patient",
             "display_name": "冠心病患者",
             "phone": "13900001001",
             "organization": "示范社区",
@@ -24,7 +24,7 @@ class AuthService:
             "profile_bio": "多年冠心病病史，需要重点监护，可用于预实验患者端。",
         },
         "prime": {
-            "user_id": "demo-prime",
+            "user_id": "beta-prime",
             "display_name": "张医生",
             "phone": "13900001002",
             "organization": "市医院急救科",
@@ -33,7 +33,7 @@ class AuthService:
             "profile_bio": "急救科医生，熟悉 CPR 和 AED 处置，可承担核心施救任务。",
         },
         "runner": {
-            "user_id": "demo-runner",
+            "user_id": "beta-runner",
             "display_name": "体育生小李",
             "phone": "13900001003",
             "organization": "大学校园",
@@ -42,7 +42,7 @@ class AuthService:
             "profile_bio": "体育生，跑得快，熟悉校园路线，可快速取送 AED。",
         },
         "guide": {
-            "user_id": "demo-guide",
+            "user_id": "beta-guide",
             "display_name": "安保老王",
             "phone": "13900001004",
             "organization": "校园安保",
@@ -131,7 +131,7 @@ class AuthService:
         normalized_phone = self._normalize_phone(phone)
         if len(normalized_phone) < 11:
             raise HTTPException(status_code=400, detail="请输入有效手机号")
-        return AuthCodeRequestResponse(demoCode=self._mock_login_code(normalized_phone))
+        return AuthCodeRequestResponse(betaCode=self._mock_login_code(normalized_phone))
 
     def login_with_code(self, phone: str, code: str) -> AuthCodeLoginResponse:
         normalized_phone = self._normalize_phone(phone)
@@ -153,9 +153,9 @@ class AuthService:
             phone=normalized_phone,
         )
 
-    def demo_login(self, persona: str) -> AuthResponse:
+    def beta_login(self, persona: str) -> AuthResponse:
         normalized_persona = persona.strip().lower()
-        profile = self.DEMO_PERSONAS.get(normalized_persona)
+        profile = self.beta_PERSONAS.get(normalized_persona)
         if profile is None:
             raise HTTPException(status_code=400, detail="未知演示身份")
 

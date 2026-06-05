@@ -5,18 +5,18 @@ import "./styles/index.css";
 
 const DesktopApp = React.lazy(() => import("./app/App"));
 const MobileApp = React.lazy(() => import("./mobile/MobileApp"));
-const MobileDemoStage = React.lazy(() => import("./mobile/MobileDemoStage"));
+const MobilebetaStage = React.lazy(() => import("./mobile/MobilebetaStage"));
 
 function isMobileRoute() {
   return window.location.pathname === "/mobile" || window.location.pathname.startsWith("/mobile/");
 }
 
-function isMobileDemoRoute() {
-  return window.location.pathname === "/mobile-demo" || window.location.pathname.startsWith("/mobile-demo/");
+function isMobilebetaRoute() {
+  return window.location.pathname === "/mobile-beta" || window.location.pathname.startsWith("/mobile-beta/");
 }
 
 function Root() {
-  const App = isMobileDemoRoute() ? MobileDemoStage : isMobileRoute() ? MobileApp : DesktopApp;
+  const App = isMobilebetaRoute() ? MobilebetaStage : isMobileRoute() ? MobileApp : DesktopApp;
 
   return (
     <Suspense

@@ -2,12 +2,12 @@
   "incidentId": "1b6545bb-c46d-4add-baae-9143a6a18324",
   "generatedAt": 1779759804406,
   "phase": "ARCHIVED",
-  "patientUserId": "demo-patient",
+  "patientUserId": "beta-patient",
   "dispatchSource": "fallback",
   "assignments": {
-    "PRIME": "demo-prime",
-    "RUNNER": "demo-runner",
-    "GUIDE": "demo-guide"
+    "PRIME": "beta-prime",
+    "RUNNER": "beta-runner",
+    "GUIDE": "beta-guide"
   },
   "metrics": {
     "dispatchSeconds": 1,
@@ -35,15 +35,15 @@
     },
     {
       "ts": 1779756675601,
-      "msg": "Patient SOS alerting started (demo-patient)"
+      "msg": "Patient SOS alerting started (beta-patient)"
     },
     {
       "ts": 1779756680634,
-      "msg": "Patient SOS confirmed (demo-patient)"
+      "msg": "Patient SOS confirmed (beta-patient)"
     },
     {
       "ts": 1779756680649,
-      "msg": "Patient designated by patient SOS (demo-patient)"
+      "msg": "Patient designated by patient SOS (beta-patient)"
     },
     {
       "ts": 1779756680649,
@@ -51,56 +51,56 @@
     },
     {
       "ts": 1779756681040,
-      "msg": "PRIME joined (demo-prime)"
+      "msg": "PRIME joined (beta-prime)"
     },
     {
       "ts": 1779756681412,
-      "msg": "PRIME assigned (demo-prime) via fallback"
+      "msg": "PRIME assigned (beta-prime) via fallback"
     },
     {
       "ts": 1779756681426,
-      "msg": "RUNNER assigned (demo-runner) via fallback"
+      "msg": "RUNNER assigned (beta-runner) via fallback"
     },
     {
       "ts": 1779756681438,
-      "msg": "GUIDE assigned (demo-guide) via fallback"
+      "msg": "GUIDE assigned (beta-guide) via fallback"
     },
     {
       "ts": 1779756682919,
-      "msg": "CPR started by demo-prime"
+      "msg": "CPR started by beta-prime"
     },
     {
       "ts": 1779756686949,
-      "msg": "AED picked by demo-runner"
+      "msg": "AED picked by beta-runner"
     },
     {
       "ts": 1779756689537,
-      "msg": "AED delivered by demo-runner"
+      "msg": "AED delivered by beta-runner"
     },
     {
       "ts": 1779756692341,
-      "msg": "Ambulance arrived (reported by demo-guide)"
+      "msg": "Ambulance arrived (reported by beta-guide)"
     },
     {
       "ts": 1779756693004,
-      "msg": "AED analysis started by demo-prime"
+      "msg": "AED analysis started by beta-prime"
     },
     {
       "ts": 1779756694792,
-      "msg": "AED shock delivered by demo-prime"
+      "msg": "AED shock delivered by beta-prime"
     },
     {
       "ts": 1779759781611,
-      "msg": "Ambulance handover state repaired before archive by demo-guide"
+      "msg": "Ambulance handover state repaired before archive by beta-guide"
     },
     {
       "ts": 1779759781611,
-      "msg": "Handover completed by demo-guide"
+      "msg": "Handover completed by beta-guide"
     }
   ],
   "clients": [
     {
-      "userId": "demo-patient",
+      "userId": "beta-patient",
       "displayName": "冠心病患者",
       "organization": "模拟社区",
       "healthCondition": "存在心脏骤停风险",
@@ -118,7 +118,7 @@
         "accuracyMeters": 25.0,
         "label": "教学楼 A 座 2 层走廊",
         "floor": "2F",
-        "source": "mobile-demo",
+        "source": "mobile-beta",
         "updatedTs": null
       },
       "healthSignals": {
@@ -140,7 +140,7 @@
       }
     },
     {
-      "userId": "demo-guide",
+      "userId": "beta-guide",
       "displayName": "安保老王",
       "organization": "校园安保",
       "healthCondition": "身体状态一般",
@@ -158,7 +158,7 @@
         "accuracyMeters": 20.0,
         "label": "校门岗亭",
         "floor": "1F",
-        "source": "mobile-demo",
+        "source": "mobile-beta",
         "updatedTs": null
       },
       "healthSignals": {
@@ -176,7 +176,7 @@
       }
     },
     {
-      "userId": "demo-runner",
+      "userId": "beta-runner",
       "displayName": "体育生小李",
       "organization": "大学校园",
       "healthCondition": "身体素质良好",
@@ -194,7 +194,7 @@
         "accuracyMeters": 18.0,
         "label": "操场入口",
         "floor": "1F",
-        "source": "mobile-demo",
+        "source": "mobile-beta",
         "updatedTs": null
       },
       "healthSignals": {
@@ -212,7 +212,7 @@
       }
     },
     {
-      "userId": "demo-prime",
+      "userId": "beta-prime",
       "displayName": "张医生",
       "organization": "市医院急救科",
       "healthCondition": "身体状态一般",
@@ -230,7 +230,7 @@
         "accuracyMeters": 18.0,
         "label": "教学楼 A 座 1 层大厅",
         "floor": "1F",
-        "source": "mobile-demo",
+        "source": "mobile-beta",
         "updatedTs": null
       },
       "healthSignals": {
@@ -250,7 +250,7 @@
   ],
   "aedSites": [
     {
-      "siteId": "demo-aed-1",
+      "siteId": "beta-aed-1",
       "name": "二楼服务台 AED",
       "location": {
         "latitude": 39.90403,
@@ -258,7 +258,7 @@
         "accuracyMeters": null,
         "label": "二楼服务台 AED 箱",
         "floor": "2F",
-        "source": "demo",
+        "source": "beta",
         "updatedTs": 1779756384963
       },
       "status": "AVAILABLE",
@@ -266,7 +266,7 @@
       "lastCheckedTs": 1779756384963
     },
     {
-      "siteId": "demo-aed-2",
+      "siteId": "beta-aed-2",
       "name": "校门值班室 AED",
       "location": {
         "latitude": 39.90456,
@@ -274,7 +274,7 @@
         "accuracyMeters": null,
         "label": "校门值班室 AED 箱",
         "floor": "1F",
-        "source": "demo",
+        "source": "beta",
         "updatedTs": 1779756384986
       },
       "status": "AVAILABLE",
@@ -284,7 +284,7 @@
   ],
   "dispatchRationale": {
     "PRIME": {
-      "userId": "demo-prime",
+      "userId": "beta-prime",
       "score": 34.0,
       "reasons": [
         "距离患者约 11 米",
@@ -293,12 +293,12 @@
       ],
       "warnings": [],
       "distanceToPatientMeters": 10.878465730137206,
-      "nearestAedSiteId": "demo-aed-1",
+      "nearestAedSiteId": "beta-aed-1",
       "distanceToAedMeters": 35.237971686026725,
       "aedToPatientMeters": 26.684587690751123
     },
     "RUNNER": {
-      "userId": "demo-runner",
+      "userId": "beta-runner",
       "score": 30.0,
       "reasons": [
         "距离患者约 28 米",
@@ -307,12 +307,12 @@
       ],
       "warnings": [],
       "distanceToPatientMeters": 27.5179669606645,
-      "nearestAedSiteId": "demo-aed-1",
+      "nearestAedSiteId": "beta-aed-1",
       "distanceToAedMeters": 14.912040182637217,
       "aedToPatientMeters": 26.684587690751123
     },
     "GUIDE": {
-      "userId": "demo-guide",
+      "userId": "beta-guide",
       "score": 25.0,
       "reasons": [
         "距离患者约 55 米",
@@ -321,7 +321,7 @@
       ],
       "warnings": [],
       "distanceToPatientMeters": 54.84982411885389,
-      "nearestAedSiteId": "demo-aed-2",
+      "nearestAedSiteId": "beta-aed-2",
       "distanceToAedMeters": 9.543461688327588,
       "aedToPatientMeters": 64.3482574614877
     }

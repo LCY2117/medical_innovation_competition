@@ -24,7 +24,7 @@ from app.models.schemas import (
     AuthCodeRequestResponse,
     AuthMeResponse,
     AuthLoginReq,
-    AuthDemoReq,
+    AuthbetaReq,
     AuthProfileUpdateReq,
     AuthResponse,
     AuthRegisterReq,
@@ -36,7 +36,7 @@ from app.models.schemas import (
     ClientRegisterReq,
     ClientRegisterResponse,
     CreateIncidentResponse,
-    DemoBootstrapResponse,
+    betaBootstrapResponse,
     DispatchExplainResponse,
     DispatchReq,
     DispatchResponse,
@@ -147,20 +147,20 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             },
         )
 
-    def is_demo_admin_authorized(x_demo_admin_token: str | None) -> bool:
-        if not settings.demo_admin_token:
+    def is_beta_admin_authorized(x_beta_admin_token: str | None) -> bool:
+        if not settings.beta_admin_token:
             return False
-        header_token = (x_demo_admin_token or "").strip()
-        return bool(header_token) and hmac.compare_digest(header_token, settings.demo_admin_token)
+        header_token = (x_beta_admin_token or "").strip()
+        return bool(header_token) and hmac.compare_digest(header_token, settings.beta_admin_token)
 
     def require_admin(
         request: Request,
         authorization: str | None = Header(default=None),
-        x_demo_admin_token: str | None = Header(default=None),
+        x_beta_admin_token: str | None = Header(default=None),
     ) -> str:
         rate_limit(request, "admin", settings.rate_limit_admin_per_minute)
-        if is_demo_admin_authorized(x_demo_admin_token):
-            return "demo_admin"
+        if is_beta_admin_authorized(x_beta_admin_token):
+            return "beta_admin"
         if authorization:
             try:
                 user = auth_service.require_admin_user(authorization)
@@ -174,21 +174,21 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
                 )
                 raise
             return user.user_id
-        if settings.demo_admin_token or settings.admin_phones:
-            denied_event = "demo_admin_denied" if settings.demo_admin_token else "admin_denied"
+        if settings.beta_admin_token or settings.admin_phones:
+            denied_event = "beta_admin_denied" if settings.beta_admin_token else "admin_denied"
             audit(request, denied_event, "anonymous", outcome="denied")
             raise HTTPException(status_code=403, detail="缺少有效管理员权限")
-        return "open_demo_admin"
+        return "open_beta_admin"
 
-    def require_actor_when_public_demo_is_protected(
+    def require_actor_when_public_beta_is_protected(
         user_id: str,
         request: Request,
         authorization: str | None,
-        x_demo_admin_token: str | None,
+        x_beta_admin_token: str | None,
     ) -> None:
-        if not settings.demo_admin_token:
+        if not settings.beta_admin_token:
             return
-        if is_demo_admin_authorized(x_demo_admin_token):
+        if is_beta_admin_authorized(x_beta_admin_token):
             return
         user = auth_service.require_user(authorization)
         if auth_service.is_admin_user(user):
@@ -216,7 +216,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         details["version"] = "competition-hardening"
         details["auth"] = {
             "tokenTtlSec": settings.auth_token_ttl_sec,
-            "demoAdminAuthEnabled": settings.demo_admin_token is not None,
+            "betaAdminAuthEnabled": settings.beta_admin_token is not None,
             "adminAccountAuthEnabled": bool(settings.admin_phones),
             "adminPhoneCount": len(settings.admin_phones),
         }
@@ -241,7 +241,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             "adminAccountAuthEnabled": bool(settings.admin_phones),
             "adminPhoneCount": len(settings.admin_phones),
         }
-        details["demoAdminAuthEnabled"] = settings.demo_admin_token is not None
+        details["betaAdminAuthEnabled"] = settings.beta_admin_token is not None
         return HealthDetailResponse(**details)
 
     @router.post("/incidents", response_model=CreateIncidentResponse)
@@ -300,7 +300,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             request,
             "auth_code_requested",
             "anonymous",
-            metadata={"channel": response.channel, "mock": response.demoCode is not None},
+            metadata={"channel": response.channel, "mock": response.betaCode is not None},
         )
         return response
 
@@ -350,13 +350,13 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         )
         return response
 
-    @router.post("/auth/demo", response_model=AuthResponse)
-    async def demo_login(req: AuthDemoReq, request: Request) -> AuthResponse:
+    @router.post("/auth/beta", response_model=AuthResponse)
+    async def beta_login(req: AuthbetaReq, request: Request) -> AuthResponse:
         rate_limit(request, "auth", settings.rate_limit_auth_per_minute)
-        response = auth_service.demo_login(req.persona)
+        response = auth_service.beta_login(req.persona)
         audit(
             request,
-            "auth_demo_login",
+            "auth_beta_login",
             "user",
             actor_id=response.user.userId,
             target_type="user",
@@ -524,12 +524,12 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         audit(request, "incident_reset", "admin", actor_id=admin, target_type="incident", target_id=response.incidentId)
         return response
 
-    @router.post("/demo/bootstrap", response_model=DemoBootstrapResponse)
-    async def demo_bootstrap(request: Request, admin: str = Depends(require_admin)) -> DemoBootstrapResponse:
-        response = await service.bootstrap_demo()
+    @router.post("/beta/bootstrap", response_model=betaBootstrapResponse)
+    async def beta_bootstrap(request: Request, admin: str = Depends(require_admin)) -> betaBootstrapResponse:
+        response = await service.bootstrap_beta()
         audit(
             request,
-            "demo_bootstrapped",
+            "beta_bootstrapped",
             "admin",
             actor_id=admin,
             target_type="incident",
@@ -591,9 +591,9 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         req: AutoJoinReq,
         request: Request,
         authorization: str | None = Header(default=None),
-        x_demo_admin_token: str | None = Header(default=None),
+        x_beta_admin_token: str | None = Header(default=None),
     ) -> AutoJoinResponse:
-        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        require_actor_when_public_beta_is_protected(req.userId, request, authorization, x_beta_admin_token)
         rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
         response = await service.join_current_auto(req.userId)
         audit(
@@ -617,9 +617,9 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         req: JoinReq,
         request: Request,
         authorization: str | None = Header(default=None),
-        x_demo_admin_token: str | None = Header(default=None),
+        x_beta_admin_token: str | None = Header(default=None),
     ) -> MutationResponse:
-        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        require_actor_when_public_beta_is_protected(req.userId, request, authorization, x_beta_admin_token)
         rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
         response = await service.join_incident(incident_id, req.role, req.userId)
         audit(
@@ -639,9 +639,9 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         req: ActionReq,
         request: Request,
         authorization: str | None = Header(default=None),
-        x_demo_admin_token: str | None = Header(default=None),
+        x_beta_admin_token: str | None = Header(default=None),
     ) -> MutationResponse:
-        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        require_actor_when_public_beta_is_protected(req.userId, request, authorization, x_beta_admin_token)
         rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
         response = await service.post_action(incident_id, req.action, req.userId)
         audit(

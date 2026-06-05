@@ -8,7 +8,7 @@ Make `/mobile` feel like a national-final-ready emergency collaboration terminal
 - clearer in urgent states
 - lower cognitive load for patient, PRIME, RUNNER, GUIDE, and observer roles
 - reliable on phone-sized browser viewports
-- still fully compatible with the existing demo and cloud workflow
+- still fully compatible with the existing beta and cloud workflow
 
 ## Non-Goals
 

@@ -12,9 +12,7 @@ enum class MainTab(val label: String) {
     Home("首页"),
     Tasks("任务"),
     Incident("事件"),
-    Archive("归档"),
     Profile("我的"),
-    Settings("设置"),
 }
 
 fun userRoleFromBackendRole(role: String): UserRole = when (role) {
@@ -108,7 +106,7 @@ fun formatAedStatusLabel(status: String?): String? = when (status?.trim()?.upper
 
 fun formatLocationSourceLabel(source: String?): String = when (source?.trim()?.lowercase()) {
     null, "" -> "--"
-    "app-demo", "app-demo-fallback", "mobile-demo" -> "协同点位"
+    "app-beta", "app-beta-fallback", "mobile-beta" -> "协同点位"
     "manual" -> "手动录入"
     "android-gps" -> "系统 GPS 定位"
     "android-network" -> "系统网络定位"

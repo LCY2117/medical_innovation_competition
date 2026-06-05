@@ -30,7 +30,7 @@ LRA_WEB_DIST_DIR=web/dist
 LRA_SOS_DURATION_SEC=5
 LRA_DISPATCH_DELAY_SEC=0
 LRA_DISPATCH_LLM_BUDGET_SEC=1
-LRA_DEMO_ADMIN_TOKEN=
+LRA_beta_ADMIN_TOKEN=
 LRA_ADMIN_PHONES=
 LRA_AUDIT_LOG_ENABLED=true
 LRA_RATE_LIMIT_ENABLED=true
@@ -38,15 +38,15 @@ LRA_RATE_LIMIT_AUTH_PER_MINUTE=20
 LRA_RATE_LIMIT_ADMIN_PER_MINUTE=60
 LRA_RATE_LIMIT_ACTOR_PER_MINUTE=120
 LRA_PUSH_PROVIDER=websocket
-LRA_MAP_PROVIDER=demo
+LRA_MAP_PROVIDER=beta
 LRA_AMAP_SERVICE_KEY=
 LRA_MAP_DISTANCE_TIMEOUT_SEC=3
 LRA_SILICONFLOW_API_KEY=
 ```
 
-`LRA_DEMO_ADMIN_TOKEN` 建议在公网演示环境启用。启用后，创建事件、初始化演示场景、重置事件、指定患者、更新 AED 点位、导出实验数据等管理接口必须携带 `X-Demo-Admin-Token`。Web 调度台右上角“演示口令”会把该值保存在当前浏览器本地，并自动附加到管理请求中。不要把真实口令写入 Git、PPT 或聊天记录。
+`LRA_beta_ADMIN_TOKEN` 建议在公网演示环境启用。启用后，创建事件、初始化演示场景、重置事件、指定患者、更新 AED 点位、导出实验数据等管理接口必须携带 `X-beta-Admin-Token`。Web 调度台右上角“演示口令”会把该值保存在当前浏览器本地，并自动附加到管理请求中。不要把真实口令写入 Git、PPT 或聊天记录。
 
-`LRA_ADMIN_PHONES` 是正式管理员账号白名单，可填写逗号分隔手机号。白名单用户仍通过普通注册/登录拿到 Bearer token，`/auth/me` 会返回 `privileges=["admin"]`，并可用该 token 调用初始化、重置、AED 更新、导出和审计等管理接口。若同时配置 `LRA_DEMO_ADMIN_TOKEN`，旧的演示口令仍可作为比赛现场备用通道；不要把手机号白名单当作密码或密钥提交到 Git。
+`LRA_ADMIN_PHONES` 是正式管理员账号白名单，可填写逗号分隔手机号。白名单用户仍通过普通注册/登录拿到 Bearer token，`/auth/me` 会返回 `privileges=["admin"]`，并可用该 token 调用初始化、重置、AED 更新、导出和审计等管理接口。若同时配置 `LRA_beta_ADMIN_TOKEN`，旧的演示口令仍可作为比赛现场备用通道；不要把手机号白名单当作密码或密钥提交到 Git。
 
 `LRA_AUDIT_LOG_ENABLED` 默认开启，会在 SQLite 中记录登录、演示管理、角色响应、现场动作、实验导出和审计读取事件。Web 总控台“审计”按钮读取 `GET /api/audit/events`，该接口需要正式管理员 token 或演示管理员口令。审计事件不保存密码、token 或 API Key，仅保留 actor/target、结果、脱敏请求 hash 和结构化元数据。
 
@@ -72,7 +72,7 @@ LRA_AMAP_SERVICE_KEY=
 LRA_MAP_DISTANCE_TIMEOUT_SEC=3
 ```
 
-后端距离 provider 已接入健康检查和调度解释。配置高德服务端 Key 后，调度评分、AED 最近点和预实验 `runnerRouteMeters` 会优先使用高德 WebService 距离；接口失败、超时或未配置 Key 时会自动回退到 demo/Haversine 距离，并在 `/api/health/detail.mapProvider` 中显示 fallback 原因。
+后端距离 provider 已接入健康检查和调度解释。配置高德服务端 Key 后，调度评分、AED 最近点和预实验 `runnerRouteMeters` 会优先使用高德 WebService 距离；接口失败、超时或未配置 Key 时会自动回退到 beta/Haversine 距离，并在 `/api/health/detail.mapProvider` 中显示 fallback 原因。
 
 ## 3. 本地构建验证
 
@@ -242,7 +242,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | 项目 | 验收方式 |
 | --- | --- |
 | Web 首页可访问 | 打开 `https://lifereflex.mddcommunity.top/` |
-| API 健康检查 | `curl https://lifereflex.mddcommunity.top/api/health/detail`，确认 `frontend.indexReady`、`frontend.mobileChunkReady`、`frontend.desktopChunkReady`、DB、WebSocket、认证和 `demoReadiness` |
+| API 健康检查 | `curl https://lifereflex.mddcommunity.top/api/health/detail`，确认 `frontend.indexReady`、`frontend.mobileChunkReady`、`frontend.desktopChunkReady`、DB、WebSocket、认证和 `betaReadiness` |
 | 安全控制 | `health.detail.security` 显示审计和限流配置，`storage.auditEventCount` 会随关键动作增加 |
 | WebSocket | Web 调度台显示“实时同步” |
 | WebSocket 切换稳定性 | 在 Web 总控台和 `/mobile` 切换事件、刷新或退出登录时，不应出现旧事件重新连接、状态回跳或重复“重连中” |
@@ -251,7 +251,7 @@ curl -fsS https://lifereflex.mddcommunity.top/api/health/detail
 | 地图距离 provider | `health.detail.mapProvider` 显示 `mode`、`distanceSource`、`configured` 和 fallback 原因；未配置 Key 时仍可完整演示 |
 | 推送 provider | `health.detail.pushProvider` 显示 `mode=websocket`、`channel=websocket_state`；配置未来 provider 时应显示 fallback 原因 |
 | 数据导出 | 点击“证据包”获得 ZIP，包内含审阅索引、匿名化 JSON/CSV、专家摘要、数据字典和 manifest 校验信息 |
-| 公网演示保护 | 配置 `LRA_DEMO_ADMIN_TOKEN` 后，未带口令的管理接口返回 403 |
+| 公网演示保护 | 配置 `LRA_beta_ADMIN_TOKEN` 后，未带口令的管理接口返回 403 |
 | 正式管理员账号 | 配置 `LRA_ADMIN_PHONES` 后，白名单手机号注册/登录的 `/auth/me.user.privileges` 含 `admin`，Bearer token 可访问管理接口 |
 | 审计日志 | Web 总控台点击“审计”可看到最近登录、演示、导出和现场动作；无口令读取返回 403 |
 | Android | App 安装后能登录并连接同一事件 |

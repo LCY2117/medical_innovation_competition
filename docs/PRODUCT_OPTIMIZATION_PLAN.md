@@ -2,12 +2,12 @@
 
 ## Goal
 
-把“生命反射弧”从能跑通的医创赛 Demo，继续打磨成可展示、可安装、可预实验、可维护的准产品形态：
+把“生命反射弧”从能跑通的医创赛 beta，继续打磨成可展示、可安装、可预实验、可维护的准产品形态：
 
 - Web 调度台可用于现场演示、数据导出和讲解 AI 分派依据。
 - Android APK 能让不同参与者低门槛登录、接入事件、执行任务、查看归档。
 - 后端具备基础认证、会话、安全边界、实验数据和运维可观测能力。
-- 第三方地图、推送、短信、AI Key 未申请前，系统仍能用 demo/fallback 模式完整预实验。
+- 第三方地图、推送、短信、AI Key 未申请前，系统仍能用 beta/fallback 模式完整预实验。
 
 ## Non-Goals
 
@@ -16,7 +16,7 @@
 - 不宣称临床有效性；当前定位是院前急救协同与低成本预实验系统。
 - 不在没有回滚路径时做生产破坏性操作。
 
-## P0: Competition Demo Must Look Like A Product
+## P0: Competition beta Must Look Like A Product
 
 ### Web Console
 
@@ -61,14 +61,14 @@ Acceptance:
 - [x] 增加 `/auth/me`，客户端可校验当前 token。
 - [x] 增加 `/auth/logout`，客户端可主动撤销 token。
 - [x] Token 带过期时间，默认有效期可配置。
-- [x] demo 管理端点继续由 `LRA_DEMO_ADMIN_TOKEN` 保护。
+- [x] beta 管理端点继续由 `LRA_beta_ADMIN_TOKEN` 保护。
 - [x] 测试覆盖注册、登录、me、logout、过期/无效 token。
 - [x] 公网演示开启口令后，角色 join/action 需要本人 token 或演示管理员 token。
 
 Acceptance:
 
 - `python -m unittest tests.test_server tests.test_link_mechanism` passes.
-- 现有 demo bootstrap/export/designate 流程不回退。
+- 现有 beta bootstrap/export/designate 流程不回退。
 
 ## P1: Experiment And Evidence Readiness
 
@@ -99,7 +99,7 @@ Acceptance:
 
 ## P2: Third-Party Integration Readiness
 
-- [x] 地图 provider 抽象：高德/腾讯/百度/纯 demo 坐标。
+- [x] 地图 provider 抽象：高德/腾讯/百度/纯 beta 坐标。
 - [x] Android 定位权限、手动定位、地图 SDK 接入点预留。
 - [x] 推送 provider 抽象：极光/厂商推送/本地 WebSocket fallback。
 - [x] AI provider 抽象：本地模型、硅基流动、OpenAI-compatible API。
@@ -125,13 +125,13 @@ Acceptance:
 Implementation notes:
 
 - Android 使用 AndroidX Security 的 `EncryptedSharedPreferences` 存储 session/token，并将旧版 `lra_session` 明文登录态迁移到 `lra_session_secure`；若个别设备 Keystore 不可用，则不落盘 token，重启后要求重新登录。
-- 后端新增最小 RBAC：`LRA_ADMIN_PHONES` 配置正式管理员手机号白名单，白名单用户通过普通登录获得 Bearer token，`/auth/me` 返回 `privileges=["admin"]`，管理接口接受管理员 token 或旧版 `X-Demo-Admin-Token`。只配置白名单不配置演示口令时，未登录的管理接口仍保持关闭。
-- 后端新增 SQLite 审计表，记录登录、demo 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
+- 后端新增最小 RBAC：`LRA_ADMIN_PHONES` 配置正式管理员手机号白名单，白名单用户通过普通登录获得 Bearer token，`/auth/me` 返回 `privileges=["admin"]`，管理接口接受管理员 token 或旧版 `X-beta-Admin-Token`。只配置白名单不配置演示口令时，未登录的管理接口仍保持关闭。
+- 后端新增 SQLite 审计表，记录登录、beta 管理、患者指定、角色响应、现场动作、实验导出和审计读取事件；审计记录只保留 actor/target、结果、脱敏请求 hash 和结构化元数据，不保存密码、token、API Key。
 - 后端角色接入和现场动作接口保持幂等：同一终端重复 join 已进入 CPR/AED/交接等进度的角色时不会把状态降回 JOINED；重复提交已经完成的 CPR、AED、救护车到达或交接动作时，会返回当前阶段但不重复追加日志，避免弱网重试污染证据包时间线。
 - `/api/audit/events` 由正式管理员 token 或演示管理员口令保护，Web 总控台新增“审计”按钮，可在比赛演示中展示最近留痕。
 - 后端新增 auth/admin/actor 三类滑动窗口频率限制；阈值可通过 `.env` 配置，`/api/health/detail` 会暴露当前安全控制状态。
 - 预实验证据包包含审阅索引、匿名化 JSON/CSV、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、证据质量报告、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验，外部材料默认使用审阅索引、数据字典、证据质量报告和匿名化文件；单名专家签字使用 `expert_feedback_form.md`，多名专家意见和后续整改状态使用 `expert_feedback_summary.csv` 汇总；多轮 ZIP 优先用 `scripts/build_pre_experiment_report.py` 一键生成 `round-summary.csv`、PPT 安全口径 `round-analysis.md`、图表底表 `round-chart-data.csv` 和复核行动清单 `round-review-actions.csv`，也可分步运行 `summarize_evidence_rounds.py` 与 `analyze_round_summary.py`。`round-summary.csv` 会合并每轮质量等级、质量分、问题计数、缺失关键节点和提示代码，`round-analysis.md` 会新增证据质量小节，`round-review-actions.csv` 会标出可采用、带备注采用、重跑或人工补充的轮次，用于筛选进入 PPT 图表的数据。
-- 后端新增 `SpatialProvider`，统一调度评分、调度解释、AED 最近点和预实验指标中的距离计算；默认 `demo` 使用内置坐标 + Haversine，配置 `LRA_MAP_PROVIDER=amap` 且填入 `LRA_AMAP_SERVICE_KEY` 后会优先调用高德 WebService 距离接口，失败或缺 Key 时结构化回退到 demo 距离。
+- 后端新增 `SpatialProvider`，统一调度评分、调度解释、AED 最近点和预实验指标中的距离计算；默认 `beta` 使用内置坐标 + Haversine，配置 `LRA_MAP_PROVIDER=amap` 且填入 `LRA_AMAP_SERVICE_KEY` 后会优先调用高德 WebService 距离接口，失败或缺 Key 时结构化回退到 beta 距离。
 - Android 新增 `LocationProvider` 抽象和系统定位 provider：注册终端与“我的”页同步位置时优先使用系统最近定位，未授权、定位关闭或无最近定位时自动回退演示坐标；高德/腾讯 Android SDK 后续可作为 adapter 替换 provider，不影响 UI 和上报链路。
 - 后端新增 `NotificationProvider` 抽象，当前 `LRA_PUSH_PROVIDER=websocket` 使用既有 WebSocket 状态同步作为比赛版实时通知；若设置 `jpush`/`vendor` 等未来 provider，会在 `/api/health/detail.pushProvider` 明确显示 adapter pending 并自动回退 WebSocket，不阻塞演示。
 
@@ -178,7 +178,7 @@ Validation:
 
 ## Current Mobile Web Implementation Slice
 
-Goal: provide a dedicated mobile-browser URL that can substitute for the Android app during urgent or low-friction demonstrations.
+Goal: provide a dedicated mobile-browser URL that can substitute for the Android app during urgent or low-friction betanstrations.
 
 Route:
 
@@ -188,7 +188,7 @@ Required capabilities:
 
 - [x] Mobile login/register with the same backend account model as Android.
 - [x] Persist and validate browser session through `/auth/me`.
-- [x] Register the browser terminal as a rescue client with demo/manual location fallback.
+- [x] Register the browser terminal as a rescue client with beta/manual location fallback.
 - [x] Open current incident or a pasted incident ID.
 - [x] Real-time WebSocket state sync with reconnect status.
 - [x] Mobile WebSocket reconnect ignores stale socket callbacks and clears pending reconnects on logout/unmount.
@@ -234,4 +234,4 @@ Validation results:
 - Mobile browser smoke at `390x844`: login/register screen rendered, no horizontal overflow, manifest detected.
 - Mobile SOS smoke at `390x844`: registered a browser user, opened current event, started SOS, auto-dispatched to `任务已下发`, showed patient mode, role statuses, timeline logs, and no horizontal overflow.
 - Mobile UX polish smoke at `390x844`: emergency content is separated into `总览 / 任务 / 现场 / 记录`; `总览` keeps only status, identity, and the current high-priority action/patient guidance.
-- Mobile theme and localization smoke: light/dark mode switches through `data-mobile-theme`; mobile logs and visible labels no longer expose raw dispatch English, `1F/2F`, or demo user IDs during the checked flow.
+- Mobile theme and localization smoke: light/dark mode switches through `data-mobile-theme`; mobile logs and visible labels no longer expose raw dispatch English, `1F/2F`, or beta user IDs during the checked flow.

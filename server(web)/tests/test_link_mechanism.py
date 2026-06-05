@@ -239,7 +239,7 @@ class LinkMechanismTestCase(unittest.TestCase):
         self.assertTrue(any(value is not None for value in assignments.values()))
         self.assertIn("PRIME", rationale)
 
-    def test_fallback_to_rules_when_llm_exceeds_demo_budget(self) -> None:
+    def test_fallback_to_rules_when_llm_exceeds_beta_budget(self) -> None:
         slow_api = MockLLMServer(
             response_delay_sec=1.5,
             response_factory=lambda: {

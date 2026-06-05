@@ -56,6 +56,39 @@ class AuthRepository(
         return apiService.login(AuthLoginRequest(phone = phone, password = password))
     }
 
+    suspend fun requestLoginCode(phone: String): AuthCodeRequestResponse {
+        return apiService.requestLoginCode(AuthCodeRequest(phone = phone))
+    }
+
+    suspend fun loginWithCode(
+        phone: String,
+        code: String,
+    ): AuthCodeLoginResponse {
+        return apiService.loginWithCode(AuthCodeLoginRequest(phone = phone, code = code))
+    }
+
+    suspend fun completeCodeRegistration(
+        phone: String,
+        code: String,
+        displayName: String,
+        organization: String,
+        healthCondition: String,
+        professionIdentity: String,
+        profileBio: String,
+    ): AuthResponse {
+        return apiService.completeCodeRegistration(
+            AuthCodeRegisterRequest(
+                phone = phone,
+                code = code,
+                displayName = displayName,
+                organization = organization,
+                healthCondition = healthCondition,
+                professionIdentity = professionIdentity,
+                profileBio = profileBio,
+            )
+        )
+    }
+
     suspend fun me(authToken: String): AuthMeResponse {
         return apiService.me("Bearer $authToken")
     }

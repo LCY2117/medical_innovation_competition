@@ -44,6 +44,14 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
+    private val _codeHint = MutableStateFlow<String?>(null)
+    val codeHint: StateFlow<String?> = _codeHint.asStateFlow()
+
+    private val _pendingProfilePhone = MutableStateFlow<String?>(null)
+    val pendingProfilePhone: StateFlow<String?> = _pendingProfilePhone.asStateFlow()
+
+    private var pendingProfileCode: String? = null
+
     init {
         validateStoredSession()
     }
@@ -58,11 +66,16 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         bio: String,
     ) {
         val normalizedPhone = normalizePhone(phone)
-        val validationError = validateRegister(displayName, normalizedPhone, password, bio)
+        val validationError = validateRegister(displayName, normalizedPhone, password)
         if (validationError != null) {
             _error.value = validationError
             return
         }
+        val profileBio = buildProfileBio(
+            bio = bio,
+            healthCondition = healthCondition,
+            professionIdentity = professionIdentity,
+        )
 
         viewModelScope.launch {
             try {
@@ -75,7 +88,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                     organization = organization.trim().ifBlank { "生命反射弧网络" },
                     healthCondition = healthCondition.label,
                     professionIdentity = professionIdentity.label,
-                    profileBio = bio.trim(),
+                    profileBio = profileBio,
                 )
                 persistAuthSession(response)
             } catch (e: Exception) {
@@ -117,6 +130,139 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun requestLoginCode(phone: String) {
+        val normalizedPhone = normalizePhone(phone)
+        if (normalizedPhone.length < 11) {
+            _error.value = "请输入有效手机号"
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                _error.value = null
+                val response = repository.requestLoginCode(normalizedPhone)
+                _codeHint.value = if (response.betaCode.isNullOrBlank()) {
+                    "验证码已发送，请留意短信"
+                } else {
+                    "演示验证码：${response.betaCode}，也可输入 LCY"
+                }
+            } catch (e: Exception) {
+                _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "验证码发送失败，请稍后重试")
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    fun loginWithCode(
+        phone: String,
+        code: String,
+    ) {
+        val normalizedPhone = normalizePhone(phone)
+        if (normalizedPhone.length < 11) {
+            _error.value = "请输入有效手机号"
+            return
+        }
+        if (code.isBlank()) {
+            _error.value = "请输入验证码"
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                _error.value = null
+                val response = repository.loginWithCode(
+                    phone = normalizedPhone,
+                    code = code.trim(),
+                )
+                if (response.needsProfileSetup) {
+                    _pendingProfilePhone.value = response.phone ?: normalizedPhone
+                    pendingProfileCode = code.trim()
+                    _codeHint.value = "手机号已验证，请完成协同资料设置"
+                } else {
+                    val token = response.token
+                    val user = response.user
+                    if (token.isNullOrBlank() || user == null) {
+                        _error.value = "验证码登录响应异常，请稍后重试"
+                    } else {
+                        persistAuthSession(
+                            AuthResponse(
+                                ok = response.ok,
+                                token = token,
+                                user = user,
+                                tokenExpiresAt = response.tokenExpiresAt,
+                            )
+                        )
+                        _pendingProfilePhone.value = null
+                    }
+                }
+            } catch (e: Exception) {
+                _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "验证码登录失败，请稍后重试")
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    fun completeProfileSetup(
+        displayName: String,
+        organization: String,
+        healthCondition: HealthCondition,
+        professionIdentity: ProfessionIdentity,
+        bio: String,
+    ) {
+        val verifiedPhone = _pendingProfilePhone.value
+        if (verifiedPhone.isNullOrBlank()) {
+            _error.value = "请先完成手机号验证"
+            return
+        }
+        val verifiedCode = pendingProfileCode
+        if (verifiedCode.isNullOrBlank()) {
+            _error.value = "验证码状态已失效，请重新验证手机号"
+            return
+        }
+        val validationError = validateProfile(displayName, bio)
+        if (validationError != null) {
+            _error.value = validationError
+            return
+        }
+        val profileBio = buildProfileBio(
+            bio = bio,
+            healthCondition = healthCondition,
+            professionIdentity = professionIdentity,
+        )
+
+        viewModelScope.launch {
+            try {
+                _loading.value = true
+                _error.value = null
+                val response = repository.completeCodeRegistration(
+                    phone = verifiedPhone,
+                    code = verifiedCode,
+                    displayName = displayName.trim(),
+                    organization = organization.trim().ifBlank { "生命反射弧网络" },
+                    healthCondition = healthCondition.label,
+                    professionIdentity = professionIdentity.label,
+                    profileBio = profileBio,
+                )
+                persistAuthSession(response)
+            } catch (e: Exception) {
+                _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "资料保存失败，请稍后重试")
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    fun cancelProfileSetup() {
+        _pendingProfilePhone.value = null
+        pendingProfileCode = null
+        _codeHint.value = null
+        _error.value = null
+    }
+
     fun signOut() {
         val token = _session.value.authToken
         if (token.isNotBlank()) {
@@ -127,6 +273,9 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         clearStoredSession()
         _session.value = UserSession()
         _error.value = null
+        _codeHint.value = null
+        _pendingProfilePhone.value = null
+        pendingProfileCode = null
         _loading.value = false
     }
 
@@ -147,6 +296,11 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
             _error.value = validationError
             return
         }
+        val profileBio = buildProfileBio(
+            bio = bio,
+            healthCondition = healthCondition,
+            professionIdentity = professionIdentity,
+        )
 
         viewModelScope.launch {
             try {
@@ -158,7 +312,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                     organization = organization.trim().ifBlank { "生命反射弧网络" },
                     healthCondition = healthCondition.label,
                     professionIdentity = professionIdentity.label,
-                    profileBio = bio.trim(),
+                    profileBio = profileBio,
                 )
                 persistAuthSession(
                     AuthResponse(
@@ -266,6 +420,9 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         saveSession(newSession)
         _session.value = newSession
         _error.value = null
+        _codeHint.value = null
+        _pendingProfilePhone.value = null
+        pendingProfileCode = null
     }
 
     fun recordIncidentArchive(
@@ -461,19 +618,15 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         displayName: String,
         normalizedPhone: String,
         password: String,
-        bio: String,
     ): String? {
         if (displayName.isBlank()) {
-            return "请输入姓名"
+            return "请输入昵称或展示名"
         }
         if (normalizedPhone.length < 11) {
             return "请输入有效手机号"
         }
         if (password.length < 4) {
             return "密码至少 4 位"
-        }
-        if (bio.trim().length < 8) {
-            return "个人介绍至少 8 个字，便于智能调度"
         }
         return null
     }
@@ -483,12 +636,19 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         bio: String,
     ): String? {
         if (displayName.isBlank()) {
-            return "请输入姓名"
-        }
-        if (bio.trim().length < 8) {
-            return "个人介绍至少 8 个字，便于智能调度"
+            return "请输入昵称或展示名"
         }
         return null
+    }
+
+    private fun buildProfileBio(
+        bio: String,
+        healthCondition: HealthCondition,
+        professionIdentity: ProfessionIdentity,
+    ): String {
+        return bio.trim().ifBlank {
+            "${healthCondition.label}，${professionIdentity.label}，可用于协同调度风险评估。"
+        }
     }
 
     private fun normalizePhone(phone: String): String = phone.filter(Char::isDigit)

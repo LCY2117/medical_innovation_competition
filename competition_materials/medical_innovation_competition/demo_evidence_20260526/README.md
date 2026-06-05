@@ -13,7 +13,7 @@
 | 文件 | 建议用途 |
 | --- | --- |
 | `01_public_dashboard.png` | Web 总控台、公网部署证明 |
-| `02_public_mobile_demo_stage.png` | 一键四端演示入口 |
+| `02_public_mobile_beta_stage.png` | 一键四端演示入口 |
 | `03_public_mobile_prime.png` | 移动端任务页示例 |
 | `04_mobile_patient.png` | 患者端/SOS 流程 |
 | `05_mobile_prime.png` | 核心施救端/CPR 流程 |

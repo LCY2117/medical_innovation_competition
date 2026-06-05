@@ -35,12 +35,11 @@ import com.example.lifereflexarc.ui.components.ActiveIncidentBanner
 import com.example.lifereflexarc.ui.components.AppTopBar
 import com.example.lifereflexarc.ui.components.InlineErrorCard
 import com.example.lifereflexarc.ui.screens.ActiveEmergencyScreen
-import com.example.lifereflexarc.ui.screens.ArchiveScreen
 import com.example.lifereflexarc.ui.screens.CommandHomeScreen
 import com.example.lifereflexarc.ui.screens.IncidentScreen
 import com.example.lifereflexarc.ui.screens.LoginScreen
+import com.example.lifereflexarc.ui.screens.ProfileRoute
 import com.example.lifereflexarc.ui.screens.ProfileScreen
-import com.example.lifereflexarc.ui.screens.SettingsScreen
 import com.example.lifereflexarc.ui.screens.TasksScreen
 import com.example.lifereflexarc.data.isArchived
 
@@ -55,6 +54,8 @@ fun AppRoot(
     val appSettings by settingsViewModel.settings.collectAsState()
     val sessionError by sessionViewModel.error.collectAsState()
     val sessionLoading by sessionViewModel.loading.collectAsState()
+    val codeHint by sessionViewModel.codeHint.collectAsState()
+    val pendingProfilePhone by sessionViewModel.pendingProfilePhone.collectAsState()
     val archives by sessionViewModel.archives.collectAsState()
     val incidentState by incidentViewModel.state.collectAsState(null)
     val connected by incidentViewModel.connected.collectAsState(false)
@@ -77,20 +78,23 @@ fun AppRoot(
         LoginScreen(
             error = sessionError,
             loading = sessionLoading,
-            onRegister = { name, phone, password, organization, healthCondition, professionIdentity, bio ->
-                sessionViewModel.register(
-                    displayName = name,
-                    phone = phone,
-                    password = password,
+            codeHint = codeHint,
+            pendingProfilePhone = pendingProfilePhone,
+            onPasswordLogin = { phone, password ->
+                sessionViewModel.login(phone = phone, password = password)
+            },
+            onRequestCode = sessionViewModel::requestLoginCode,
+            onCodeLogin = sessionViewModel::loginWithCode,
+            onCompleteProfileSetup = { displayName, organization, healthCondition, professionIdentity, bio ->
+                sessionViewModel.completeProfileSetup(
+                    displayName = displayName,
                     organization = organization,
                     healthCondition = healthCondition,
                     professionIdentity = professionIdentity,
                     bio = bio,
                 )
             },
-            onLogin = { phone, password ->
-                sessionViewModel.login(phone = phone, password = password)
-            },
+            onCancelProfileSetup = sessionViewModel::cancelProfileSetup,
             onInputChanged = sessionViewModel::clearError,
         )
         return
@@ -116,6 +120,7 @@ fun AppRoot(
     val assignedRole = assignedRoleRaw?.let(::userRoleFromBackendRole)
         ?: incidentState?.let { deriveAssignedRole(it, activeUserId) }
     var activeTab by rememberSaveable { mutableStateOf(MainTab.Home) }
+    var profileRoute by rememberSaveable { mutableStateOf(ProfileRoute.Home) }
     var dismissedArchivedIncidentId by rememberSaveable { mutableStateOf<String?>(null) }
     val currentIncident = incidentState
     val currentIncidentError = incidentError
@@ -145,7 +150,8 @@ fun AppRoot(
             voiceGuidanceEnabled = appSettings.voiceGuidanceEnabled,
             onExitEmergency = {
                 dismissedArchivedIncidentId = currentIncidentId
-                activeTab = MainTab.Archive
+                activeTab = MainTab.Profile
+                profileRoute = ProfileRoute.Archive
             },
         )
         return
@@ -264,18 +270,26 @@ fun AppRoot(
                         incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = true)
                     },
                 )
-                MainTab.Archive -> ArchiveScreen(
-                    incidentState = incidentState,
-                    archives = archives,
-                )
                 MainTab.Profile -> ProfileScreen(
                     session = session,
                     sessionError = sessionError,
                     sessionLoading = sessionLoading,
+                    profileRoute = profileRoute,
                     healthSignals = healthSignals,
                     healthReadiness = healthReadiness,
                     location = currentLocation,
                     locationStatus = locationStatus,
+                    incidentState = incidentState,
+                    archives = archives,
+                    connected = connected,
+                    connecting = connecting,
+                    appSettings = appSettings,
+                    onRouteChange = { profileRoute = it },
+                    onOpenCurrent = {
+                        incidentViewModel.clearError()
+                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
+                        activeTab = MainTab.Incident
+                    },
                     onSyncSystemLocation = {
                         locationPermissionLauncher.launch(
                             arrayOf(
@@ -284,8 +298,8 @@ fun AppRoot(
                             )
                         )
                     },
-                    onDemoLocationSelected = { label, latitude, longitude ->
-                        incidentViewModel.updateDemoLocation(activeUserId, label, latitude, longitude)
+                    onbetaLocationSelected = { label, latitude, longitude ->
+                        incidentViewModel.updatebetaLocation(activeUserId, label, latitude, longitude)
                     },
                     onProfileUpdate = { displayName, organization, healthCondition, professionIdentity, bio ->
                         sessionViewModel.updateProfile(
@@ -301,39 +315,11 @@ fun AppRoot(
                         incidentViewModel.disconnect()
                         sessionViewModel.signOut()
                         activeTab = MainTab.Home
-                    },
-                )
-                MainTab.Settings -> SettingsScreen(
-                    session = session,
-                    incidentState = incidentState,
-                    connected = connected,
-                    connecting = connecting,
-                    healthReadiness = healthReadiness,
-                    appSettings = appSettings,
-                    location = currentLocation,
-                    locationStatus = locationStatus,
-                    archiveCount = archives.size,
-                    onOpenCurrent = {
-                        incidentViewModel.clearError()
-                        incidentViewModel.connectCurrent(activeUserId, authToken = session.authToken, autoJoin = false)
-                        activeTab = MainTab.Incident
-                    },
-                    onSyncSystemLocation = {
-                        locationPermissionLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION,
-                            )
-                        )
+                        profileRoute = ProfileRoute.Home
                     },
                     onVoiceGuidanceChanged = settingsViewModel::setVoiceGuidanceEnabled,
                     onVibrationAlertChanged = settingsViewModel::setVibrationAlertEnabled,
-                    onDemoSafetyChanged = settingsViewModel::setDemoSafetyAcknowledged,
-                    onLogout = {
-                        incidentViewModel.disconnect()
-                        sessionViewModel.signOut()
-                        activeTab = MainTab.Home
-                    },
+                    onbetaSafetyChanged = settingsViewModel::setbetaSafetyAcknowledged,
                 )
             }
         }

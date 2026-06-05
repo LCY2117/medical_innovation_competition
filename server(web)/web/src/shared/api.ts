@@ -38,18 +38,18 @@ export function getWsBase(): string {
   return `${protocol}//${window.location.host}/ws`;
 }
 
-export function getStoredDemoAdminToken(): string {
+export function getStoredbetaAdminToken(): string {
   if (typeof window === 'undefined') {
     return '';
   }
-  return window.localStorage.getItem('lra_demo_admin_token') ?? '';
+  return window.localStorage.getItem('lra_beta_admin_token') ?? '';
 }
 
-export function buildDemoAdminHeaders(token: string, extra?: HeadersInit): HeadersInit {
+export function buildbetaAdminHeaders(token: string, extra?: HeadersInit): HeadersInit {
   const headers = new Headers(extra);
   const trimmed = token.trim();
   if (trimmed) {
-    headers.set('X-Demo-Admin-Token', trimmed);
+    headers.set('X-beta-Admin-Token', trimmed);
   }
   return headers;
 }
@@ -128,9 +128,9 @@ export async function loginAccount(phone: string, password: string): Promise<Aut
   );
 }
 
-export async function loginDemoPersona(persona: string): Promise<AuthResponse> {
+export async function loginbetaPersona(persona: string): Promise<AuthResponse> {
   return requestJson<AuthResponse>(
-    '/auth/demo',
+    '/auth/beta',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -280,13 +280,13 @@ export interface DownloadedPackageInfo {
 
 export async function downloadExperimentPackage(
   token?: string | null,
-  demoAdminToken = getStoredDemoAdminToken(),
+  betaAdminToken = getStoredbetaAdminToken(),
   incidentId?: string | null,
 ): Promise<DownloadedPackageInfo> {
   if (typeof window === 'undefined') {
     throw new Error('下载事件证据包失败：当前环境不支持浏览器下载');
   }
-  const headers = buildDemoAdminHeaders(demoAdminToken, buildAuthHeaders(token));
+  const headers = buildbetaAdminHeaders(betaAdminToken, buildAuthHeaders(token));
   const trimmedIncidentId = incidentId?.trim();
   const packagePath = trimmedIncidentId
     ? `/experiments/${encodeURIComponent(trimmedIncidentId)}/package`

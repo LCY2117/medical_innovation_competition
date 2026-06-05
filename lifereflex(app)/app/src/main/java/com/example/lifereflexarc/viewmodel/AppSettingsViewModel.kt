@@ -22,8 +22,8 @@ class AppSettingsViewModel(application: Application) : AndroidViewModel(applicat
         update(_settings.value.copy(vibrationAlertEnabled = enabled))
     }
 
-    fun setDemoSafetyAcknowledged(enabled: Boolean) {
-        update(_settings.value.copy(demoSafetyAcknowledged = enabled))
+    fun setbetaSafetyAcknowledged(enabled: Boolean) {
+        update(_settings.value.copy(betaSafetyAcknowledged = enabled))
     }
 
     private fun update(next: AppSettings) {
@@ -31,7 +31,7 @@ class AppSettingsViewModel(application: Application) : AndroidViewModel(applicat
         prefs.edit()
             .putBoolean(KEY_VOICE, next.voiceGuidanceEnabled)
             .putBoolean(KEY_VIBRATION, next.vibrationAlertEnabled)
-            .putBoolean(KEY_DEMO_SAFETY, next.demoSafetyAcknowledged)
+            .putBoolean(KEY_beta_SAFETY, next.betaSafetyAcknowledged)
             .apply()
     }
 
@@ -39,7 +39,7 @@ class AppSettingsViewModel(application: Application) : AndroidViewModel(applicat
         return AppSettings(
             voiceGuidanceEnabled = prefs.getBoolean(KEY_VOICE, true),
             vibrationAlertEnabled = prefs.getBoolean(KEY_VIBRATION, true),
-            demoSafetyAcknowledged = prefs.getBoolean(KEY_DEMO_SAFETY, true),
+            betaSafetyAcknowledged = prefs.getBoolean(KEY_beta_SAFETY, true),
         )
     }
 
@@ -47,6 +47,6 @@ class AppSettingsViewModel(application: Application) : AndroidViewModel(applicat
         const val PREFS_NAME = "lra_app_settings"
         const val KEY_VOICE = "voice_guidance_enabled"
         const val KEY_VIBRATION = "vibration_alert_enabled"
-        const val KEY_DEMO_SAFETY = "demo_safety_acknowledged"
+        const val KEY_beta_SAFETY = "beta_safety_acknowledged"
     }
 }

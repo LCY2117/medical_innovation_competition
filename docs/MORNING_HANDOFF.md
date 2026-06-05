@@ -22,8 +22,8 @@
 - 调度评分已经纳入健康摘要，高心率、低血氧、高压力等风险会降低高强度角色分派优先级。
 - 预实验证据包已升级为 ZIP：包含审阅索引、原始 JSON、匿名化 JSON/CSV、结构化时间线、指标 CSV、调度依据、专家摘要、专家复核清单、专家反馈签字表、专家意见汇总与整改闭环表、主持人跑场单、数据分析说明、数据字典、参与者知情与安全边界简表、证据质量报告、观察员记录表、参与者问卷、基线-系统对照分析表、单轮汇总表和 manifest 校验信息。
 - 证据包 `review_index.md` 已提供专家/评委快速审阅顺序；`manifest.json` 已补充匿名化使用建议、内部复核文件边界和 SHA-256 校验说明。
-- `/api/health/detail` 增加 `demoReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
-- Web 总控台新增 5 步演示流程条；`/mobile-demo` 新增 4 端导播脚本。
+- `/api/health/detail` 增加 `betaReadiness`，可检查演示前的终端数量、AED、定位、健康摘要覆盖和导出状态。
+- Web 总控台新增 5 步演示流程条；`/mobile-beta` 新增 4 端导播脚本。
 - 移动 Web 患者 SOS 增加二次确认，第一次点击只进入确认态，避免误触发。
 - 移动 Web 通用操作已增加 ref 级单飞保护：SOS、自动接单、角色动作、位置同步和证据包下载在同一帧极快连点时只会提交一次。
 - 移动 Web 任务页默认优先“自动接单”，PRIME/RUNNER/GUIDE 手动抢接折叠为“演示备用”，减少绕过 AI 分派叙事的误操作。
@@ -40,38 +40,38 @@
 - 部署手册已补生产备份、SQLite 在线备份、1Panel/OpenResty 检查、数据库回滚和本地 DB 不提交的 Git 注意事项。
 - Android 首页快速入口已改为优先“进入当前事件/自动接单”，新建事件降级为“演示备用”。
 - 最终 P0/P1 验证已通过：后端 38 项测试、Web typecheck/build、Android debug/release readiness 构建均通过。
-- 第三方资源文档新增 provider/fallback 接入契约：地图、AI、健康、推送、短信都按真实 provider + demo fallback 设计。
+- 第三方资源文档新增 provider/fallback 接入契约：地图、AI、健康、推送、短信都按真实 provider + beta fallback 设计。
 - 后端增加输入边界校验：经纬度、定位精度、健康指标、AED 状态会拒绝明显非法值。
-- 后端新增 SQLite 审计日志和轻量频控：登录、demo 管理、患者指定、角色响应、现场动作、实验导出均有脱敏留痕，`/api/health/detail` 可查看安全控制状态。
+- 后端新增 SQLite 审计日志和轻量频控：登录、beta 管理、患者指定、角色响应、现场动作、实验导出均有脱敏留痕，`/api/health/detail` 可查看安全控制状态。
 - 后端自动接单、角色接入/动作接口已做幂等保护：AI 已分派终端首次自动接单会从 ASSIGNED 推进到 JOINED 并写入时间线；同一终端重复 join 不会把 CPR/AED/交接等已推进状态降级，同一个已完成动作被弱网重试或连点重复提交时，会返回当前阶段但不再追加重复日志，保证证据包时间线更干净。
 - Web 总控台新增“审计”按钮，可用演示口令查看最近操作留痕，适合作为比赛答辩中的安全合规截图。
 - Android session/token 已从普通 SharedPreferences 迁移到 AndroidX Security 加密存储，并兼容旧明文登录态迁移；若设备安全存储不可用，不再把 token 落盘。
 - Android Gradle JVM 堆已提高到 2GB，避免新增安全依赖后 Windows 构建出现 GC thrashing。
-- 后端地图距离 provider 已抽象：默认 demo/Haversine，`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；健康检查和调度元数据会显示 provider、距离来源和 fallback 原因。
+- 后端地图距离 provider 已抽象：默认 beta/Haversine，`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；健康检查和调度元数据会显示 provider、距离来源和 fallback 原因。
 - Android 原生定位 provider 已预埋：无需第三方 Key 即可走系统最近定位 + 演示坐标 fallback，后续高德 Android SDK 可作为 adapter 接入。
 - 后端通知 provider 已抽象：比赛版默认 `LRA_PUSH_PROVIDER=websocket`，未来 `jpush`/`vendor` provider 未接入时会显示 pending 并回退 WebSocket。
 - 后端最小 RBAC 已预埋：`LRA_ADMIN_PHONES` 可配置正式管理员手机号白名单，白名单用户登录后 `/auth/me` 返回 `admin` 权限，管理接口接受 Bearer token 或旧演示口令。
-- 移动端患者 SOS 正延迟分派已修复：`/mobile?demo=patient` 等待倒计时后不会再卡在 `DISPATCHING`，会继续完成角色分派。
+- 移动端患者 SOS 正延迟分派已修复：`/mobile?beta=patient` 等待倒计时后不会再卡在 `DISPATCHING`，会继续完成角色分派。
 - Web 总控台在服务器配置 `LRA_ADMIN_PHONES` 后会显示正式管理员登录入口，管理请求优先使用 Bearer token，演示口令仍可作为备用。
-- Web 总控台与 `/mobile-demo` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
+- Web 总控台与 `/mobile-beta` 已进一步去除评委可见的英文/内部码：演示阶段、审计留痕、AED 状态、四端角色标题和现场日志都优先显示中文。
 - Web 总控台默认已降噪：首屏保留演示流程、智能分派摘要、任务单、现场拓扑和四端状态；AI 配置、调度评分、在线终端调试列表、审计和系统日志统一放入“技术详情”展开区。
 - Web 总控台新增“演示准备度”检查卡：终端数量、AED 可用性、定位覆盖、健康摘要覆盖、证据导出状态会直接显示在首屏，便于正式展示前快速排雷。
 - Web 总控台新增“自检报告/导出自检”：可下载 Markdown 演示前自检报告，汇总准备度、管理权限、前后端健康、审计/频控、provider fallback、终端任务、AED 点位、演示入口和安全边界，不写入口令、token 或 API Key。
 - Web 总控台新增“演示入口”面板：可复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接，也可同步打开 4 个手机端标签页；初始化协同演示场景后自动绑定当前 `incidentId`，方便发给队友手机或现场审阅端。
-- `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-demo?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，并在导播台顶部和每个面板显示“已绑定当前事件/共享事件”，便于专家远程或多标签复现实验时确认没有开错轮次。
+- `/mobile?incidentId=...` 深链已恢复可用，入口和 PWA service worker 不再清理事件编号；`/mobile-beta?incidentId=...` 会把同一个事件编号透传给四个移动端 iframe，并在导播台顶部和每个面板显示“已绑定当前事件/共享事件”，便于专家远程或多标签复现实验时确认没有开错轮次。
 - Web 总控台和移动 Web 的 WebSocket 重连已补过期回调保护：切换事件、退出登录、关闭旧连接或网络抖动时，旧 socket 的 close/error/message 不会再覆盖当前连接状态或排出幽灵重连。
 - 移动 Web 首页已把 SOS/当前动作卡放在用户资料卡之前，急救状态下先看到行动按钮；移动演示入口也改为中文优先文案。
 - 移动 Web “现场/协同”页已进一步分层：默认只展示 AED 位置、队友角色、在线状态和任务状态；分派评分、理由、健康摘要和风险标记收进“分派依据与健康摘要”展开区。
 - 移动 Web 演示入口和 4 端演示台进一步弱化 PRIME/RUNNER/GUIDE 辅助代号，优先展示“核心施救端、AED 保障端、清障接驳端”和具体职责。
 - 移动 Web 归档页新增“下载事件证据包”按钮，沿用正式管理员或演示口令权限；手机端可直接输入演示口令并保存到与 Web 总控台相同的权限状态。
 - Web 手机预览和 Android 归档页已移除固定 `04:35`、`3人`、`成功 (1次)` 与未实现的 NFC 传输承诺，改为按事件日志/角色状态生成总耗时、协同任务和 AED 记录摘要。
-- `/mobile-demo` 导播步骤已补“归档并下载证据包”，总控台和移动/Android 可见文案进一步收敛为“智能分派/协同演示/事件证据包”等审慎表述。
+- `/mobile-beta` 导播步骤已补“归档并下载证据包”，总控台和移动/Android 可见文案进一步收敛为“智能分派/协同演示/事件证据包”等审慎表述。
 - 移动 Web 和 Android 健康卡已把“模拟现场/预实验证据包/OPPO 健康摘要”等界面词进一步收敛为“协同演示现场/事件证据包/健康摘要”，减少评委视角的内部项目感。
 - 移动 Web 归档态新增“复制本轮链接”和“返回总控台”，并修复归档后仍提示“响应清障接驳”的动作卡问题。
 - Android 全屏急救态进一步弱化 PRIME/RUNNER/GUIDE 辅助代号，调度中、AED 回送和送达提示均改为中文职责表述。
 - Android CPR 节律辅助页已将可见英文标题改为中文，减少评委演示时的语言割裂。
 - Android 核心施救导航页已移除 `AHEAD`、`Start CPR` 和固定 `15 m` 占位距离；现在优先显示调度距离，没有精确距离时提示按现场指引前往患者位置。
-- Android 现场总览、AED 目标卡和“我的”页已把楼层、AED 状态、定位来源等可见字段转成中文表述，避免展示 `1F/AVAILABLE/app-demo-fallback` 这类工程内部值。
+- Android 现场总览、AED 目标卡和“我的”页已把楼层、AED 状态、定位来源等可见字段转成中文表述，避免展示 `1F/AVAILABLE/app-beta-fallback` 这类工程内部值。
 - Android 错误提示已友好化：登录、事件连接、角色响应、定位/健康同步和 WebSocket 断线会显示 401/403/404/422、网络不可达、超时、证书、明文 HTTP 等中文排查提示，不再直接展示底层异常。
 - Android 事件连接已增加 REST 快照兜底：进入当前事件或指定事件时会先用 REST 返回值更新本地状态，再等待 WebSocket 实时帧，减少真机弱网下短暂空白或等待第一帧的问题。
 - Android WebSocket 重连已改为单飞调度：网络抖动或关闭/失败回调同时触发时，不会排队多个延迟重连任务，切换事件和主动关闭会取消旧重连。
@@ -96,15 +96,15 @@
 ## 线上已验证
 
 - `/api/health/detail` 正常，显示 `registeredClients=4`、`registeredAedSites=2`。
-- `POST /api/demo/bootstrap` 正常生成演示数据。
+- `POST /api/beta/bootstrap` 正常生成演示数据。
 - `POST /api/incidents/current/designate_patient` 正常分派：
-  - PRIME：`demo-doctor`
-  - RUNNER：`demo-runner`
-  - GUIDE：`demo-guide`
+  - PRIME：`beta-doctor`
+  - RUNNER：`beta-runner`
+  - GUIDE：`beta-guide`
 - `GET /api/experiments/current/export` 正常导出；ZIP 证据包可通过 `/api/experiments/current/package` 下载。
 - PM2 重启后再次读取客户端、AED、导出数据均正常。
-- 线上前端构建产物包含“演示口令”、`X-Demo-Admin-Token`、演示场景和导出控件。
-- 远端 `.env` 已设置 `LRA_DEMO_ADMIN_TOKEN`，当前演示口令为 `LCY`；不带口令访问 `/api/demo/bootstrap` 会返回 403。
+- 线上前端构建产物包含“演示口令”、`X-beta-Admin-Token`、演示场景和导出控件。
+- 远端 `.env` 已设置 `LRA_beta_ADMIN_TOKEN`，当前演示口令为 `LCY`；不带口令访问 `/api/beta/bootstrap` 会返回 403。
 
 ## 本地验证结果
 
@@ -123,19 +123,19 @@ npm run typecheck
 npm run build
 ```
 
-结果：均通过。最新证据包 SHA 复制增量构建产物为桌面 `App-DVQkGLsA.js`、移动 `MobileApp-Dhqmeawv.js`、4端演示台 `MobileDemoStage-bWe17Ylh.js`；上一轮 4 端导播台事件绑定构建产物为桌面 `App-C8-rsJ4D.js`、移动 `MobileApp-9a_Fy8WK.js`、4端演示台 `MobileDemoStage-7g9iM-bl.js`；准备度告警一致性构建产物为桌面 `App-DKGpinBD.js`、移动 `MobileApp-CWxAHAbu.js`、4端演示台 `MobileDemoStage-cNrZP1Tv.js`。
+结果：均通过。最新证据包 SHA 复制增量构建产物为桌面 `App-DVQkGLsA.js`、移动 `MobileApp-Dhqmeawv.js`、4端演示台 `MobilebetaStage-bWe17Ylh.js`；上一轮 4 端导播台事件绑定构建产物为桌面 `App-C8-rsJ4D.js`、移动 `MobileApp-9a_Fy8WK.js`、4端演示台 `MobilebetaStage-7g9iM-bl.js`；准备度告警一致性构建产物为桌面 `App-DKGpinBD.js`、移动 `MobileApp-CWxAHAbu.js`、4端演示台 `MobilebetaStage-cNrZP1Tv.js`。
 
 演示准备度告警一致性检查：Web 总控台现在把管理员权限未就绪并入可见准备度告警，卡片颜色、标题、待确认数量、告警摘要和导出的 Markdown 自检报告使用同一套状态。这样不会再出现页面显示“准备就绪”但自检报告仍列出管理权限阻塞的口径不一致。
 
-4 端导播台绑定状态检查：`/mobile-demo` 现在显示是否已绑定当前事件、短事件编号和“共享事件”面板标记；如果没有从总控台带入 `incidentId`，会提示先初始化演示场景再打开导播台。
+4 端导播台绑定状态检查：`/mobile-beta` 现在显示是否已绑定当前事件、短事件编号和“共享事件”面板标记；如果没有从总控台带入 `incidentId`，会提示先初始化演示场景再打开导播台。
 
 证据包 SHA 复制检查：Web 总控台下载 ZIP 证据包后，成功提示会保留文件名和 SHA-256，并提供“复制 SHA”按钮，便于把哈希贴到预实验记录、专家反馈或交接材料中。
 
-证据包 SHA-256 展示烟测：使用临时本地后端 `127.0.0.1:18093`、演示口令 `LCY`、临时 SQLite DB 通过。确认 Web 总控台点击“证据包”后显示“证据包已下载”和 64 位 SHA-256，且不显示“请求异常”；移动归档页 `/mobile?demo=guide&incidentId=...` 点击“下载事件证据包”后显示文件名和 64 位 SHA-256，且无下载错误提示。
+证据包 SHA-256 展示烟测：使用临时本地后端 `127.0.0.1:18093`、演示口令 `LCY`、临时 SQLite DB 通过。确认 Web 总控台点击“证据包”后显示“证据包已下载”和 64 位 SHA-256，且不显示“请求异常”；移动归档页 `/mobile?beta=guide&incidentId=...` 点击“下载事件证据包”后显示文件名和 64 位 SHA-256，且无下载错误提示。
 
-移动端演示防误触烟测：使用临时本地后端/前端 `127.0.0.1:18092`、临时 SQLite DB 通过。确认 `/mobile?demo=patient` 有可用 `启动 SOS`，首次点击只进入 `再次点击确认 SOS` 且不启动倒计时；`/mobile?demo=prime` 显示“核心施救不触发患者 SOS”，只有禁用的“等待患者端启动 SOS”，没有可用 SOS 触发按钮。
+移动端演示防误触烟测：使用临时本地后端/前端 `127.0.0.1:18092`、临时 SQLite DB 通过。确认 `/mobile?beta=patient` 有可用 `启动 SOS`，首次点击只进入 `再次点击确认 SOS` 且不启动倒计时；`/mobile?beta=prime` 显示“核心施救不触发患者 SOS”，只有禁用的“等待患者端启动 SOS”，没有可用 SOS 触发按钮。
 
-浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-demo?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?demo=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
+浏览器烟测：使用临时本地后端 `127.0.0.1:18086`、临时 SQLite DB、演示口令 `LCY` 通过。确认总控页默认隐藏技术细节、展开后可见 AI/日志诊断，`/mobile-beta?incidentId=...` 四个 iframe 均保留同一事件编号，`/mobile?beta=patient&slot=...&incidentId=...` 不丢失深链且 SOS 动作卡排在资料卡前。
 
 移动现场页烟测：使用临时本地后端 `127.0.0.1:18087` 通过。确认“现场”页默认不展示“智能评分/风险标记”，展开“分派依据与健康摘要”后再展示健康与风险信息。
 
@@ -214,7 +214,7 @@ Web 自检报告烟测：本地一体化后端 `127.0.0.1:18096`、临时 SQLite
 - `a635129`：后端正式管理员账号最小 RBAC，已推送。
 - `337496d`：前端共享类型补齐 `AuthUser.privileges`，已推送。
 - `9b373f4`：患者 SOS 正延迟修复与 Web 总控台管理员登录，已推送。
-- `a648ad8`：Web 总控台和 `/mobile-demo` 可见标签中文化，已推送。
+- `a648ad8`：Web 总控台和 `/mobile-beta` 可见标签中文化，已推送。
 - `c15d60f`：记录后端/Web 验证扫尾，已推送。
 - `36b818b`：记录 Android debug APK 验证扫尾，已推送。
 - `169a615`：预实验证据包新增 `expert_review_checklist.md` 和 `observer_record_form.csv`，并同步测试与材料口径，已推送。
@@ -327,9 +327,9 @@ python scripts\analyze_round_summary.py "D:\path\to\round-summary.csv" --output 
 2. 点击“演示场景”或“初始化协同演示场景”。
 3. 在“演示入口”面板复制或打开患者端、核心施救端、AED 保障端、清障接驳端和 4 端导播台链接。
 4. 展示 4 类终端画像和 AED 点位。
-5. 触发患者 `demo-patient`。
+5. 触发患者 `beta-patient`。
 6. 展示核心施救、AED 保障、环境清障三类任务的分派过程和理由。
-7. 用 Web、Android 或 `/mobile-demo` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
+7. 用 Web、Android 或 `/mobile-beta` 四端演示台完成 CPR、AED 取送、救护车到达、交接动作。
 8. 点击“自检报告”导出演示前状态记录；点击“证据包”下载 ZIP 作为低成本预实验记录，并用 `scripts/verify_evidence_package.py` 校验。
 9. 对外给专家/PPT 优先使用 `review_index.md`、`experiment_anonymized.json`、`clients_anonymized.csv`、`expert_summary.md`、`expert_review_checklist.md`、`expert_feedback_form.md`、`expert_feedback_summary.csv`、`facilitator_run_sheet.md`、`analysis_guide.md`、`data_dictionary.md`、`participant_consent_safety_brief.md`、`evidence_quality_report.json`、`observer_record_form.csv`、`participant_questionnaire.csv`、`baseline_vs_system_comparison.csv` 和 `pre_experiment_round_summary.csv`；单名专家用 `expert_feedback_form.md` 签字，多名专家意见和后续整改用 `expert_feedback_summary.csv` 汇总。
 

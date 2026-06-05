@@ -25,7 +25,7 @@ Build LifeReflexArc into a competition-ready medical innovation system:
 - Work on branch `codex/competition-hardening`.
 - Prefer `/opt/lifereflex` for server deployment preparation.
 - Third-party accounts that need QR login, email/SMS verification, real-name verification, paid quota, or final legal agreement are recorded as blockers and skipped.
-- Build features so the system still works in demo mode without map/vendor API keys.
+- Build features so the system still works in beta mode without map/vendor API keys.
 
 ## Priority 1: Planning And Resource Prep
 
@@ -67,12 +67,12 @@ Deliverables:
 - dispatch scoring uses qualification + health risk + distance + AED access
 - dispatch explanation exposed to web/app
 - event timeline and export endpoint
-- demo scenario bootstrap endpoint
+- beta scenario bootstrap endpoint
 
 Validation:
 
 - existing backend tests pass
-- new tests cover demo data, AED inventory, export, and dispatch rationale
+- new tests cover beta data, AED inventory, export, and dispatch rationale
 
 ## Priority 4: App And Web Usability
 

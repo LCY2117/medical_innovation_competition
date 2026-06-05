@@ -367,7 +367,7 @@ interface DispatchMeta {
 }
 
 interface HealthDetail {
-  demoAdminAuthEnabled?: boolean;
+  betaAdminAuthEnabled?: boolean;
   auth?: {
     adminAccountAuthEnabled?: boolean;
     adminPhoneCount?: number;
@@ -379,7 +379,7 @@ interface HealthDetail {
   healthProvider?: Record<string, unknown>;
   security?: Record<string, unknown>;
   storage?: Record<string, unknown>;
-  demoReadiness?: DemoReadiness;
+  betaReadiness?: betaReadiness;
   registeredClients?: number;
   registeredAedSites?: number;
   activeWebSockets?: number;
@@ -387,7 +387,7 @@ interface HealthDetail {
   version?: string | null;
 }
 
-interface DemoReadiness {
+interface betaReadiness {
   ready?: boolean;
   patientSelected?: boolean;
   clientCount?: number;
@@ -586,13 +586,13 @@ function translateAuditEventType(type: string): string {
     auth_register: '账号注册',
     auth_login: '账号登录',
     auth_logout: '退出登录',
-    auth_demo_login: '演示身份登录',
-    demo_admin_denied: '管理口令拒绝',
+    auth_beta_login: '演示身份登录',
+    beta_admin_denied: '管理口令拒绝',
     admin_denied: '管理权限拒绝',
     admin_user_denied: '管理员账号拒绝',
     incident_created: '创建事件',
     incident_reset: '重置事件',
-    demo_bootstrapped: '初始化演示',
+    beta_bootstrapped: '初始化演示',
     patient_designated: '指定患者',
     role_joined: '角色响应',
     role_auto_joined: '自动接单',
@@ -629,10 +629,10 @@ function summarizeActor(value?: string | null): string {
   if (!value) {
     return '--';
   }
-  if (value === 'demo_admin') {
+  if (value === 'beta_admin') {
     return '演示口令';
   }
-  if (value === 'open_demo_admin') {
+  if (value === 'open_beta_admin') {
     return '本地演示';
   }
   return value;
@@ -702,7 +702,7 @@ function translateLogMessage(message: string, displayUser: (userId?: string | nu
   if (message === 'AI dispatching started') {
     return '智能分派已启动';
   }
-  if (message === 'Demo scenario bootstrapped') {
+  if (message === 'beta scenario bootstrapped') {
     return '协同演示场景已初始化';
   }
   if (message === 'Incident auto-triggered') {
@@ -721,16 +721,16 @@ function formatTimeLabel(ts?: number | null): string {
   return new Date(ts).toLocaleTimeString('zh-CN', { hour12: false });
 }
 
-function getStoredDemoAdminToken(): string {
+function getStoredbetaAdminToken(): string {
   if (typeof window === 'undefined') {
     return '';
   }
-  return window.localStorage.getItem('lra_demo_admin_token') ?? '';
+  return window.localStorage.getItem('lra_beta_admin_token') ?? '';
 }
 
 const ADMIN_SESSION_KEY = 'lra_admin_session';
 
-const mobileDemoEntries = [
+const mobilebetaEntries = [
   { key: 'patient', label: '患者端', caption: '触发 SOS' },
   { key: 'prime', label: '核心施救', caption: 'CPR 与 AED 分析' },
   { key: 'runner', label: 'AED 保障', caption: '取送设备' },
@@ -763,15 +763,15 @@ function getStoredThemeMode(): ThemeMode {
   return 'dark';
 }
 
-function buildAdminHeaders(demoToken: string, adminToken: string | null | undefined, extra?: HeadersInit): HeadersInit {
+function buildAdminHeaders(betaToken: string, adminToken: string | null | undefined, extra?: HeadersInit): HeadersInit {
   const headers = new Headers(extra);
   const trimmedAdminToken = adminToken?.trim();
   if (trimmedAdminToken) {
     headers.set('Authorization', `Bearer ${trimmedAdminToken}`);
   }
-  const trimmedDemoToken = demoToken.trim();
-  if (trimmedDemoToken) {
-    headers.set('X-Demo-Admin-Token', trimmedDemoToken);
+  const trimmedbetaToken = betaToken.trim();
+  if (trimmedbetaToken) {
+    headers.set('X-beta-Admin-Token', trimmedbetaToken);
   }
   return headers;
 }
@@ -848,11 +848,11 @@ function formatTechnicalValue(value: unknown): string {
   }
   if (typeof value === 'string') {
     const labels: Record<string, string> = {
-      demo: '演示距离模型',
+      beta: '演示距离模型',
       amap: '高德地图服务',
       tencent: '腾讯地图服务',
       baidu: '百度地图服务',
-      haversine_demo: '演示直线距离',
+      haversine_beta: '演示直线距离',
       amap_web_service: '高德 WebService 距离',
       amap_service_key_missing: '高德服务 Key 未配置，已使用演示距离',
       amap_timeout: '高德服务超时，已使用演示距离',
@@ -1040,7 +1040,7 @@ function buildDispatchStream(
   }));
 }
 
-function buildDemoFlowSteps(state: IncidentState | null) {
+function buildbetaFlowSteps(state: IncidentState | null) {
   const phase = state?.phase;
   const hasIncident = Boolean(state);
   const dispatchStarted = Boolean(
@@ -1380,7 +1380,7 @@ export default function App() {
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [showAuditPanel, setShowAuditPanel] = useState(false);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
-  const [demoAdminToken, setDemoAdminToken] = useState(getStoredDemoAdminToken);
+  const [betaAdminToken, setbetaAdminToken] = useState(getStoredbetaAdminToken);
   const [adminSession, setAdminSession] = useState<AdminSession | null>(getStoredAdminSession);
   const [adminPhone, setAdminPhone] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -1450,7 +1450,7 @@ export default function App() {
   const archiveRoleCountLabel = formatArchiveRoleCount(incidentState);
   const archiveAedSummaryLabel = formatArchiveAedSummary(incidentState);
   const dispatchStream = buildDispatchStream(incidentState, clients, dispatchMeta, dispatchNowMs);
-  const demoFlowSteps = buildDemoFlowSteps(incidentState);
+  const betaFlowSteps = buildbetaFlowSteps(incidentState);
   const rationale = incidentState?.dispatchRationale ?? {};
   const rationaleEntries = Object.entries(rationale);
   const assignedRoleEntries = incidentState
@@ -1499,14 +1499,14 @@ export default function App() {
       ? formatDistanceLabel(incidentState.dispatchRationale.PRIME.distanceToPatientMeters)
       : '按现场路线';
   const runnerDisplayName = getClientDisplayName(incidentState?.roles.RUNNER.userId);
-  const demoReadiness = healthDetail?.demoReadiness;
-  const readinessWarnings = demoReadiness?.warnings ?? [];
+  const betaReadiness = healthDetail?.betaReadiness;
+  const readinessWarnings = betaReadiness?.warnings ?? [];
   const readinessItems = [
-    { label: '终端', value: `${demoReadiness?.clientCount ?? clients.length}/4`, ready: (demoReadiness?.clientCount ?? clients.length) >= 4 },
-    { label: 'AED', value: `${demoReadiness?.availableAedSiteCount ?? visibleAedSites.length}`, ready: (demoReadiness?.availableAedSiteCount ?? visibleAedSites.length) >= 1 },
-    { label: '定位', value: readinessPercent(demoReadiness?.locationCoveragePercent), ready: (demoReadiness?.locationCoveragePercent ?? 0) >= 100 },
-    { label: '健康摘要', value: readinessPercent(demoReadiness?.healthCoveragePercent), ready: (demoReadiness?.healthCoveragePercent ?? 0) >= 100 },
-    { label: '证据导出', value: demoReadiness?.exportReady ? '可用' : '待事件日志', ready: Boolean(demoReadiness?.exportReady) },
+    { label: '终端', value: `${betaReadiness?.clientCount ?? clients.length}/4`, ready: (betaReadiness?.clientCount ?? clients.length) >= 4 },
+    { label: 'AED', value: `${betaReadiness?.availableAedSiteCount ?? visibleAedSites.length}`, ready: (betaReadiness?.availableAedSiteCount ?? visibleAedSites.length) >= 1 },
+    { label: '定位', value: readinessPercent(betaReadiness?.locationCoveragePercent), ready: (betaReadiness?.locationCoveragePercent ?? 0) >= 100 },
+    { label: '健康摘要', value: readinessPercent(betaReadiness?.healthCoveragePercent), ready: (betaReadiness?.healthCoveragePercent ?? 0) >= 100 },
+    { label: '证据导出', value: betaReadiness?.exportReady ? '可用' : '待事件日志', ready: Boolean(betaReadiness?.exportReady) },
   ];
   const cprLogTs = getLatestLogTs(incidentState, 'CPR started');
   const shockLogTs = getLatestLogTs(incidentState, 'AED shock delivered');
@@ -1515,22 +1515,22 @@ export default function App() {
   const resuscitationGuidance = getResuscitationGuidance(guidanceElapsedSec);
   const adminAccountEnabled = Boolean(healthDetail?.auth?.adminAccountAuthEnabled);
   const adminSessionReady = Boolean(adminSession?.token && adminSession.user.privileges?.includes('admin'));
-  const demoAdminRequired = Boolean(healthDetail?.demoAdminAuthEnabled || adminAccountEnabled);
-  const demoAdminReady = !demoAdminRequired || adminSessionReady || demoAdminToken.trim().length > 0;
+  const betaAdminRequired = Boolean(healthDetail?.betaAdminAuthEnabled || adminAccountEnabled);
+  const betaAdminReady = !betaAdminRequired || adminSessionReady || betaAdminToken.trim().length > 0;
   const adminReadinessWarning = '管理权限未就绪：请先登录正式管理员账号或填写演示口令。';
   const visibleReadinessWarnings = [
     ...readinessWarnings,
-    ...(!demoAdminReady ? [adminReadinessWarning] : []),
+    ...(!betaAdminReady ? [adminReadinessWarning] : []),
   ];
-  const readinessReady = Boolean(demoReadiness?.ready && demoAdminReady);
-  const demoAdminStatusLabel = adminSessionReady
+  const readinessReady = Boolean(betaReadiness?.ready && betaAdminReady);
+  const betaAdminStatusLabel = adminSessionReady
     ? '账号已登录'
-    : demoAdminToken.trim()
+    : betaAdminToken.trim()
       ? '口令已填'
-      : demoAdminRequired
+      : betaAdminRequired
       ? '需要权限'
       : '本地免口令';
-  const buildDemoUrl = (path: '/mobile' | '/mobile-demo', params?: Record<string, string>): string => {
+  const buildbetaUrl = (path: '/mobile' | '/mobile-beta', params?: Record<string, string>): string => {
     if (typeof window === 'undefined') {
       return path;
     }
@@ -1545,21 +1545,21 @@ export default function App() {
     });
     return url.toString();
   };
-  const demoShareLinks = [
+  const betaShareLinks = [
     {
       key: 'stage',
       label: '4端导播台',
       caption: '一屏预览患者与三类任务端',
-      url: buildDemoUrl('/mobile-demo'),
+      url: buildbetaUrl('/mobile-beta'),
     },
-    ...mobileDemoEntries.map((entry) => ({
+    ...mobilebetaEntries.map((entry) => ({
       ...entry,
-      url: buildDemoUrl('/mobile', { demo: entry.key, slot: entry.key }),
+      url: buildbetaUrl('/mobile', { beta: entry.key, slot: entry.key }),
     })),
   ];
-  const mobileTerminalLinks = demoShareLinks.filter((link) => link.key !== 'stage');
+  const mobileTerminalLinks = betaShareLinks.filter((link) => link.key !== 'stage');
   const mobileTerminalShareText = mobileTerminalLinks.map((link) => `${link.label}：${link.url}`).join('\n');
-  const demoShareText = demoShareLinks.map((link) => `${link.label}：${link.url}`).join('\n');
+  const betaShareText = betaShareLinks.map((link) => `${link.label}：${link.url}`).join('\n');
 
   const getActorId = (role: 'PRIME' | 'RUNNER' | 'GUIDE'): string => {
     const serverUserId = incidentState?.roles?.[role]?.userId;
@@ -1589,13 +1589,13 @@ export default function App() {
     if (typeof window === 'undefined') {
       return;
     }
-    const trimmed = demoAdminToken.trim();
+    const trimmed = betaAdminToken.trim();
     if (trimmed) {
-      window.localStorage.setItem('lra_demo_admin_token', trimmed);
+      window.localStorage.setItem('lra_beta_admin_token', trimmed);
     } else {
-      window.localStorage.removeItem('lra_demo_admin_token');
+      window.localStorage.removeItem('lra_beta_admin_token');
     }
-  }, [demoAdminToken]);
+  }, [betaAdminToken]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1851,7 +1851,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '创建事件失败'));
@@ -1940,7 +1940,7 @@ export default function App() {
     try {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/audit/events?limit=30`, {
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '加载审计日志失败'));
@@ -1953,12 +1953,12 @@ export default function App() {
     }
   };
 
-  const bootstrapDemo = async () => {
+  const bootstrapbeta = async () => {
     try {
       setErrorMessage(null);
-      const res = await fetch(`${getApiBase()}/demo/bootstrap`, {
+      const res = await fetch(`${getApiBase()}/beta/bootstrap`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '初始化演示场景失败'));
@@ -1981,15 +1981,15 @@ export default function App() {
     }
   };
 
-  const openMobileDemoStage = () => {
+  const openMobilebetaStage = () => {
     if (typeof window === 'undefined') {
       return;
     }
-    const url = new URL('/mobile-demo', window.location.origin);
+    const url = new URL('/mobile-beta', window.location.origin);
     if (incidentId) {
       url.searchParams.set('incidentId', incidentId);
     }
-    const opened = window.open(url.toString(), 'lifereflex-mobile-demo-stage');
+    const opened = window.open(url.toString(), 'lifereflex-mobile-beta-stage');
     if (!opened) {
       setErrorMessage('浏览器拦截了 4端演示台，请允许本站弹出窗口后重试。');
       return;
@@ -2002,7 +2002,7 @@ export default function App() {
       setErrorMessage(null);
       setSuccessMessage(null);
       const res = await fetch(`${getApiBase()}/experiments/current/export`, {
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '导出实验数据失败'));
@@ -2025,7 +2025,7 @@ export default function App() {
         ? `/experiments/${encodeURIComponent(targetIncidentId)}/package`
         : '/experiments/current/package';
       const res = await fetch(`${getApiBase()}${packagePath}`, {
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '导出事件证据包失败'));
@@ -2084,7 +2084,7 @@ export default function App() {
       formatLocationLabel(site.location),
       site.accessNotes || '无补充说明',
     ]);
-    const shareLinkRows = demoShareLinks.map((link) => [link.label, link.url]);
+    const shareLinkRows = betaShareLinks.map((link) => [link.label, link.url]);
     const table = (headers: string[], rows: Array<Array<string | number | boolean | null | undefined>>) => {
       const normalize = (value: string | number | boolean | null | undefined) => String(value ?? '--').replace(/\|/g, '/');
       return [
@@ -2116,9 +2116,9 @@ export default function App() {
         ['项目', '状态'],
         [
           ['实时连接', wsConnected ? '已连接' : '未连接'],
-          ['管理权限', demoAdminStatusLabel],
+          ['管理权限', betaAdminStatusLabel],
           ['正式管理员账号', adminAccountEnabled ? '已启用' : '未启用'],
-          ['演示口令保护', healthDetail?.demoAdminAuthEnabled ? '已启用' : '未启用'],
+          ['演示口令保护', healthDetail?.betaAdminAuthEnabled ? '已启用' : '未启用'],
           ['后端版本', healthDetail?.version ?? '未返回'],
           ['前端构建', healthDetail?.frontend?.ok ? '可用' : '待确认'],
           ['审计日志', healthDetail?.security?.auditLogEnabled ? '已启用' : '未启用'],
@@ -2156,7 +2156,7 @@ export default function App() {
       '',
       '## 八、建议演示顺序',
       '',
-      ...demoFlowSteps.map((step, index) => `${index + 1}. ${step.title}：${step.detail}（${step.complete ? '已完成' : step.active ? '当前步骤' : '待执行'}）`),
+      ...betaFlowSteps.map((step, index) => `${index + 1}. ${step.title}：${step.detail}（${step.complete ? '已完成' : step.active ? '当前步骤' : '待执行'}）`),
       '',
       '## 九、预实验后证据处理',
       '',
@@ -2191,7 +2191,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current/reset`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '重置事件失败'));
@@ -2211,7 +2211,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/current/designate_patient`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ patientUserId }),
       });
       if (!res.ok) {
@@ -2241,7 +2241,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/join`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ role, userId: getActorId(role) }),
       });
       if (!res.ok) {
@@ -2260,7 +2260,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/actions`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({ action, userId: getActionActorId(action) }),
       });
       if (!res.ok) {
@@ -2279,7 +2279,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/trigger`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '触发事件失败'));
@@ -2297,7 +2297,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/sos_start`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '启动 SOS 失败'));
@@ -2315,7 +2315,7 @@ export default function App() {
       setErrorMessage(null);
       const res = await fetch(`${getApiBase()}/incidents/${incidentId}/sos_cancel`, {
         method: 'POST',
-        headers: buildAdminHeaders(demoAdminToken, adminSession?.token),
+        headers: buildAdminHeaders(betaAdminToken, adminSession?.token),
       });
       if (!res.ok) {
         throw new Error(await explainResponseError(res, '取消 SOS 失败'));
@@ -2357,11 +2357,11 @@ export default function App() {
     };
   }, []);
 
-  const openDemoLink = (url: string, key: string) => {
+  const openbetaLink = (url: string, key: string) => {
     if (typeof window === 'undefined') {
       return;
     }
-    const opened = window.open(url, key === 'stage' ? 'lifereflex-mobile-demo-stage' : '_blank');
+    const opened = window.open(url, key === 'stage' ? 'lifereflex-mobile-beta-stage' : '_blank');
     if (!opened) {
       setErrorMessage('浏览器拦截了演示入口，请允许本站弹出窗口后重试。');
       return;
@@ -2390,7 +2390,7 @@ export default function App() {
       }
     });
     if (opened.length !== mobileTerminalLinks.length) {
-      const copied = await copyDemoLink('mobile-all', mobileTerminalShareText);
+      const copied = await copybetaLink('mobile-all', mobileTerminalShareText);
       setErrorMessage(
         copied
           ? `浏览器只允许打开 ${opened.length}/${mobileTerminalLinks.length} 个手机端，已复制四端链接，请手动粘贴到新标签页。`
@@ -2409,7 +2409,7 @@ export default function App() {
     }, 1600);
   };
 
-  const copyDemoLink = async (key: string, text: string): Promise<boolean> => {
+  const copybetaLink = async (key: string, text: string): Promise<boolean> => {
     const ok = await copyTextToClipboard(text);
     if (!ok) {
       setErrorMessage('复制失败，请手动复制演示入口链接。');
@@ -3140,8 +3140,8 @@ export default function App() {
             <div className="h-9 flex items-center gap-2 rounded-lg border border-slate-700 bg-black/30 px-3">
               <KeyRound size={14} className="text-slate-400" />
               <input
-                value={demoAdminToken}
-                onChange={(event) => setDemoAdminToken(event.target.value)}
+                value={betaAdminToken}
+                onChange={(event) => setbetaAdminToken(event.target.value)}
                 type="password"
                 autoComplete="off"
                 placeholder="演示口令"
@@ -3152,14 +3152,14 @@ export default function App() {
             <div
               className={cn(
                 "h-9 flex items-center gap-2 rounded-lg border px-3 text-[10px] font-bold uppercase tracking-wider",
-                demoAdminReady
+                betaAdminReady
                   ? "border-emerald-700/60 bg-emerald-950/40 text-emerald-300"
                   : "border-amber-700/60 bg-amber-950/40 text-amber-300"
               )}
               title="读取 /api/health/detail 后判断是否需要正式管理员账号或演示口令"
             >
-              {demoAdminReady ? <Unlock size={14} /> : <Lock size={14} />}
-              {demoAdminStatusLabel}
+              {betaAdminReady ? <Unlock size={14} /> : <Lock size={14} />}
+              {betaAdminStatusLabel}
             </div>
             <div className="font-mono text-xs font-bold text-slate-200 px-3 py-2 text-center bg-black/30 rounded border border-white/10">
               {incidentId ? `事件: ${incidentId.slice(0, 8)}` : '事件: --'}
@@ -3170,14 +3170,14 @@ export default function App() {
             
           <div className="flex items-center gap-2">
              <button
-               onClick={bootstrapDemo}
+               onClick={bootstrapbeta}
                className="h-9 px-3 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
                title="初始化可演示的患者、救援者和 AED 场景"
              >
                <Siren size={16} /> 演示场景
              </button>
              <button
-               onClick={openMobileDemoStage}
+               onClick={openMobilebetaStage}
                className="h-9 px-3 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors text-[10px] font-bold uppercase tracking-wider flex items-center gap-2"
                title="新开单个 4 端分屏演示台，兼容 Edge 弹窗限制"
              >
@@ -3408,7 +3408,7 @@ export default function App() {
                   <Smartphone size={14} /> {copiedLinkKey === 'mobile-all' ? '已打开' : '打开4个手机端'}
                 </button>
                 <button
-                  onClick={() => copyDemoLink('all', demoShareText)}
+                  onClick={() => copybetaLink('all', betaShareText)}
                   className="h-9 rounded-lg border border-blue-700/70 bg-blue-900/40 px-3 text-[10px] font-bold uppercase tracking-wider text-blue-100 hover:bg-blue-900/70 transition-colors flex items-center gap-2"
                   title="复制四端导播台和各移动端入口"
                 >
@@ -3417,7 +3417,7 @@ export default function App() {
               </div>
             </div>
             <div className="mt-3 grid grid-cols-1 md:grid-cols-5 gap-2">
-              {demoShareLinks.map((link) => (
+              {betaShareLinks.map((link) => (
                 <div key={link.key} className="rounded-lg border border-blue-900/60 bg-slate-950/35 px-3 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -3426,14 +3426,14 @@ export default function App() {
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
                       <button
-                        onClick={() => copyDemoLink(link.key, link.url)}
+                        onClick={() => copybetaLink(link.key, link.url)}
                         className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white"
                         title={`复制${link.label}链接`}
                       >
                         {copiedLinkKey === link.key ? <CheckCircle2 size={14} /> : <Copy size={14} />}
                       </button>
                       <button
-                        onClick={() => openDemoLink(link.url, link.key)}
+                        onClick={() => openbetaLink(link.url, link.key)}
                         className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white"
                         title={`打开${link.label}`}
                       >
@@ -3449,7 +3449,7 @@ export default function App() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-            {demoFlowSteps.map((step, index) => (
+            {betaFlowSteps.map((step, index) => (
               <div
                 key={step.title}
                 className={cn(
@@ -3482,7 +3482,7 @@ export default function App() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <button
-              onClick={bootstrapDemo}
+              onClick={bootstrapbeta}
               className="min-h-12 rounded-lg border border-red-500/60 bg-red-950/40 px-4 py-3 text-left hover:bg-red-950/70 transition-colors"
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-white">

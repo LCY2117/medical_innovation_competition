@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,6 +65,14 @@ import com.example.lifereflexarc.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+enum class ProfileRoute {
+    Home,
+    Account,
+    Archive,
+    Settings,
+    HealthLocation,
+}
 
 @Composable
 fun CommandHomeScreen(
@@ -513,6 +524,7 @@ private fun translateTimelineMessage(message: String): String {
 fun ArchiveScreen(
     incidentState: IncidentState?,
     archives: List<IncidentArchiveEntry>,
+    showTitle: Boolean = true,
 ) {
     Column(
         modifier = Modifier
@@ -520,7 +532,9 @@ fun ArchiveScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SectionTitle("事件归档")
+        if (showTitle) {
+            SectionTitle("事件归档")
+        }
         if (archives.isEmpty()) {
             EmptyStateCard(
                 title = "暂无已归档事件",
@@ -579,15 +593,96 @@ fun ProfileScreen(
     session: UserSession,
     sessionError: String?,
     sessionLoading: Boolean,
+    profileRoute: ProfileRoute,
     healthSignals: HealthSignalSummary?,
     healthReadiness: HealthIntegrationReadiness,
     location: GeoPoint?,
     locationStatus: String,
+    incidentState: IncidentState?,
+    archives: List<IncidentArchiveEntry>,
+    connected: Boolean,
+    connecting: Boolean,
+    appSettings: AppSettings,
+    onRouteChange: (ProfileRoute) -> Unit,
+    onOpenCurrent: () -> Unit,
     onSyncSystemLocation: () -> Unit,
-    onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+    onbetaLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
     onProfileUpdate: (String, String, HealthCondition, ProfessionIdentity, String) -> Unit,
     onInputChanged: () -> Unit,
     onLogout: () -> Unit,
+    onVoiceGuidanceChanged: (Boolean) -> Unit,
+    onVibrationAlertChanged: (Boolean) -> Unit,
+    onbetaSafetyChanged: (Boolean) -> Unit,
+) {
+    when (profileRoute) {
+        ProfileRoute.Home -> ProfileHomeScreen(
+            session = session,
+            archives = archives,
+            connected = connected,
+            connecting = connecting,
+            location = location,
+            locationStatus = locationStatus,
+            healthReadiness = healthReadiness,
+            onRouteChange = onRouteChange,
+            onLogout = onLogout,
+        )
+        ProfileRoute.Account -> AccountProfileScreen(
+            session = session,
+            sessionError = sessionError,
+            sessionLoading = sessionLoading,
+            onBack = { onRouteChange(ProfileRoute.Home) },
+            onProfileUpdate = onProfileUpdate,
+            onInputChanged = onInputChanged,
+        )
+        ProfileRoute.Archive -> ProfileSubpageScaffold(
+            title = "事件归档",
+            onBack = { onRouteChange(ProfileRoute.Home) },
+        ) {
+            ArchiveScreen(incidentState = incidentState, archives = archives, showTitle = false)
+        }
+        ProfileRoute.Settings -> ProfileSubpageScaffold(
+            title = "应用设置",
+            onBack = { onRouteChange(ProfileRoute.Home) },
+        ) {
+            SettingsScreen(
+                session = session,
+                incidentState = incidentState,
+                connected = connected,
+                connecting = connecting,
+                healthReadiness = healthReadiness,
+                appSettings = appSettings,
+                location = location,
+                locationStatus = locationStatus,
+                archiveCount = archives.size,
+                onOpenCurrent = onOpenCurrent,
+                onSyncSystemLocation = onSyncSystemLocation,
+                onVoiceGuidanceChanged = onVoiceGuidanceChanged,
+                onVibrationAlertChanged = onVibrationAlertChanged,
+                onbetaSafetyChanged = onbetaSafetyChanged,
+                onLogout = onLogout,
+                showTitle = false,
+            )
+        }
+        ProfileRoute.HealthLocation -> HealthLocationScreen(
+            healthSignals = healthSignals,
+            healthReadiness = healthReadiness,
+            location = location,
+            locationStatus = locationStatus,
+            onBack = { onRouteChange(ProfileRoute.Home) },
+            onSyncSystemLocation = onSyncSystemLocation,
+            onbetaLocationSelected = onbetaLocationSelected,
+        )
+    }
+}
+
+@Composable
+private fun AccountProfileScreen(
+    session: UserSession,
+    sessionError: String?,
+    sessionLoading: Boolean,
+    onBack: () -> Unit,
+    onProfileUpdate: (String, String, HealthCondition, ProfessionIdentity, String) -> Unit,
+    onInputChanged: () -> Unit,
 ) {
     var editing by rememberSaveable { mutableStateOf(false) }
     var displayName by rememberSaveable { mutableStateOf(session.displayName) }
@@ -612,7 +707,17 @@ fun ProfileScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SectionTitle("个人中心")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onBack)
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("个人资料", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        }
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF111C34)),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
@@ -661,7 +766,7 @@ fun ProfileScreen(
                             displayName = it
                             onInputChanged()
                         },
-                        label = "姓名",
+                        label = "昵称 / 展示名",
                         modifier = Modifier.fillMaxWidth(),
                     )
                     com.example.lifereflexarc.ui.components.LraOutlinedTextField(
@@ -699,7 +804,7 @@ fun ProfileScreen(
                             bio = it
                             onInputChanged()
                         },
-                        label = "个人介绍",
+                        label = "个人补充（可选）",
                         modifier = Modifier.fillMaxWidth(),
                     )
                     if (!sessionError.isNullOrBlank()) {
@@ -733,7 +838,7 @@ fun ProfileScreen(
                         )
                     }
                 } else {
-                    SummaryRow("姓名", session.displayName, dark = true)
+                    SummaryRow("昵称 / 展示名", session.displayName, dark = true)
                     SummaryRow("组织 / 场景", session.organization, dark = true)
                     SummaryRow("调度画像", session.profileSummary, dark = true)
                     PressableButton(
@@ -745,15 +850,6 @@ fun ProfileScreen(
                 }
             }
         }
-
-        HealthSignalSummaryCard(healthSignals = healthSignals, readiness = healthReadiness)
-
-        DemoLocationCard(
-            location = location,
-            locationStatus = locationStatus,
-            onSyncSystemLocation = onSyncSystemLocation,
-            onDemoLocationSelected = onDemoLocationSelected,
-        )
 
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
@@ -768,21 +864,263 @@ fun ProfileScreen(
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
                 )
-                Text(
-                    text = "系统会基于你的身体状况、职业身份和个人画像，为你分配最合适的现场任务。",
-                    color = PhoneColors.GrayText,
-                    fontSize = 13.sp,
-                    lineHeight = 20.sp,
-                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileHomeScreen(
+    session: UserSession,
+    archives: List<IncidentArchiveEntry>,
+    connected: Boolean,
+    connecting: Boolean,
+    location: GeoPoint?,
+    locationStatus: String,
+    healthReadiness: HealthIntegrationReadiness,
+    onRouteChange: (ProfileRoute) -> Unit,
+    onLogout: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF111C34)),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            border = BorderStroke(1.dp, Color(0xFF22304A)),
+            modifier = Modifier.clickable { onRouteChange(ProfileRoute.Account) },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
+                        .background(Color(0xFF2563EB)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = session.displayName.take(1).ifBlank { "我" },
+                        color = Color.White,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(session.displayName, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(maskPhone(session.phone), color = PhoneColors.GrayText, fontSize = 13.sp)
+                    Text(session.organization, color = Color(0xFFE2E8F0), fontSize = 13.sp)
+                }
+                Text(">", color = PhoneColors.GrayText, fontSize = 24.sp)
             }
         }
 
-        PressableButton(
-            text = "退出登录",
-            onClick = onLogout,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7F1D1D), contentColor = Color.White),
-            modifier = Modifier.fillMaxWidth(),
+        ProfileMenuGroup {
+            ProfileMenuRow(
+                iconText = "资",
+                title = "个人资料",
+                value = session.credentialStatus,
+                accent = PhoneColors.Blue,
+                onClick = { onRouteChange(ProfileRoute.Account) },
+            )
+        }
+
+        ProfileMenuGroup {
+            ProfileMenuRow(
+                iconText = "档",
+                title = "事件归档",
+                value = "${archives.size} 条",
+                accent = Color(0xFF8B5CF6),
+                onClick = { onRouteChange(ProfileRoute.Archive) },
+            )
+            ProfileMenuDivider()
+            ProfileMenuRow(
+                iconText = "康",
+                title = "位置与健康",
+                value = location?.label ?: healthReadiness.statusText,
+                accent = Color(0xFF10B981),
+                onClick = { onRouteChange(ProfileRoute.HealthLocation) },
+            )
+        }
+
+        ProfileMenuGroup {
+            ProfileMenuRow(
+                iconText = "设",
+                title = "应用设置",
+                value = connectionStatusLabel(connected, connecting),
+                accent = Color(0xFF60A5FA),
+                onClick = { onRouteChange(ProfileRoute.Settings) },
+            )
+        }
+
+        ProfileMenuGroup {
+            ProfileMenuRow(
+                iconText = "退",
+                title = "退出登录",
+                value = "",
+                accent = Color(0xFFEF4444),
+                onClick = onLogout,
+                danger = true,
+            )
+        }
+
+        if (locationStatus.isNotBlank()) {
+            Text(
+                text = locationStatus,
+                color = PhoneColors.GrayText,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileSubpageScaffold(
+    title: String,
+    onBack: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ProfileBackHeader(title = title, onBack = onBack)
+        content()
+    }
+}
+
+@Composable
+private fun HealthLocationScreen(
+    healthSignals: HealthSignalSummary?,
+    healthReadiness: HealthIntegrationReadiness,
+    location: GeoPoint?,
+    locationStatus: String,
+    onBack: () -> Unit,
+    onSyncSystemLocation: () -> Unit,
+    onbetaLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        ProfileBackHeader(title = "位置与健康", onBack = onBack)
+        HealthSignalSummaryCard(healthSignals = healthSignals, readiness = healthReadiness)
+        betaLocationCard(
+            location = location,
+            locationStatus = locationStatus,
+            onSyncSystemLocation = onSyncSystemLocation,
+            onbetaLocationSelected = onbetaLocationSelected,
         )
+    }
+}
+
+@Composable
+private fun ProfileBackHeader(
+    title: String,
+    onBack: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onBack)
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun ProfileMenuGroup(
+    content: @Composable () -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+        border = BorderStroke(1.dp, Color(0xFF1E293B)),
+    ) {
+        Column {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ProfileMenuRow(
+    iconText: String,
+    title: String,
+    value: String,
+    accent: Color,
+    onClick: () -> Unit,
+    danger: Boolean = false,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(9.dp))
+                .background(accent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = iconText,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            text = title,
+            color = if (danger) Color(0xFFFCA5A5) else Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        if (value.isNotBlank()) {
+            Text(value, color = PhoneColors.GrayText, fontSize = 12.sp)
+        }
+        Text(">", color = PhoneColors.GrayText, fontSize = 18.sp)
+    }
+}
+
+@Composable
+private fun ProfileMenuDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 56.dp)
+            .background(Color(0xFF1E293B))
+            .height(1.dp),
+    )
+}
+
+private fun maskPhone(phone: String): String {
+    val digits = phone.filter(Char::isDigit)
+    return if (digits.length >= 7) {
+        "${digits.take(3)}****${digits.takeLast(4)}"
+    } else {
+        phone
     }
 }
 
@@ -801,8 +1139,9 @@ fun SettingsScreen(
     onSyncSystemLocation: () -> Unit,
     onVoiceGuidanceChanged: (Boolean) -> Unit,
     onVibrationAlertChanged: (Boolean) -> Unit,
-    onDemoSafetyChanged: (Boolean) -> Unit,
+    onbetaSafetyChanged: (Boolean) -> Unit,
     onLogout: () -> Unit,
+    showTitle: Boolean = true,
 ) {
     Column(
         modifier = Modifier
@@ -810,7 +1149,9 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        SectionTitle("设置")
+        if (showTitle) {
+            SectionTitle("设置")
+        }
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF111C34)),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
@@ -878,8 +1219,8 @@ fun SettingsScreen(
                 SettingsSwitchRow(
                     title = "演示安全确认",
                     body = "在比赛与预实验中明确当前流程仅用于模拟展示。",
-                    checked = appSettings.demoSafetyAcknowledged,
-                    onCheckedChange = onDemoSafetyChanged,
+                    checked = appSettings.betaSafetyAcknowledged,
+                    onCheckedChange = onbetaSafetyChanged,
                 )
             }
         }
@@ -1006,17 +1347,17 @@ private fun SettingsSwitchRow(
 }
 
 @Composable
-private fun DemoLocationCard(
+private fun betaLocationCard(
     location: GeoPoint?,
     locationStatus: String,
     onSyncSystemLocation: () -> Unit,
-    onDemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+    onbetaLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
 ) {
     val points = listOf(
-        DemoLocationPoint("患者走廊", "教学楼 A 座 2 层走廊", 39.904120, 116.407210),
-        DemoLocationPoint("一层大厅", "教学楼 A 座 1 层大厅", 39.904210, 116.407260),
-        DemoLocationPoint("校门岗亭", "校门岗亭", 39.904500, 116.407620),
-        DemoLocationPoint("操场入口", "操场入口", 39.903920, 116.407020),
+        betaLocationPoint("患者走廊", "教学楼 A 座 2 层走廊", 39.904120, 116.407210),
+        betaLocationPoint("一层大厅", "教学楼 A 座 1 层大厅", 39.904210, 116.407260),
+        betaLocationPoint("校门岗亭", "校门岗亭", 39.904500, 116.407620),
+        betaLocationPoint("操场入口", "操场入口", 39.903920, 116.407020),
     )
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
@@ -1050,7 +1391,7 @@ private fun DemoLocationCard(
             points.forEach { point ->
                 PressableButton(
                     text = point.title,
-                    onClick = { onDemoLocationSelected(point.label, point.latitude, point.longitude) },
+                    onClick = { onbetaLocationSelected(point.label, point.latitude, point.longitude) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D4ED8), contentColor = Color.White),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -1059,7 +1400,7 @@ private fun DemoLocationCard(
     }
 }
 
-private data class DemoLocationPoint(
+private data class betaLocationPoint(
     val title: String,
     val label: String,
     val latitude: Double,
