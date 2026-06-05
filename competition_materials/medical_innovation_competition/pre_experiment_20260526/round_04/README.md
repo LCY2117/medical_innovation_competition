@@ -3,7 +3,7 @@
 事件编号：0a4df7a4-d506-420e-975f-f936735222c2
 导出时间戳：1779769335698
 事件阶段：ARCHIVED
-患者终端：beta-patient
+患者终端：demo-patient
 调度来源：fallback
 
 ## 文件说明

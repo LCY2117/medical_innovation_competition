@@ -119,7 +119,7 @@ class AuthCodeRequestResponse(BaseModel):
     ok: bool = True
     channel: str = "mock"
     expiresInSec: int = 300
-    betaCode: str | None = None
+    demoCode: str | None = None
 
 
 class AuthProfileUpdateReq(BaseModel):
@@ -130,7 +130,7 @@ class AuthProfileUpdateReq(BaseModel):
     profileBio: str
 
 
-class AuthbetaReq(BaseModel):
+class AuthdemoReq(BaseModel):
     persona: str
 
 
@@ -289,7 +289,7 @@ class HealthDetailResponse(BaseModel):
     healthProvider: dict = {}
     mapProvider: dict = {}
     pushProvider: dict = {}
-    betaReadiness: dict = {}
+    demoReadiness: dict = {}
     currentIncidentId: str | None = None
     loadedIncidents: int
     registeredClients: int = 0
@@ -298,7 +298,7 @@ class HealthDetailResponse(BaseModel):
     activeSosTimers: int
     dispatch: dict = {}
     security: dict = {}
-    betaAdminAuthEnabled: bool = False
+    demoAdminAuthEnabled: bool = False
 
 
 class AuditEvent(BaseModel):
@@ -388,7 +388,7 @@ class DispatchResponse(BaseModel):
     rationale: dict[str, DispatchRoleDecision] = {}
 
 
-class betaBootstrapResponse(BaseModel):
+class demoBootstrapResponse(BaseModel):
     ok: bool = True
     incidentId: str
     clients: list[ClientInfo]

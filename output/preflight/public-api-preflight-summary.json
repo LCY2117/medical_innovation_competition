@@ -7,9 +7,9 @@
       "ok": true,
       "version": "competition-hardening",
       "frontendOk": true,
-      "betaAdminAuthEnabled": true,
+      "demoAdminAuthEnabled": true,
       "mapProvider": "amap",
-      "betaReady": true
+      "demoReady": true
     },
     {
       "name": "aed-site-list",
@@ -18,35 +18,35 @@
       "first": "二楼服务台 AED"
     },
     {
-      "name": "bootstrap-beta",
+      "name": "bootstrap-demo",
       "ok": true,
       "incidentId": "b16b5a17-5c6b-4135-8f94-499e9b2d79e0",
       "clients": 4,
       "aedSites": 2
     },
     {
-      "name": "beta-persona-auth-register",
+      "name": "demo-persona-auth-register",
       "ok": true,
-      "patient": "beta-patient",
-      "prime": "beta-prime",
-      "runner": "beta-runner",
-      "guide": "beta-guide"
+      "patient": "demo-patient",
+      "prime": "demo-prime",
+      "runner": "demo-runner",
+      "guide": "demo-guide"
     },
     {
       "name": "dispatch-designate-patient",
       "ok": true,
       "incidentId": "b16b5a17-5c6b-4135-8f94-499e9b2d79e0",
       "source": "fallback",
-      "prime": "beta-prime",
-      "runner": "beta-runner",
-      "guide": "beta-guide"
+      "prime": "demo-prime",
+      "runner": "demo-runner",
+      "guide": "demo-guide"
     },
     {
       "name": "role-join",
       "ok": true,
-      "PRIME": "beta-prime",
-      "RUNNER": "beta-runner",
-      "GUIDE": "beta-guide"
+      "PRIME": "demo-prime",
+      "RUNNER": "demo-runner",
+      "GUIDE": "demo-guide"
     },
     {
       "name": "full-action-chain-archived",
@@ -63,7 +63,7 @@
       "disposition": "attachment; filename*=UTF-8''lifereflex-experiment-b16b5a17-5c6b-4135-8f94-499e9b2d79e0.zip"
     },
     {
-      "name": "leave-fresh-beta-ready",
+      "name": "leave-fresh-demo-ready",
       "ok": true,
       "incidentId": "c5ee5b78-2b4d-4170-86c0-652331994815",
       "clients": 4,

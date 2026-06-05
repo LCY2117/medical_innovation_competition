@@ -38,7 +38,7 @@ data class AuthCodeRequestResponse(
     val ok: Boolean,
     val channel: String,
     val expiresInSec: Int,
-    val betaCode: String? = null,
+    val demoCode: String? = null,
 )
 
 data class AuthCodeLoginResponse(

@@ -142,10 +142,10 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
                 _loading.value = true
                 _error.value = null
                 val response = repository.requestLoginCode(normalizedPhone)
-                _codeHint.value = if (response.betaCode.isNullOrBlank()) {
+                _codeHint.value = if (response.demoCode.isNullOrBlank()) {
                     "验证码已发送，请留意短信"
                 } else {
-                    "演示验证码：${response.betaCode}，也可输入 LCY"
+                    "演示验证码：${response.demoCode}，也可输入 LCY"
                 }
             } catch (e: Exception) {
                 _error.value = ErrorMessages.forHttpOrNetwork(e, fallback = "验证码发送失败，请稍后重试")

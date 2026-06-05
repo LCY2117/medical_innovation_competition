@@ -3,7 +3,7 @@
 事件编号：1b6545bb-c46d-4add-baae-9143a6a18324
 导出时间戳：1779759553827
 事件阶段：SHOCK_DELIVERED
-患者终端：beta-patient
+患者终端：demo-patient
 调度来源：fallback
 
 ## 文件说明

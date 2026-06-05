@@ -1,6 +1,6 @@
 import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/mobile/MobileApp.tsx");const React = __vite__cjsImport0_react; const useCallback = __vite__cjsImport0_react["useCallback"]; const useEffect = __vite__cjsImport0_react["useEffect"]; const useMemo = __vite__cjsImport0_react["useMemo"]; const useRef = __vite__cjsImport0_react["useRef"]; const useState = __vite__cjsImport0_react["useState"];const _jsxDEV = __vite__cjsImport8_react_jsxDevRuntime["jsxDEV"]; const _Fragment = __vite__cjsImport8_react_jsxDevRuntime["Fragment"];import __vite__cjsImport0_react from "/node_modules/.vite/deps/react.js?v=656b97fc";
 import { Activity, BadgeInfo, CheckCircle2, ChevronDown, Clock, Copy, ExternalLink, HeartPulse, LogOut, MapPin, Moon, Navigation, Radio, RefreshCw, Shield, Siren, Sun, UserRound, Zap } from "/node_modules/.vite/deps/lucide-react.js?v=656b97fc";
-import { autoJoinCurrent, downloadExperimentPackage, fetchAedSites, fetchClients, fetchCurrentIncident, fetchIncident, fetchMe, joinIncident, loginAccount, loginbetaPersona, logoutAccount, openIncidentSocket, patientSosCancel, patientSosStart, postIncidentAction, registerAccount, registerClient, updateClientHealth, updateClientLocation, getStoredbetaAdminToken } from "/src/shared/api.ts";
+import { autoJoinCurrent, downloadExperimentPackage, fetchAedSites, fetchClients, fetchCurrentIncident, fetchIncident, fetchMe, joinIncident, loginAccount, logindemoPersona, logoutAccount, openIncidentSocket, patientSosCancel, patientSosStart, postIncidentAction, registerAccount, registerClient, updateClientHealth, updateClientLocation, getStoreddemoAdminToken } from "/src/shared/api.ts";
 import { findUserRole, formatDistanceLabel, formatHealthRiskTags, formatHealthSignalSummary, formatLocationLabel, formatTimeLabel, getResuscitationGuidance, hasPrimeStarted, hasRunnerDelivered, hasRunnerPicked, isAedAnalyzing, isRoleJoined, isShockDelivered, mergeIncidentState, translatePhaseLabel, translateRoleLabel, translateRoleStatus } from "/src/shared/domain.ts";
 import aedRouteUrl from "/src/mobile/assets/aed-route.svg?import";
 import emergencySceneUrl from "/src/mobile/assets/emergency-scene.svg?import";
@@ -14,8 +14,8 @@ const TAB_SESSION_KEY = "lra_mobile_tab_session";
 const INCIDENT_KEY = "lra_mobile_incident_id";
 const LOCATION_KEY = "lra_mobile_location";
 const MOBILE_THEME_KEY = "lra_mobile_theme";
-const beta_ADMIN_TOKEN_KEY = "lra_beta_admin_token";
-const betaPersonas = [
+const demo_ADMIN_TOKEN_KEY = "lra_demo_admin_token";
+const demoPersonas = [
 	{
 		key: "patient",
 		label: "患者端",
@@ -27,7 +27,7 @@ const betaPersonas = [
 			accuracyMeters: 25,
 			label: "教学楼 A 座 2 层走廊",
 			floor: "2F",
-			source: "mobile-beta"
+			source: "mobile-demo"
 		}
 	},
 	{
@@ -41,7 +41,7 @@ const betaPersonas = [
 			accuracyMeters: 18,
 			label: "教学楼 A 座 1 层大厅",
 			floor: "1F",
-			source: "mobile-beta"
+			source: "mobile-demo"
 		}
 	},
 	{
@@ -55,7 +55,7 @@ const betaPersonas = [
 			accuracyMeters: 18,
 			label: "操场入口",
 			floor: "1F",
-			source: "mobile-beta"
+			source: "mobile-demo"
 		}
 	},
 	{
@@ -69,7 +69,7 @@ const betaPersonas = [
 			accuracyMeters: 20,
 			label: "校门岗亭",
 			floor: "1F",
-			source: "mobile-beta"
+			source: "mobile-demo"
 		}
 	}
 ];
@@ -79,10 +79,10 @@ const defaultLocation = {
 	accuracyMeters: 25,
 	label: "协同演示现场",
 	floor: "二层",
-	source: "mobile-beta"
+	source: "mobile-demo"
 };
-function readbetaPersonaFromUrl() {
-	const raw = new URLSearchParams(window.location.search).get("beta")?.trim().toLowerCase();
+function readdemoPersonaFromUrl() {
+	const raw = new URLSearchParams(window.location.search).get("demo")?.trim().toLowerCase();
 	if (raw === "patient" || raw === "prime" || raw === "runner" || raw === "guide") {
 		return raw;
 	}
@@ -91,15 +91,15 @@ function readbetaPersonaFromUrl() {
 function readIncidentIdFromUrl() {
 	return new URLSearchParams(window.location.search).get("incidentId")?.trim() ?? "";
 }
-function readbetaSlotFromUrl() {
+function readdemoSlotFromUrl() {
 	const raw = new URLSearchParams(window.location.search).get("slot")?.trim().toLowerCase() || "default";
 	return raw.replace(/[^a-z0-9_-]/g, "").slice(0, 24) || "default";
 }
 function tabSessionKey() {
-	return `${TAB_SESSION_KEY}_${readbetaSlotFromUrl()}`;
+	return `${TAB_SESSION_KEY}_${readdemoSlotFromUrl()}`;
 }
 function tabLocationKey() {
-	return `${LOCATION_KEY}_${readbetaSlotFromUrl()}`;
+	return `${LOCATION_KEY}_${readdemoSlotFromUrl()}`;
 }
 async function copyTextToClipboard(text) {
 	if (typeof window === "undefined" || typeof document === "undefined") {
@@ -127,8 +127,8 @@ async function copyTextToClipboard(text) {
 	}
 	return copied;
 }
-function betaLocationFor(persona) {
-	return betaPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
+function demoLocationFor(persona) {
+	return demoPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
 }
 function mockHealthSignalsFor(user, persona) {
 	const text = `${user.healthCondition} ${user.professionIdentity} ${user.profileBio} ${persona ?? ""}`;
@@ -256,10 +256,10 @@ function saveSession(session) {
 		window.localStorage.removeItem(SESSION_KEY);
 		return;
 	}
-	const storage = session.betaPersona ? window.sessionStorage : window.localStorage;
-	const key = session.betaPersona ? tabSessionKey() : SESSION_KEY;
+	const storage = session.demoPersona ? window.sessionStorage : window.localStorage;
+	const key = session.demoPersona ? tabSessionKey() : SESSION_KEY;
 	storage.setItem(key, JSON.stringify(session));
-	if (session.betaPersona) {
+	if (session.demoPersona) {
 		window.localStorage.removeItem(SESSION_KEY);
 	}
 }
@@ -480,14 +480,14 @@ function compactAedLabel(site) {
 	const floor = site.location.floor ? ` · ${site.location.floor}` : "";
 	return `${site.name}${floor}`;
 }
-function mobileToneClass(role, isPatient, isbetaResponder) {
+function mobileToneClass(role, isPatient, isdemoResponder) {
 	if (isPatient) {
 		return "patient";
 	}
 	if (role) {
 		return `role-${role.toLowerCase()}`;
 	}
-	if (isbetaResponder) {
+	if (isdemoResponder) {
 		return "standby";
 	}
 	return "neutral";
@@ -575,7 +575,7 @@ function translateLogMessage(message, clients) {
 		case "AI dispatching started": return "智能调度已启动";
 		case "Incident reset": return "事件已重置";
 		case "Incident created": return "事件已创建";
-		case "beta scenario bootstrapped": return "演示场景已初始化";
+		case "demo scenario bootstrapped": return "演示场景已初始化";
 		case "SOS alerting started": return "SOS 已启动";
 		case "SOS alerting canceled": return "SOS 已取消";
 		case "Incident auto-triggered": return "事件已自动触发";
@@ -631,18 +631,18 @@ function AuthPanel({ onAuthenticated }) {
 			setBusy(null);
 		}
 	}
-	async function enterbeta(persona) {
+	async function enterdemo(persona) {
 		setBusy(persona);
 		setNotice(null);
 		try {
-			const auth = await loginbetaPersona(persona);
+			const auth = await logindemoPersona(persona);
 			const session = {
 				token: auth.token,
 				user: auth.user,
 				tokenExpiresAt: auth.tokenExpiresAt,
-				betaPersona: persona
+				demoPersona: persona
 			};
-			const location = betaLocationFor(persona);
+			const location = demoLocationFor(persona);
 			saveSession(session);
 			window.sessionStorage.setItem(tabLocationKey(), JSON.stringify(location));
 			onAuthenticated(session, location);
@@ -708,7 +708,7 @@ function AuthPanel({ onAuthenticated }) {
 			id: "top",
 			children: [
 				/* @__PURE__ */ _jsxDEV("div", {
-					className: "mobile-beta-entry",
+					className: "mobile-demo-entry",
 					children: [/* @__PURE__ */ _jsxDEV("div", {
 						className: "mobile-section-head",
 						children: /* @__PURE__ */ _jsxDEV("div", { children: [/* @__PURE__ */ _jsxDEV("p", {
@@ -732,10 +732,10 @@ function AuthPanel({ onAuthenticated }) {
 						lineNumber: 713,
 						columnNumber: 11
 					}, this), /* @__PURE__ */ _jsxDEV("div", {
-						className: "mobile-beta-grid",
-						children: betaPersonas.map((persona) => /* @__PURE__ */ _jsxDEV("button", {
+						className: "mobile-demo-grid",
+						children: demoPersonas.map((persona) => /* @__PURE__ */ _jsxDEV("button", {
 							type: "button",
-							onClick: () => enterbeta(persona.key),
+							onClick: () => enterdemo(persona.key),
 							disabled: Boolean(busy),
 							children: [/* @__PURE__ */ _jsxDEV("strong", { children: busy === persona.key ? "进入中..." : persona.label }, void 0, false, {
 								fileName: _jsxFileName,
@@ -935,11 +935,11 @@ _s(AuthPanel, "YpNjJHA5+gkl+H5tcvKRlLvdIbE=");
 _c = AuthPanel;
 function MobileApp() {
 	_s2();
-	const urlbetaPersona = useMemo(() => readbetaPersonaFromUrl(), []);
+	const urldemoPersona = useMemo(() => readdemoPersonaFromUrl(), []);
 	const urlIncidentId = useMemo(() => readIncidentIdFromUrl(), []);
 	const [theme, setTheme] = useState(() => readStoredTheme());
-	const [session, setSession] = useState(() => urlbetaPersona ? null : readStoredSession());
-	const [booting, setBooting] = useState(Boolean(urlbetaPersona) || Boolean(readStoredSession()));
+	const [session, setSession] = useState(() => urldemoPersona ? null : readStoredSession());
+	const [booting, setBooting] = useState(Boolean(urldemoPersona) || Boolean(readStoredSession()));
 	const [incidentIdInput, setIncidentIdInput] = useState(() => urlIncidentId || (window.localStorage.getItem(INCIDENT_KEY) ?? ""));
 	const [incident, setIncident] = useState(null);
 	const [clients, setClients] = useState([]);
@@ -954,16 +954,16 @@ function MobileApp() {
 	const [sosConfirming, setSosConfirming] = useState(false);
 	const [showManualJoin, setShowManualJoin] = useState(false);
 	const [showSceneDetails, setShowSceneDetails] = useState(false);
-	const [betaAdminToken, setbetaAdminToken] = useState(getStoredbetaAdminToken);
+	const [demoAdminToken, setdemoAdminToken] = useState(getStoreddemoAdminToken);
 	const wsRef = useRef(null);
 	const reconnectRef = useRef(null);
 	const token = session?.token ?? "";
 	const user = session?.user ?? null;
 	const userRole = useMemo(() => findUserRole(incident, user?.userId), [incident, user?.userId]);
 	const isPatient = Boolean(incident?.patientUserId && incident.patientUserId === user?.userId);
-	const isPatientTerminal = isPatient || session?.betaPersona === "patient";
-	const isbetaResponder = Boolean(session?.betaPersona && session.betaPersona !== "patient");
-	const betaResponderLabel = session?.betaPersona ? betaPersonas.find((item) => item.key === session.betaPersona)?.label : null;
+	const isPatientTerminal = isPatient || session?.demoPersona === "patient";
+	const isdemoResponder = Boolean(session?.demoPersona && session.demoPersona !== "patient");
+	const demoResponderLabel = session?.demoPersona ? demoPersonas.find((item) => item.key === session.demoPersona)?.label : null;
 	const currentClient = useMemo(() => clients.find((client) => client.userId === user?.userId) ?? null, [clients, user?.userId]);
 	const activeRole = userRole ?? currentClient?.assignedRole ?? null;
 	const primaryAed = useMemo(() => selectPrimaryAed(incident, aedSites, activeRole), [
@@ -980,13 +980,13 @@ function MobileApp() {
 		if (typeof window === "undefined") {
 			return;
 		}
-		const trimmed = betaAdminToken.trim();
+		const trimmed = demoAdminToken.trim();
 		if (trimmed) {
-			window.localStorage.setItem(beta_ADMIN_TOKEN_KEY, trimmed);
+			window.localStorage.setItem(demo_ADMIN_TOKEN_KEY, trimmed);
 		} else {
-			window.localStorage.removeItem(beta_ADMIN_TOKEN_KEY);
+			window.localStorage.removeItem(demo_ADMIN_TOKEN_KEY);
 		}
-	}, [betaAdminToken]);
+	}, [demoAdminToken]);
 	const toggleTheme = () => {
 		setTheme((current) => {
 			const next = current === "light" ? "dark" : "light";
@@ -1079,7 +1079,7 @@ function MobileApp() {
 			return;
 		}
 		await registerClient(activeSession.user, activeSession.token, activeLocation);
-		await updateClientHealth(activeSession.user.userId, activeSession.token, mockHealthSignalsFor(activeSession.user, activeSession.betaPersona));
+		await updateClientHealth(activeSession.user.userId, activeSession.token, mockHealthSignalsFor(activeSession.user, activeSession.demoPersona));
 	}
 	useEffect(() => {
 		document.documentElement.dataset.mobileRoute = "true";
@@ -1092,15 +1092,15 @@ function MobileApp() {
 		document.documentElement.dataset.mobileRoute = "true";
 		let mounted = true;
 		async function restore() {
-			if (!session && urlbetaPersona) {
+			if (!session && urldemoPersona) {
 				try {
-					const auth = await loginbetaPersona(urlbetaPersona);
-					const nextLocation = betaLocationFor(urlbetaPersona);
+					const auth = await logindemoPersona(urldemoPersona);
+					const nextLocation = demoLocationFor(urldemoPersona);
 					const next = {
 						token: auth.token,
 						user: auth.user,
 						tokenExpiresAt: auth.tokenExpiresAt,
-						betaPersona: urlbetaPersona
+						demoPersona: urldemoPersona
 					};
 					saveSession(next);
 					window.sessionStorage.setItem(tabLocationKey(), JSON.stringify(nextLocation));
@@ -1122,7 +1122,7 @@ function MobileApp() {
 					}
 					setNotice({
 						kind: "ok",
-						text: `已进入${betaPersonas.find((item) => item.key === urlbetaPersona)?.label ?? "演示"}身份。`
+						text: `已进入${demoPersonas.find((item) => item.key === urldemoPersona)?.label ?? "演示"}身份。`
 					});
 				} catch (error) {
 					saveSession(null);
@@ -1188,14 +1188,14 @@ function MobileApp() {
 		return () => window.clearInterval(timer);
 	}, []);
 	useEffect(() => {
-		if (!incident || incident.phase !== "CREATED" || incident.sos?.status === "ALERTING" || isbetaResponder) {
+		if (!incident || incident.phase !== "CREATED" || incident.sos?.status === "ALERTING" || isdemoResponder) {
 			setSosConfirming(false);
 		}
 	}, [
 		incident?.incidentId,
 		incident?.phase,
 		incident?.sos?.status,
-		isbetaResponder
+		isdemoResponder
 	]);
 	useEffect(() => {
 		return () => {
@@ -1285,14 +1285,14 @@ function MobileApp() {
 				} catch {
 					next = {
 						...next,
-						source: "mobile-beta",
+						source: "mobile-demo",
 						label: location.label || "手动/演示点位"
 					};
 				}
 			}
 			setLocation(next);
-			const locationStorage = session.betaPersona ? window.sessionStorage : window.localStorage;
-			locationStorage.setItem(session.betaPersona ? tabLocationKey() : LOCATION_KEY, JSON.stringify(next));
+			const locationStorage = session.demoPersona ? window.sessionStorage : window.localStorage;
+			locationStorage.setItem(session.demoPersona ? tabLocationKey() : LOCATION_KEY, JSON.stringify(next));
 			await updateClientLocation(session.user.userId, session.token, next);
 		}, "位置已上报。");
 	}
@@ -1318,11 +1318,11 @@ function MobileApp() {
 		if (!incident || !session) {
 			return;
 		}
-		if (isbetaResponder) {
+		if (isdemoResponder) {
 			setSosConfirming(false);
 			setNotice({
 				kind: "info",
-				text: `${betaResponderLabel ?? "当前演示端"}仅响应分派任务，请等待患者端启动 SOS。`
+				text: `${demoResponderLabel ?? "当前演示端"}仅响应分派任务，请等待患者端启动 SOS。`
 			});
 			return;
 		}
@@ -1386,7 +1386,7 @@ function MobileApp() {
 			return;
 		}
 		await runAction("package", async () => {
-			const download = await downloadExperimentPackage(session?.token, betaAdminToken, incident.incidentId);
+			const download = await downloadExperimentPackage(session?.token, demoAdminToken, incident.incidentId);
 			return download.packageSha256 ? `事件证据包已下载：${download.filename}；SHA-256 ${download.packageSha256}` : `事件证据包已下载：${download.filename}。未读取到 SHA-256 响应头，请以 ZIP 内 manifest 为准。`;
 		});
 	}
@@ -1396,9 +1396,9 @@ function MobileApp() {
 		}
 		const url = new URL("/mobile", window.location.origin);
 		url.searchParams.set("incidentId", incident.incidentId);
-		if (session.betaPersona) {
-			url.searchParams.set("beta", session.betaPersona);
-			url.searchParams.set("slot", session.betaPersona);
+		if (session.demoPersona) {
+			url.searchParams.set("demo", session.demoPersona);
+			url.searchParams.set("slot", session.demoPersona);
 		}
 		const copied = await copyTextToClipboard(url.toString());
 		setNotice({
@@ -1437,13 +1437,13 @@ function MobileApp() {
 	const primeStep = activeRole === "PRIME" ? primeNextStep(incident) : null;
 	const phaseLabel = incident ? translatePhaseLabel(incident.phase) : "未接入事件";
 	const syncLabel = syncStatus === "live" ? "实时在线" : syncStatus === "connecting" ? "连接中" : syncStatus === "reconnecting" ? "恢复连接中" : syncStatus === "offline" ? "连接离线" : "待连接";
-	const roleLabel = isPatientTerminal ? "患者端" : activeRole ? translateRoleLabel(activeRole) : betaResponderLabel ?? "待命终端";
+	const roleLabel = isPatientTerminal ? "患者端" : activeRole ? translateRoleLabel(activeRole) : demoResponderLabel ?? "待命终端";
 	const nextActionSummary = isPatientTerminal ? "保持当前位置，等待协同成员到场" : activeRole && action ? `${translateRoleLabel(activeRole)}：${action.label}` : incident ? "保持在线，等待本轮任务" : "打开或加入事件";
-	const commandTitle = activeRole && action && !isPatientTerminal ? action.label : isbetaResponder ? "等待患者端启动" : isPatientTerminal && sosRemaining !== null ? `SOS 倒计时 ${sosRemaining}s` : isPatientTerminal ? "患者应急模式" : incident ? "保持在线待命" : "接入当前事件";
-	const commandBody = activeRole && action && !isPatientTerminal ? action.hint : isbetaResponder ? "响应端不触发 SOS。请保持页面在线，等待患者端启动后自动进入任务。" : isPatientTerminal && incident?.phase === "CREATED" ? "如出现异常，先触发 SOS；系统会在倒计时结束后分派核心施救、AED 保障和环境清障。" : isPatientTerminal ? "保持当前位置，等待协同成员到场并完成交接。" : "移动端会同步当前事件、角色分派、AED 点位和现场日志。";
+	const commandTitle = activeRole && action && !isPatientTerminal ? action.label : isdemoResponder ? "等待患者端启动" : isPatientTerminal && sosRemaining !== null ? `SOS 倒计时 ${sosRemaining}s` : isPatientTerminal ? "患者应急模式" : incident ? "保持在线待命" : "接入当前事件";
+	const commandBody = activeRole && action && !isPatientTerminal ? action.hint : isdemoResponder ? "响应端不触发 SOS。请保持页面在线，等待患者端启动后自动进入任务。" : isPatientTerminal && incident?.phase === "CREATED" ? "如出现异常，先触发 SOS；系统会在倒计时结束后分派核心施救、AED 保障和环境清障。" : isPatientTerminal ? "保持当前位置，等待协同成员到场并完成交接。" : "移动端会同步当前事件、角色分派、AED 点位和现场日志。";
 	const incidentStartedAt = incident?.logs?.[0]?.ts ?? null;
 	const incidentElapsedLabel = formatElapsedLabel(incidentStartedAt, now);
-	const commandTone = mobileToneClass(activeRole, isPatientTerminal, isbetaResponder);
+	const commandTone = mobileToneClass(activeRole, isPatientTerminal, isdemoResponder);
 	const healthStats = healthStatItems(currentClient?.healthSignals);
 	const visibleClients = clients.slice(0, 5);
 	const incidentShortId = incident?.incidentId ? incident.incidentId.slice(0, 8) : null;
@@ -1842,11 +1842,11 @@ function MobileApp() {
 					lineNumber: 1433,
 					columnNumber: 13
 				}, this) : /* @__PURE__ */ _jsxDEV("section", {
-					className: `mobile-emergency-panel ${isPatient ? "patient" : ""} ${isbetaResponder ? "readonly" : ""}`,
+					className: `mobile-emergency-panel ${isPatient ? "patient" : ""} ${isdemoResponder ? "readonly" : ""}`,
 					children: [/* @__PURE__ */ _jsxDEV("div", {
 						className: "mobile-action-row",
 						children: [/* @__PURE__ */ _jsxDEV("div", { children: [
-							isbetaResponder ? /* @__PURE__ */ _jsxDEV(Shield, { size: 28 }, void 0, false, {
+							isdemoResponder ? /* @__PURE__ */ _jsxDEV(Shield, { size: 28 }, void 0, false, {
 								fileName: _jsxFileName,
 								lineNumber: 1457,
 								columnNumber: 38
@@ -1857,18 +1857,18 @@ function MobileApp() {
 							}, this),
 							/* @__PURE__ */ _jsxDEV("p", {
 								className: "mobile-kicker",
-								children: isbetaResponder ? "演示待命" : "高优先级"
+								children: isdemoResponder ? "演示待命" : "高优先级"
 							}, void 0, false, {
 								fileName: _jsxFileName,
 								lineNumber: 1458,
 								columnNumber: 19
 							}, this),
-							/* @__PURE__ */ _jsxDEV("h2", { children: isbetaResponder ? "等待患者端" : isPatientTerminal ? "患者应急模式" : "患者 SOS" }, void 0, false, {
+							/* @__PURE__ */ _jsxDEV("h2", { children: isdemoResponder ? "等待患者端" : isPatientTerminal ? "患者应急模式" : "患者 SOS" }, void 0, false, {
 								fileName: _jsxFileName,
 								lineNumber: 1459,
 								columnNumber: 19
 							}, this),
-							/* @__PURE__ */ _jsxDEV("p", { children: isbetaResponder ? incident?.sos?.status === "ALERTING" ? "患者端已启动 SOS，保持在线，等待系统分派本轮任务" : `${betaResponderLabel ?? "当前演示端"}不触发患者 SOS，现场演示请从患者端启动` : sosRemaining !== null ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派` : isPatientTerminal && incident?.phase !== "CREATED" ? "保持当前位置，等待核心施救、AED 保障和环境清障人员到场" : incident?.phase === "CREATED" ? "如你是患者端，可直接触发当前事件" : "当前事件已进入协同处置" }, void 0, false, {
+							/* @__PURE__ */ _jsxDEV("p", { children: isdemoResponder ? incident?.sos?.status === "ALERTING" ? "患者端已启动 SOS，保持在线，等待系统分派本轮任务" : `${demoResponderLabel ?? "当前演示端"}不触发患者 SOS，现场演示请从患者端启动` : sosRemaining !== null ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派` : isPatientTerminal && incident?.phase !== "CREATED" ? "保持当前位置，等待核心施救、AED 保障和环境清障人员到场" : incident?.phase === "CREATED" ? "如你是患者端，可直接触发当前事件" : "当前事件已进入协同处置" }, void 0, false, {
 								fileName: _jsxFileName,
 								lineNumber: 1460,
 								columnNumber: 19
@@ -1879,7 +1879,7 @@ function MobileApp() {
 							columnNumber: 17
 						}, this), /* @__PURE__ */ _jsxDEV("img", {
 							className: "mobile-action-illustration",
-							src: isbetaResponder ? responseRolesUrl : emergencySceneUrl,
+							src: isdemoResponder ? responseRolesUrl : emergencySceneUrl,
 							alt: "",
 							loading: "lazy",
 							"aria-hidden": "true"
@@ -1892,7 +1892,7 @@ function MobileApp() {
 						fileName: _jsxFileName,
 						lineNumber: 1455,
 						columnNumber: 15
-					}, this), isbetaResponder ? /* @__PURE__ */ _jsxDEV("div", {
+					}, this), isdemoResponder ? /* @__PURE__ */ _jsxDEV("div", {
 						className: "mobile-emergency-actions single",
 						children: /* @__PURE__ */ _jsxDEV("button", {
 							className: "mobile-ghost-button",
@@ -2765,8 +2765,8 @@ function MobileApp() {
 							lineNumber: 1760,
 							columnNumber: 13
 						}, this), /* @__PURE__ */ _jsxDEV("input", {
-							value: betaAdminToken,
-							onChange: (event) => setbetaAdminToken(event.target.value),
+							value: demoAdminToken,
+							onChange: (event) => setdemoAdminToken(event.target.value),
 							placeholder: "输入演示口令",
 							autoComplete: "off"
 						}, void 0, false, {

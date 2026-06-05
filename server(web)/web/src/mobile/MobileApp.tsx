@@ -30,7 +30,7 @@ import {
   fetchMe,
   joinIncident,
   loginAccount,
-  loginbetaPersona,
+  logindemoPersona,
   logoutAccount,
   openIncidentSocket,
   patientSosCancel,
@@ -40,7 +40,7 @@ import {
   registerClient,
   updateClientHealth,
   updateClientLocation,
-  getStoredbetaAdminToken,
+  getStoreddemoAdminToken,
   type RegisterForm,
 } from '@/shared/api';
 import {
@@ -74,13 +74,13 @@ type SyncStatus = 'idle' | 'connecting' | 'live' | 'reconnecting' | 'offline';
 type MobileView = 'home' | 'mission' | 'scene' | 'logs';
 type MobileTheme = 'light' | 'dark';
 type Notice = { kind: 'ok' | 'error' | 'info'; text: string } | null;
-type betaPersona = 'patient' | 'prime' | 'runner' | 'guide';
+type demoPersona = 'patient' | 'prime' | 'runner' | 'guide';
 
 interface StoredSession {
   token: string;
   user: AuthUser;
   tokenExpiresAt?: number | null;
-  betaPersona?: betaPersona;
+  demoPersona?: demoPersona;
 }
 
 const SESSION_KEY = 'lra_mobile_session';
@@ -88,10 +88,10 @@ const TAB_SESSION_KEY = 'lra_mobile_tab_session';
 const INCIDENT_KEY = 'lra_mobile_incident_id';
 const LOCATION_KEY = 'lra_mobile_location';
 const MOBILE_THEME_KEY = 'lra_mobile_theme';
-const beta_ADMIN_TOKEN_KEY = 'lra_beta_admin_token';
+const demo_ADMIN_TOKEN_KEY = 'lra_demo_admin_token';
 
-const betaPersonas: Array<{
-  key: betaPersona;
+const demoPersonas: Array<{
+  key: demoPersona;
   label: string;
   title: string;
   description: string;
@@ -108,7 +108,7 @@ const betaPersonas: Array<{
       accuracyMeters: 25,
       label: '教学楼 A 座 2 层走廊',
       floor: '2F',
-      source: 'mobile-beta',
+      source: 'mobile-demo',
     },
   },
   {
@@ -122,7 +122,7 @@ const betaPersonas: Array<{
       accuracyMeters: 18,
       label: '教学楼 A 座 1 层大厅',
       floor: '1F',
-      source: 'mobile-beta',
+      source: 'mobile-demo',
     },
   },
   {
@@ -136,7 +136,7 @@ const betaPersonas: Array<{
       accuracyMeters: 18,
       label: '操场入口',
       floor: '1F',
-      source: 'mobile-beta',
+      source: 'mobile-demo',
     },
   },
   {
@@ -150,7 +150,7 @@ const betaPersonas: Array<{
       accuracyMeters: 20,
       label: '校门岗亭',
       floor: '1F',
-      source: 'mobile-beta',
+      source: 'mobile-demo',
     },
   },
 ];
@@ -161,11 +161,11 @@ const defaultLocation: GeoPoint = {
   accuracyMeters: 25,
   label: '协同演示现场',
   floor: '二层',
-  source: 'mobile-beta',
+  source: 'mobile-demo',
 };
 
-function readbetaPersonaFromUrl(): betaPersona | null {
-  const raw = new URLSearchParams(window.location.search).get('beta')?.trim().toLowerCase();
+function readdemoPersonaFromUrl(): demoPersona | null {
+  const raw = new URLSearchParams(window.location.search).get('demo')?.trim().toLowerCase();
   if (raw === 'patient' || raw === 'prime' || raw === 'runner' || raw === 'guide') {
     return raw;
   }
@@ -176,17 +176,17 @@ function readIncidentIdFromUrl(): string {
   return new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
 }
 
-function readbetaSlotFromUrl(): string {
+function readdemoSlotFromUrl(): string {
   const raw = new URLSearchParams(window.location.search).get('slot')?.trim().toLowerCase() || 'default';
   return raw.replace(/[^a-z0-9_-]/g, '').slice(0, 24) || 'default';
 }
 
 function tabSessionKey(): string {
-  return `${TAB_SESSION_KEY}_${readbetaSlotFromUrl()}`;
+  return `${TAB_SESSION_KEY}_${readdemoSlotFromUrl()}`;
 }
 
 function tabLocationKey(): string {
-  return `${LOCATION_KEY}_${readbetaSlotFromUrl()}`;
+  return `${LOCATION_KEY}_${readdemoSlotFromUrl()}`;
 }
 
 async function copyTextToClipboard(text: string): Promise<boolean> {
@@ -218,11 +218,11 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
   return copied;
 }
 
-function betaLocationFor(persona?: betaPersona | null): GeoPoint {
-  return betaPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
+function demoLocationFor(persona?: demoPersona | null): GeoPoint {
+  return demoPersonas.find((item) => item.key === persona)?.location ?? defaultLocation;
 }
 
-function mockHealthSignalsFor(user: AuthUser, persona?: betaPersona): HealthSignalSummary {
+function mockHealthSignalsFor(user: AuthUser, persona?: demoPersona): HealthSignalSummary {
   const text = `${user.healthCondition} ${user.professionIdentity} ${user.profileBio} ${persona ?? ''}`;
   const now = Date.now();
   if (text.includes('心脏') || persona === 'patient') {
@@ -346,10 +346,10 @@ function saveSession(session: StoredSession | null): void {
     window.localStorage.removeItem(SESSION_KEY);
     return;
   }
-  const storage = session.betaPersona ? window.sessionStorage : window.localStorage;
-  const key = session.betaPersona ? tabSessionKey() : SESSION_KEY;
+  const storage = session.demoPersona ? window.sessionStorage : window.localStorage;
+  const key = session.demoPersona ? tabSessionKey() : SESSION_KEY;
   storage.setItem(key, JSON.stringify(session));
-  if (session.betaPersona) {
+  if (session.demoPersona) {
     window.localStorage.removeItem(SESSION_KEY);
   }
 }
@@ -536,14 +536,14 @@ function compactAedLabel(site?: AedSite | null): string {
   return `${site.name}${floor}`;
 }
 
-function mobileToneClass(role: RoleName | null, isPatient: boolean, isbetaResponder: boolean): string {
+function mobileToneClass(role: RoleName | null, isPatient: boolean, isdemoResponder: boolean): string {
   if (isPatient) {
     return 'patient';
   }
   if (role) {
     return `role-${role.toLowerCase()}`;
   }
-  if (isbetaResponder) {
+  if (isdemoResponder) {
     return 'standby';
   }
   return 'neutral';
@@ -641,7 +641,7 @@ function translateLogMessage(message: string, clients: ClientInfo[]): string {
       return '事件已重置';
     case 'Incident created':
       return '事件已创建';
-    case 'beta scenario bootstrapped':
+    case 'demo scenario bootstrapped':
       return '演示场景已初始化';
     case 'SOS alerting started':
       return 'SOS 已启动';
@@ -692,13 +692,13 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
     }
   }
 
-  async function enterbeta(persona: betaPersona) {
+  async function enterdemo(persona: demoPersona) {
     setBusy(persona);
     setNotice(null);
     try {
-      const auth = await loginbetaPersona(persona);
-      const session = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, betaPersona: persona };
-      const location = betaLocationFor(persona);
+      const auth = await logindemoPersona(persona);
+      const session = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, demoPersona: persona };
+      const location = demoLocationFor(persona);
       saveSession(session);
       window.sessionStorage.setItem(tabLocationKey(), JSON.stringify(location));
       onAuthenticated(session, location);
@@ -722,16 +722,16 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
       </section>
 
       <section className="mobile-panel" id="top">
-        <div className="mobile-beta-entry">
+        <div className="mobile-demo-entry">
           <div className="mobile-section-head">
             <div>
               <p className="mobile-kicker">演示模式</p>
               <h2>演示模式直达</h2>
             </div>
           </div>
-          <div className="mobile-beta-grid">
-            {betaPersonas.map((persona) => (
-              <button key={persona.key} type="button" onClick={() => enterbeta(persona.key)} disabled={Boolean(busy)}>
+          <div className="mobile-demo-grid">
+            {demoPersonas.map((persona) => (
+              <button key={persona.key} type="button" onClick={() => enterdemo(persona.key)} disabled={Boolean(busy)}>
                 <strong>{busy === persona.key ? '进入中...' : persona.label}</strong>
                 <span>{persona.description}</span>
               </button>
@@ -821,11 +821,11 @@ function AuthPanel({ onAuthenticated }: { onAuthenticated: (session: StoredSessi
 }
 
 function MobileApp() {
-  const urlbetaPersona = useMemo(() => readbetaPersonaFromUrl(), []);
+  const urldemoPersona = useMemo(() => readdemoPersonaFromUrl(), []);
   const urlIncidentId = useMemo(() => readIncidentIdFromUrl(), []);
   const [theme, setTheme] = useState<MobileTheme>(() => readStoredTheme());
-  const [session, setSession] = useState<StoredSession | null>(() => (urlbetaPersona ? null : readStoredSession()));
-  const [booting, setBooting] = useState(Boolean(urlbetaPersona) || Boolean(readStoredSession()));
+  const [session, setSession] = useState<StoredSession | null>(() => (urldemoPersona ? null : readStoredSession()));
+  const [booting, setBooting] = useState(Boolean(urldemoPersona) || Boolean(readStoredSession()));
   const [incidentIdInput, setIncidentIdInput] = useState(() => urlIncidentId || (window.localStorage.getItem(INCIDENT_KEY) ?? ''));
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [clients, setClients] = useState<ClientInfo[]>([]);
@@ -840,7 +840,7 @@ function MobileApp() {
   const [sosConfirming, setSosConfirming] = useState(false);
   const [showManualJoin, setShowManualJoin] = useState(false);
   const [showSceneDetails, setShowSceneDetails] = useState(false);
-  const [betaAdminToken, setbetaAdminToken] = useState(getStoredbetaAdminToken);
+  const [demoAdminToken, setdemoAdminToken] = useState(getStoreddemoAdminToken);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
 
@@ -848,9 +848,9 @@ function MobileApp() {
   const user = session?.user ?? null;
   const userRole = useMemo(() => findUserRole(incident, user?.userId), [incident, user?.userId]);
   const isPatient = Boolean(incident?.patientUserId && incident.patientUserId === user?.userId);
-  const isPatientTerminal = isPatient || session?.betaPersona === 'patient';
-  const isbetaResponder = Boolean(session?.betaPersona && session.betaPersona !== 'patient');
-  const betaResponderLabel = session?.betaPersona ? betaPersonas.find((item) => item.key === session.betaPersona)?.label : null;
+  const isPatientTerminal = isPatient || session?.demoPersona === 'patient';
+  const isdemoResponder = Boolean(session?.demoPersona && session.demoPersona !== 'patient');
+  const demoResponderLabel = session?.demoPersona ? demoPersonas.find((item) => item.key === session.demoPersona)?.label : null;
   const currentClient = useMemo(
     () => clients.find((client) => client.userId === user?.userId) ?? null,
     [clients, user?.userId],
@@ -872,13 +872,13 @@ function MobileApp() {
     if (typeof window === 'undefined') {
       return;
     }
-    const trimmed = betaAdminToken.trim();
+    const trimmed = demoAdminToken.trim();
     if (trimmed) {
-      window.localStorage.setItem(beta_ADMIN_TOKEN_KEY, trimmed);
+      window.localStorage.setItem(demo_ADMIN_TOKEN_KEY, trimmed);
     } else {
-      window.localStorage.removeItem(beta_ADMIN_TOKEN_KEY);
+      window.localStorage.removeItem(demo_ADMIN_TOKEN_KEY);
     }
-  }, [betaAdminToken]);
+  }, [demoAdminToken]);
 
   const toggleTheme = () => {
     setTheme((current) => {
@@ -980,7 +980,7 @@ function MobileApp() {
     await updateClientHealth(
       activeSession.user.userId,
       activeSession.token,
-      mockHealthSignalsFor(activeSession.user, activeSession.betaPersona),
+      mockHealthSignalsFor(activeSession.user, activeSession.demoPersona),
     );
   }
 
@@ -996,11 +996,11 @@ function MobileApp() {
     document.documentElement.dataset.mobileRoute = 'true';
     let mounted = true;
     async function restore() {
-      if (!session && urlbetaPersona) {
+      if (!session && urldemoPersona) {
         try {
-          const auth = await loginbetaPersona(urlbetaPersona);
-          const nextLocation = betaLocationFor(urlbetaPersona);
-          const next = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, betaPersona: urlbetaPersona };
+          const auth = await logindemoPersona(urldemoPersona);
+          const nextLocation = demoLocationFor(urldemoPersona);
+          const next = { token: auth.token, user: auth.user, tokenExpiresAt: auth.tokenExpiresAt, demoPersona: urldemoPersona };
           saveSession(next);
           window.sessionStorage.setItem(tabLocationKey(), JSON.stringify(nextLocation));
           if (!mounted) {
@@ -1019,7 +1019,7 @@ function MobileApp() {
           } else {
             await openCurrentIncident();
           }
-          setNotice({ kind: 'ok', text: `已进入${betaPersonas.find((item) => item.key === urlbetaPersona)?.label ?? '演示'}身份。` });
+          setNotice({ kind: 'ok', text: `已进入${demoPersonas.find((item) => item.key === urldemoPersona)?.label ?? '演示'}身份。` });
         } catch (error) {
           saveSession(null);
           if (mounted) {
@@ -1076,10 +1076,10 @@ function MobileApp() {
   }, []);
 
   useEffect(() => {
-    if (!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING' || isbetaResponder) {
+    if (!incident || incident.phase !== 'CREATED' || incident.sos?.status === 'ALERTING' || isdemoResponder) {
       setSosConfirming(false);
     }
-  }, [incident?.incidentId, incident?.phase, incident?.sos?.status, isbetaResponder]);
+  }, [incident?.incidentId, incident?.phase, incident?.sos?.status, isdemoResponder]);
 
   useEffect(() => {
     return () => {
@@ -1160,12 +1160,12 @@ function MobileApp() {
               updatedTs: Date.now(),
             };
           } catch {
-            next = { ...next, source: 'mobile-beta', label: location.label || '手动/演示点位' };
+            next = { ...next, source: 'mobile-demo', label: location.label || '手动/演示点位' };
           }
         }
         setLocation(next);
-        const locationStorage = session.betaPersona ? window.sessionStorage : window.localStorage;
-        locationStorage.setItem(session.betaPersona ? tabLocationKey() : LOCATION_KEY, JSON.stringify(next));
+        const locationStorage = session.demoPersona ? window.sessionStorage : window.localStorage;
+        locationStorage.setItem(session.demoPersona ? tabLocationKey() : LOCATION_KEY, JSON.stringify(next));
         await updateClientLocation(session.user.userId, session.token, next);
       },
       '位置已上报。',
@@ -1197,9 +1197,9 @@ function MobileApp() {
     if (!incident || !session) {
       return;
     }
-    if (isbetaResponder) {
+    if (isdemoResponder) {
       setSosConfirming(false);
-      setNotice({ kind: 'info', text: `${betaResponderLabel ?? '当前演示端'}仅响应分派任务，请等待患者端启动 SOS。` });
+      setNotice({ kind: 'info', text: `${demoResponderLabel ?? '当前演示端'}仅响应分派任务，请等待患者端启动 SOS。` });
       return;
     }
     if (!sosConfirming) {
@@ -1273,7 +1273,7 @@ function MobileApp() {
     await runAction(
       'package',
       async () => {
-        const download = await downloadExperimentPackage(session?.token, betaAdminToken, incident.incidentId);
+        const download = await downloadExperimentPackage(session?.token, demoAdminToken, incident.incidentId);
         return download.packageSha256
           ? `事件证据包已下载：${download.filename}；SHA-256 ${download.packageSha256}`
           : `事件证据包已下载：${download.filename}。未读取到 SHA-256 响应头，请以 ZIP 内 manifest 为准。`;
@@ -1287,9 +1287,9 @@ function MobileApp() {
     }
     const url = new URL('/mobile', window.location.origin);
     url.searchParams.set('incidentId', incident.incidentId);
-    if (session.betaPersona) {
-      url.searchParams.set('beta', session.betaPersona);
-      url.searchParams.set('slot', session.betaPersona);
+    if (session.demoPersona) {
+      url.searchParams.set('demo', session.demoPersona);
+      url.searchParams.set('slot', session.demoPersona);
     }
     const copied = await copyTextToClipboard(url.toString());
     setNotice({
@@ -1341,7 +1341,7 @@ function MobileApp() {
   const commandTitle =
     activeRole && action && !isPatientTerminal
       ? action.title
-      : isbetaResponder
+      : isdemoResponder
         ? '等待患者端启动'
         : isPatientTerminal && sosRemaining !== null
           ? `SOS 倒计时 ${sosRemaining}s`
@@ -1353,7 +1353,7 @@ function MobileApp() {
   const commandBody =
     activeRole && action && !isPatientTerminal
       ? action.hint
-      : isbetaResponder
+      : isdemoResponder
         ? '响应端不触发 SOS。请保持页面在线，等待患者端启动后自动进入任务。'
         : isPatientTerminal && incident?.phase === 'CREATED'
           ? '如出现异常，先触发 SOS；系统会在倒计时结束后分派核心施救、AED 保障和环境清障。'
@@ -1362,7 +1362,7 @@ function MobileApp() {
             : '移动端会同步当前事件、角色分派、AED 点位和现场日志。';
   const incidentStartedAt = incident?.logs?.[0]?.ts ?? null;
   const incidentElapsedLabel = formatElapsedLabel(incidentStartedAt, now);
-  const commandTone = mobileToneClass(activeRole, isPatientTerminal, isbetaResponder);
+  const commandTone = mobileToneClass(activeRole, isPatientTerminal, isdemoResponder);
   const healthStats = healthStatItems(currentClient?.healthSignals);
   const visibleClients = clients.slice(0, 5);
   const incidentShortId = incident?.incidentId ? incident.incidentId.slice(0, 8) : null;
@@ -1470,17 +1470,17 @@ function MobileApp() {
               </button>
             </section>
           ) : (
-            <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''} ${isbetaResponder ? 'readonly' : ''}`}>
+            <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''} ${isdemoResponder ? 'readonly' : ''}`}>
               <div className="mobile-action-row">
                 <div>
-                  {isbetaResponder ? <Shield size={28} /> : <Siren size={28} />}
-                  <p className="mobile-kicker">{isbetaResponder ? '待命终端' : '高优先级'}</p>
-                  <h2>{isbetaResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
+                  {isdemoResponder ? <Shield size={28} /> : <Siren size={28} />}
+                  <p className="mobile-kicker">{isdemoResponder ? '待命终端' : '高优先级'}</p>
+                  <h2>{isdemoResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
                   <p>
-                    {isbetaResponder
+                    {isdemoResponder
                       ? incident?.sos?.status === 'ALERTING'
                         ? '患者端已启动 SOS，保持在线，等待系统分派本轮任务'
-                        : `${betaResponderLabel ?? '当前终端'}不触发患者 SOS，现场请从患者端启动`
+                        : `${demoResponderLabel ?? '当前终端'}不触发患者 SOS，现场请从患者端启动`
                       : sosRemaining !== null
                       ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
                       : isPatientTerminal && incident?.phase !== 'CREATED'
@@ -1490,9 +1490,9 @@ function MobileApp() {
                         : '当前事件已进入协同处置'}
                   </p>
                 </div>
-                <img className="mobile-action-illustration" src={isbetaResponder ? responseRolesUrl : emergencySceneUrl} alt="" loading="lazy" aria-hidden="true" />
+                <img className="mobile-action-illustration" src={isdemoResponder ? responseRolesUrl : emergencySceneUrl} alt="" loading="lazy" aria-hidden="true" />
               </div>
-              {isbetaResponder ? (
+              {isdemoResponder ? (
                 <div className="mobile-emergency-actions single">
                   <button className="mobile-ghost-button" type="button" disabled>
                     {incident?.sos?.status === 'ALERTING' ? '等待任务分派' : '等待患者端启动 SOS'}
@@ -1778,8 +1778,8 @@ function MobileApp() {
           <label className="mobile-token-field">
             <span>演示口令</span>
             <input
-              value={betaAdminToken}
-              onChange={(event) => setbetaAdminToken(event.target.value)}
+              value={demoAdminToken}
+              onChange={(event) => setdemoAdminToken(event.target.value)}
               placeholder="输入演示口令"
               autoComplete="off"
             />

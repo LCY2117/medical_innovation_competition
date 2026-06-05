@@ -93,5 +93,5 @@ fun EmergencyAlertScreen(
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)
 @Composable
 private fun EmergencyAlertPreview() {
-    EmergencyAlertScreen(incidentId = "beta-id", onJoin = {})
+    EmergencyAlertScreen(incidentId = "demo-id", onJoin = {})
 }

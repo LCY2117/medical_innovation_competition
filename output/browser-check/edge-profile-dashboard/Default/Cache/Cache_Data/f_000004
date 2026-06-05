@@ -25,7 +25,7 @@ var __copyProps = (to, from, except, desc) => {
 	}
 	return to;
 };
-var __toESM = (mod, isNobetade, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNobetade || !mod || !mod.__esModule ? __defProp(target, "default", {
+var __toESM = (mod, isNodemode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodemode || !mod || !mod.__esModule ? __defProp(target, "default", {
 	value: mod,
 	enumerable: true
 }) : target, mod));

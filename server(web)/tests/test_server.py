@@ -43,7 +43,7 @@ class ServerTestCase(unittest.TestCase):
     def _client(self) -> TestClient:
         return TestClient(create_app(self.settings))
 
-    def _client_with_beta_admin_token(self, token: str = "test-beta-admin") -> TestClient:
+    def _client_with_demo_admin_token(self, token: str = "test-demo-admin") -> TestClient:
         settings = Settings(
             app_name=self.settings.app_name,
             api_prefix=self.settings.api_prefix,
@@ -55,7 +55,7 @@ class ServerTestCase(unittest.TestCase):
             cors_origins=self.settings.cors_origins,
             db_path=self.settings.db_path,
             web_dist_dir=self.settings.web_dist_dir,
-            beta_admin_token=token,
+            demo_admin_token=token,
         )
         return TestClient(create_app(settings))
 
@@ -71,7 +71,7 @@ class ServerTestCase(unittest.TestCase):
             cors_origins=self.settings.cors_origins,
             db_path=self.settings.db_path,
             web_dist_dir=self.settings.web_dist_dir,
-            beta_admin_token="test-beta-admin",
+            demo_admin_token="test-demo-admin",
             admin_phones=tuple(phones),
         )
         return TestClient(create_app(settings))
@@ -108,13 +108,13 @@ class ServerTestCase(unittest.TestCase):
         )
         return TestClient(create_app(settings))
 
-    def _beta_evidence_package_content(self) -> tuple[str, bytes]:
+    def _demo_evidence_package_content(self) -> tuple[str, bytes]:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
             package = client.get("/api/experiments/current/package")
@@ -206,8 +206,8 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["auth"]["tokenTtlSec"], self.settings.auth_token_ttl_sec)
         self.assertTrue(payload["features"]["experimentZipPackage"])
         self.assertEqual(payload["healthProvider"]["mode"], "mock")
-        self.assertEqual(payload["mapProvider"]["mode"], "beta")
-        self.assertEqual(payload["mapProvider"]["distanceSource"], "haversine_beta")
+        self.assertEqual(payload["mapProvider"]["mode"], "demo")
+        self.assertEqual(payload["mapProvider"]["distanceSource"], "haversine_demo")
         self.assertEqual(payload["pushProvider"]["mode"], "websocket")
         self.assertEqual(payload["pushProvider"]["channel"], "websocket_state")
         self.assertEqual(payload["storage"]["auditEventCount"], 0)
@@ -219,9 +219,9 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["frontend"]["assetCount"], 0)
         self.assertFalse(payload["frontend"]["mobileChunkReady"])
         self.assertFalse(payload["frontend"]["desktopChunkReady"])
-        self.assertFalse(payload["betaAdminAuthEnabled"])
-        self.assertFalse(payload["betaReadiness"]["ready"])
-        self.assertIn("尚未创建当前事件", payload["betaReadiness"]["warnings"])
+        self.assertFalse(payload["demoAdminAuthEnabled"])
+        self.assertFalse(payload["demoReadiness"]["ready"])
+        self.assertIn("尚未创建当前事件", payload["demoReadiness"]["warnings"])
 
         self.settings.web_dist_dir.mkdir(parents=True, exist_ok=True)
         (self.settings.web_dist_dir / "index.html").write_text("<html></html>", encoding="utf-8")
@@ -239,14 +239,14 @@ class ServerTestCase(unittest.TestCase):
         self.assertTrue(ready_payload["frontend"]["mobileChunkReady"])
         self.assertTrue(ready_payload["frontend"]["desktopChunkReady"])
 
-    def test_health_detail_reports_beta_readiness_after_bootstrap(self) -> None:
+    def test_health_detail_reports_demo_readiness_after_bootstrap(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             response = client.get("/api/health/detail")
 
         self.assertEqual(bootstrapped.status_code, 200)
         self.assertEqual(response.status_code, 200)
-        readiness = response.json()["betaReadiness"]
+        readiness = response.json()["demoReadiness"]
         self.assertTrue(readiness["ready"])
         self.assertEqual(readiness["clientCount"], 4)
         self.assertEqual(readiness["availableAedSiteCount"], 2)
@@ -283,7 +283,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("provider", payload)
         self.assertIn("dispatchDelaySec", payload)
         self.assertIn("systemPrompt", payload)
-        self.assertEqual(payload["mapProvider"]["mode"], "beta")
+        self.assertEqual(payload["mapProvider"]["mode"], "demo")
         self.assertIn("LRA_MAP_PROVIDER", payload["envKeys"])
 
     def test_amap_distance_provider_falls_back_without_service_key(self) -> None:
@@ -311,7 +311,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(provider["mode"], "amap")
         self.assertFalse(provider["configured"])
         self.assertEqual(provider["fallbackReason"], "amap_service_key_missing")
-        self.assertEqual(provider["distanceSource"], "haversine_beta")
+        self.assertEqual(provider["distanceSource"], "haversine_demo")
         self.assertEqual(meta.status_code, 200)
         self.assertEqual(meta.json()["mapProvider"]["fallbackReason"], "amap_service_key_missing")
 
@@ -331,7 +331,7 @@ class ServerTestCase(unittest.TestCase):
         )
         with TestClient(create_app(settings)) as client:
             health = client.get("/api/health/detail")
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
 
         self.assertEqual(health.status_code, 200)
         provider = health.json()["pushProvider"]
@@ -427,7 +427,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(register.status_code, 200)
         self.assertEqual(code_request.status_code, 200)
         self.assertEqual(code_request.json()["channel"], "mock")
-        self.assertEqual(code_request.json()["betaCode"], "123456")
+        self.assertEqual(code_request.json()["demoCode"], "123456")
         self.assertEqual(code_login.status_code, 200)
         self.assertFalse(code_login.json()["needsProfileSetup"])
         self.assertTrue(code_login.json()["token"])
@@ -488,12 +488,12 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(me.json()["user"]["displayName"], "李医生")
         self.assertEqual(me.json()["user"]["phone"], "13800138110")
 
-    def test_beta_auth_personas_issue_reusable_sessions(self) -> None:
+    def test_demo_auth_personas_issue_reusable_sessions(self) -> None:
         with self._client() as client:
-            patient = client.post("/api/auth/beta", json={"persona": "patient"})
-            repeat_patient = client.post("/api/auth/beta", json={"persona": "patient"})
-            prime = client.post("/api/auth/beta", json={"persona": "prime"})
-            unknown = client.post("/api/auth/beta", json={"persona": "pilot"})
+            patient = client.post("/api/auth/demo", json={"persona": "patient"})
+            repeat_patient = client.post("/api/auth/demo", json={"persona": "patient"})
+            prime = client.post("/api/auth/demo", json={"persona": "prime"})
+            unknown = client.post("/api/auth/demo", json={"persona": "pilot"})
             me = client.get(
                 "/api/auth/me",
                 headers={"Authorization": f"Bearer {patient.json()['token']}"},
@@ -503,12 +503,12 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(repeat_patient.status_code, 200)
         self.assertEqual(prime.status_code, 200)
         self.assertEqual(unknown.status_code, 400)
-        self.assertEqual(patient.json()["user"]["userId"], "beta-patient")
-        self.assertEqual(repeat_patient.json()["user"]["userId"], "beta-patient")
-        self.assertEqual(prime.json()["user"]["userId"], "beta-prime")
+        self.assertEqual(patient.json()["user"]["userId"], "demo-patient")
+        self.assertEqual(repeat_patient.json()["user"]["userId"], "demo-patient")
+        self.assertEqual(prime.json()["user"]["userId"], "demo-prime")
         self.assertNotEqual(patient.json()["token"], repeat_patient.json()["token"])
         self.assertEqual(me.status_code, 200)
-        self.assertEqual(me.json()["user"]["userId"], "beta-patient")
+        self.assertEqual(me.json()["user"]["userId"], "demo-patient")
 
     def test_expired_auth_token_is_rejected(self) -> None:
         with self._client_with_expired_auth_tokens() as client:
@@ -722,13 +722,13 @@ class ServerTestCase(unittest.TestCase):
         self.assertNotEqual(payload["assignments"]["RUNNER"], risky_user_id)
         self.assertIn("healthSignals", meta["candidateFields"])
 
-    def test_beta_bootstrap_aed_dispatch_and_export(self) -> None:
+    def test_demo_bootstrap_aed_dispatch_and_export(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
-            beta = bootstrapped.json()
-            self.assertEqual(len(beta["clients"]), 4)
-            self.assertEqual(len(beta["aedSites"]), 2)
+            demo = bootstrapped.json()
+            self.assertEqual(len(demo["clients"]), 4)
+            self.assertEqual(len(demo["aedSites"]), 2)
 
             aed_sites = client.get("/api/aed-sites")
             self.assertEqual(aed_sites.status_code, 200)
@@ -736,20 +736,20 @@ class ServerTestCase(unittest.TestCase):
 
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
             payload = dispatch.json()
-            self.assertEqual(payload["assignments"]["PRIME"], "beta-prime")
-            self.assertEqual(payload["assignments"]["RUNNER"], "beta-runner")
-            self.assertEqual(payload["assignments"]["GUIDE"], "beta-guide")
+            self.assertEqual(payload["assignments"]["PRIME"], "demo-prime")
+            self.assertEqual(payload["assignments"]["RUNNER"], "demo-runner")
+            self.assertEqual(payload["assignments"]["GUIDE"], "demo-guide")
             self.assertGreater(payload["rationale"]["RUNNER"]["distanceToAedMeters"], 0)
 
             export = client.get("/api/experiments/current/export")
             self.assertEqual(export.status_code, 200)
             exported = export.json()
-            self.assertEqual(exported["patientUserId"], "beta-patient")
-            self.assertEqual(exported["assignments"]["RUNNER"], "beta-runner")
+            self.assertEqual(exported["patientUserId"], "demo-patient")
+            self.assertEqual(exported["assignments"]["RUNNER"], "demo-runner")
             self.assertIn("dispatchSeconds", exported["metrics"])
             self.assertIn("firstResponderResponseSeconds", exported["metrics"])
             self.assertEqual(exported["metrics"]["participantCount"], 4)
@@ -759,7 +759,7 @@ class ServerTestCase(unittest.TestCase):
             self.assertEqual(exported["metrics"]["roleAssignmentCompleteness"], 1.0)
             self.assertGreater(exported["metrics"]["runnerRouteMeters"], 0)
             self.assertTrue(exported["timeline"])
-            patient = next(item for item in exported["clients"] if item["userId"] == "beta-patient")
+            patient = next(item for item in exported["clients"] if item["userId"] == "demo-patient")
             self.assertEqual(patient["healthSignals"]["source"], "mock")
             self.assertEqual(patient["healthSignals"]["authorizationStatus"], "sample")
             self.assertIn("low_spo2", patient["healthSignals"]["riskTags"])
@@ -792,7 +792,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("manifest.json", names)
                 clients_csv = archive.read("clients.csv").decode("utf-8-sig")
                 self.assertIn("heartRateBpm", clients_csv)
-                self.assertIn("beta-patient", clients_csv)
+                self.assertIn("demo-patient", clients_csv)
                 self.assertIn("sample", clients_csv)
                 self.assertNotIn("OPPO Health mock", clients_csv)
                 experiment_json = archive.read("experiment.json").decode("utf-8")
@@ -809,23 +809,23 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("ROLE_ASSIGNED", timeline_csv)
                 self.assertIn("P001", timeline_csv)
                 self.assertNotIn("actorUserId", timeline_csv)
-                self.assertNotIn("beta-patient", timeline_csv)
-                self.assertNotIn("beta-prime", timeline_csv)
-                self.assertNotIn("beta-runner", timeline_csv)
+                self.assertNotIn("demo-patient", timeline_csv)
+                self.assertNotIn("demo-prime", timeline_csv)
+                self.assertNotIn("demo-runner", timeline_csv)
                 dispatch_rationale_csv = archive.read("dispatch_rationale.csv").decode("utf-8-sig")
                 self.assertIn("participantCode", dispatch_rationale_csv)
                 self.assertNotIn("userId", dispatch_rationale_csv.splitlines()[0])
-                self.assertNotIn("beta-prime", dispatch_rationale_csv)
-                self.assertNotIn("beta-runner", dispatch_rationale_csv)
-                self.assertNotIn("beta-guide", dispatch_rationale_csv)
+                self.assertNotIn("demo-prime", dispatch_rationale_csv)
+                self.assertNotIn("demo-runner", dispatch_rationale_csv)
+                self.assertNotIn("demo-guide", dispatch_rationale_csv)
                 anonymized_clients_csv = archive.read("clients_anonymized.csv").decode("utf-8-sig")
                 self.assertIn("participantCode", anonymized_clients_csv)
                 self.assertIn("P001", anonymized_clients_csv)
-                self.assertNotIn("beta-patient", anonymized_clients_csv)
+                self.assertNotIn("demo-patient", anonymized_clients_csv)
                 anonymized_json = archive.read("experiment_anonymized.json").decode("utf-8")
                 self.assertIn("participantMap", anonymized_json)
                 self.assertIn("P001", anonymized_json)
-                self.assertNotIn("beta-patient", anonymized_json)
+                self.assertNotIn("demo-patient", anonymized_json)
                 package_readme = archive.read("README.md").decode("utf-8")
                 self.assertIn("build_pre_experiment_report.py", package_readme)
                 self.assertIn("round-summary.csv", package_readme)
@@ -839,8 +839,8 @@ class ServerTestCase(unittest.TestCase):
                 self.assertIn("expert_feedback_summary.csv", review_index)
                 self.assertIn("样例健康摘要或演示健康摘要", review_index)
                 self.assertIn("患者代号：P001", review_index)
-                self.assertNotIn("beta-patient", review_index)
-                self.assertNotIn("beta-prime", review_index)
+                self.assertNotIn("demo-patient", review_index)
+                self.assertNotIn("demo-prime", review_index)
                 expert_summary = archive.read("expert_summary.md").decode("utf-8")
                 self.assertIn("生命反射弧预实验专家摘要", expert_summary)
                 self.assertIn("数据使用边界", expert_summary)
@@ -880,7 +880,7 @@ class ServerTestCase(unittest.TestCase):
                 self.assertEqual(quality_report["metricCoverage"]["roleAssignmentCompleteness"], 1.0)
                 self.assertEqual(quality_report["metricCoverage"]["healthCoveragePercent"], 100.0)
                 self.assertIn("missing_cprStarted", {item["code"] for item in quality_report["warnings"]})
-                self.assertNotIn("beta-patient", json.dumps(quality_report, ensure_ascii=False))
+                self.assertNotIn("demo-patient", json.dumps(quality_report, ensure_ascii=False))
                 observer_form = archive.read("observer_record_form.csv").decode("utf-8-sig")
                 self.assertIn("observerValue", observer_form)
                 self.assertIn("role_assignment_clarity", observer_form)
@@ -942,9 +942,9 @@ class ServerTestCase(unittest.TestCase):
                     content = archive.read(name)
                     self.assertEqual(hashlib.sha256(content).hexdigest(), entry["sha256"])
 
-    def test_beta_clients_and_aed_sites_persist_across_app_recreation(self) -> None:
+    def test_demo_clients_and_aed_sites_persist_across_app_recreation(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
 
         with self._client() as restarted_client:
@@ -952,7 +952,7 @@ class ServerTestCase(unittest.TestCase):
             aed_sites = restarted_client.get("/api/aed-sites")
             dispatch = restarted_client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
 
         self.assertEqual(clients.status_code, 200)
@@ -960,22 +960,22 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(dispatch.status_code, 200)
         self.assertEqual(len(clients.json()["clients"]), 4)
         self.assertEqual(len(aed_sites.json()["aedSites"]), 2)
-        self.assertEqual(dispatch.json()["assignments"]["PRIME"], "beta-prime")
+        self.assertEqual(dispatch.json()["assignments"]["PRIME"], "demo-prime")
 
     def test_responders_cannot_join_before_patient_sos_dispatch(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             incident_id = bootstrapped.json()["incidentId"]
 
             manual_join = client.post(
                 f"/api/incidents/{incident_id}/join",
-                json={"role": "PRIME", "userId": "beta-prime"},
+                json={"role": "PRIME", "userId": "demo-prime"},
             )
             self.assertEqual(manual_join.status_code, 409)
             self.assertIn("患者端启动 SOS", manual_join.json()["detail"])
 
-            auto_join = client.post("/api/incidents/current/join_auto", json={"userId": "beta-prime"})
+            auto_join = client.post("/api/incidents/current/join_auto", json={"userId": "demo-prime"})
             self.assertEqual(auto_join.status_code, 409)
             self.assertIn("患者端启动 SOS", auto_join.json()["detail"])
 
@@ -986,12 +986,12 @@ class ServerTestCase(unittest.TestCase):
 
     def test_historical_export_uses_target_incident_roles(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             old_incident_id = bootstrapped.json()["incidentId"]
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
 
@@ -1001,20 +1001,20 @@ class ServerTestCase(unittest.TestCase):
             current_export = client.get("/api/experiments/current/export")
             self.assertEqual(current_export.status_code, 200)
             current_clients = current_export.json()["clients"]
-            current_prime = next(item for item in current_clients if item["userId"] == "beta-prime")
+            current_prime = next(item for item in current_clients if item["userId"] == "demo-prime")
             self.assertIsNone(current_prime["assignedRole"])
 
             old_export = client.get(f"/api/experiments/{old_incident_id}/export")
             self.assertEqual(old_export.status_code, 200)
             old_payload = old_export.json()
-            old_prime = next(item for item in old_payload["clients"] if item["userId"] == "beta-prime")
-            old_patient = next(item for item in old_payload["clients"] if item["userId"] == "beta-patient")
+            old_prime = next(item for item in old_payload["clients"] if item["userId"] == "demo-prime")
+            old_patient = next(item for item in old_payload["clients"] if item["userId"] == "demo-patient")
             old_package = client.get(f"/api/experiments/{old_incident_id}/package")
             self.assertEqual(old_package.status_code, 200)
             current_package = client.get("/api/experiments/current/package")
             self.assertEqual(current_package.status_code, 200)
 
-        self.assertEqual(old_payload["assignments"]["PRIME"], "beta-prime")
+        self.assertEqual(old_payload["assignments"]["PRIME"], "demo-prime")
         self.assertEqual(old_prime["assignedRole"], "PRIME")
         self.assertTrue(old_patient["isPatient"])
         with zipfile.ZipFile(BytesIO(old_package.content)) as archive:
@@ -1025,7 +1025,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertNotEqual(current_manifest["incidentId"], old_incident_id)
 
     def test_evidence_package_verification_script_accepts_current_package(self) -> None:
-        _, package_content = self._beta_evidence_package_content()
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence.zip"
         package_path.write_bytes(package_content)
         result = self._run_evidence_verifier(package_path)
@@ -1034,13 +1034,13 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("OK: evidence package manifest", result.stdout)
 
     def test_evidence_package_verifier_rejects_public_raw_user_id_leak(self) -> None:
-        _, package_content = self._beta_evidence_package_content()
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence-leaky.zip"
         with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
             for info in source.infolist():
                 content = source.read(info.filename)
                 if info.filename == "review_index.md":
-                    content += "\nraw leak: beta-patient\n".encode("utf-8")
+                    content += "\nraw leak: demo-patient\n".encode("utf-8")
                 target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
 
         result = self._run_evidence_verifier(package_path)
@@ -1049,7 +1049,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("public file leaks raw participant id: review_index.md", result.stderr)
 
     def test_evidence_package_verifier_rejects_tampered_manifest_hash(self) -> None:
-        _, package_content = self._beta_evidence_package_content()
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence-tampered-hash.zip"
         with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
             for info in source.infolist():
@@ -1066,7 +1066,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("SHA-256 mismatch:", result.stderr)
 
     def test_evidence_package_verifier_rejects_unlisted_file(self) -> None:
-        _, package_content = self._beta_evidence_package_content()
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence-unlisted-file.zip"
         with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
             for info in source.infolist():
@@ -1079,7 +1079,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("ZIP contains file not listed in manifest: unexpected.txt", result.stderr)
 
     def test_evidence_package_verifier_rejects_privacy_guidance_overlap(self) -> None:
-        _, package_content = self._beta_evidence_package_content()
+        _, package_content = self._demo_evidence_package_content()
         package_path = self.root / "lifereflex-evidence-privacy-overlap.zip"
         with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
             for info in source.infolist():
@@ -1099,11 +1099,11 @@ class ServerTestCase(unittest.TestCase):
 
     def test_evidence_round_summary_script_merges_packages(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
             package = client.get("/api/experiments/current/package")
@@ -1148,11 +1148,11 @@ class ServerTestCase(unittest.TestCase):
 
     def test_round_summary_analysis_script_writes_ppt_safe_report(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
             package = client.get("/api/experiments/current/package")
@@ -1259,11 +1259,11 @@ class ServerTestCase(unittest.TestCase):
 
     def test_pre_experiment_report_builder_creates_summary_and_analysis(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
             package = client.get("/api/experiments/current/package")
@@ -1413,20 +1413,20 @@ class ServerTestCase(unittest.TestCase):
 
     def test_auto_join_marks_existing_assignment_joined_once(self) -> None:
         with self._client() as client:
-            client.post("/api/beta/bootstrap")
+            client.post("/api/demo/bootstrap")
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             incident_id = dispatch.json()["incidentId"]
             first_join = client.post(
                 "/api/incidents/current/join_auto",
-                json={"userId": "beta-prime"},
+                json={"userId": "demo-prime"},
             )
             after_first_join = client.get(f"/api/incidents/{incident_id}").json()
             second_join = client.post(
                 "/api/incidents/current/join_auto",
-                json={"userId": "beta-prime"},
+                json={"userId": "demo-prime"},
             )
             after_second_join = client.get(f"/api/incidents/{incident_id}").json()
 
@@ -1439,7 +1439,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(after_second_join["roles"]["PRIME"]["status"], "JOINED")
         self.assertEqual(len(after_second_join["logs"]), len(after_first_join["logs"]))
         self.assertEqual(
-            sum(1 for log in after_second_join["logs"] if log["msg"] == "PRIME auto-joined (beta-prime)"),
+            sum(1 for log in after_second_join["logs"] if log["msg"] == "PRIME auto-joined (demo-prime)"),
             1,
         )
 
@@ -1522,8 +1522,8 @@ class ServerTestCase(unittest.TestCase):
             web_dist_dir=self.settings.web_dist_dir,
         )
         with TestClient(create_app(settings)) as client:
-            first_bootstrap = client.post("/api/beta/bootstrap")
-            patient_auth = client.post("/api/auth/beta", json={"persona": "patient"})
+            first_bootstrap = client.post("/api/demo/bootstrap")
+            patient_auth = client.post("/api/auth/demo", json={"persona": "patient"})
             patient_token = patient_auth.json()["token"]
             first_incident_id = first_bootstrap.json()["incidentId"]
             started = client.post(
@@ -1532,11 +1532,11 @@ class ServerTestCase(unittest.TestCase):
             )
             first_during_sos = client.get(f"/api/incidents/{first_incident_id}").json()
 
-            second_bootstrap = client.post("/api/beta/bootstrap")
+            second_bootstrap = client.post("/api/demo/bootstrap")
             second_incident_id = second_bootstrap.json()["incidentId"]
             current_designated = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-prime"},
+                json={"patientUserId": "demo-prime"},
             )
 
         self.assertEqual(first_bootstrap.status_code, 200)
@@ -1555,14 +1555,14 @@ class ServerTestCase(unittest.TestCase):
             current_after_restart = restarted_client.get("/api/incidents/current").json()
 
         self.assertEqual(first_after_restart["phase"], "DISPATCHED")
-        self.assertEqual(first_after_restart["patientUserId"], "beta-patient")
+        self.assertEqual(first_after_restart["patientUserId"], "demo-patient")
         self.assertEqual(current_after_restart["incidentId"], second_incident_id)
         self.assertEqual(current_after_restart["phase"], "DISPATCHED")
-        self.assertEqual(current_after_restart["patientUserId"], "beta-prime")
+        self.assertEqual(current_after_restart["patientUserId"], "demo-prime")
 
     def test_patient_designation_runs_dispatch_in_worker_thread(self) -> None:
         with self._client() as client:
-            client.post("/api/beta/bootstrap")
+            client.post("/api/demo/bootstrap")
 
             with patch(
                 "app.services.incidents.asyncio.to_thread",
@@ -1570,7 +1570,7 @@ class ServerTestCase(unittest.TestCase):
             ) as to_thread:
                 response = client.post(
                     "/api/incidents/current/designate_patient",
-                    json={"patientUserId": "beta-patient"},
+                    json={"patientUserId": "demo-patient"},
                 )
 
         self.assertEqual(response.status_code, 200)
@@ -1598,12 +1598,12 @@ class ServerTestCase(unittest.TestCase):
             return {"PRIME": None, "RUNNER": None, "GUIDE": None}, "slow", {}
 
         with TestClient(create_app(settings)) as client:
-            client.post("/api/beta/bootstrap")
+            client.post("/api/demo/bootstrap")
             with patch("app.services.dispatch_ai.DispatchPlanner.assign_roles", side_effect=slow_assign):
                 started_at = __import__("time").perf_counter()
                 response = client.post(
                     "/api/incidents/current/designate_patient",
-                    json={"patientUserId": "beta-patient"},
+                    json={"patientUserId": "demo-patient"},
                 )
                 elapsed = __import__("time").perf_counter() - started_at
             current = client.get("/api/incidents/current").json()
@@ -1612,7 +1612,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertLess(elapsed, 0.8)
         self.assertEqual(current["phase"], "DISPATCHED")
         self.assertEqual(current["dispatchSource"], "fallback")
-        self.assertEqual(current["roles"]["PRIME"]["userId"], "beta-prime")
+        self.assertEqual(current["roles"]["PRIME"]["userId"], "demo-prime")
         self.assertTrue(
             any("static fallback" in entry["msg"] for entry in current["logs"]),
         )
@@ -1945,52 +1945,52 @@ class ServerTestCase(unittest.TestCase):
         exported_health = next(item for item in export["clients"] if item["userId"] == user_id)["healthSignals"]
         self.assertEqual(exported_health["riskTags"], ["tachycardia", "low_spo2"])
 
-    def test_beta_admin_token_protects_public_beta_mutations(self) -> None:
-        token = "test-beta-admin"
-        with self._client_with_beta_admin_token(token) as client:
+    def test_demo_admin_token_protects_public_demo_mutations(self) -> None:
+        token = "test-demo-admin"
+        with self._client_with_demo_admin_token(token) as client:
             health = client.get("/api/health/detail")
             denied_create = client.post("/api/incidents")
-            denied_bootstrap = client.post("/api/beta/bootstrap")
+            denied_bootstrap = client.post("/api/demo/bootstrap")
             denied_export = client.get("/api/experiments/current/export")
             denied_designate = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             allowed_create = client.post(
                 "/api/incidents",
-                headers={"X-beta-Admin-Token": token},
+                headers={"X-demo-Admin-Token": token},
             )
             allowed_bootstrap = client.post(
-                "/api/beta/bootstrap",
-                headers={"X-beta-Admin-Token": token},
+                "/api/demo/bootstrap",
+                headers={"X-demo-Admin-Token": token},
             )
             allowed_designate = client.post(
                 "/api/incidents/current/designate_patient",
-                headers={"X-beta-Admin-Token": token},
-                json={"patientUserId": "beta-patient"},
+                headers={"X-demo-Admin-Token": token},
+                json={"patientUserId": "demo-patient"},
             )
             current_incident_id = allowed_designate.json()["incidentId"]
             denied_join = client.post(
                 f"/api/incidents/{current_incident_id}/join",
-                json={"role": "PRIME", "userId": "beta-web-prime"},
+                json={"role": "PRIME", "userId": "demo-web-prime"},
             )
             allowed_join = client.post(
                 f"/api/incidents/{current_incident_id}/join",
-                headers={"X-beta-Admin-Token": token},
-                json={"role": "PRIME", "userId": "beta-web-prime"},
+                headers={"X-demo-Admin-Token": token},
+                json={"role": "PRIME", "userId": "demo-web-prime"},
             )
             allowed_action = client.post(
                 f"/api/incidents/{current_incident_id}/actions",
-                headers={"X-beta-Admin-Token": token},
-                json={"action": "CPR_STARTED", "userId": "beta-web-prime"},
+                headers={"X-demo-Admin-Token": token},
+                json={"action": "CPR_STARTED", "userId": "demo-web-prime"},
             )
             allowed_export = client.get(
                 "/api/experiments/current/export",
-                headers={"X-beta-Admin-Token": token},
+                headers={"X-demo-Admin-Token": token},
             )
 
         self.assertEqual(health.status_code, 200)
-        self.assertTrue(health.json()["betaAdminAuthEnabled"])
+        self.assertTrue(health.json()["demoAdminAuthEnabled"])
         self.assertEqual(denied_create.status_code, 403)
         self.assertEqual(denied_bootstrap.status_code, 403)
         self.assertEqual(denied_export.status_code, 403)
@@ -2003,7 +2003,7 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(allowed_action.status_code, 200)
         self.assertEqual(allowed_export.status_code, 200)
 
-    def test_configured_admin_account_can_manage_beta(self) -> None:
+    def test_configured_admin_account_can_manage_demo(self) -> None:
         admin_phone = "13800130001"
         user_phone = "13800130002"
         with self._client_with_admin_phones(admin_phone) as client:
@@ -2033,12 +2033,12 @@ class ServerTestCase(unittest.TestCase):
             admin_token = admin_register.json()["token"]
             user_token = user_register.json()["token"]
             admin_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {admin_token}"})
-            denied = client.post("/api/beta/bootstrap", headers={"Authorization": f"Bearer {user_token}"})
-            bootstrapped = client.post("/api/beta/bootstrap", headers={"Authorization": f"Bearer {admin_token}"})
+            denied = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {user_token}"})
+            bootstrapped = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {admin_token}"})
             designated = client.post(
                 "/api/incidents/current/designate_patient",
                 headers={"Authorization": f"Bearer {admin_token}"},
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             role_join = client.post(
                 f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
@@ -2058,11 +2058,11 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(audit_log.status_code, 200)
         event_types = {event["eventType"] for event in audit_log.json()["events"]}
         self.assertIn("admin_user_denied", event_types)
-        self.assertIn("beta_bootstrapped", event_types)
+        self.assertIn("demo_bootstrapped", event_types)
         self.assertTrue(health.json()["auth"]["adminAccountAuthEnabled"])
         self.assertEqual(health.json()["auth"]["adminPhoneCount"], 1)
 
-    def test_admin_phones_without_beta_token_keep_admin_apis_closed(self) -> None:
+    def test_admin_phones_without_demo_token_keep_admin_apis_closed(self) -> None:
         settings = Settings(
             app_name=self.settings.app_name,
             api_prefix=self.settings.api_prefix,
@@ -2077,7 +2077,7 @@ class ServerTestCase(unittest.TestCase):
             admin_phones=("13800130003",),
         )
         with TestClient(create_app(settings)) as client:
-            open_bootstrap = client.post("/api/beta/bootstrap")
+            open_bootstrap = client.post("/api/demo/bootstrap")
             register = client.post(
                 "/api/auth/register",
                 json=self._register_payload(
@@ -2090,38 +2090,38 @@ class ServerTestCase(unittest.TestCase):
                 ),
             )
             token = register.json()["token"]
-            admin_bootstrap = client.post("/api/beta/bootstrap", headers={"Authorization": f"Bearer {token}"})
+            admin_bootstrap = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {token}"})
 
         self.assertEqual(open_bootstrap.status_code, 403)
         self.assertEqual(register.status_code, 200)
         self.assertEqual(admin_bootstrap.status_code, 200)
 
-    def test_audit_events_capture_sensitive_beta_and_actor_actions(self) -> None:
-        token = "test-beta-admin"
-        with self._client_with_beta_admin_token(token) as client:
-            denied_bootstrap = client.post("/api/beta/bootstrap")
+    def test_audit_events_capture_sensitive_demo_and_actor_actions(self) -> None:
+        token = "test-demo-admin"
+        with self._client_with_demo_admin_token(token) as client:
+            denied_bootstrap = client.post("/api/demo/bootstrap")
             bootstrapped = client.post(
-                "/api/beta/bootstrap",
-                headers={"X-beta-Admin-Token": token},
+                "/api/demo/bootstrap",
+                headers={"X-demo-Admin-Token": token},
             )
             designated = client.post(
                 "/api/incidents/current/designate_patient",
-                headers={"X-beta-Admin-Token": token},
-                json={"patientUserId": "beta-patient"},
+                headers={"X-demo-Admin-Token": token},
+                json={"patientUserId": "demo-patient"},
             )
             joined = client.post(
                 f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
-                headers={"X-beta-Admin-Token": token},
-                json={"role": "PRIME", "userId": "beta-prime"},
+                headers={"X-demo-Admin-Token": token},
+                json={"role": "PRIME", "userId": "demo-prime"},
             )
             package = client.get(
                 "/api/experiments/current/package",
-                headers={"X-beta-Admin-Token": token},
+                headers={"X-demo-Admin-Token": token},
             )
             package_sha256 = hashlib.sha256(package.content).hexdigest()
             audit_log = client.get(
                 "/api/audit/events?limit=20",
-                headers={"X-beta-Admin-Token": token},
+                headers={"X-demo-Admin-Token": token},
             )
             health = client.get("/api/health/detail")
 
@@ -2134,8 +2134,8 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(audit_log.status_code, 200)
         events = audit_log.json()["events"]
         event_types = {event["eventType"] for event in events}
-        self.assertIn("beta_admin_denied", event_types)
-        self.assertIn("beta_bootstrapped", event_types)
+        self.assertIn("demo_admin_denied", event_types)
+        self.assertIn("demo_bootstrapped", event_types)
         self.assertIn("patient_designated", event_types)
         self.assertIn("role_joined", event_types)
         self.assertIn("experiment_package_exported", event_types)
@@ -2514,22 +2514,22 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(current["phase"], "ARCHIVED")
         self.assertEqual(current["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
 
-    def test_completed_beta_package_quality_report_is_ready(self) -> None:
+    def test_completed_demo_package_quality_report_is_ready(self) -> None:
         with self._client() as client:
-            bootstrapped = client.post("/api/beta/bootstrap")
+            bootstrapped = client.post("/api/demo/bootstrap")
             self.assertEqual(bootstrapped.status_code, 200)
             dispatch = client.post(
                 "/api/incidents/current/designate_patient",
-                json={"patientUserId": "beta-patient"},
+                json={"patientUserId": "demo-patient"},
             )
             self.assertEqual(dispatch.status_code, 200)
             incident_id = dispatch.json()["incidentId"]
             for action, user_id in (
-                ("CPR_STARTED", "beta-prime"),
-                ("AED_PICKED", "beta-runner"),
-                ("AED_DELIVERED", "beta-runner"),
-                ("AMBULANCE_ARRIVED", "beta-guide"),
-                ("HANDOVER_COMPLETED", "beta-guide"),
+                ("CPR_STARTED", "demo-prime"),
+                ("AED_PICKED", "demo-runner"),
+                ("AED_DELIVERED", "demo-runner"),
+                ("AMBULANCE_ARRIVED", "demo-guide"),
+                ("HANDOVER_COMPLETED", "demo-guide"),
             ):
                 response = client.post(
                     f"/api/incidents/{incident_id}/actions",

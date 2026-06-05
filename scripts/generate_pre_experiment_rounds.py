@@ -133,8 +133,8 @@ def _settings(db_path: Path) -> Settings:
         local_model_base_url=None,
         prefer_local_model=False,
         dispatch_llm_budget_sec=0.05,
-        beta_admin_token=None,
-        map_provider="beta",
+        demo_admin_token=None,
+        map_provider="demo",
         audit_log_enabled=True,
         rate_limit_enabled=False,
     )
@@ -148,27 +148,27 @@ def _post_ok(client: TestClient, url: str, payload: dict | None = None) -> dict:
 
 
 def _run_round(client: TestClient, scenario: dict) -> str:
-    bootstrapped = _post_ok(client, "/api/beta/bootstrap")
+    bootstrapped = _post_ok(client, "/api/demo/bootstrap")
     incident_id = bootstrapped["incidentId"]
-    _post_ok(client, "/api/incidents/current/designate_patient", {"patientUserId": "beta-patient"})
+    _post_ok(client, "/api/incidents/current/designate_patient", {"patientUserId": "demo-patient"})
 
     action_plan = [
-        ("CPR_STARTED", "beta-prime"),
-        ("AED_PICKED", "beta-runner"),
+        ("CPR_STARTED", "demo-prime"),
+        ("AED_PICKED", "demo-runner"),
     ]
     if scenario["ambulance"] < scenario["aed_delivery"]:
-        action_plan.append(("AMBULANCE_ARRIVED", "beta-guide"))
+        action_plan.append(("AMBULANCE_ARRIVED", "demo-guide"))
     action_plan.extend(
         [
-            ("AED_DELIVERED", "beta-runner"),
-            ("AED_ANALYSIS_STARTED", "beta-prime"),
+            ("AED_DELIVERED", "demo-runner"),
+            ("AED_ANALYSIS_STARTED", "demo-prime"),
         ]
     )
     if scenario.get("shock") is not None:
-        action_plan.append(("AED_SHOCK_DELIVERED", "beta-prime"))
+        action_plan.append(("AED_SHOCK_DELIVERED", "demo-prime"))
     if scenario["ambulance"] >= scenario["aed_delivery"]:
-        action_plan.append(("AMBULANCE_ARRIVED", "beta-guide"))
-    action_plan.append(("HANDOVER_COMPLETED", "beta-guide"))
+        action_plan.append(("AMBULANCE_ARRIVED", "demo-guide"))
+    action_plan.append(("HANDOVER_COMPLETED", "demo-guide"))
 
     for action, user_id in action_plan:
         _post_ok(
@@ -206,7 +206,7 @@ def _run_round(client: TestClient, scenario: dict) -> str:
         elif message.startswith("AED site updated"):
             entry.ts = base - 3500 + aed_update_count * 120
             aed_update_count += 1
-        elif message == "beta scenario bootstrapped":
+        elif message == "demo scenario bootstrapped":
             entry.ts = base - 3000
         elif message.startswith("Patient designated"):
             entry.ts = base

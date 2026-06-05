@@ -22,17 +22,17 @@ export function getWsBase() {
 	const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 	return `${protocol}//${window.location.host}/ws`;
 }
-export function getStoredbetaAdminToken() {
+export function getStoreddemoAdminToken() {
 	if (typeof window === "undefined") {
 		return "";
 	}
-	return window.localStorage.getItem("lra_beta_admin_token") ?? "";
+	return window.localStorage.getItem("lra_demo_admin_token") ?? "";
 }
-export function buildbetaAdminHeaders(token, extra) {
+export function builddemoAdminHeaders(token, extra) {
 	const headers = new Headers(extra);
 	const trimmed = token.trim();
 	if (trimmed) {
-		headers.set("X-beta-Admin-Token", trimmed);
+		headers.set("X-demo-Admin-Token", trimmed);
 	}
 	return headers;
 }
@@ -87,8 +87,8 @@ export async function loginAccount(phone, password) {
 		})
 	}, "登录失败");
 }
-export async function loginbetaPersona(persona) {
-	return requestJson("/auth/beta", {
+export async function logindemoPersona(persona) {
+	return requestJson("/auth/demo", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ persona })
@@ -195,11 +195,11 @@ export async function patientSosCancel(incidentId, token) {
 export function openIncidentSocket(incidentId) {
 	return new WebSocket(`${getWsBase()}?incidentId=${encodeURIComponent(incidentId)}`);
 }
-export async function downloadExperimentPackage(token, betaAdminToken = getStoredbetaAdminToken(), incidentId) {
+export async function downloadExperimentPackage(token, demoAdminToken = getStoreddemoAdminToken(), incidentId) {
 	if (typeof window === "undefined") {
 		throw new Error("下载事件证据包失败：当前环境不支持浏览器下载");
 	}
-	const headers = buildbetaAdminHeaders(betaAdminToken, buildAuthHeaders(token));
+	const headers = builddemoAdminHeaders(demoAdminToken, buildAuthHeaders(token));
 	const trimmedIncidentId = incidentId?.trim();
 	const packagePath = trimmedIncidentId ? `/experiments/${encodeURIComponent(trimmedIncidentId)}/package` : "/experiments/current/package";
 	const response = await fetch(`${getApiBase()}${packagePath}`, { headers });

@@ -79,11 +79,11 @@ class Settings:
     local_model_name: str = "default"
     local_model_timeout_sec: int = 30
     prefer_local_model: bool = True
-    beta_admin_token: str | None = None
+    demo_admin_token: str | None = None
     admin_phones: tuple[str, ...] = ()
     auth_token_ttl_sec: int = 604800
     health_provider: str = "mock"
-    map_provider: str = "beta"
+    map_provider: str = "demo"
     amap_web_key: str | None = None
     amap_web_security_js_code: str | None = None
     amap_service_key: str | None = None
@@ -129,11 +129,11 @@ def get_settings() -> Settings:
         local_model_name=os.getenv("LRA_LOCAL_MODEL_NAME", "default"),
         local_model_timeout_sec=int(os.getenv("LRA_LOCAL_MODEL_TIMEOUT_SEC", "30")),
         prefer_local_model=_parse_bool(os.getenv("LRA_PREFER_LOCAL_MODEL"), default=True),
-        beta_admin_token=(os.getenv("LRA_beta_ADMIN_TOKEN") or "").strip() or None,
+        demo_admin_token=(os.getenv("LRA_demo_ADMIN_TOKEN") or "").strip() or None,
         admin_phones=_parse_phone_csv(os.getenv("LRA_ADMIN_PHONES")),
         auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
         health_provider=os.getenv("LRA_HEALTH_PROVIDER", "mock").strip() or "mock",
-        map_provider=os.getenv("LRA_MAP_PROVIDER", "beta").strip() or "beta",
+        map_provider=os.getenv("LRA_MAP_PROVIDER", "demo").strip() or "demo",
         amap_web_key=(os.getenv("LRA_AMAP_WEB_KEY") or "").strip() or None,
         amap_web_security_js_code=(os.getenv("LRA_AMAP_WEB_SECURITY_JS_CODE") or "").strip() or None,
         amap_service_key=(os.getenv("LRA_AMAP_SERVICE_KEY") or "").strip() or None,

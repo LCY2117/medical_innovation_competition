@@ -9,7 +9,7 @@ from urllib import error, parse, request
 from app.models.schemas import GeoPoint
 
 
-SUPPORTED_MAP_PROVIDERS = {"beta", "amap", "tencent", "baidu"}
+SUPPORTED_MAP_PROVIDERS = {"demo", "amap", "tencent", "baidu"}
 
 
 @dataclass(frozen=True)
@@ -23,13 +23,13 @@ class DistanceResult:
 class SpatialProvider:
     def __init__(
         self,
-        provider: str = "beta",
+        provider: str = "demo",
         amap_service_key: str | None = None,
         timeout_sec: int = 3,
     ) -> None:
-        normalized = provider.strip().lower() if provider else "beta"
-        self.provider = normalized if normalized in SUPPORTED_MAP_PROVIDERS else "beta"
-        self.requested_provider = normalized or "beta"
+        normalized = provider.strip().lower() if provider else "demo"
+        self.provider = normalized if normalized in SUPPORTED_MAP_PROVIDERS else "demo"
+        self.requested_provider = normalized or "demo"
         self.amap_service_key = (amap_service_key or "").strip() or None
         self.timeout_sec = max(1, timeout_sec)
         self._distance_cache: dict[tuple[str, str, str], DistanceResult] = {}
@@ -44,7 +44,7 @@ class SpatialProvider:
         elif self.provider in {"tencent", "baidu"}:
             fallback_reason = f"{self.provider}_adapter_pending"
 
-        active_provider = self.provider if configured else "beta"
+        active_provider = self.provider if configured else "demo"
         return {
             "requestedProvider": self.requested_provider,
             "mode": self.provider,
@@ -52,7 +52,7 @@ class SpatialProvider:
             "configured": configured,
             "fallbackEnabled": True,
             "fallbackReason": fallback_reason,
-            "distanceSource": "amap_web_service" if configured else "haversine_beta",
+            "distanceSource": "amap_web_service" if configured else "haversine_demo",
             "timeoutSec": self.timeout_sec,
         }
 
@@ -77,8 +77,8 @@ class SpatialProvider:
             fallback_reason = f"{self.provider}_adapter_pending"
         return DistanceResult(
             meters=self._haversine_distance_meters(origin, destination),
-            provider="beta",
-            source="haversine_beta",
+            provider="demo",
+            source="haversine_demo",
             fallbackReason=fallback_reason,
         )
 
@@ -116,8 +116,8 @@ class SpatialProvider:
         except (ValueError, KeyError, TypeError, json.JSONDecodeError, error.URLError, error.HTTPError, TimeoutError):
             return DistanceResult(
                 meters=self._haversine_distance_meters(origin, destination),
-                provider="beta",
-                source="haversine_beta",
+                provider="demo",
+                source="haversine_demo",
                 fallbackReason="amap_distance_failed",
             )
 

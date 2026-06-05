@@ -559,23 +559,23 @@
   background: var(--mobile-surface-2);
 }
 
-.mobile-beta-entry {
+.mobile-demo-entry {
   margin-bottom: 14px;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--mobile-border);
 }
 
-.mobile-beta-entry .mobile-section-head {
+.mobile-demo-entry .mobile-section-head {
   margin-bottom: 10px;
 }
 
-.mobile-beta-grid {
+.mobile-demo-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.mobile-beta-grid button {
+.mobile-demo-grid button {
   min-height: 78px;
   border: 1px solid var(--mobile-border);
   border-radius: var(--mobile-control-radius);
@@ -586,18 +586,18 @@
   text-align: left;
 }
 
-.mobile-beta-grid strong,
-.mobile-beta-grid span {
+.mobile-demo-grid strong,
+.mobile-demo-grid span {
   display: block;
 }
 
-.mobile-beta-grid strong {
+.mobile-demo-grid strong {
   color: var(--mobile-ink);
   font-size: 0.92rem;
   font-weight: 800;
 }
 
-.mobile-beta-grid span {
+.mobile-demo-grid span {
   margin-top: 4px;
   color: var(--mobile-muted);
   font-size: 0.76rem;

@@ -118,7 +118,7 @@
         "accuracyMeters": 25.0,
         "label": "教学楼 A 座 2 层走廊",
         "floor": "2F",
-        "source": "mobile-beta",
+        "source": "mobile-demo",
         "updatedTs": null
       },
       "healthSignals": {
@@ -159,7 +159,7 @@
         "accuracyMeters": 20.0,
         "label": "校门岗亭",
         "floor": "1F",
-        "source": "mobile-beta",
+        "source": "mobile-demo",
         "updatedTs": null
       },
       "healthSignals": {
@@ -196,7 +196,7 @@
         "accuracyMeters": 18.0,
         "label": "操场入口",
         "floor": "1F",
-        "source": "mobile-beta",
+        "source": "mobile-demo",
         "updatedTs": null
       },
       "healthSignals": {
@@ -233,7 +233,7 @@
         "accuracyMeters": 18.0,
         "label": "教学楼 A 座 1 层大厅",
         "floor": "1F",
-        "source": "mobile-beta",
+        "source": "mobile-demo",
         "updatedTs": null
       },
       "healthSignals": {
@@ -254,7 +254,7 @@
   ],
   "aedSites": [
     {
-      "siteId": "beta-aed-1",
+      "siteId": "demo-aed-1",
       "name": "二楼服务台 AED",
       "location": {
         "latitude": 39.90403,
@@ -262,7 +262,7 @@
         "accuracyMeters": null,
         "label": "二楼服务台 AED 箱",
         "floor": "2F",
-        "source": "beta",
+        "source": "demo",
         "updatedTs": 1779756384963
       },
       "status": "AVAILABLE",
@@ -270,7 +270,7 @@
       "lastCheckedTs": 1779756384963
     },
     {
-      "siteId": "beta-aed-2",
+      "siteId": "demo-aed-2",
       "name": "校门值班室 AED",
       "location": {
         "latitude": 39.90456,
@@ -278,7 +278,7 @@
         "accuracyMeters": null,
         "label": "校门值班室 AED 箱",
         "floor": "1F",
-        "source": "beta",
+        "source": "demo",
         "updatedTs": 1779756384986
       },
       "status": "AVAILABLE",
@@ -297,7 +297,7 @@
       ],
       "warnings": [],
       "distanceToPatientMeters": 10.878465730137206,
-      "nearestAedSiteId": "beta-aed-1",
+      "nearestAedSiteId": "demo-aed-1",
       "distanceToAedMeters": 35.237971686026725,
       "aedToPatientMeters": 26.684587690751123
     },
@@ -311,7 +311,7 @@
       ],
       "warnings": [],
       "distanceToPatientMeters": 27.5179669606645,
-      "nearestAedSiteId": "beta-aed-1",
+      "nearestAedSiteId": "demo-aed-1",
       "distanceToAedMeters": 14.912040182637217,
       "aedToPatientMeters": 26.684587690751123
     },
@@ -325,7 +325,7 @@
       ],
       "warnings": [],
       "distanceToPatientMeters": 54.84982411885389,
-      "nearestAedSiteId": "beta-aed-2",
+      "nearestAedSiteId": "demo-aed-2",
       "distanceToAedMeters": 9.543461688327588,
       "aedToPatientMeters": 64.3482574614877
     }

@@ -6,7 +6,7 @@ const path = require('path');
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true });
-  await page.goto('https://lifereflex.mddcommunity.top/mobile?beta=patient&slot=patient&incidentId=f3445385-b48a-4dd2-9a12-3cac6b20bffc', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.goto('https://lifereflex.mddcommunity.top/mobile?demo=patient&slot=patient&incidentId=f3445385-b48a-4dd2-9a12-3cac6b20bffc', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForTimeout(1500);
   const metrics = await page.evaluate(() => {
     const health = document.querySelector('.mobile-health-line');

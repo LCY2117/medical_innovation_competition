@@ -298,8 +298,8 @@ fun AppRoot(
                             )
                         )
                     },
-                    onbetaLocationSelected = { label, latitude, longitude ->
-                        incidentViewModel.updatebetaLocation(activeUserId, label, latitude, longitude)
+                    ondemoLocationSelected = { label, latitude, longitude ->
+                        incidentViewModel.updatedemoLocation(activeUserId, label, latitude, longitude)
                     },
                     onProfileUpdate = { displayName, organization, healthCondition, professionIdentity, bio ->
                         sessionViewModel.updateProfile(
@@ -319,7 +319,7 @@ fun AppRoot(
                     },
                     onVoiceGuidanceChanged = settingsViewModel::setVoiceGuidanceEnabled,
                     onVibrationAlertChanged = settingsViewModel::setVibrationAlertEnabled,
-                    onbetaSafetyChanged = settingsViewModel::setbetaSafetyAcknowledged,
+                    ondemoSafetyChanged = settingsViewModel::setdemoSafetyAcknowledged,
                 )
             }
         }

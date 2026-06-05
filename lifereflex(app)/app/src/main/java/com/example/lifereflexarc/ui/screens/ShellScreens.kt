@@ -606,13 +606,13 @@ fun ProfileScreen(
     onRouteChange: (ProfileRoute) -> Unit,
     onOpenCurrent: () -> Unit,
     onSyncSystemLocation: () -> Unit,
-    onbetaLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+    ondemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
     onProfileUpdate: (String, String, HealthCondition, ProfessionIdentity, String) -> Unit,
     onInputChanged: () -> Unit,
     onLogout: () -> Unit,
     onVoiceGuidanceChanged: (Boolean) -> Unit,
     onVibrationAlertChanged: (Boolean) -> Unit,
-    onbetaSafetyChanged: (Boolean) -> Unit,
+    ondemoSafetyChanged: (Boolean) -> Unit,
 ) {
     when (profileRoute) {
         ProfileRoute.Home -> ProfileHomeScreen(
@@ -658,7 +658,7 @@ fun ProfileScreen(
                 onSyncSystemLocation = onSyncSystemLocation,
                 onVoiceGuidanceChanged = onVoiceGuidanceChanged,
                 onVibrationAlertChanged = onVibrationAlertChanged,
-                onbetaSafetyChanged = onbetaSafetyChanged,
+                ondemoSafetyChanged = ondemoSafetyChanged,
                 onLogout = onLogout,
                 showTitle = false,
             )
@@ -670,7 +670,7 @@ fun ProfileScreen(
             locationStatus = locationStatus,
             onBack = { onRouteChange(ProfileRoute.Home) },
             onSyncSystemLocation = onSyncSystemLocation,
-            onbetaLocationSelected = onbetaLocationSelected,
+            ondemoLocationSelected = ondemoLocationSelected,
         )
     }
 }
@@ -1007,7 +1007,7 @@ private fun HealthLocationScreen(
     locationStatus: String,
     onBack: () -> Unit,
     onSyncSystemLocation: () -> Unit,
-    onbetaLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+    ondemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -1017,11 +1017,11 @@ private fun HealthLocationScreen(
     ) {
         ProfileBackHeader(title = "位置与健康", onBack = onBack)
         HealthSignalSummaryCard(healthSignals = healthSignals, readiness = healthReadiness)
-        betaLocationCard(
+        demoLocationCard(
             location = location,
             locationStatus = locationStatus,
             onSyncSystemLocation = onSyncSystemLocation,
-            onbetaLocationSelected = onbetaLocationSelected,
+            ondemoLocationSelected = ondemoLocationSelected,
         )
     }
 }
@@ -1139,7 +1139,7 @@ fun SettingsScreen(
     onSyncSystemLocation: () -> Unit,
     onVoiceGuidanceChanged: (Boolean) -> Unit,
     onVibrationAlertChanged: (Boolean) -> Unit,
-    onbetaSafetyChanged: (Boolean) -> Unit,
+    ondemoSafetyChanged: (Boolean) -> Unit,
     onLogout: () -> Unit,
     showTitle: Boolean = true,
 ) {
@@ -1219,8 +1219,8 @@ fun SettingsScreen(
                 SettingsSwitchRow(
                     title = "演示安全确认",
                     body = "在比赛与预实验中明确当前流程仅用于模拟展示。",
-                    checked = appSettings.betaSafetyAcknowledged,
-                    onCheckedChange = onbetaSafetyChanged,
+                    checked = appSettings.demoSafetyAcknowledged,
+                    onCheckedChange = ondemoSafetyChanged,
                 )
             }
         }
@@ -1347,17 +1347,17 @@ private fun SettingsSwitchRow(
 }
 
 @Composable
-private fun betaLocationCard(
+private fun demoLocationCard(
     location: GeoPoint?,
     locationStatus: String,
     onSyncSystemLocation: () -> Unit,
-    onbetaLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
+    ondemoLocationSelected: (label: String, latitude: Double, longitude: Double) -> Unit,
 ) {
     val points = listOf(
-        betaLocationPoint("患者走廊", "教学楼 A 座 2 层走廊", 39.904120, 116.407210),
-        betaLocationPoint("一层大厅", "教学楼 A 座 1 层大厅", 39.904210, 116.407260),
-        betaLocationPoint("校门岗亭", "校门岗亭", 39.904500, 116.407620),
-        betaLocationPoint("操场入口", "操场入口", 39.903920, 116.407020),
+        demoLocationPoint("患者走廊", "教学楼 A 座 2 层走廊", 39.904120, 116.407210),
+        demoLocationPoint("一层大厅", "教学楼 A 座 1 层大厅", 39.904210, 116.407260),
+        demoLocationPoint("校门岗亭", "校门岗亭", 39.904500, 116.407620),
+        demoLocationPoint("操场入口", "操场入口", 39.903920, 116.407020),
     )
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
@@ -1391,7 +1391,7 @@ private fun betaLocationCard(
             points.forEach { point ->
                 PressableButton(
                     text = point.title,
-                    onClick = { onbetaLocationSelected(point.label, point.latitude, point.longitude) },
+                    onClick = { ondemoLocationSelected(point.label, point.latitude, point.longitude) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1D4ED8), contentColor = Color.White),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -1400,7 +1400,7 @@ private fun betaLocationCard(
     }
 }
 
-private data class betaLocationPoint(
+private data class demoLocationPoint(
     val title: String,
     val label: String,
     val latitude: Double,

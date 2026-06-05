@@ -2,7 +2,7 @@
 
 ## Phase 1 Goal
 
-- Keep the LifeReflexArc beta usable before OPPO review is complete.
+- Keep the LifeReflexArc demo usable before OPPO review is complete.
 - Add a mock/fallback health-data path for Android, mobile web, backend export, and Web console display.
 - Prepare the real OPPO Health SDK/API integration points without storing secrets in Git.
 
@@ -13,7 +13,7 @@
 - Prepare a 520 x 520 px logo under 3 MB.
 - Prepare a fixed HTTPS host and redirect URI for future OAuth/cloud callbacks.
 - Prepare a short cooperation purpose, cooperation plan, and minimal health-data permission request.
-- Only request phase-1 read permissions that support the beta: profile identifier, daily activity, heart rate, sleep, blood oxygen, and sport metadata summary.
+- Only request phase-1 read permissions that support the demo: profile identifier, daily activity, heart rate, sleep, blood oxygen, and sport metadata summary.
 
 ## Compliance
 
@@ -21,7 +21,7 @@
 - Initialize the real SDK only after the user has accepted the app privacy policy.
 - Real health-data reads must be triggered by a visible user action.
 - Do not log or commit OPPO `clientId`, `clientSecret`, access tokens, refresh tokens, signing material, SDK repository credentials, or decryption keys.
-- Treat mock/fallback values as beta evidence, not clinical diagnosis.
+- Treat mock/fallback values as demo evidence, not clinical diagnosis.
 
 ## Android SDK Preparation
 

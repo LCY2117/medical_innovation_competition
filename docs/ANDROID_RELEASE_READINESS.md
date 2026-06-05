@@ -1,6 +1,6 @@
 # Android Release Readiness
 
-This checklist is for turning the current installable debug APK into a more formal competition/expert-beta APK without committing secrets.
+This checklist is for turning the current installable debug APK into a more formal competition/expert-demo APK without committing secrets.
 
 ## Current State
 
@@ -84,7 +84,7 @@ Install on a connected device:
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r "app\build\outputs\apk\debug\app-debug.apk"
 ```
 
-## Before Expert beta
+## Before Expert demo
 
 - Confirm `/api/health/detail` is healthy on the public domain.
 - Confirm Android `LRA_API_BASE` and `LRA_WS_BASE` are public HTTPS/WSS values; release packaging will fail fast if local HTTP/WS values are left in place.

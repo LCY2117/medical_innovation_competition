@@ -205,7 +205,7 @@ python -m app.cli
 
 - 页面入口: `/`
 - 移动浏览器端: `/mobile`
-- 4 端协同演示台: `/mobile-beta`
+- 4 端协同演示台: `/mobile-demo`
 - 静态资源: `/assets/*`
 - 推荐 API: `/api/*`
 - 兼容旧 API: `/incidents*`, `/health`
@@ -244,7 +244,7 @@ APK 发布准备和 release 签名见 `docs/ANDROID_RELEASE_READINESS.md`。签�
 - SQLite 持久化后重启恢复当前事件、终端和 AED 点位。
 - 管理口令、正式管理员账号、审计日志和频率限制。
 - 患者 SOS、自动分派、自动接单留痕、角色接入/CPR/AED/交接动作幂等和归档。
-- 地图/推送/AI provider 不可用时的 beta fallback。
+- 地图/推送/AI provider 不可用时的 demo fallback。
 - Web/移动端 WebSocket 过期回调保护，避免切换事件或网络抖动时旧连接覆盖当前状态。
 - Android REST 状态种子、WebSocket 单飞重连和急救动作提交态。
 - 预实验证据包 ZIP、匿名化文件、manifest hash、坏包拒绝和专家材料。
@@ -253,15 +253,15 @@ APK 发布准备和 release 签名见 `docs/ANDROID_RELEASE_READINESS.md`。签�
 
 - Web 总控台：`/`
 - 移动浏览器端：`/mobile`
-- 4 端协同演示台：`/mobile-beta`
+- 4 端协同演示台：`/mobile-demo`
 - 指定同一事件进入移动端：`/mobile?incidentId=事件编号`
-- 指定同一事件打开 4 端演示台：`/mobile-beta?incidentId=事件编号`
+- 指定同一事件打开 4 端演示台：`/mobile-demo?incidentId=事件编号`
 
 Web 总控台首屏现在提供“演示入口”面板，可一键复制或打开 4 端导播台、患者端、核心施救端、AED 保障端和清障接驳端链接；也可点击“打开4个手机端”同步打开四个移动端标签页。初始化协同演示场景后，这些链接会自动绑定当前 `incidentId`，方便现场发给队友手机或审阅端浏览器。
 
 公网演示建议在 `.env` 中设置：
 
-- `LRA_beta_ADMIN_TOKEN`：启用后，初始化演示场景、重置事件、更新 AED、导出数据等管理操作需要演示口令。
+- `LRA_demo_ADMIN_TOKEN`：启用后，初始化演示场景、重置事件、更新 AED、导出数据等管理操作需要演示口令。
 - `LRA_ADMIN_PHONES`：可选正式管理员手机号白名单；白名单账号正常登录后也可调用管理接口。
 
 ## 预实验证据包
@@ -378,7 +378,7 @@ SiliconFlow 的配置文件放在：
 
 ## 第三方 provider 与 fallback
 
-当前比赛版按“真实 provider + beta fallback”设计：
+当前比赛版按“真实 provider + demo fallback”设计：
 
 - AI：`LRA_SILICONFLOW_API_KEY` 或本地 OpenAI-compatible 模型；不可用时走规则兜底。
 - 地图：`LRA_MAP_PROVIDER=amap` + `LRA_AMAP_SERVICE_KEY` 可启用高德 WebService 距离；缺 Key 时走内置坐标和 Haversine。

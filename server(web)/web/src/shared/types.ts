@@ -97,7 +97,7 @@ export interface DispatchMeta {
 }
 
 export interface HealthDetail {
-  betaAdminAuthEnabled?: boolean;
+  demoAdminAuthEnabled?: boolean;
   frontend?: { ok?: boolean };
 }
 

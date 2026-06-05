@@ -33,7 +33,7 @@
 | `roleAssignmentCompleteness` | 1.0 | PRIME/RUNNER/GUIDE 三类角色是否完整分派，1.0 表示三类均有终端 | 仅表示任务分派完整性 |
 | `locationCoveragePercent` | 100.0% | 有位置摘要的终端占比 | 演示坐标不等同真实定位精度 |
 | `healthCoveragePercent` | 100.0% | 有健康摘要的终端占比 | 演示健康摘要不等同真实诊断 |
-| `runnerRouteMeters` | 41.6 | AED 保障端到 AED 点位再回患者位置的估算总距离 | 地图 Key 未接入时可能为 beta/Haversine 估算 |
+| `runnerRouteMeters` | 41.6 | AED 保障端到 AED 点位再回患者位置的估算总距离 | 地图 Key 未接入时可能为 demo/Haversine 估算 |
 
 ## 三、角色代码
 

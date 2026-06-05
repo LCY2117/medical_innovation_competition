@@ -15,7 +15,7 @@ import { fetchCurrentIncident, fetchIncident } from '@/shared/api';
 import type { IncidentState, RoleName } from '../shared/types';
 import './mobile-demo-stage.css';
 
-const betaFrames = [
+const demoFrames = [
   { key: 'patient', label: '患者', caption: 'SOS 触发', tone: 'patient', role: null },
   { key: 'prime', label: '施救', caption: 'CPR / AED', tone: 'prime', role: 'PRIME' as const },
   { key: 'runner', label: 'AED', caption: '取送设备', tone: 'runner', role: 'RUNNER' as const },
@@ -218,7 +218,7 @@ function getEvidenceStatus(state: IncidentState | null): string {
   return `实时采集中，日志 ${state.logs?.length ?? 0} 条`;
 }
 
-function getTerminalStatus(frame: (typeof betaFrames)[number], state: IncidentState | null): string {
+function getTerminalStatus(frame: (typeof demoFrames)[number], state: IncidentState | null): string {
   if (!state) {
     return '未接入事件';
   }
@@ -231,7 +231,7 @@ function getTerminalStatus(frame: (typeof betaFrames)[number], state: IncidentSt
   return translateRoleStatus(state.roles?.[frame.role]?.status);
 }
 
-function MobilebetaStage() {
+function MobiledemoStage() {
   const [incidentId, setIncidentId] = useState(() => new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '');
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -291,31 +291,31 @@ function MobilebetaStage() {
   }, [incidentId]);
 
   const reloadAll = () => {
-    document.querySelectorAll<HTMLIFrameElement>('.mobile-beta-stage-frame').forEach((frame) => {
+    document.querySelectorAll<HTMLIFrameElement>('.mobile-demo-stage-frame').forEach((frame) => {
       frame.contentWindow?.location.reload();
     });
   };
 
   return (
-    <main className="mobile-beta-stage">
-      <header className="mobile-beta-stage-header">
-        <a href="/" className="mobile-beta-stage-icon-link" aria-label="返回总控台">
+    <main className="mobile-demo-stage">
+      <header className="mobile-demo-stage-header">
+        <a href="/" className="mobile-demo-stage-icon-link" aria-label="返回总控台">
           <ArrowLeft size={18} />
         </a>
-        <div className="mobile-beta-stage-title">
+        <div className="mobile-demo-stage-title">
           <Smartphone size={20} />
           <div>
             <p>生命反射弧</p>
             <h1>四端协同演示台</h1>
           </div>
         </div>
-        <button className="mobile-beta-stage-icon-button" onClick={reloadAll} aria-label="刷新四端" title="刷新四端">
+        <button className="mobile-demo-stage-icon-button" onClick={reloadAll} aria-label="刷新四端" title="刷新四端">
           <RefreshCw size={18} />
         </button>
       </header>
 
-      <section className="mobile-beta-stage-strip" aria-label="演示状态">
-        <div className={`mobile-beta-stage-context ${incidentId ? 'is-bound' : 'is-unbound'}`}>
+      <section className="mobile-demo-stage-strip" aria-label="演示状态">
+        <div className={`mobile-demo-stage-context ${incidentId ? 'is-bound' : 'is-unbound'}`}>
           <ShieldCheck size={16} />
           <div>
             <strong>{incidentStatus}</strong>
@@ -323,14 +323,14 @@ function MobilebetaStage() {
           </div>
         </div>
         <p>{incidentHint}</p>
-        <div className="mobile-beta-stage-safety">
+        <div className="mobile-demo-stage-safety">
           <ShieldCheck size={15} />
           <span>安全边界：仅用于协同训练与预实验展示，不触发真实急救调度。</span>
         </div>
-        <ol className="mobile-beta-stage-runbook" aria-label="演示导播步骤">
+        <ol className="mobile-demo-stage-runbook" aria-label="演示导播步骤">
           {runbookSteps.map((step, index) => (
             <li
-              className={`mobile-beta-stage-runbook-step ${
+              className={`mobile-demo-stage-runbook-step ${
                 index < currentRunbookIndex ? 'is-done' : index === currentRunbookIndex ? 'is-active' : 'is-waiting'
               }`}
               key={step}
@@ -342,27 +342,27 @@ function MobilebetaStage() {
         </ol>
       </section>
 
-      <section className="mobile-beta-stage-dashboard" aria-label="事件动态">
-        <div className="mobile-beta-stage-metric is-phase">
+      <section className="mobile-demo-stage-dashboard" aria-label="事件动态">
+        <div className="mobile-demo-stage-metric is-phase">
           <Activity size={18} />
           <span>事件阶段</span>
           <strong>{translatePhase(incident?.phase)}</strong>
           <small>刷新 {lastUpdatedLabel}</small>
         </div>
-        <div className="mobile-beta-stage-metric is-aed">
+        <div className="mobile-demo-stage-metric is-aed">
           <Zap size={18} />
           <span>AED 状态</span>
           <strong>{getAedStatus(incident)}</strong>
           <small>{incident?.aedSites?.length ? `${incident.aedSites.length} 个点位` : '点位待同步'}</small>
         </div>
-        <div className="mobile-beta-stage-metric is-archive">
+        <div className="mobile-demo-stage-metric is-archive">
           <FileCheck2 size={18} />
           <span>证据 / 归档</span>
           <strong>{getEvidenceStatus(incident)}</strong>
           <small>{loadError || '日志、角色、AED 轨迹进入证据链'}</small>
         </div>
-        <div className="mobile-beta-stage-log-card">
-          <div className="mobile-beta-stage-log-title">
+        <div className="mobile-demo-stage-log-card">
+          <div className="mobile-demo-stage-log-title">
             <Archive size={17} />
             <strong>最近日志</strong>
           </div>
@@ -382,9 +382,9 @@ function MobilebetaStage() {
         </div>
       </section>
 
-      <section className="mobile-beta-stage-roles" aria-label="角色状态">
+      <section className="mobile-demo-stage-roles" aria-label="角色状态">
         {roleSummary.map((role) => (
-          <div className="mobile-beta-stage-role" key={role.role}>
+          <div className="mobile-demo-stage-role" key={role.role}>
             <HeartPulse size={16} />
             <span>{role.label}</span>
             <strong>{role.status}</strong>
@@ -392,16 +392,16 @@ function MobilebetaStage() {
         ))}
       </section>
 
-      <section className="mobile-beta-stage-grid">
-        {betaFrames.map((frame) => {
-          const params = new URLSearchParams({ beta: frame.key, slot: frame.key });
+      <section className="mobile-demo-stage-grid">
+        {demoFrames.map((frame) => {
+          const params = new URLSearchParams({ demo: frame.key, slot: frame.key });
           if (incidentId) {
             params.set('incidentId', incidentId);
           }
           const src = `/mobile?${params.toString()}`;
           return (
-            <article className={`mobile-beta-stage-panel is-${frame.tone}`} key={frame.key}>
-              <div className="mobile-beta-stage-panel-head">
+            <article className={`mobile-demo-stage-panel is-${frame.tone}`} key={frame.key}>
+              <div className="mobile-demo-stage-panel-head">
                 <div>
                   <strong>{frame.label}</strong>
                   <span>{frame.caption} · {getTerminalStatus(frame, incident)}</span>
@@ -411,8 +411,8 @@ function MobilebetaStage() {
                   <ExternalLink size={16} />
                 </a>
               </div>
-              <div className="mobile-beta-stage-device">
-                <iframe className="mobile-beta-stage-frame" title={frame.label} src={src} loading="eager" />
+              <div className="mobile-demo-stage-device">
+                <iframe className="mobile-demo-stage-frame" title={frame.label} src={src} loading="eager" />
               </div>
             </article>
           );
@@ -422,4 +422,4 @@ function MobilebetaStage() {
   );
 }
 
-export default MobilebetaStage;
+export default MobiledemoStage;

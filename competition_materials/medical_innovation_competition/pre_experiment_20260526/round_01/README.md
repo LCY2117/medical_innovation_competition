@@ -3,7 +3,7 @@
 事件编号：64902970-d038-4730-8a89-de69a310b7cd
 导出时间戳：1779769334379
 事件阶段：ARCHIVED
-患者终端：beta-patient
+患者终端：demo-patient
 调度来源：fallback
 
 ## 文件说明

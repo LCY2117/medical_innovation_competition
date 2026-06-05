@@ -3,7 +3,7 @@
 事件编号：11a8d320-52b6-422e-b673-ce016679008d
 导出时间戳：1779769336177
 事件阶段：ARCHIVED
-患者终端：beta-patient
+患者终端：demo-patient
 调度来源：fallback
 
 ## 文件说明

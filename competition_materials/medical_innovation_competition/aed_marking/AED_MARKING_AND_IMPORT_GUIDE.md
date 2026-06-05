@@ -52,7 +52,7 @@
 
 ```http
 POST /api/aed-sites
-Header: X-beta-Admin-Token: <演示管理员口令>
+Header: X-demo-Admin-Token: <演示管理员口令>
 Content-Type: application/json
 ```
 

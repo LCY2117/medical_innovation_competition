@@ -218,7 +218,7 @@ class IncidentViewModel(
             try {
                 val healthSignals = healthSignalProvider.readSummary(session)
                 _healthReadiness.value = healthSignalProvider.readiness()
-                val fallbackLocation = betaLocationFor(
+                val fallbackLocation = demoLocationFor(
                     session.displayName,
                     session.professionIdentity.label,
                     session.healthCondition.label,
@@ -249,7 +249,7 @@ class IncidentViewModel(
         }
     }
 
-    fun updatebetaLocation(userId: String, label: String, latitude: Double, longitude: Double) {
+    fun updatedemoLocation(userId: String, label: String, latitude: Double, longitude: Double) {
         viewModelScope.launch {
             try {
                 _error.value = null
@@ -257,7 +257,7 @@ class IncidentViewModel(
                     latitude = latitude,
                     longitude = longitude,
                     label = label,
-                    source = "app-beta",
+                    source = "app-demo",
                 )
                 repository.updateLocation(
                     authToken = _authToken.value,
@@ -286,7 +286,7 @@ class IncidentViewModel(
                     longitude = 116.407330,
                     label = "校园中心点",
                     floor = "1F",
-                    source = "app-beta-fallback",
+                    source = "app-demo-fallback",
                 )
                 val result = bestAvailableLocation(fallback)
                 repository.updateLocation(
@@ -316,14 +316,14 @@ class IncidentViewModel(
         _pendingAction.value = null
     }
 
-    private fun betaLocationFor(displayName: String, professionIdentity: String, healthCondition: String): GeoPoint {
+    private fun demoLocationFor(displayName: String, professionIdentity: String, healthCondition: String): GeoPoint {
         val text = "$displayName $professionIdentity $healthCondition"
         return when {
-            "心脏" in text || "患者" in text -> GeoPoint(39.904120, 116.407210, label = "教学楼 A 座 2 层走廊", floor = "2F", source = "app-beta")
-            "医生" in text || "医护" in text -> GeoPoint(39.904210, 116.407260, label = "教学楼 A 座 1 层大厅", floor = "1F", source = "app-beta")
-            "安保" in text || "物业" in text -> GeoPoint(39.904500, 116.407620, label = "校门岗亭", floor = "1F", source = "app-beta")
-            "体育" in text || "跑" in text -> GeoPoint(39.903920, 116.407020, label = "操场入口", floor = "1F", source = "app-beta")
-            else -> GeoPoint(39.904260, 116.407330, label = "校园中心点", floor = "1F", source = "app-beta")
+            "心脏" in text || "患者" in text -> GeoPoint(39.904120, 116.407210, label = "教学楼 A 座 2 层走廊", floor = "2F", source = "app-demo")
+            "医生" in text || "医护" in text -> GeoPoint(39.904210, 116.407260, label = "教学楼 A 座 1 层大厅", floor = "1F", source = "app-demo")
+            "安保" in text || "物业" in text -> GeoPoint(39.904500, 116.407620, label = "校门岗亭", floor = "1F", source = "app-demo")
+            "体育" in text || "跑" in text -> GeoPoint(39.903920, 116.407020, label = "操场入口", floor = "1F", source = "app-demo")
+            else -> GeoPoint(39.904260, 116.407330, label = "校园中心点", floor = "1F", source = "app-demo")
         }
     }
 
@@ -332,7 +332,7 @@ class IncidentViewModel(
         return if (provider == null) {
             com.example.lifereflexarc.data.LocationProviderResult(
                 location = fallback,
-                status = LocationProviderStatus.beta_FALLBACK,
+                status = LocationProviderStatus.demo_FALLBACK,
                 message = "未接入系统定位 provider，使用演示坐标",
             )
         } else {

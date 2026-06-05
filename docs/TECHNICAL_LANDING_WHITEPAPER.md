@@ -82,7 +82,7 @@ flowchart LR
 - 增加可选演示管理员口令，保护公网演示的创建、重置、触发、导出和 AED 管理接口。
 - 终端位置更新复用登录态，避免任意 userId 伪造位置污染调度输入。
 - 自动接单、角色接入和现场动作接口具备幂等保护：AI 已分派终端首次自动接单会记录 JOINED 时间线，同一终端重复 join 不会把已推进的角色状态降回 JOINED，重复提交已完成动作不会追加重复日志，保证预实验证据时间线稳定。
-- 后端单元测试覆盖 beta bootstrap、AED、location、export、dispatch rationale。
+- 后端单元测试覆盖 demo bootstrap、AED、location、export、dispatch rationale。
 
 ### 5.2 Web 调度台
 
@@ -166,7 +166,7 @@ flowchart LR
 | AI 分派错误 | 规则兜底 + 解释输出 | 专家规则库、风险黑名单、人工确认 |
 | 位置不准确 | 显示精度和来源 | 接入地图 SDK、室内定位或手动校正 |
 | 个人隐私 | 预实验匿名化 | 权限分级、脱敏、审计日志 |
-| 公网演示被重置或污染 | 可配置 `LRA_beta_ADMIN_TOKEN` | 分角色鉴权、后台管理账号、操作审计 |
+| 公网演示被重置或污染 | 可配置 `LRA_demo_ADMIN_TOKEN` | 分角色鉴权、后台管理账号、操作审计 |
 | 服务不可用 | 单机原型 | systemd、备份、监控、灰度发布 |
 | 证书/域名配置混乱 | 1Panel 管理 | 自动化脚本写入 1Panel 记录并备份 |
 

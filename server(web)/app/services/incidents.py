@@ -21,7 +21,7 @@ from app.models.schemas import (
     AutoJoinResponse,
     ClientInfo,
     CreateIncidentResponse,
-    betaBootstrapResponse,
+    demoBootstrapResponse,
     DispatchResponse,
     ExperimentExportResponse,
     GeoPoint,
@@ -60,7 +60,7 @@ class IncidentService:
         local_model_name: str = "Qwen/Qwen2.5-7B-Instruct",
         local_model_timeout_sec: int = 30,
         prefer_local_model: bool = True,
-        map_provider: str = "beta",
+        map_provider: str = "demo",
         amap_service_key: str | None = None,
         map_distance_timeout_sec: int = 3,
         push_provider: str = "websocket",
@@ -606,22 +606,22 @@ class IncidentService:
         await self._broadcast_state_async(incident_id)
         return MutationResponse(incidentId=incident_id, phase=state.phase)
 
-    async def bootstrap_beta(self) -> betaBootstrapResponse:
+    async def bootstrap_demo(self) -> demoBootstrapResponse:
         self.clients = {}
         self.aed_sites = {}
         incident_id = self._new_incident()
         self.current_incident_id = incident_id
 
-        beta_locations = {
-            "patient": GeoPoint(latitude=39.904120, longitude=116.407210, label="教学楼 A 座 2 层走廊", floor="2F", source="beta"),
-            "doctor": GeoPoint(latitude=39.904210, longitude=116.407260, label="教学楼 A 座 1 层大厅", floor="1F", source="beta"),
-            "runner": GeoPoint(latitude=39.903920, longitude=116.407020, label="操场入口", floor="1F", source="beta"),
-            "guide": GeoPoint(latitude=39.904500, longitude=116.407620, label="校门岗亭", floor="1F", source="beta"),
-            "aed1": GeoPoint(latitude=39.904030, longitude=116.406920, label="二楼服务台 AED 箱", floor="2F", source="beta"),
-            "aed2": GeoPoint(latitude=39.904560, longitude=116.407700, label="校门值班室 AED 箱", floor="1F", source="beta"),
+        demo_locations = {
+            "patient": GeoPoint(latitude=39.904120, longitude=116.407210, label="教学楼 A 座 2 层走廊", floor="2F", source="demo"),
+            "doctor": GeoPoint(latitude=39.904210, longitude=116.407260, label="教学楼 A 座 1 层大厅", floor="1F", source="demo"),
+            "runner": GeoPoint(latitude=39.903920, longitude=116.407020, label="操场入口", floor="1F", source="demo"),
+            "guide": GeoPoint(latitude=39.904500, longitude=116.407620, label="校门岗亭", floor="1F", source="demo"),
+            "aed1": GeoPoint(latitude=39.904030, longitude=116.406920, label="二楼服务台 AED 箱", floor="2F", source="demo"),
+            "aed2": GeoPoint(latitude=39.904560, longitude=116.407700, label="校门值班室 AED 箱", floor="1F", source="demo"),
         }
 
-        beta_health = {
+        demo_health = {
             "patient": HealthSignalSummary(
                 source="mock",
                 authorizationStatus="sample",
@@ -668,19 +668,19 @@ class IncidentService:
             ),
         }
 
-        self.register_client("beta-patient", "冠心病患者", "示范社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", beta_locations["patient"], beta_health["patient"])
-        self.register_client("beta-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", beta_locations["doctor"], beta_health["doctor"])
-        self.register_client("beta-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", beta_locations["runner"], beta_health["runner"])
-        self.register_client("beta-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", beta_locations["guide"], beta_health["guide"])
-        self.upsert_aed_site("二楼服务台 AED", beta_locations["aed1"], access_notes="教学楼 A 座服务台左侧红色 AED 箱", site_id="beta-aed-1")
-        self.upsert_aed_site("校门值班室 AED", beta_locations["aed2"], access_notes="校门岗亭内，安保可协助取用", site_id="beta-aed-2")
+        self.register_client("demo-patient", "冠心病患者", "示范社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"], demo_health["patient"])
+        self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"], demo_health["doctor"])
+        self.register_client("demo-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", demo_locations["runner"], demo_health["runner"])
+        self.register_client("demo-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
+        self.upsert_aed_site("二楼服务台 AED", demo_locations["aed1"], access_notes="教学楼 A 座服务台左侧红色 AED 箱", site_id="demo-aed-1")
+        self.upsert_aed_site("校门值班室 AED", demo_locations["aed2"], access_notes="校门岗亭内，安保可协助取用", site_id="demo-aed-2")
 
         state = self.incidents[incident_id]
         state.aedSites = self.list_aed_sites()
-        state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="beta scenario bootstrapped"))
+        state.logs.append(IncidentLogEntry(ts=self._now_ms(), msg="demo scenario bootstrapped"))
         self._persist()
         await self._broadcast_state_async(incident_id)
-        return betaBootstrapResponse(
+        return demoBootstrapResponse(
             incidentId=incident_id,
             clients=self.list_clients(),
             aedSites=self.list_aed_sites(),
@@ -854,7 +854,7 @@ class IncidentService:
             "dispatch": dispatch_info,
             "mapProvider": self.spatial_provider.explain(),
             "pushProvider": self.notification_provider.explain(),
-            "betaReadiness": self._beta_readiness(),
+            "demoReadiness": self._demo_readiness(),
         }
 
     def dispatch_explain(self) -> dict:
@@ -875,7 +875,7 @@ class IncidentService:
         explanation["mapProvider"] = self.spatial_provider.explain()
         return explanation
 
-    def _beta_readiness(self) -> dict:
+    def _demo_readiness(self) -> dict:
         state = self.incidents.get(self.current_incident_id or "") if self.current_incident_id else None
         clients = self._clients_for_export(state) if state else self.list_clients()
         aed_sites = state.aedSites if state and state.aedSites else self.list_aed_sites()
@@ -1714,8 +1714,8 @@ class IncidentService:
 
         if "AI dispatching started" in message:
             return {"eventType": "DISPATCH_STARTED", "role": "", "actorUserId": ""}
-        if "beta scenario bootstrapped" in message:
-            return {"eventType": "beta_BOOTSTRAPPED", "role": "", "actorUserId": ""}
+        if "demo scenario bootstrapped" in message:
+            return {"eventType": "demo_BOOTSTRAPPED", "role": "", "actorUserId": ""}
         if "AED site updated" in message:
             return {"eventType": "AED_SITE_UPDATED", "role": "", "actorUserId": ""}
         if "Incident reset" in message:
@@ -2305,7 +2305,7 @@ python scripts\\build_pre_experiment_report.py "D:\\path\\to\\evidence-zips" --o
 | `roleAssignmentCompleteness` | {metrics.get("roleAssignmentCompleteness", "--")} | PRIME/RUNNER/GUIDE 三类角色是否完整分派，1.0 表示三类均有终端 | 仅表示任务分派完整性 |
 | `locationCoveragePercent` | {metrics.get("locationCoveragePercent", "--")}% | 有位置摘要的终端占比 | 演示坐标不等同真实定位精度 |
 | `healthCoveragePercent` | {metrics.get("healthCoveragePercent", "--")}% | 有健康摘要的终端占比 | 演示健康摘要不等同真实诊断 |
-| `runnerRouteMeters` | {metrics.get("runnerRouteMeters", "--")} | AED 保障端到 AED 点位再回患者位置的估算总距离 | 地图 Key 未接入时可能为 beta/Haversine 估算 |
+| `runnerRouteMeters` | {metrics.get("runnerRouteMeters", "--")} | AED 保障端到 AED 点位再回患者位置的估算总距离 | 地图 Key 未接入时可能为 demo/Haversine 估算 |
 
 ## 三、角色代码
 

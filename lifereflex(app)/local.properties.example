@@ -8,12 +8,12 @@ sdk.dir=C:\\Users\\LCY\\AppData\\Local\\Android\\Sdk
 # REST API base URL. Must end with /.
 # Debug APK can use local HTTP for LAN/emulator testing, for example:
 # LRA_API_BASE=http://192.168.1.20:8080/
-# Release/public beta builds should keep HTTPS.
+# Release/public demo builds should keep HTTPS.
 # The Gradle release task fails fast if this value is not https://.
 LRA_API_BASE=https://lifereflex.mddcommunity.top/
 
 # WebSocket endpoint for incident state streaming.
-# Use ws:// only with a debug HTTP backend; public beta builds should keep WSS.
+# Use ws:// only with a debug HTTP backend; public demo builds should keep WSS.
 # The Gradle release task fails fast if this value is not wss://.
 LRA_WS_BASE=wss://lifereflex.mddcommunity.top/ws
 
