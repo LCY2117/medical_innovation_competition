@@ -241,6 +241,7 @@ function MobiledemoStage() {
   const incidentHint = incidentId
     ? '四个终端共享同一事件编号，状态面板每 3 秒刷新一次。'
     : '请先从总控台初始化演示场景，再打开 4 端导播台。';
+  const boundIncidentId = incident?.incidentId || incidentId;
   const currentRunbookIndex = getRunbookIndex(incident);
   const latestLogs = useMemo(() => [...(incident?.logs ?? [])].slice(-3).reverse(), [incident?.logs]);
   const roleSummary = roleNames.map((role) => ({
@@ -395,8 +396,8 @@ function MobiledemoStage() {
       <section className="mobile-demo-stage-grid">
         {demoFrames.map((frame) => {
           const params = new URLSearchParams({ demo: frame.key, slot: frame.key });
-          if (incidentId) {
-            params.set('incidentId', incidentId);
+          if (boundIncidentId) {
+            params.set('incidentId', boundIncidentId);
           }
           const src = `/mobile?${params.toString()}`;
           return (

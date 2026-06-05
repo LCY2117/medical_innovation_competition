@@ -176,6 +176,16 @@ function readIncidentIdFromUrl(): string {
   return new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
 }
 
+function readInitialIncidentId(urlIncidentId: string, demoPersona: demoPersona | null): string {
+  if (urlIncidentId) {
+    return urlIncidentId;
+  }
+  if (demoPersona) {
+    return '';
+  }
+  return window.localStorage.getItem(INCIDENT_KEY) ?? '';
+}
+
 function readdemoSlotFromUrl(): string {
   const raw = new URLSearchParams(window.location.search).get('slot')?.trim().toLowerCase() || 'default';
   return raw.replace(/[^a-z0-9_-]/g, '').slice(0, 24) || 'default';
@@ -826,7 +836,7 @@ function MobileApp() {
   const [theme, setTheme] = useState<MobileTheme>(() => readStoredTheme());
   const [session, setSession] = useState<StoredSession | null>(() => (urldemoPersona ? null : readStoredSession()));
   const [booting, setBooting] = useState(Boolean(urldemoPersona) || Boolean(readStoredSession()));
-  const [incidentIdInput, setIncidentIdInput] = useState(() => urlIncidentId || (window.localStorage.getItem(INCIDENT_KEY) ?? ''));
+  const [incidentIdInput, setIncidentIdInput] = useState(() => readInitialIncidentId(urlIncidentId, urldemoPersona));
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [aedSites, setAedSites] = useState<AedSite[]>([]);
