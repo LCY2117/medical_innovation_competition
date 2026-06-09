@@ -1,0 +1,22 @@
+services:
+  lifereflex-server:
+    build:
+      context: .
+    container_name: lifereflex-server
+    env_file:
+      - .env
+    ports:
+      - "${LRA_HOST_BIND:-127.0.0.1}:${LRA_HOST_PORT:-18029}:8080"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=5)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

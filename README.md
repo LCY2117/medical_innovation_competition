@@ -1,5 +1,29 @@
 # Life Reflex Arc Server + Web
 
+## Docker / 迁移运行
+
+服务端 Docker 交付文件位于 `server(web)/`：
+
+```bash
+cd "server(web)"
+docker compose up -d --build
+```
+
+默认服务监听服务器本机：
+
+```text
+http://127.0.0.1:18029
+```
+
+生产公网访问建议通过 1Panel/OpenResty 反向代理到 `127.0.0.1:18029`。迁移时需要同步 `server(web)/.env` 与 SQLite 数据库文件，但这些运行时文件不应提交到 Git。
+
+停止容器：
+
+```bash
+cd "server(web)"
+docker compose down
+```
+
 先把环境配置文件填好，再启动项目。
 
 另外，Android 端如果要正常联调，也要先配置它自己的地址：去 `lifereflex(app)/gradle.properties` 里修改 `LRA_API_BASE` 和 `LRA_WS_BASE`，把它们改成当前后端/Web 所在机器的 IP 和端口。
