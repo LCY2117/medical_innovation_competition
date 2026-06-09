@@ -180,6 +180,31 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             raise HTTPException(status_code=403, detail="缺少有效管理员权限")
         return "open_demo_admin"
 
+    def require_package_export_actor(
+        incident_id: str,
+        request: Request,
+        authorization: str | None,
+        x_demo_admin_token: str | None,
+    ) -> tuple[str, str]:
+        if is_demo_admin_authorized(x_demo_admin_token):
+            return "admin", "demo_admin"
+        if authorization:
+            user = auth_service.require_user(authorization)
+            if auth_service.is_admin_user(user):
+                return "admin", user.user_id
+            incident = service.get_incident(incident_id)
+            assigned_user_ids = {
+                role_state.userId
+                for role_state in (incident.roles.PRIME, incident.roles.RUNNER, incident.roles.GUIDE)
+                if role_state.userId
+            }
+            if user.user_id == incident.patientUserId or user.user_id in assigned_user_ids:
+                return "user", user.user_id
+        if settings.demo_admin_token or settings.admin_phones:
+            audit(request, "experiment_package_denied", "anonymous", target_type="incident", target_id=incident_id, outcome="denied")
+            raise HTTPException(status_code=403, detail="缺少有效事件参与者或管理员权限")
+        return "admin", "open_demo_admin"
+
     def require_actor_when_public_demo_is_protected(
         user_id: str,
         request: Request,
@@ -545,9 +570,15 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         return response
 
     @router.get("/experiments/current/package")
-    async def export_current_experiment_package(request: Request, admin: str = Depends(require_admin)) -> Response:
+    async def export_current_experiment_package(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
+    ) -> Response:
+        incident_id = service.get_current_incident().incidentId
+        _, actor_id = require_package_export_actor(incident_id, request, authorization, x_demo_admin_token)
         filename, content = service.export_experiment_package()
-        return experiment_package_response(request, admin, service.get_current_incident().incidentId, filename, content)
+        return experiment_package_response(request, actor_id, incident_id, filename, content)
 
     @router.get("/experiments/{incident_id}/export", response_model=ExperimentExportResponse)
     async def export_experiment(
@@ -563,10 +594,12 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
     async def export_experiment_package(
         incident_id: str,
         request: Request,
-        admin: str = Depends(require_admin),
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
     ) -> Response:
+        _, actor_id = require_package_export_actor(incident_id, request, authorization, x_demo_admin_token)
         filename, content = service.export_experiment_package(incident_id)
-        return experiment_package_response(request, admin, incident_id, filename, content)
+        return experiment_package_response(request, actor_id, incident_id, filename, content)
 
     @router.post("/incidents/current/designate_patient", response_model=DispatchResponse)
     async def designate_patient(

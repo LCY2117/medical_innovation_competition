@@ -176,6 +176,16 @@ function readIncidentIdFromUrl(): string {
   return new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '';
 }
 
+function readInitialIncidentId(urlIncidentId: string, demoPersona: demoPersona | null): string {
+  if (urlIncidentId) {
+    return urlIncidentId;
+  }
+  if (demoPersona) {
+    return '';
+  }
+  return window.localStorage.getItem(INCIDENT_KEY) ?? '';
+}
+
 function readdemoSlotFromUrl(): string {
   const raw = new URLSearchParams(window.location.search).get('slot')?.trim().toLowerCase() || 'default';
   return raw.replace(/[^a-z0-9_-]/g, '').slice(0, 24) || 'default';
@@ -826,7 +836,7 @@ function MobileApp() {
   const [theme, setTheme] = useState<MobileTheme>(() => readStoredTheme());
   const [session, setSession] = useState<StoredSession | null>(() => (urldemoPersona ? null : readStoredSession()));
   const [booting, setBooting] = useState(Boolean(urldemoPersona) || Boolean(readStoredSession()));
-  const [incidentIdInput, setIncidentIdInput] = useState(() => urlIncidentId || (window.localStorage.getItem(INCIDENT_KEY) ?? ''));
+  const [incidentIdInput, setIncidentIdInput] = useState(() => readInitialIncidentId(urlIncidentId, urldemoPersona));
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [clients, setClients] = useState<ClientInfo[]>([]);
   const [aedSites, setAedSites] = useState<AedSite[]>([]);
@@ -1197,6 +1207,11 @@ function MobileApp() {
     if (!incident || !session) {
       return;
     }
+    if (incident.phase !== 'CREATED') {
+      setSosConfirming(false);
+      setNotice({ kind: 'info', text: '当前事件已进入协同处置，不能重复启动 SOS。' });
+      return;
+    }
     if (isdemoResponder) {
       setSosConfirming(false);
       setNotice({ kind: 'info', text: `${demoResponderLabel ?? '当前演示端'}仅响应分派任务，请等待患者端启动 SOS。` });
@@ -1503,7 +1518,7 @@ function MobileApp() {
                   <button
                     className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
                     onClick={handlePatientSos}
-                    disabled={!incident || incident.phase !== 'CREATED' || busyAction === 'sos'}
+                    disabled={!incident || busyAction === 'sos'}
                   >
                     {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
                   </button>
