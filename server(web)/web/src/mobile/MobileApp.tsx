@@ -1356,31 +1356,28 @@ function MobileApp() {
   const commandTitle =
     activeRole && action && !isPatientTerminal
       ? action.title
-      : isdemoResponder
-        ? '等待患者端启动'
-        : isPatientTerminal && sosRemaining !== null
-          ? `SOS 倒计时 ${sosRemaining}s`
+      : isPatientTerminal && sosRemaining !== null
+        ? `SOS 倒计时 ${sosRemaining}s`
+        : isPatientTerminal && incident?.phase !== 'CREATED'
+          ? '等待救援'
           : isPatientTerminal
-            ? '患者应急模式'
+            ? '我出事了，需要帮助'
             : incident
-              ? '保持在线待命'
+              ? '在线待命'
               : '接入当前事件';
   const commandBody =
     activeRole && action && !isPatientTerminal
       ? action.hint
-      : isdemoResponder
-        ? '响应端不触发 SOS。请保持页面在线，等待患者端启动后自动进入任务。'
-        : isPatientTerminal && incident?.phase === 'CREATED'
-          ? '如出现异常，先触发 SOS；系统会在倒计时结束后分派核心施救、AED 保障和环境清障。'
-          : isPatientTerminal
-            ? '保持当前位置，等待协同成员到场并完成交接。'
-            : '移动端会同步当前事件、角色分派、AED 点位和现场日志。';
+      : isPatientTerminal && incident?.phase === 'CREATED'
+        ? '点击下方按钮发出求救，系统会自动呼叫最近的急救力量。'
+        : isPatientTerminal && incident?.phase !== 'CREATED'
+          ? '救援人员正在赶来，请留在当前位置等待。'
+          : '';
   const incidentStartedAt = incident?.logs?.[0]?.ts ?? null;
   const incidentElapsedLabel = formatElapsedLabel(incidentStartedAt, now);
   const commandTone = mobileToneClass(activeRole, isPatientTerminal, isdemoResponder);
   const healthStats = healthStatItems(currentClient?.healthSignals);
   const visibleClients = clients.slice(0, 5);
-  const incidentShortId = incident?.incidentId ? incident.incidentId.slice(0, 8) : null;
   const viewTabs: Array<{ key: MobileView; label: string; icon: React.ReactNode }> = [
     { key: 'home', label: '总览', icon: <Activity size={18} /> },
     { key: 'mission', label: '任务', icon: <Radio size={18} /> },
@@ -1415,37 +1412,20 @@ function MobileApp() {
           <div>
             <p className="mobile-kicker">{roleLabel}</p>
             <h2>{commandTitle}</h2>
-            <p>{commandBody}</p>
+            {commandBody && <p>{commandBody}</p>}
           </div>
-          <div className="mobile-command-metric">
-            <span>用时</span>
-            <strong>{incidentElapsedLabel}</strong>
-          </div>
-        </div>
-        <div className="mobile-hero-visual" aria-hidden="true">
-          <img src={emergencySceneUrl} alt="" loading="eager" />
-        </div>
-        <div className="mobile-command-facts" aria-label="事件关键信息">
-          <div>
-            <span>事件</span>
-            <strong>{incidentShortId ?? '--'}</strong>
-          </div>
-          <div>
-            <span>AED</span>
-            <strong>{compactAedLabel(primaryAed)}</strong>
-          </div>
-          <div>
-            <span>在线</span>
-            <strong>{clients.filter((client) => client.online).length}/{clients.length}</strong>
-          </div>
+          {incidentStartedAt && (
+            <div className="mobile-command-metric">
+              <span>黄金时间</span>
+              <strong>{incidentElapsedLabel}</strong>
+            </div>
+          )}
         </div>
       </section>
 
-      {incident && (
-        <section className="mobile-context-strip" aria-label="当前事件状态">
+      {incident && activeRole && action && !isPatientTerminal && (
+        <section className="mobile-context-strip" aria-label="当前行动指引">
           <BadgeInfo size={15} />
-          <span>事件 {incidentShortId}</span>
-          <span>{syncStatus === 'live' ? '实时同步中' : syncStatus === 'reconnecting' ? '正在恢复连接' : syncStatus === 'offline' ? '连接离线，保留最近状态' : '最近状态已保留'}</span>
           <strong>{nextActionSummary}</strong>
         </section>
       )}
@@ -1486,50 +1466,51 @@ function MobileApp() {
             </section>
           ) : (
             <section className={`mobile-emergency-panel ${isPatient ? 'patient' : ''} ${isdemoResponder ? 'readonly' : ''}`}>
-              <div className="mobile-action-row">
-                <div>
-                  {isdemoResponder ? <Shield size={28} /> : <Siren size={28} />}
-                  <p className="mobile-kicker">{isdemoResponder ? '待命终端' : '高优先级'}</p>
-                  <h2>{isdemoResponder ? '等待患者端' : isPatientTerminal ? '患者应急模式' : '患者 SOS'}</h2>
-                  <p>
-                    {isdemoResponder
-                      ? incident?.sos?.status === 'ALERTING'
-                        ? '患者端已启动 SOS，保持在线，等待系统分派本轮任务'
-                        : `${demoResponderLabel ?? '当前终端'}不触发患者 SOS，现场请从患者端启动`
-                      : sosRemaining !== null
-                      ? `倒计时 ${sosRemaining}s，结束后进入本轮演示分派`
-                      : isPatientTerminal && incident?.phase !== 'CREATED'
-                        ? '保持当前位置，等待核心施救、AED 保障和环境清障人员到场'
-                      : incident?.phase === 'CREATED'
-                        ? '如你是患者端，可直接触发当前事件'
-                        : '当前事件已进入协同处置'}
-                  </p>
-                </div>
-                <img className="mobile-action-illustration" src={isdemoResponder ? responseRolesUrl : emergencySceneUrl} alt="" loading="lazy" aria-hidden="true" />
-              </div>
               {isdemoResponder ? (
                 <div className="mobile-emergency-actions single">
                   <button className="mobile-ghost-button" type="button" disabled>
-                    {incident?.sos?.status === 'ALERTING' ? '等待任务分派' : '等待患者端启动 SOS'}
+                    {incident?.sos?.status === 'ALERTING' ? '等待任务分派...' : '待命中，等待患者端触发求救'}
                   </button>
                 </div>
               ) : (
-                <div className="mobile-emergency-actions">
-                  <button
-                    className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
-                    onClick={handlePatientSos}
-                    disabled={!incident || busyAction === 'sos'}
-                  >
-                    {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
-                  </button>
-                  <button
-                    className="mobile-ghost-button"
-                    onClick={cancelPatientSos}
-                    disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatientTerminal || busyAction === 'sosCancel'}
-                  >
-                    取消
-                  </button>
-                </div>
+                <>
+                  {isPatientTerminal && incident && incident.phase !== 'CREATED' && (
+                    <div className="mobile-rescue-progress" aria-label="救援力量进度">
+                      {[
+                        { role: 'PRIME', label: '急救' },
+                        { role: 'RUNNER', label: 'AED' },
+                        { role: 'GUIDE', label: '接应' },
+                      ].map(({ role, label }) => {
+                        const status = incident.roles?.[role as 'PRIME' | 'RUNNER' | 'GUIDE']?.status;
+                        const arrived = status === 'CPR_STARTED' || status === 'AED_DELIVERED' || status === 'AMBULANCE_ARRIVED' || status === 'HANDOVER_COMPLETED';
+                        const dispatched = Boolean(incident.roles?.[role as 'PRIME' | 'RUNNER' | 'GUIDE']?.userId);
+                        return (
+                          <div key={role} className={`mobile-rescue-item ${arrived ? 'arrived' : dispatched ? 'onway' : 'pending'}`}>
+                            <span className="mobile-rescue-dot" />
+                            <span>{label}</span>
+                            <small>{arrived ? '已到' : dispatched ? '赶来中' : '待分派'}</small>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="mobile-emergency-actions">
+                    <button
+                      className={`mobile-danger-button ${sosConfirming ? 'confirming' : ''}`}
+                      onClick={handlePatientSos}
+                      disabled={!incident || busyAction === 'sos'}
+                    >
+                      {busyAction === 'sos' ? '启动中...' : sosConfirming ? '再次点击确认 SOS' : '启动 SOS'}
+                    </button>
+                    <button
+                      className="mobile-ghost-button"
+                      onClick={cancelPatientSos}
+                      disabled={!incident || incident.sos?.status !== 'ALERTING' || !isPatientTerminal || busyAction === 'sosCancel'}
+                    >
+                      取消
+                    </button>
+                  </div>
+                </>
               )}
             </section>
           )}
@@ -1545,22 +1526,31 @@ function MobileApp() {
                 <p>{user.organization} · {user.professionIdentity}</p>
               </div>
             </div>
-            <div className="mobile-health-stats">
-              {healthStats.map((item) => (
-                <div key={item.label} className={item.tone ? `tone-${item.tone}` : ''}>
-                  <span>{item.label}</span>
-                  <strong>{item.value}</strong>
-                </div>
-              ))}
-            </div>
-            <div className="mobile-health-line">
-              <HeartPulse size={14} />
-              <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
-            </div>
             <div className="mobile-location-line">
               <MapPin size={14} />
               <span>{formatLocationLabel(location)}</span>
             </div>
+            {healthStats.length > 0 && (
+              <details className="mobile-health-details">
+                <summary className="mobile-health-summary">
+                  <HeartPulse size={14} />
+                  健康数据
+                  <span className="mobile-chevron" />
+                </summary>
+                <div className="mobile-health-stats">
+                  {healthStats.map((item) => (
+                    <div key={item.label} className={item.tone ? `tone-${item.tone}` : ''}>
+                      <span>{item.label}</span>
+                      <strong>{item.value}</strong>
+                    </div>
+                  ))}
+                </div>
+                <div className="mobile-health-line">
+                  <HeartPulse size={14} />
+                  <span>{formatHealthSignalSummary(currentClient?.healthSignals)}</span>
+                </div>
+              </details>
+            )}
           </section>
 
           {!incident && (

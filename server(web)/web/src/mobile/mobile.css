@@ -495,7 +495,7 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid var(--mobile-border);
   border-radius: 14px;
   background: var(--mobile-surface-2);
@@ -504,17 +504,7 @@
   font-weight: 720;
 }
 
-.mobile-context-strip span {
-  min-width: 0;
-}
-
-.mobile-context-strip span:first-of-type {
-  color: var(--mobile-ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-}
-
 .mobile-context-strip strong {
-  flex-basis: 100%;
   color: var(--mobile-ink);
   font-size: 0.84rem;
 }
@@ -874,6 +864,123 @@ button:disabled {
 
 .mobile-location-line span {
   min-width: 0;
+}
+
+.mobile-health-details {
+  margin-top: 10px;
+  border-top: 1px solid var(--mobile-border);
+  padding-top: 10px;
+}
+
+.mobile-health-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--mobile-soft);
+  font-size: 0.8rem;
+  font-weight: 760;
+  list-style: none;
+  user-select: none;
+}
+
+.mobile-health-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-health-summary svg {
+  color: var(--mobile-blue);
+}
+
+.mobile-chevron {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.mobile-health-details[open] .mobile-chevron {
+  transform: rotate(-135deg);
+}
+
+.mobile-health-details .mobile-health-stats {
+  margin-top: 10px;
+}
+
+.mobile-health-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--mobile-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.mobile-health-line svg {
+  flex: 0 0 auto;
+  color: var(--mobile-blue);
+}
+
+.mobile-rescue-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.mobile-rescue-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 14px;
+  background: var(--mobile-surface-2);
+  font-size: 0.78rem;
+  font-weight: 760;
+  color: var(--mobile-muted);
+}
+
+.mobile-rescue-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.mobile-rescue-item small {
+  font-size: 0.68rem;
+  font-weight: 720;
+  color: var(--mobile-soft);
+}
+
+.mobile-rescue-item.onway .mobile-rescue-dot {
+  background: var(--mobile-blue);
+  box-shadow: 0 0 8px var(--mobile-blue);
+}
+
+.mobile-rescue-item.onway {
+  border-color: color-mix(in srgb, var(--mobile-blue) 40%, var(--mobile-border));
+  color: var(--mobile-ink);
+}
+
+.mobile-rescue-item.arrived .mobile-rescue-dot {
+  background: var(--mobile-ok-text);
+  box-shadow: 0 0 8px var(--mobile-ok-text);
+}
+
+.mobile-rescue-item.arrived {
+  border-color: color-mix(in srgb, var(--mobile-ok-text) 45%, var(--mobile-border));
+  color: var(--mobile-ink);
+}
+
+.mobile-rescue-item.arrived small {
+  color: var(--mobile-ok-text);
 }
 
 .mobile-health-stats {

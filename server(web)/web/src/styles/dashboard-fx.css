@@ -1,0 +1,143 @@
+/* ============================================================
+   LifeReflexArc Dashboard 科技感视觉增强（dark 模式）
+   仅作用于 .lra-dashboard，不改动业务结构。
+   ============================================================ */
+
+.lra-dashboard {
+  /* 深空主背景 + 微网格 + 径向光晕 */
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(37, 99, 235, 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(139, 92, 246, 0.08), transparent 55%),
+    radial-gradient(ellipse 100% 60% at 50% 120%, rgba(6, 182, 212, 0.06), transparent 60%),
+    linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    #030712 !important;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 44px 44px, 44px 44px, 100% 100%;
+}
+
+/* Header 底部发光分隔线 */
+.lra-dashboard header {
+  position: relative;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.82)) !important;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.18) !important;
+}
+
+.lra-dashboard header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
+}
+
+/* 面板统一质感：半透明 + 发光描边 */
+.lra-dashboard .bg-slate-800\/80,
+.lra-dashboard .bg-slate-800,
+.lra-dashboard .bg-slate-800\/70,
+.lra-dashboard .bg-slate-900\/50,
+.lra-dashboard .bg-slate-900\/60,
+.lra-dashboard .bg-slate-900,
+.lra-dashboard .bg-slate-950,
+.lra-dashboard .bg-black\/30,
+.lra-dashboard .bg-black {
+  background-color: rgba(8, 15, 30, 0.72) !important;
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.08);
+}
+
+/* 发光边框（细线动画） */
+@keyframes lra-border-pulse {
+  0%, 100% { border-color: rgba(56, 189, 248, 0.18); }
+  50% { border-color: rgba(56, 189, 248, 0.42); }
+}
+
+.lra-dashboard .border-slate-700\/50,
+.lra-dashboard .border-slate-700,
+.lra-dashboard .border-slate-800 {
+  animation: lra-border-pulse 4s ease-in-out infinite;
+}
+
+/* 关键数字发光 */
+.lra-dashboard .text-red-400,
+.lra-dashboard .text-blue-400,
+.lra-dashboard .text-yellow-500,
+.lra-dashboard .text-emerald-300,
+.lra-dashboard .text-violet-300,
+.lra-dashboard .font-mono {
+  text-shadow: 0 0 12px currentColor;
+}
+
+/* 等宽数字呼吸 */
+@keyframes lra-glow-pulse {
+  0%, 100% { text-shadow: 0 0 8px currentColor; opacity: 1; }
+  50% { text-shadow: 0 0 18px currentColor, 0 0 30px currentColor; opacity: 0.92; }
+}
+
+.lra-dashboard .lra-glow {
+  animation: lra-glow-pulse 2.4s ease-in-out infinite;
+}
+
+/* 顶部扫描线数据流 */
+@keyframes lra-scanline {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+.lra-dashboard .lra-scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.lra-dashboard .lra-scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.06), transparent);
+  background-size: 100% 220%;
+  animation: lra-scanline 3s linear infinite;
+}
+
+/* 标题栏：科技感标签 */
+.lra-dashboard .text-\[10px\] {
+  letter-spacing: 0.14em;
+}
+
+/* 状态卡片 hover 微光 */
+.lra-dashboard .rounded-lg,
+.lra-dashboard .rounded-xl {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.lra-dashboard .rounded-lg:hover,
+.lra-dashboard .rounded-xl:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(148, 163, 184, 0.1);
+}
+
+/* 红/蓝/紫 accent 卡片专属光效 */
+.lra-dashboard .border-amber-700\/40,
+.lra-dashboard .border-amber-700\/60,
+.lra-dashboard .border-red-600 {
+  animation: none;
+}
+
+.lra-dashboard .border-amber-700\/40 {
+  border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+.lra-dashboard .border-amber-700\/60 {
+  border-color: rgba(251, 191, 36, 0.45) !important;
+}
+
+/* 禁用浅色主题时此层不生效 */
+[data-theme='light'] .lra-dashboard {
+  animation: none;
+}
+
+[data-theme='light'] .lra-dashboard .lra-scanline::after,
+[data-theme='light'] .lra-dashboard header::after {
+  display: none;
+}

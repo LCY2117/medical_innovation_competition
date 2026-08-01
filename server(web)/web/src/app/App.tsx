@@ -3164,8 +3164,8 @@ export default function App() {
             <div className="font-mono text-xs font-bold text-slate-200 px-3 py-2 text-center bg-black/30 rounded border border-white/10">
               {incidentId ? `事件: ${incidentId.slice(0, 8)}` : '事件: --'}
             </div>
-            <div className="font-mono text-xs font-bold text-slate-200 px-3 py-2 text-center bg-black/30 rounded border border-white/10">
-              {incidentStartTs ? `耗时: ${formatElapsed(elapsedSeconds)}` : '耗时: --:--'}
+            <div className="font-mono text-xs font-bold text-yellow-400 lra-glow px-3 py-2 text-center bg-black/30 rounded border border-yellow-500/30">
+              {incidentStartTs ? `黄金时间 ${formatElapsed(elapsedSeconds)}` : '黄金时间 --:--'}
             </div>
             
           <div className="flex items-center gap-2">
@@ -3264,7 +3264,7 @@ export default function App() {
       )}
 
       {/* Main Content Grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden lra-scanline">
         
         {/* Left: Cloud Brain / Control Center */}
         <div className="lg:col-span-7 flex flex-col border-r border-slate-800 bg-slate-900/50 p-6 space-y-6 overflow-y-auto">
