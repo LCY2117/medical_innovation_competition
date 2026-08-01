@@ -103,8 +103,8 @@ bash scripts/deploy_linux.sh
 
 当前部署地址：
 
-- `LRA_API_BASE=https://111.230.52.99/`
-- `LRA_WS_BASE=wss://111.230.52.99/ws`
+- `LRA_API_BASE=https://www.yclsm.top/`
+- `LRA_WS_BASE=wss://www.yclsm.top/ws`
 
 ## 项目介绍
 

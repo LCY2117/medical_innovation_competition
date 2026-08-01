@@ -17,8 +17,8 @@ fun projectLocalOrEnv(name: String): String? =
         ?: localProperties.getProperty(name)
         ?: providers.environmentVariable(name).orNull
 
-val apiBase = projectLocalOrEnv("LRA_API_BASE") ?: "https://111.230.52.99/"
-val wsBase = projectLocalOrEnv("LRA_WS_BASE") ?: "wss://111.230.52.99/ws"
+val apiBase = projectLocalOrEnv("LRA_API_BASE") ?: "https://www.yclsm.top/"
+val wsBase = projectLocalOrEnv("LRA_WS_BASE") ?: "wss://www.yclsm.top/ws"
 val releaseStoreFilePath = projectLocalOrEnv("LRA_RELEASE_STORE_FILE")
 val releaseStorePassword = projectLocalOrEnv("LRA_RELEASE_STORE_PASSWORD")
 val releaseKeyAlias = projectLocalOrEnv("LRA_RELEASE_KEY_ALIAS")
