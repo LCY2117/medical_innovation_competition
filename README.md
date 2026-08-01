@@ -15,7 +15,9 @@ docker compose up -d --build
 http://127.0.0.1:18029
 ```
 
-生产公网访问建议通过 1Panel/OpenResty 反向代理到 `127.0.0.1:18029`。迁移时需要同步 `server(web)/.env` 与 SQLite 数据库文件，但这些运行时文件不应提交到 Git。
+端口可用 `.env` 中的 `LRA_HOST_BIND` / `LRA_HOST_PORT` 覆盖（例如生产环境通常设为 `127.0.0.1:8080`）。
+
+生产公网访问建议通过 Nginx/Caddy 反向代理到后端端口。迁移时需要同步 `server(web)/.env` 与 SQLite 数据库文件，但这些运行时文件不应提交到 Git。
 
 停止容器：
 
