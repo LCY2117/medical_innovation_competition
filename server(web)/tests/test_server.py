@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import hashlib
+import csv
+import json
+import subprocess
+import sys
 import tempfile
 import unittest
+import zipfile
+from io import BytesIO
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -35,6 +43,94 @@ class ServerTestCase(unittest.TestCase):
     def _client(self) -> TestClient:
         return TestClient(create_app(self.settings))
 
+    def _client_with_demo_admin_token(self, token: str = "test-demo-admin") -> TestClient:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            demo_admin_token=token,
+        )
+        return TestClient(create_app(settings))
+
+    def _client_with_admin_phones(self, *phones: str) -> TestClient:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            demo_admin_token="test-demo-admin",
+            admin_phones=tuple(phones),
+        )
+        return TestClient(create_app(settings))
+
+    def _client_with_expired_auth_tokens(self) -> TestClient:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            auth_token_ttl_sec=-1,
+        )
+        return TestClient(create_app(settings))
+
+    def _client_with_auth_rate_limit(self, limit: int = 1) -> TestClient:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            rate_limit_auth_per_minute=limit,
+        )
+        return TestClient(create_app(settings))
+
+    def _demo_evidence_package_content(self) -> tuple[str, bytes]:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+        return bootstrapped.json()["incidentId"], package.content
+
+    def _run_evidence_verifier(self, package_path: Path) -> subprocess.CompletedProcess[str]:
+        script_path = Path(__file__).resolve().parents[2] / "scripts" / "verify_evidence_package.py"
+        return subprocess.run(
+            [sys.executable, str(script_path), str(package_path)],
+            cwd=script_path.parent.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     @staticmethod
     def _register_payload(
         display_name: str,
@@ -54,6 +150,12 @@ class ServerTestCase(unittest.TestCase):
             "profileBio": profile_bio,
         }
 
+    def _create_dispatchable_incident(self, client: TestClient) -> str:
+        incident_id = client.post("/api/incidents").json()["incidentId"]
+        triggered = client.post(f"/api/incidents/{incident_id}/trigger")
+        self.assertEqual(triggered.status_code, 200)
+        return incident_id
+
     def test_dual_api_prefixes_work(self) -> None:
         with self._client() as client:
             old_health = client.get("/health")
@@ -68,6 +170,7 @@ class ServerTestCase(unittest.TestCase):
         with self._client() as client:
             created = client.post("/api/incidents")
             incident_id = created.json()["incidentId"]
+            triggered = client.post(f"/api/incidents/{incident_id}/trigger")
 
             joined = client.post(
                 f"/api/incidents/{incident_id}/join",
@@ -75,6 +178,7 @@ class ServerTestCase(unittest.TestCase):
             )
 
         self.assertEqual(created.status_code, 200)
+        self.assertEqual(triggered.status_code, 200)
         self.assertEqual(joined.status_code, 200)
 
         with self._client() as second_client:
@@ -96,6 +200,78 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["storage"]["dbPath"], str(self.settings.db_path))
         self.assertFalse(payload["frontend"]["ok"])
         self.assertEqual(payload["loadedIncidents"], 0)
+        self.assertEqual(payload["registeredClients"], 0)
+        self.assertEqual(payload["registeredAedSites"], 0)
+        self.assertIn("dispatch", payload)
+        self.assertEqual(payload["auth"]["tokenTtlSec"], self.settings.auth_token_ttl_sec)
+        self.assertTrue(payload["features"]["experimentZipPackage"])
+        self.assertEqual(payload["healthProvider"]["mode"], "mock")
+        self.assertEqual(payload["mapProvider"]["mode"], "demo")
+        self.assertEqual(payload["mapProvider"]["distanceSource"], "haversine_demo")
+        self.assertEqual(payload["pushProvider"]["mode"], "websocket")
+        self.assertEqual(payload["pushProvider"]["channel"], "websocket_state")
+        self.assertEqual(payload["storage"]["auditEventCount"], 0)
+        self.assertTrue(payload["security"]["auditLogEnabled"])
+        self.assertTrue(payload["security"]["rateLimitEnabled"])
+        self.assertEqual(payload["security"]["rateLimitAuthPerMinute"], self.settings.rate_limit_auth_per_minute)
+        self.assertFalse(payload["frontend"]["indexReady"])
+        self.assertFalse(payload["frontend"]["assetsReady"])
+        self.assertEqual(payload["frontend"]["assetCount"], 0)
+        self.assertFalse(payload["frontend"]["mobileChunkReady"])
+        self.assertFalse(payload["frontend"]["desktopChunkReady"])
+        self.assertFalse(payload["demoAdminAuthEnabled"])
+        self.assertFalse(payload["demoReadiness"]["ready"])
+        self.assertIn("尚未创建当前事件", payload["demoReadiness"]["warnings"])
+
+        self.settings.web_dist_dir.mkdir(parents=True, exist_ok=True)
+        (self.settings.web_dist_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+        assets_dir = self.settings.web_dist_dir / "assets"
+        assets_dir.mkdir()
+        (assets_dir / "MobileApp-test.js").write_text("console.log('mobile')", encoding="utf-8")
+        (assets_dir / "App-test.js").write_text("console.log('app')", encoding="utf-8")
+        with self._client() as client:
+            ready_response = client.get("/api/health/detail")
+        ready_payload = ready_response.json()
+        self.assertTrue(ready_payload["frontend"]["ok"])
+        self.assertTrue(ready_payload["frontend"]["indexReady"])
+        self.assertTrue(ready_payload["frontend"]["assetsReady"])
+        self.assertEqual(ready_payload["frontend"]["assetCount"], 2)
+        self.assertTrue(ready_payload["frontend"]["mobileChunkReady"])
+        self.assertTrue(ready_payload["frontend"]["desktopChunkReady"])
+
+    def test_health_detail_reports_demo_readiness_after_bootstrap(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            response = client.get("/api/health/detail")
+
+        self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(response.status_code, 200)
+        readiness = response.json()["demoReadiness"]
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["clientCount"], 4)
+        self.assertEqual(readiness["availableAedSiteCount"], 2)
+        self.assertEqual(readiness["clientsWithLocation"], 4)
+        self.assertEqual(readiness["clientsWithHealthSignals"], 4)
+        self.assertEqual(readiness["healthCoveragePercent"], 100.0)
+        self.assertTrue(readiness["exportReady"])
+        self.assertEqual(readiness["warnings"], [])
+
+    def test_websocket_disconnect_is_removed_from_health_count(self) -> None:
+        with self._client() as client:
+            current = client.get("/api/incidents/current")
+            self.assertEqual(current.status_code, 200)
+            incident_id = current.json()["incidentId"]
+
+            with client.websocket_connect(f"/ws?incidentId={incident_id}") as websocket:
+                first = websocket.receive_json()
+                self.assertEqual(first["type"], "STATE")
+                detail = client.get("/api/health/detail")
+                self.assertEqual(detail.status_code, 200)
+                self.assertEqual(detail.json()["activeWebSockets"], 1)
+
+            detail = client.get("/api/health/detail")
+            self.assertEqual(detail.status_code, 200)
+            self.assertEqual(detail.json()["activeWebSockets"], 0)
 
     def test_dispatch_meta_is_serializable(self) -> None:
         with self._client() as client:
@@ -107,6 +283,63 @@ class ServerTestCase(unittest.TestCase):
         self.assertIn("provider", payload)
         self.assertIn("dispatchDelaySec", payload)
         self.assertIn("systemPrompt", payload)
+        self.assertEqual(payload["mapProvider"]["mode"], "demo")
+        self.assertIn("LRA_MAP_PROVIDER", payload["envKeys"])
+
+    def test_amap_distance_provider_falls_back_without_service_key(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            map_provider="amap",
+            amap_service_key=None,
+        )
+        with TestClient(create_app(settings)) as client:
+            health = client.get("/api/health/detail")
+            meta = client.get("/api/dispatch/meta")
+
+        self.assertEqual(health.status_code, 200)
+        provider = health.json()["mapProvider"]
+        self.assertEqual(provider["requestedProvider"], "amap")
+        self.assertEqual(provider["mode"], "amap")
+        self.assertFalse(provider["configured"])
+        self.assertEqual(provider["fallbackReason"], "amap_service_key_missing")
+        self.assertEqual(provider["distanceSource"], "haversine_demo")
+        self.assertEqual(meta.status_code, 200)
+        self.assertEqual(meta.json()["mapProvider"]["fallbackReason"], "amap_service_key_missing")
+
+    def test_push_provider_placeholder_falls_back_to_websocket(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            push_provider="jpush",
+        )
+        with TestClient(create_app(settings)) as client:
+            health = client.get("/api/health/detail")
+            bootstrapped = client.post("/api/demo/bootstrap")
+
+        self.assertEqual(health.status_code, 200)
+        provider = health.json()["pushProvider"]
+        self.assertEqual(provider["requestedProvider"], "jpush")
+        self.assertEqual(provider["mode"], "jpush")
+        self.assertEqual(provider["activeProvider"], "websocket")
+        self.assertEqual(provider["fallbackReason"], "jpush_adapter_pending")
+        self.assertEqual(bootstrapped.status_code, 200)
 
     def test_auth_register_and_login(self) -> None:
         with self._client() as client:
@@ -125,15 +358,176 @@ class ServerTestCase(unittest.TestCase):
                 "/api/auth/login",
                 json={"phone": "13800138000", "password": "123456"},
             )
+            me = client.get(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {register.json()['token']}"},
+            )
+            logout = client.post(
+                "/api/auth/logout",
+                headers={"Authorization": f"Bearer {register.json()['token']}"},
+            )
+            after_logout = client.get(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {register.json()['token']}"},
+            )
 
         self.assertEqual(register.status_code, 200)
         self.assertEqual(login.status_code, 200)
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(logout.status_code, 200)
+        self.assertEqual(after_logout.status_code, 401)
         register_payload = register.json()
         login_payload = login.json()
         self.assertTrue(register_payload["token"])
         self.assertTrue(login_payload["token"])
+        self.assertIsInstance(register_payload["tokenExpiresAt"], int)
         self.assertEqual(register_payload["user"]["phone"], "13800138000")
         self.assertEqual(login_payload["user"]["phone"], "13800138000")
+        self.assertEqual(me.json()["user"]["phone"], "13800138000")
+
+    def test_auth_code_login_supports_existing_and_new_users(self) -> None:
+        with self._client() as client:
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="AED 志愿者",
+                    phone="13800138090",
+                    organization="国赛演示队",
+                    health_condition="身体状态一般",
+                    profession_identity="有一定急救常识",
+                    profile_bio="完成校内急救培训，可参与协同演示",
+                ),
+            )
+            code_request = client.post("/api/auth/code/request", json={"phone": "13800138090"})
+            code_login = client.post(
+                "/api/auth/code/login",
+                json={"phone": "13800138090", "code": "123456"},
+            )
+            new_phone_login = client.post(
+                "/api/auth/code/login",
+                json={"phone": "13800138091", "code": "LCY"},
+            )
+            code_register = client.post(
+                "/api/auth/code/register",
+                json={
+                    "phone": "13800138091",
+                    "code": "LCY",
+                    "displayName": "新志愿者",
+                    "organization": "国赛演示队",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "有一定急救常识",
+                    "profileBio": "",
+                },
+            )
+            denied = client.post(
+                "/api/auth/code/login",
+                json={"phone": "13800138090", "code": "000000"},
+            )
+
+        self.assertEqual(register.status_code, 200)
+        self.assertEqual(code_request.status_code, 200)
+        self.assertEqual(code_request.json()["channel"], "mock")
+        self.assertEqual(code_request.json()["demoCode"], "123456")
+        self.assertEqual(code_login.status_code, 200)
+        self.assertFalse(code_login.json()["needsProfileSetup"])
+        self.assertTrue(code_login.json()["token"])
+        self.assertEqual(code_login.json()["user"]["phone"], "13800138090")
+        self.assertEqual(new_phone_login.status_code, 200)
+        self.assertTrue(new_phone_login.json()["needsProfileSetup"])
+        self.assertEqual(new_phone_login.json()["phone"], "13800138091")
+        self.assertIsNone(new_phone_login.json()["token"])
+        self.assertEqual(code_register.status_code, 200)
+        self.assertEqual(code_register.json()["user"]["displayName"], "新志愿者")
+        self.assertEqual(code_register.json()["user"]["phone"], "13800138091")
+        self.assertEqual(denied.status_code, 401)
+
+    def test_auth_profile_can_be_updated_by_owner(self) -> None:
+        with self._client() as client:
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="张医生",
+                    phone="13800138110",
+                    organization="市医院急救科",
+                    health_condition="身体状态一般",
+                    profession_identity="医生 / 专业急救人员",
+                    profile_bio="急救科医生，熟悉 CPR 和 AED 处置",
+                ),
+            )
+            token = register.json()["token"]
+            updated = client.patch(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "displayName": "李医生",
+                    "organization": "国赛演示医院",
+                    "healthCondition": "身体素质良好",
+                    "professionIdentity": "系统培训过的急救者",
+                    "profileBio": "完成急救培训，熟悉国赛演示流程和 AED 协同。",
+                },
+            )
+            me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+            denied = client.patch(
+                "/api/auth/me",
+                json={
+                    "displayName": "无凭证",
+                    "organization": "测试",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "有一定急救常识",
+                    "profileBio": "缺少登录凭证的资料更新测试",
+                },
+            )
+
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(denied.status_code, 401)
+        self.assertEqual(updated.json()["user"]["displayName"], "李医生")
+        self.assertEqual(updated.json()["user"]["organization"], "国赛演示医院")
+        self.assertEqual(updated.json()["user"]["healthCondition"], "身体素质良好")
+        self.assertEqual(updated.json()["user"]["professionIdentity"], "系统培训过的急救者")
+        self.assertEqual(me.json()["user"]["displayName"], "李医生")
+        self.assertEqual(me.json()["user"]["phone"], "13800138110")
+
+    def test_demo_auth_personas_issue_reusable_sessions(self) -> None:
+        with self._client() as client:
+            patient = client.post("/api/auth/demo", json={"persona": "patient"})
+            repeat_patient = client.post("/api/auth/demo", json={"persona": "patient"})
+            prime = client.post("/api/auth/demo", json={"persona": "prime"})
+            unknown = client.post("/api/auth/demo", json={"persona": "pilot"})
+            me = client.get(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {patient.json()['token']}"},
+            )
+
+        self.assertEqual(patient.status_code, 200)
+        self.assertEqual(repeat_patient.status_code, 200)
+        self.assertEqual(prime.status_code, 200)
+        self.assertEqual(unknown.status_code, 400)
+        self.assertEqual(patient.json()["user"]["userId"], "demo-patient")
+        self.assertEqual(repeat_patient.json()["user"]["userId"], "demo-patient")
+        self.assertEqual(prime.json()["user"]["userId"], "demo-prime")
+        self.assertNotEqual(patient.json()["token"], repeat_patient.json()["token"])
+        self.assertEqual(me.status_code, 200)
+        self.assertEqual(me.json()["user"]["userId"], "demo-patient")
+
+    def test_expired_auth_token_is_rejected(self) -> None:
+        with self._client_with_expired_auth_tokens() as client:
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="过期测试",
+                    phone="13800138999",
+                    organization="测试组织",
+                    health_condition="身体状态一般",
+                    profession_identity="有一定急救常识",
+                    profile_bio="用于测试登录态过期处理",
+                ),
+            )
+            self.assertEqual(register.status_code, 200)
+            token = register.json()["token"]
+            me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+
+        self.assertEqual(me.status_code, 401)
 
     def test_patient_designation_assigns_roles_from_registered_profiles(self) -> None:
         with self._client() as client:
@@ -214,10 +608,1555 @@ class ServerTestCase(unittest.TestCase):
             current_payload = current.json()
             self.assertEqual(current_payload["phase"], "DISPATCHED")
             self.assertEqual(current_payload["patientUserId"], user_ids["冠心病患者"])
+            self.assertIn("dispatchRationale", current_payload)
+            self.assertEqual(current_payload["dispatchRationale"]["PRIME"]["userId"], user_ids["张医生"])
+
+            repeated = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": user_ids["冠心病患者"]},
+            )
+            self.assertEqual(repeated.status_code, 200)
+            repeated_payload = repeated.json()
+            self.assertEqual(repeated_payload["assignments"]["PRIME"], user_ids["张医生"])
+
+            current_after_repeat = client.get("/api/incidents/current")
+            self.assertEqual(current_after_repeat.status_code, 200)
+            current_after_repeat_payload = current_after_repeat.json()
+            self.assertEqual(current_after_repeat_payload["phase"], "DISPATCHED")
+            self.assertEqual(current_after_repeat_payload["dispatchRationale"]["PRIME"]["userId"], user_ids["张医生"])
+
+    def test_health_risk_summary_deprioritizes_high_intensity_roles(self) -> None:
+        with self._client() as client:
+            registrations = [
+                self._register_payload(
+                    display_name="模拟患者",
+                    phone="13800138201",
+                    organization="社区",
+                    health_condition="存在心脏骤停风险",
+                    profession_identity="患者侧",
+                    profile_bio="心血管病史，需要重点监护",
+                ),
+                self._register_payload(
+                    display_name="风险跑者",
+                    phone="13800138202",
+                    organization="大学校园",
+                    health_condition="身体素质良好",
+                    profession_identity="有一定急救常识",
+                    profile_bio="体育生，跑得快，熟悉校园路线，可快速取送 AED",
+                ),
+                self._register_payload(
+                    display_name="稳健跑者",
+                    phone="13800138203",
+                    organization="大学校园",
+                    health_condition="身体素质良好",
+                    profession_identity="有一定急救常识",
+                    profile_bio="熟悉校园路线，可快速取送 AED",
+                ),
+                self._register_payload(
+                    display_name="张医生",
+                    phone="13800138204",
+                    organization="市医院急救科",
+                    health_condition="身体状态一般",
+                    profession_identity="医生 / 专业急救人员",
+                    profile_bio="急救科医生，熟悉 CPR 和 AED 处置",
+                ),
+                self._register_payload(
+                    display_name="安保老王",
+                    phone="13800138205",
+                    organization="校园安保",
+                    health_condition="身体状态一般",
+                    profession_identity="安保 / 物业 / 场地协调人员",
+                    profile_bio="熟悉通道和救护车接驳",
+                ),
+            ]
+            sessions = {}
+            for payload in registrations:
+                auth = client.post("/api/auth/register", json=payload)
+                self.assertEqual(auth.status_code, 200)
+                auth_payload = auth.json()
+                user_id = auth_payload["user"]["userId"]
+                token = auth_payload["token"]
+                sessions[payload["displayName"]] = (user_id, token)
+                register_terminal = client.post(
+                    "/api/clients/register",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={
+                        "userId": user_id,
+                        "displayName": payload["displayName"],
+                        "organization": payload["organization"],
+                        "healthCondition": payload["healthCondition"],
+                        "professionIdentity": payload["professionIdentity"],
+                        "profileBio": payload["profileBio"],
+                        "deviceType": "MOBILE_WEB",
+                    },
+                )
+                self.assertEqual(register_terminal.status_code, 200)
+
+            risky_user_id, risky_token = sessions["风险跑者"]
+            health_update = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {risky_token}"},
+                json={
+                    "userId": risky_user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "authorized",
+                        "heartRateBpm": 132,
+                        "bloodOxygenPercent": 91,
+                        "pressureScore": 85,
+                        "riskTags": ["tachycardia", "low_spo2", "high_pressure"],
+                    },
+                },
+            )
+            self.assertEqual(health_update.status_code, 200)
+
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": sessions["模拟患者"][0]},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            payload = dispatch.json()
+            meta = client.get("/api/dispatch/meta").json()
+
+        self.assertEqual(payload["assignments"]["RUNNER"], sessions["稳健跑者"][0])
+        self.assertNotEqual(payload["assignments"]["RUNNER"], risky_user_id)
+        self.assertIn("healthSignals", meta["candidateFields"])
+
+    def test_demo_bootstrap_aed_dispatch_and_export(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            demo = bootstrapped.json()
+            self.assertEqual(len(demo["clients"]), 4)
+            self.assertEqual(len(demo["aedSites"]), 2)
+
+            aed_sites = client.get("/api/aed-sites")
+            self.assertEqual(aed_sites.status_code, 200)
+            self.assertEqual(len(aed_sites.json()["aedSites"]), 2)
+
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            payload = dispatch.json()
+            self.assertEqual(payload["assignments"]["PRIME"], "demo-prime")
+            self.assertEqual(payload["assignments"]["RUNNER"], "demo-runner")
+            self.assertEqual(payload["assignments"]["GUIDE"], "demo-guide")
+            self.assertGreater(payload["rationale"]["RUNNER"]["distanceToAedMeters"], 0)
+
+            export = client.get("/api/experiments/current/export")
+            self.assertEqual(export.status_code, 200)
+            exported = export.json()
+            self.assertEqual(exported["patientUserId"], "demo-patient")
+            self.assertEqual(exported["assignments"]["RUNNER"], "demo-runner")
+            self.assertIn("dispatchSeconds", exported["metrics"])
+            self.assertIn("firstResponderResponseSeconds", exported["metrics"])
+            self.assertEqual(exported["metrics"]["participantCount"], 4)
+            self.assertEqual(exported["metrics"]["aedSiteCount"], 2)
+            self.assertEqual(exported["metrics"]["clientsWithHealthSignals"], 4)
+            self.assertEqual(exported["metrics"]["healthCoveragePercent"], 100.0)
+            self.assertEqual(exported["metrics"]["roleAssignmentCompleteness"], 1.0)
+            self.assertGreater(exported["metrics"]["runnerRouteMeters"], 0)
+            self.assertTrue(exported["timeline"])
+            patient = next(item for item in exported["clients"] if item["userId"] == "demo-patient")
+            self.assertEqual(patient["healthSignals"]["source"], "mock")
+            self.assertEqual(patient["healthSignals"]["authorizationStatus"], "sample")
+            self.assertIn("low_spo2", patient["healthSignals"]["riskTags"])
+
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+            self.assertEqual(package.headers["content-type"], "application/zip")
+            with zipfile.ZipFile(BytesIO(package.content)) as archive:
+                names = set(archive.namelist())
+                self.assertIn("experiment.json", names)
+                self.assertIn("experiment_anonymized.json", names)
+                self.assertIn("review_index.md", names)
+                self.assertIn("expert_summary.md", names)
+                self.assertIn("expert_review_checklist.md", names)
+                self.assertIn("expert_feedback_form.md", names)
+                self.assertIn("facilitator_run_sheet.md", names)
+                self.assertIn("analysis_guide.md", names)
+                self.assertIn("data_dictionary.md", names)
+                self.assertIn("participant_consent_safety_brief.md", names)
+                self.assertIn("evidence_quality_report.json", names)
+                self.assertIn("clients.csv", names)
+                self.assertIn("clients_anonymized.csv", names)
+                self.assertIn("timeline.csv", names)
+                self.assertIn("dispatch_rationale.csv", names)
+                self.assertIn("observer_record_form.csv", names)
+                self.assertIn("participant_questionnaire.csv", names)
+                self.assertIn("baseline_vs_system_comparison.csv", names)
+                self.assertIn("pre_experiment_round_summary.csv", names)
+                self.assertIn("expert_feedback_summary.csv", names)
+                self.assertIn("manifest.json", names)
+                clients_csv = archive.read("clients.csv").decode("utf-8-sig")
+                self.assertIn("heartRateBpm", clients_csv)
+                self.assertIn("demo-patient", clients_csv)
+                self.assertIn("sample", clients_csv)
+                self.assertNotIn("OPPO Health mock", clients_csv)
+                experiment_json = archive.read("experiment.json").decode("utf-8")
+                self.assertIn('"authorizationStatus": "sample"', experiment_json)
+                self.assertNotIn("OPPO Health mock", experiment_json)
+                metrics_csv = archive.read("metrics.csv").decode("utf-8-sig")
+                self.assertIn("healthCoveragePercent", metrics_csv)
+                self.assertIn("firstResponderResponseSeconds", metrics_csv)
+                self.assertIn("runnerRouteMeters", metrics_csv)
+                timeline_csv = archive.read("timeline.csv").decode("utf-8-sig")
+                self.assertIn("tsIso", timeline_csv)
+                self.assertIn("eventType", timeline_csv)
+                self.assertIn("participantCode", timeline_csv)
+                self.assertIn("ROLE_ASSIGNED", timeline_csv)
+                self.assertIn("P001", timeline_csv)
+                self.assertNotIn("actorUserId", timeline_csv)
+                self.assertNotIn("demo-patient", timeline_csv)
+                self.assertNotIn("demo-prime", timeline_csv)
+                self.assertNotIn("demo-runner", timeline_csv)
+                dispatch_rationale_csv = archive.read("dispatch_rationale.csv").decode("utf-8-sig")
+                self.assertIn("participantCode", dispatch_rationale_csv)
+                self.assertNotIn("userId", dispatch_rationale_csv.splitlines()[0])
+                self.assertNotIn("demo-prime", dispatch_rationale_csv)
+                self.assertNotIn("demo-runner", dispatch_rationale_csv)
+                self.assertNotIn("demo-guide", dispatch_rationale_csv)
+                anonymized_clients_csv = archive.read("clients_anonymized.csv").decode("utf-8-sig")
+                self.assertIn("participantCode", anonymized_clients_csv)
+                self.assertIn("P001", anonymized_clients_csv)
+                self.assertNotIn("demo-patient", anonymized_clients_csv)
+                anonymized_json = archive.read("experiment_anonymized.json").decode("utf-8")
+                self.assertIn("participantMap", anonymized_json)
+                self.assertIn("P001", anonymized_json)
+                self.assertNotIn("demo-patient", anonymized_json)
+                package_readme = archive.read("README.md").decode("utf-8")
+                self.assertIn("build_pre_experiment_report.py", package_readme)
+                self.assertIn("round-summary.csv", package_readme)
+                self.assertIn("round-analysis.md", package_readme)
+                self.assertIn("样例接入或演示来源", package_readme)
+                review_index = archive.read("review_index.md").decode("utf-8")
+                self.assertIn("生命反射弧证据包审阅索引", review_index)
+                self.assertIn("建议 3 分钟打开顺序", review_index)
+                self.assertIn("对外材料优先使用", review_index)
+                self.assertIn("不宣称提高抢救成功率", review_index)
+                self.assertIn("expert_feedback_summary.csv", review_index)
+                self.assertIn("样例健康摘要或演示健康摘要", review_index)
+                self.assertIn("患者代号：P001", review_index)
+                self.assertNotIn("demo-patient", review_index)
+                self.assertNotIn("demo-prime", review_index)
+                expert_summary = archive.read("expert_summary.md").decode("utf-8")
+                self.assertIn("生命反射弧预实验专家摘要", expert_summary)
+                self.assertIn("数据使用边界", expert_summary)
+                self.assertIn("样例接入或演示来源", expert_summary)
+                review_checklist = archive.read("expert_review_checklist.md").decode("utf-8")
+                self.assertIn("生命反射弧专家现场复核清单", review_checklist)
+                self.assertIn("安全边界", review_checklist)
+                expert_feedback = archive.read("expert_feedback_form.md").decode("utf-8")
+                self.assertIn("生命反射弧事件级专家反馈与签字表", expert_feedback)
+                self.assertIn("专家签字", expert_feedback)
+                self.assertIn("不构成真实临床疗效证明", expert_feedback)
+                run_sheet = archive.read("facilitator_run_sheet.md").decode("utf-8")
+                self.assertIn("生命反射弧预实验主持人跑场单", run_sheet)
+                self.assertIn("预实验前 5 分钟检查", run_sheet)
+                self.assertIn("不用于真实患者处置", run_sheet)
+                analysis_guide = archive.read("analysis_guide.md").decode("utf-8")
+                self.assertIn("预实验数据分析说明", analysis_guide)
+                self.assertIn("多轮 ZIP 一键汇总", analysis_guide)
+                self.assertIn("build_pre_experiment_report.py", analysis_guide)
+                self.assertIn("T1-T6", analysis_guide)
+                self.assertIn("避免写法", analysis_guide)
+                data_dictionary = archive.read("data_dictionary.md").decode("utf-8")
+                self.assertIn("证据包数据字典", data_dictionary)
+                self.assertIn("runnerRouteMeters", data_dictionary)
+                self.assertIn("round-summary.csv", data_dictionary)
+                self.assertIn("角色代码", data_dictionary)
+                self.assertIn("禁止表述", data_dictionary)
+                safety_brief = archive.read("participant_consent_safety_brief.md").decode("utf-8")
+                self.assertIn("参与者知情与安全边界简表", safety_brief)
+                self.assertIn("参与者可随时暂停或退出", safety_brief)
+                self.assertIn("样例接入或演示来源", safety_brief)
+                quality_report = json.loads(archive.read("evidence_quality_report.json").decode("utf-8"))
+                self.assertEqual(quality_report["schemaVersion"], 1)
+                self.assertEqual(quality_report["scope"], "simulation_training_pre_experiment_only")
+                self.assertEqual(quality_report["participantSummary"]["patientCode"], "P001")
+                self.assertEqual(quality_report["participantSummary"]["roleCodes"]["PRIME"], "R001-PRIME")
+                self.assertEqual(quality_report["metricCoverage"]["roleAssignmentCompleteness"], 1.0)
+                self.assertEqual(quality_report["metricCoverage"]["healthCoveragePercent"], 100.0)
+                self.assertIn("missing_cprStarted", {item["code"] for item in quality_report["warnings"]})
+                self.assertNotIn("demo-patient", json.dumps(quality_report, ensure_ascii=False))
+                observer_form = archive.read("observer_record_form.csv").decode("utf-8-sig")
+                self.assertIn("observerValue", observer_form)
+                self.assertIn("role_assignment_clarity", observer_form)
+                participant_questionnaire = archive.read("participant_questionnaire.csv").decode("utf-8-sig")
+                self.assertIn("participantCode", participant_questionnaire)
+                self.assertIn("Q05", participant_questionnaire)
+                self.assertIn("安全边界提示清楚", participant_questionnaire)
+                comparison = archive.read("baseline_vs_system_comparison.csv").decode("utf-8-sig")
+                self.assertIn("baselineRoundId", comparison)
+                self.assertIn("systemRoundId", comparison)
+                self.assertIn("firstResponderResponseSecondsDelta", comparison)
+                self.assertIn("cprStartSecondsDelta", comparison)
+                self.assertIn("aedDeliverySecondsChangePercent", comparison)
+                round_summary = archive.read("pre_experiment_round_summary.csv").decode("utf-8-sig")
+                self.assertIn("roundId", round_summary)
+                self.assertIn("firstResponderResponseSeconds", round_summary)
+                self.assertIn("roleAssignmentCompleteness", round_summary)
+                self.assertIn("healthCoveragePercent", round_summary)
+                feedback_summary = archive.read("expert_feedback_summary.csv").decode("utf-8-sig")
+                self.assertIn("feedbackId", feedback_summary)
+                self.assertIn("requiredImprovement", feedback_summary)
+                self.assertIn("secondReviewComment", feedback_summary)
+                manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+                self.assertEqual(manifest["incidentId"], exported["incidentId"])
+                self.assertIn("generatedAtIso", manifest)
+                self.assertEqual(manifest["packageType"], "LifeReflexArc pre-experiment evidence package")
+                self.assertEqual(manifest["verification"]["algorithm"], "SHA-256")
+                self.assertIn("review_index.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("experiment_anonymized.json", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("expert_review_checklist.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("expert_feedback_form.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("facilitator_run_sheet.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("analysis_guide.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("data_dictionary.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("participant_consent_safety_brief.md", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("evidence_quality_report.json", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("observer_record_form.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("participant_questionnaire.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("baseline_vs_system_comparison.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("pre_experiment_round_summary.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("expert_feedback_summary.csv", manifest["privacyGuidance"]["publicOrExpertReview"])
+                self.assertIn("experiment.json", manifest["privacyGuidance"]["internalReviewOnly"])
+                manifest_files = {item["fileName"]: item for item in manifest["files"]}
+                self.assertIn("review_index.md", manifest_files)
+                self.assertIn("expert_summary.md", manifest_files)
+                self.assertIn("expert_review_checklist.md", manifest_files)
+                self.assertIn("expert_feedback_form.md", manifest_files)
+                self.assertIn("facilitator_run_sheet.md", manifest_files)
+                self.assertIn("analysis_guide.md", manifest_files)
+                self.assertIn("data_dictionary.md", manifest_files)
+                self.assertIn("participant_consent_safety_brief.md", manifest_files)
+                self.assertIn("evidence_quality_report.json", manifest_files)
+                self.assertIn("observer_record_form.csv", manifest_files)
+                self.assertIn("participant_questionnaire.csv", manifest_files)
+                self.assertIn("baseline_vs_system_comparison.csv", manifest_files)
+                self.assertIn("pre_experiment_round_summary.csv", manifest_files)
+                self.assertIn("expert_feedback_summary.csv", manifest_files)
+                for name, entry in manifest_files.items():
+                    content = archive.read(name)
+                    self.assertEqual(hashlib.sha256(content).hexdigest(), entry["sha256"])
+
+    def test_demo_clients_and_aed_sites_persist_across_app_recreation(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+
+        with self._client() as restarted_client:
+            clients = restarted_client.get("/api/clients")
+            aed_sites = restarted_client.get("/api/aed-sites")
+            dispatch = restarted_client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+
+        self.assertEqual(clients.status_code, 200)
+        self.assertEqual(aed_sites.status_code, 200)
+        self.assertEqual(dispatch.status_code, 200)
+        self.assertEqual(len(clients.json()["clients"]), 4)
+        self.assertEqual(len(aed_sites.json()["aedSites"]), 2)
+        self.assertEqual(dispatch.json()["assignments"]["PRIME"], "demo-prime")
+
+    def test_responders_cannot_join_before_patient_sos_dispatch(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            incident_id = bootstrapped.json()["incidentId"]
+
+            manual_join = client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "demo-prime"},
+            )
+            self.assertEqual(manual_join.status_code, 409)
+            self.assertIn("患者端启动 SOS", manual_join.json()["detail"])
+
+            auto_join = client.post("/api/incidents/current/join_auto", json={"userId": "demo-prime"})
+            self.assertEqual(auto_join.status_code, 409)
+            self.assertIn("患者端启动 SOS", auto_join.json()["detail"])
+
+            state = client.get(f"/api/incidents/{incident_id}").json()
+            self.assertEqual(state["phase"], "CREATED")
+            self.assertIsNone(state["roles"]["PRIME"]["userId"])
+            self.assertEqual(state["roles"]["PRIME"]["status"], "")
+
+    def test_historical_export_uses_target_incident_roles(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            old_incident_id = bootstrapped.json()["incidentId"]
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+
+            created = client.post("/api/incidents")
+            self.assertEqual(created.status_code, 200)
+            self.assertNotEqual(created.json()["incidentId"], old_incident_id)
+            current_export = client.get("/api/experiments/current/export")
+            self.assertEqual(current_export.status_code, 200)
+            current_clients = current_export.json()["clients"]
+            current_prime = next(item for item in current_clients if item["userId"] == "demo-prime")
+            self.assertIsNone(current_prime["assignedRole"])
+
+            old_export = client.get(f"/api/experiments/{old_incident_id}/export")
+            self.assertEqual(old_export.status_code, 200)
+            old_payload = old_export.json()
+            old_prime = next(item for item in old_payload["clients"] if item["userId"] == "demo-prime")
+            old_patient = next(item for item in old_payload["clients"] if item["userId"] == "demo-patient")
+            old_package = client.get(f"/api/experiments/{old_incident_id}/package")
+            self.assertEqual(old_package.status_code, 200)
+            current_package = client.get("/api/experiments/current/package")
+            self.assertEqual(current_package.status_code, 200)
+
+        self.assertEqual(old_payload["assignments"]["PRIME"], "demo-prime")
+        self.assertEqual(old_prime["assignedRole"], "PRIME")
+        self.assertTrue(old_patient["isPatient"])
+        with zipfile.ZipFile(BytesIO(old_package.content)) as archive:
+            old_manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+        with zipfile.ZipFile(BytesIO(current_package.content)) as archive:
+            current_manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+        self.assertEqual(old_manifest["incidentId"], old_incident_id)
+        self.assertNotEqual(current_manifest["incidentId"], old_incident_id)
+
+    def test_evidence_package_verification_script_accepts_current_package(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence.zip"
+        package_path.write_bytes(package_content)
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: evidence package manifest", result.stdout)
+
+    def test_evidence_package_verifier_rejects_public_raw_user_id_leak(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-leaky.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                content = source.read(info.filename)
+                if info.filename == "review_index.md":
+                    content += "\nraw leak: demo-patient\n".encode("utf-8")
+                target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("public file leaks raw participant id: review_index.md", result.stderr)
+
+    def test_evidence_package_verifier_rejects_tampered_manifest_hash(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-tampered-hash.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                content = source.read(info.filename)
+                if info.filename == "manifest.json":
+                    manifest = json.loads(content.decode("utf-8"))
+                    manifest["files"][0]["sha256"] = "0" * 64
+                    content = json.dumps(manifest, ensure_ascii=False).encode("utf-8")
+                target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SHA-256 mismatch:", result.stderr)
+
+    def test_evidence_package_verifier_rejects_unlisted_file(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-unlisted-file.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                target.writestr(info.filename, source.read(info.filename), compress_type=zipfile.ZIP_DEFLATED)
+            target.writestr("unexpected.txt", "extra evidence outside manifest", compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ZIP contains file not listed in manifest: unexpected.txt", result.stderr)
+
+    def test_evidence_package_verifier_rejects_privacy_guidance_overlap(self) -> None:
+        _, package_content = self._demo_evidence_package_content()
+        package_path = self.root / "lifereflex-evidence-privacy-overlap.zip"
+        with zipfile.ZipFile(BytesIO(package_content)) as source, zipfile.ZipFile(package_path, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            for info in source.infolist():
+                content = source.read(info.filename)
+                if info.filename == "manifest.json":
+                    manifest = json.loads(content.decode("utf-8"))
+                    manifest["privacyGuidance"]["internalReviewOnly"].append(
+                        manifest["privacyGuidance"]["publicOrExpertReview"][0]
+                    )
+                    content = json.dumps(manifest, ensure_ascii=False).encode("utf-8")
+                target.writestr(info.filename, content, compress_type=zipfile.ZIP_DEFLATED)
+
+        result = self._run_evidence_verifier(package_path)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("privacy guidance marks files as both public and internal", result.stderr)
+
+    def test_evidence_round_summary_script_merges_packages(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        output_path = self.root / "round-summary.csv"
+        package_path.write_bytes(package.content)
+        script_path = Path(__file__).resolve().parents[2] / "scripts" / "summarize_evidence_rounds.py"
+        result = subprocess.run(
+            [sys.executable, str(script_path), str(package_path), "--output", str(output_path)],
+            cwd=script_path.parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: summarized 1 evidence round", result.stdout)
+        summary = output_path.read_text(encoding="utf-8-sig")
+        rows = list(csv.DictReader(summary.splitlines()))
+        self.assertIn("packageSha256", summary)
+        self.assertIn("verificationStatus", summary)
+        self.assertIn("manifestIncidentId", summary)
+        self.assertIn("qualityLevel", summary)
+        self.assertIn("qualityScore", summary)
+        self.assertIn("qualityWarningCount", summary)
+        self.assertIn("qualityCriticalCount", summary)
+        self.assertIn("missingKeyEventCount", summary)
+        self.assertIn("qualityWarningCodes", summary)
+        self.assertIn("roleAssignmentCompleteness", summary)
+        self.assertIn("OK", summary)
+        self.assertIn(bootstrapped.json()["incidentId"], summary)
+        self.assertEqual(rows[0]["qualityLevel"], "needs_rerun_or_manual_review")
+        self.assertEqual(rows[0]["qualityScore"], "51")
+        self.assertEqual(rows[0]["qualityIssueCount"], "7")
+        self.assertEqual(rows[0]["qualityCriticalCount"], "0")
+        self.assertEqual(rows[0]["qualityWarningCount"], "4")
+        self.assertEqual(rows[0]["qualityInfoCount"], "3")
+        self.assertEqual(rows[0]["missingKeyEventCount"], "5")
+        self.assertIn("missing_cprStarted", rows[0]["qualityWarningCodes"])
+
+    def test_round_summary_analysis_script_writes_ppt_safe_report(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        summary_path = self.root / "round-summary.csv"
+        report_path = self.root / "round-analysis.md"
+        chart_path = self.root / "round-chart-data.csv"
+        review_path = self.root / "round-review-actions.csv"
+        package_path.write_bytes(package.content)
+        scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
+
+        summary_result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "summarize_evidence_rounds.py"),
+                str(package_path),
+                "--output",
+                str(summary_path),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        report_result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "analyze_round_summary.py"),
+                str(summary_path),
+                "--output",
+                str(report_path),
+                "--chart-output",
+                str(chart_path),
+                "--review-output",
+                str(review_path),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(summary_result.returncode, 0, summary_result.stderr)
+        self.assertEqual(report_result.returncode, 0, report_result.stderr)
+        report = report_path.read_text(encoding="utf-8")
+        chart_data = chart_path.read_text(encoding="utf-8-sig")
+        review_actions = review_path.read_text(encoding="utf-8-sig")
+        self.assertIn("生命反射弧预实验多轮分析摘要", report)
+        self.assertIn("T1 触发到分派完成", report)
+        self.assertIn("T2 触发到核心施救响应", report)
+        self.assertIn("校验通过轮次：1", report)
+        self.assertIn("## 证据质量", report)
+        self.assertIn("needs_rerun_or_manual_review: 1", report)
+        self.assertIn("| 质量分 `qualityScore` | 1 | 51 | 51 | 51 | 51 |", report)
+        self.assertIn("Critical 问题数：0", report)
+        self.assertIn("缺失关键节点数：5", report)
+        self.assertIn("### 需复核轮次", report)
+        self.assertIn("| 轮次/事件 | 质量等级 | 质量分 | Critical | Warning | 缺失节点 | 主要提示代码 |", report)
+        self.assertIn("missing_cprStarted", report)
+        self.assertIn("| 角色分派完整度 `roleAssignmentCompleteness` | 1 | 100 | 100 | 100 | 100 |", report)
+        self.assertIn("不应表述为：提高真实抢救成功率", report)
+        self.assertIn(bootstrapped.json()["incidentId"], report)
+        self.assertIn("metricGroup,metricKey,metricLabel,unit,validRoundCount", chart_data)
+        self.assertIn("time,dispatchSeconds,T1 触发到分派完成,seconds,1", chart_data)
+        self.assertIn("time,firstResponderResponseSeconds,T2 触发到核心施救响应,seconds,0", chart_data)
+        self.assertIn("quality,qualityScore,质量分,score,1,51,51,51,51", chart_data)
+        self.assertIn("coverage,roleAssignmentCompleteness,角色分派完整度,percent,1,100,100,100,100", chart_data)
+        self.assertIn("roundId,incidentId,verificationStatus,qualityLevel,qualityScore,reviewDecision", review_actions)
+        self.assertIn("rerun_or_manual_supplement", review_actions)
+        self.assertIn("missing_cprStarted", review_actions)
+        self.assertIn("do_not_use_until_resolved", review_actions)
+
+        legacy_summary_path = self.root / "round-summary-legacy.csv"
+        legacy_report_path = self.root / "round-analysis-legacy.md"
+        legacy_review_path = self.root / "round-review-actions-legacy.csv"
+        legacy_summary_path.write_text(
+            "verificationStatus,manifestIncidentId,manifestPhase,roleAssignmentCompleteness\nOK,legacy-incident,ARCHIVED,1\n",
+            encoding="utf-8-sig",
+        )
+        legacy_report_result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "analyze_round_summary.py"),
+                str(legacy_summary_path),
+                "--output",
+                str(legacy_report_path),
+                "--review-output",
+                str(legacy_review_path),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(legacy_report_result.returncode, 0, legacy_report_result.stderr)
+        legacy_report = legacy_report_path.read_text(encoding="utf-8")
+        legacy_review = legacy_review_path.read_text(encoding="utf-8-sig")
+        self.assertIn("missing_quality_report: 1", legacy_report)
+        self.assertIn("| legacy-incident | missing_quality_report | - | - | - | - | - |", legacy_report)
+        self.assertIn("manual_review_required", legacy_review)
+        self.assertIn("do_not_use_until_reviewed", legacy_review)
+
+    def test_pre_experiment_report_builder_creates_summary_and_analysis(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            package = client.get("/api/experiments/current/package")
+            self.assertEqual(package.status_code, 200)
+
+        package_path = self.root / "lifereflex-evidence.zip"
+        output_dir = self.root / "analysis-output"
+        package_path.write_bytes(package.content)
+        scripts_dir = Path(__file__).resolve().parents[2] / "scripts"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(scripts_dir / "build_pre_experiment_report.py"),
+                str(package_path),
+                "--output-dir",
+                str(output_dir),
+            ],
+            cwd=scripts_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK: summarized 1 evidence round", result.stdout)
+        summary = (output_dir / "round-summary.csv").read_text(encoding="utf-8-sig")
+        report = (output_dir / "round-analysis.md").read_text(encoding="utf-8")
+        chart_data = (output_dir / "round-chart-data.csv").read_text(encoding="utf-8-sig")
+        review_actions = (output_dir / "round-review-actions.csv").read_text(encoding="utf-8-sig")
+        self.assertIn("verificationStatus", summary)
+        self.assertIn("qualityLevel", summary)
+        self.assertIn("qualityScore", summary)
+        self.assertIn(bootstrapped.json()["incidentId"], summary)
+        self.assertIn("生命反射弧预实验多轮分析摘要", report)
+        self.assertIn("证据质量", report)
+        self.assertIn("需复核轮次", report)
+        self.assertIn("角色分派完整度", report)
+        self.assertIn("metricGroup", chart_data)
+        self.assertIn("dispatchSeconds", chart_data)
+        self.assertIn("firstResponderResponseSeconds", chart_data)
+        self.assertIn("reviewDecision", review_actions)
+        self.assertIn("rerun_or_manual_supplement", review_actions)
+
+    def test_patient_designation_rejects_unregistered_patient(self) -> None:
+        with self._client() as client:
+            response = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "missing-patient"},
+            )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Patient client not registered", response.text)
+
+    def test_patient_sos_uses_logged_in_user_and_dispatches_roles(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=0,
+            dispatch_delay_sec=0,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+        )
+        with TestClient(create_app(settings)) as client:
+            incident = client.get("/api/incidents/current").json()
+            incident_id = incident["incidentId"]
+
+            registrations = [
+                self._register_payload(
+                    display_name="冠心病患者",
+                    phone="13800138101",
+                    organization="社区",
+                    health_condition="存在心脏骤停风险",
+                    profession_identity="患者侧",
+                    profile_bio="多年冠心病病史，需要重点监护",
+                ),
+                self._register_payload(
+                    display_name="张医生",
+                    phone="13800138102",
+                    organization="市医院急救科",
+                    health_condition="身体状态一般",
+                    profession_identity="医生 / 专业急救人员",
+                    profile_bio="急救科医生，熟悉 CPR 和 AED 处置",
+                ),
+                self._register_payload(
+                    display_name="体育生小李",
+                    phone="13800138103",
+                    organization="大学校园",
+                    health_condition="身体素质良好",
+                    profession_identity="有一定急救常识",
+                    profile_bio="体育生，跑得快，熟悉校园路线，可快速取送 AED",
+                ),
+                self._register_payload(
+                    display_name="社区安保老王",
+                    phone="13800138104",
+                    organization="小区物业",
+                    health_condition="身体状态一般",
+                    profession_identity="安保 / 物业 / 场地协调人员",
+                    profile_bio="安保人员，熟悉楼栋出入口和车辆通道",
+                ),
+            ]
+
+            patient_token = ""
+            patient_user_id = ""
+            for payload in registrations:
+                auth = client.post("/api/auth/register", json=payload)
+                self.assertEqual(auth.status_code, 200)
+                auth_payload = auth.json()
+                user_id = auth_payload["user"]["userId"]
+                token = auth_payload["token"]
+                if payload["displayName"] == "冠心病患者":
+                    patient_token = token
+                    patient_user_id = user_id
+                register_terminal = client.post(
+                    "/api/clients/register",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={
+                        "userId": user_id,
+                        "displayName": payload["displayName"],
+                        "organization": payload["organization"],
+                        "healthCondition": payload["healthCondition"],
+                        "professionIdentity": payload["professionIdentity"],
+                        "profileBio": payload["profileBio"],
+                        "deviceType": "MOBILE_WEB",
+                    },
+                )
+                self.assertEqual(register_terminal.status_code, 200)
+
+            no_auth = client.post(f"/api/incidents/{incident_id}/patient_sos_start")
+            started = client.post(
+                f"/api/incidents/{incident_id}/patient_sos_start",
+                headers={"Authorization": f"Bearer {patient_token}"},
+            )
+            current = client.get("/api/incidents/current")
+
+        self.assertEqual(no_auth.status_code, 401)
+        self.assertEqual(started.status_code, 200)
+        payload = current.json()
+        self.assertEqual(payload["phase"], "DISPATCHED")
+        self.assertEqual(payload["patientUserId"], patient_user_id)
+        self.assertEqual(payload["roles"]["PRIME"]["status"], "ASSIGNED")
+        self.assertEqual(payload["roles"]["RUNNER"]["status"], "ASSIGNED")
+        self.assertEqual(payload["roles"]["GUIDE"]["status"], "ASSIGNED")
+
+    def test_auto_join_marks_existing_assignment_joined_once(self) -> None:
+        with self._client() as client:
+            client.post("/api/demo/bootstrap")
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            incident_id = dispatch.json()["incidentId"]
+            first_join = client.post(
+                "/api/incidents/current/join_auto",
+                json={"userId": "demo-prime"},
+            )
+            after_first_join = client.get(f"/api/incidents/{incident_id}").json()
+            second_join = client.post(
+                "/api/incidents/current/join_auto",
+                json={"userId": "demo-prime"},
+            )
+            after_second_join = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(dispatch.status_code, 200)
+        self.assertEqual(first_join.status_code, 200)
+        self.assertEqual(first_join.json()["role"], "PRIME")
+        self.assertEqual(second_join.status_code, 200)
+        self.assertEqual(second_join.json()["role"], "PRIME")
+        self.assertEqual(after_first_join["roles"]["PRIME"]["status"], "JOINED")
+        self.assertEqual(after_second_join["roles"]["PRIME"]["status"], "JOINED")
+        self.assertEqual(len(after_second_join["logs"]), len(after_first_join["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_second_join["logs"] if log["msg"] == "PRIME auto-joined (demo-prime)"),
+            1,
+        )
+
+    def test_patient_sos_with_dispatch_delay_completes_auto_dispatch(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=1,
+            dispatch_delay_sec=1,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+        )
+        with TestClient(create_app(settings)) as client:
+            incident_id = client.get("/api/incidents/current").json()["incidentId"]
+            patient_token = ""
+
+            for payload in [
+                self._register_payload("延迟患者", "13800138201", "社区", "存在心脏骤停风险", "患者侧", "用于正延迟自动分派测试"),
+                self._register_payload("延迟医生", "13800138202", "医院", "身体状态一般", "医生 / 专业急救人员", "用于正延迟自动分派测试"),
+                self._register_payload("延迟跑者", "13800138203", "校园", "身体素质良好", "有一定急救常识", "用于正延迟自动分派测试"),
+                self._register_payload("延迟引导员", "13800138204", "物业", "身体状态一般", "安保 / 物业", "用于正延迟自动分派测试"),
+            ]:
+                auth = client.post("/api/auth/register", json=payload)
+                self.assertEqual(auth.status_code, 200)
+                auth_payload = auth.json()
+                token = auth_payload["token"]
+                user_id = auth_payload["user"]["userId"]
+                if payload["displayName"] == "延迟患者":
+                    patient_token = token
+                registered = client.post(
+                    "/api/clients/register",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json={
+                        "userId": user_id,
+                        "displayName": payload["displayName"],
+                        "organization": payload["organization"],
+                        "healthCondition": payload["healthCondition"],
+                        "professionIdentity": payload["professionIdentity"],
+                        "profileBio": payload["profileBio"],
+                        "deviceType": "MOBILE_WEB",
+                    },
+                )
+                self.assertEqual(registered.status_code, 200)
+
+            started = client.post(
+                f"/api/incidents/{incident_id}/patient_sos_start",
+                headers={"Authorization": f"Bearer {patient_token}"},
+            )
+
+            current = {}
+            for _ in range(20):
+                current = client.get("/api/incidents/current").json()
+                if current["phase"] == "DISPATCHED":
+                    break
+                import time
+
+                time.sleep(0.2)
+
+        self.assertEqual(started.status_code, 200)
+        self.assertEqual(current["phase"], "DISPATCHED")
+        self.assertEqual(current["roles"]["PRIME"]["status"], "ASSIGNED")
+        self.assertEqual(current["roles"]["RUNNER"]["status"], "ASSIGNED")
+        self.assertEqual(current["roles"]["GUIDE"]["status"], "ASSIGNED")
+
+    def test_bootstrap_recovers_expired_patient_sos_for_original_incident(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=1,
+            dispatch_delay_sec=0,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+        )
+        with TestClient(create_app(settings)) as client:
+            first_bootstrap = client.post("/api/demo/bootstrap")
+            patient_auth = client.post("/api/auth/demo", json={"persona": "patient"})
+            patient_token = patient_auth.json()["token"]
+            first_incident_id = first_bootstrap.json()["incidentId"]
+            started = client.post(
+                f"/api/incidents/{first_incident_id}/patient_sos_start",
+                headers={"Authorization": f"Bearer {patient_token}"},
+            )
+            first_during_sos = client.get(f"/api/incidents/{first_incident_id}").json()
+
+            second_bootstrap = client.post("/api/demo/bootstrap")
+            second_incident_id = second_bootstrap.json()["incidentId"]
+            current_designated = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-prime"},
+            )
+
+        self.assertEqual(first_bootstrap.status_code, 200)
+        self.assertEqual(patient_auth.status_code, 200)
+        self.assertEqual(started.status_code, 200)
+        self.assertEqual(first_during_sos["phase"], "CREATED")
+        self.assertEqual(first_during_sos["sos"]["status"], "ALERTING")
+        self.assertEqual(second_bootstrap.status_code, 200)
+        self.assertEqual(current_designated.status_code, 200)
+
+        import time
+
+        time.sleep(1.2)
+        with TestClient(create_app(settings)) as restarted_client:
+            first_after_restart = restarted_client.get(f"/api/incidents/{first_incident_id}").json()
+            current_after_restart = restarted_client.get("/api/incidents/current").json()
+
+        self.assertEqual(first_after_restart["phase"], "DISPATCHED")
+        self.assertEqual(first_after_restart["patientUserId"], "demo-patient")
+        self.assertEqual(current_after_restart["incidentId"], second_incident_id)
+        self.assertEqual(current_after_restart["phase"], "DISPATCHED")
+        self.assertEqual(current_after_restart["patientUserId"], "demo-prime")
+
+    def test_patient_designation_runs_dispatch_in_worker_thread(self) -> None:
+        with self._client() as client:
+            client.post("/api/demo/bootstrap")
+
+            with patch(
+                "app.services.incidents.asyncio.to_thread",
+                wraps=__import__("asyncio").to_thread,
+            ) as to_thread:
+                response = client.post(
+                    "/api/incidents/current/designate_patient",
+                    json={"patientUserId": "demo-patient"},
+                )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(to_thread.called)
+
+    def test_patient_designation_uses_static_fallback_when_dispatch_budget_expires(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=0,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            dispatch_llm_budget_sec=0.1,
+        )
+
+        def slow_assign(*_: object) -> tuple[dict[str, str | None], str, dict]:
+            import time
+
+            time.sleep(1)
+            return {"PRIME": None, "RUNNER": None, "GUIDE": None}, "slow", {}
+
+        with TestClient(create_app(settings)) as client:
+            client.post("/api/demo/bootstrap")
+            with patch("app.services.dispatch_ai.DispatchPlanner.assign_roles", side_effect=slow_assign):
+                started_at = __import__("time").perf_counter()
+                response = client.post(
+                    "/api/incidents/current/designate_patient",
+                    json={"patientUserId": "demo-patient"},
+                )
+                elapsed = __import__("time").perf_counter() - started_at
+            current = client.get("/api/incidents/current").json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(elapsed, 0.8)
+        self.assertEqual(current["phase"], "DISPATCHED")
+        self.assertEqual(current["dispatchSource"], "fallback")
+        self.assertEqual(current["roles"]["PRIME"]["userId"], "demo-prime")
+        self.assertTrue(
+            any("static fallback" in entry["msg"] for entry in current["logs"]),
+        )
+
+    def test_client_location_and_aed_site_can_be_updated(self) -> None:
+        with self._client() as client:
+            auth = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="测试终端",
+                    phone="13800138009",
+                    organization="测试组织",
+                    health_condition="身体状态良好",
+                    profession_identity="急救志愿者",
+                    profile_bio="完成 CPR AED 培训并熟悉路线",
+                ),
+            )
+            self.assertEqual(auth.status_code, 200)
+            auth_payload = auth.json()
+            user_id = auth_payload["user"]["userId"]
+            registered = client.post(
+                "/api/clients/register",
+                headers={"Authorization": f"Bearer {auth_payload['token']}"},
+                json={
+                    "userId": user_id,
+                    "displayName": "测试终端",
+                    "organization": "测试组织",
+                    "healthCondition": "身体状态良好",
+                    "professionIdentity": "急救志愿者",
+                    "profileBio": "完成 CPR AED 培训并熟悉路线",
+                    "deviceType": "ANDROID",
+                },
+            )
+            self.assertEqual(registered.status_code, 200)
+
+            location = {
+                "latitude": 39.9042,
+                "longitude": 116.4074,
+                "label": "测试点位",
+                "source": "manual",
+            }
+            moved = client.post(
+                "/api/clients/location",
+                headers={"Authorization": f"Bearer {auth_payload['token']}"},
+                json={"userId": user_id, "location": location},
+            )
+            self.assertEqual(moved.status_code, 200)
+
+            aed = client.post(
+                "/api/aed-sites",
+                json={
+                    "siteId": "test-aed",
+                    "name": "测试 AED",
+                    "location": location,
+                    "status": "AVAILABLE",
+                    "accessNotes": "测试备注",
+                },
+            )
+            self.assertEqual(aed.status_code, 200)
+            self.assertEqual(aed.json()["aedSites"][0]["siteId"], "test-aed")
+
+            clients = client.get("/api/clients").json()["clients"]
+            self.assertEqual(clients[0]["location"]["label"], "测试点位")
+
+    def test_input_validation_rejects_invalid_location_health_and_aed_status(self) -> None:
+        with self._client() as client:
+            auth = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="边界测试",
+                    phone="13800138666",
+                    organization="测试组织",
+                    health_condition="身体状态一般",
+                    profession_identity="急救志愿者",
+                    profile_bio="用于输入边界校验",
+                ),
+            )
+            self.assertEqual(auth.status_code, 200)
+            auth_payload = auth.json()
+            user_id = auth_payload["user"]["userId"]
+            token = auth_payload["token"]
+            registered = client.post(
+                "/api/clients/register",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "displayName": "边界测试",
+                    "organization": "测试组织",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "急救志愿者",
+                    "profileBio": "用于输入边界校验",
+                    "deviceType": "MOBILE_WEB",
+                },
+            )
+            bad_location = client.post(
+                "/api/clients/location",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "location": {
+                        "latitude": 120,
+                        "longitude": 116.4,
+                        "accuracyMeters": -1,
+                    },
+                },
+            )
+            bad_health = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "authorized",
+                        "heartRateBpm": 300,
+                        "bloodOxygenPercent": 101,
+                        "pressureScore": -2,
+                    },
+                },
+            )
+            bad_health_source = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "clinical-monitor",
+                        "authorizationStatus": "sample",
+                    },
+                },
+            )
+            bad_health_auth = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "real_clinical_authorized",
+                    },
+                },
+            )
+            bad_health_activity = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "sample",
+                        "activityLevel": "sprint",
+                        "sleepQuality": "diagnosed",
+                    },
+                },
+            )
+            bad_health_risk_tag = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "mock",
+                        "authorizationStatus": "sample",
+                        "riskTags": ["diagnosis_confirmed"],
+                    },
+                },
+            )
+            bad_aed = client.post(
+                "/api/aed-sites",
+                json={
+                    "siteId": "bad-aed",
+                    "name": "异常 AED",
+                    "location": {"latitude": 39.9, "longitude": 116.4},
+                    "status": "BROKEN",
+                },
+            )
+            normalized_aed = client.post(
+                "/api/aed-sites",
+                json={
+                    "siteId": "maint-aed",
+                    "name": "维护中 AED",
+                    "location": {"latitude": 39.9, "longitude": 116.4},
+                    "status": "maintenance",
+                },
+            )
+
+        self.assertEqual(registered.status_code, 200)
+        self.assertEqual(bad_location.status_code, 422)
+        self.assertEqual(bad_health.status_code, 422)
+        self.assertEqual(bad_health_source.status_code, 422)
+        self.assertEqual(bad_health_auth.status_code, 422)
+        self.assertEqual(bad_health_activity.status_code, 422)
+        self.assertEqual(bad_health_risk_tag.status_code, 422)
+        self.assertEqual(bad_aed.status_code, 422)
+        self.assertEqual(normalized_aed.status_code, 200)
+        self.assertEqual(normalized_aed.json()["aedSites"][0]["status"], "MAINTENANCE")
+
+    def test_client_location_requires_matching_auth_token(self) -> None:
+        with self._client() as client:
+            auth = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="定位终端",
+                    phone="13800138010",
+                    organization="测试组织",
+                    health_condition="身体状态良好",
+                    profession_identity="急救志愿者",
+                    profile_bio="完成 CPR AED 培训并熟悉路线",
+                ),
+            )
+            self.assertEqual(auth.status_code, 200)
+            auth_payload = auth.json()
+            user_id = auth_payload["user"]["userId"]
+            client.post(
+                "/api/clients/register",
+                headers={"Authorization": f"Bearer {auth_payload['token']}"},
+                json={
+                    "userId": user_id,
+                    "displayName": "定位终端",
+                    "organization": "测试组织",
+                    "healthCondition": "身体状态良好",
+                    "professionIdentity": "急救志愿者",
+                    "profileBio": "完成 CPR AED 培训并熟悉路线",
+                    "deviceType": "ANDROID",
+                },
+            )
+
+            location = {"latitude": 39.9042, "longitude": 116.4074, "label": "伪造点位"}
+            no_auth = client.post(
+                "/api/clients/location",
+                json={"userId": user_id, "location": location},
+            )
+            wrong_user = client.post(
+                "/api/clients/location",
+                headers={"Authorization": f"Bearer {auth_payload['token']}"},
+                json={"userId": "other-user", "location": location},
+            )
+
+        self.assertEqual(no_auth.status_code, 401)
+        self.assertEqual(wrong_user.status_code, 403)
+
+    def test_client_health_signals_can_be_updated_and_exported(self) -> None:
+        with self._client() as client:
+            auth = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    display_name="健康终端",
+                    phone="13800138011",
+                    organization="测试组织",
+                    health_condition="身体状态一般",
+                    profession_identity="急救志愿者",
+                    profile_bio="用于 OPPO 健康 mock/fallback 测试",
+                ),
+            )
+            self.assertEqual(auth.status_code, 200)
+            auth_payload = auth.json()
+            user_id = auth_payload["user"]["userId"]
+            token = auth_payload["token"]
+            registered = client.post(
+                "/api/clients/register",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "displayName": "健康终端",
+                    "organization": "测试组织",
+                    "healthCondition": "身体状态一般",
+                    "professionIdentity": "急救志愿者",
+                    "profileBio": "用于 OPPO 健康 mock/fallback 测试",
+                    "deviceType": "ANDROID",
+                    "healthSignals": {
+                        "source": "MOCK",
+                        "authorizationStatus": "SAMPLE",
+                        "heartRateBpm": 82,
+                        "bloodOxygenPercent": 98,
+                        "pressureScore": 30,
+                        "riskTags": [],
+                        "note": "initial mock snapshot",
+                    },
+                },
+            )
+            self.assertEqual(registered.status_code, 200)
+
+            updated = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": user_id,
+                    "healthSignals": {
+                        "source": "manual",
+                        "authorizationStatus": "sample",
+                        "heartRateBpm": 126,
+                        "bloodOxygenPercent": 91,
+                        "pressureScore": 78,
+                        "activityLevel": "LOW",
+                        "sleepQuality": "POOR",
+                        "riskTags": ["tachycardia", "low-spo2", "tachycardia"],
+                        "note": "manual fallback snapshot",
+                    },
+                },
+            )
+            self.assertEqual(updated.status_code, 200)
+
+            no_auth = client.post(
+                "/api/clients/health",
+                json={
+                    "userId": user_id,
+                    "healthSignals": {"source": "mock", "authorizationStatus": "authorized"},
+                },
+            )
+            wrong_user = client.post(
+                "/api/clients/health",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "userId": "other-user",
+                    "healthSignals": {"source": "mock", "authorizationStatus": "authorized"},
+                },
+            )
+            clients = client.get("/api/clients").json()["clients"]
+            export = client.get("/api/experiments/current/export").json()
+
+        self.assertEqual(no_auth.status_code, 401)
+        self.assertEqual(wrong_user.status_code, 403)
+        health = next(item for item in clients if item["userId"] == user_id)["healthSignals"]
+        self.assertEqual(health["source"], "manual")
+        self.assertEqual(health["authorizationStatus"], "sample")
+        self.assertEqual(health["heartRateBpm"], 126)
+        self.assertEqual(health["activityLevel"], "low")
+        self.assertEqual(health["sleepQuality"], "poor")
+        self.assertIsInstance(health["updatedTs"], int)
+        exported_health = next(item for item in export["clients"] if item["userId"] == user_id)["healthSignals"]
+        self.assertEqual(exported_health["riskTags"], ["tachycardia", "low_spo2"])
+
+    def test_demo_admin_token_protects_public_demo_mutations(self) -> None:
+        token = "test-demo-admin"
+        with self._client_with_demo_admin_token(token) as client:
+            health = client.get("/api/health/detail")
+            denied_create = client.post("/api/incidents")
+            denied_bootstrap = client.post("/api/demo/bootstrap")
+            denied_export = client.get("/api/experiments/current/export")
+            denied_designate = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            allowed_create = client.post(
+                "/api/incidents",
+                headers={"X-demo-Admin-Token": token},
+            )
+            allowed_bootstrap = client.post(
+                "/api/demo/bootstrap",
+                headers={"X-demo-Admin-Token": token},
+            )
+            allowed_designate = client.post(
+                "/api/incidents/current/designate_patient",
+                headers={"X-demo-Admin-Token": token},
+                json={"patientUserId": "demo-patient"},
+            )
+            current_incident_id = allowed_designate.json()["incidentId"]
+            denied_join = client.post(
+                f"/api/incidents/{current_incident_id}/join",
+                json={"role": "PRIME", "userId": "demo-web-prime"},
+            )
+            allowed_join = client.post(
+                f"/api/incidents/{current_incident_id}/join",
+                headers={"X-demo-Admin-Token": token},
+                json={"role": "PRIME", "userId": "demo-web-prime"},
+            )
+            allowed_action = client.post(
+                f"/api/incidents/{current_incident_id}/actions",
+                headers={"X-demo-Admin-Token": token},
+                json={"action": "CPR_STARTED", "userId": "demo-web-prime"},
+            )
+            allowed_export = client.get(
+                "/api/experiments/current/export",
+                headers={"X-demo-Admin-Token": token},
+            )
+
+        self.assertEqual(health.status_code, 200)
+        self.assertTrue(health.json()["demoAdminAuthEnabled"])
+        self.assertEqual(denied_create.status_code, 403)
+        self.assertEqual(denied_bootstrap.status_code, 403)
+        self.assertEqual(denied_export.status_code, 403)
+        self.assertEqual(denied_designate.status_code, 403)
+        self.assertEqual(allowed_create.status_code, 200)
+        self.assertEqual(allowed_bootstrap.status_code, 200)
+        self.assertEqual(allowed_designate.status_code, 200)
+        self.assertEqual(denied_join.status_code, 401)
+        self.assertEqual(allowed_join.status_code, 200)
+        self.assertEqual(allowed_action.status_code, 200)
+        self.assertEqual(allowed_export.status_code, 200)
+
+    def test_configured_admin_account_can_manage_demo(self) -> None:
+        admin_phone = "13800130001"
+        user_phone = "13800130002"
+        with self._client_with_admin_phones(admin_phone) as client:
+            admin_register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    "管理员",
+                    admin_phone,
+                    "医创赛团队",
+                    "身体状态良好",
+                    "项目负责人",
+                    "负责演示管理和数据导出",
+                ),
+            )
+            user_register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    "普通成员",
+                    user_phone,
+                    "医创赛团队",
+                    "身体状态良好",
+                    "志愿者",
+                    "只参与手机端现场演示",
+                ),
+            )
+
+            admin_token = admin_register.json()["token"]
+            user_token = user_register.json()["token"]
+            admin_me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {admin_token}"})
+            denied = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {user_token}"})
+            bootstrapped = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {admin_token}"})
+            designated = client.post(
+                "/api/incidents/current/designate_patient",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"patientUserId": "demo-patient"},
+            )
+            role_join = client.post(
+                f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"role": "PRIME", "userId": "dashboard-prime"},
+            )
+            audit_log = client.get("/api/audit/events?limit=20", headers={"Authorization": f"Bearer {admin_token}"})
+            health = client.get("/api/health/detail")
+
+        self.assertEqual(admin_register.status_code, 200)
+        self.assertEqual(user_register.status_code, 200)
+        self.assertIn("admin", admin_me.json()["user"]["privileges"])
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(designated.status_code, 200)
+        self.assertEqual(role_join.status_code, 200)
+        self.assertEqual(audit_log.status_code, 200)
+        event_types = {event["eventType"] for event in audit_log.json()["events"]}
+        self.assertIn("admin_user_denied", event_types)
+        self.assertIn("demo_bootstrapped", event_types)
+        self.assertTrue(health.json()["auth"]["adminAccountAuthEnabled"])
+        self.assertEqual(health.json()["auth"]["adminPhoneCount"], 1)
+
+    def test_admin_phones_without_demo_token_keep_admin_apis_closed(self) -> None:
+        settings = Settings(
+            app_name=self.settings.app_name,
+            api_prefix=self.settings.api_prefix,
+            host=self.settings.host,
+            port=self.settings.port,
+            reload=self.settings.reload,
+            sos_duration_sec=self.settings.sos_duration_sec,
+            dispatch_delay_sec=self.settings.dispatch_delay_sec,
+            cors_origins=self.settings.cors_origins,
+            db_path=self.settings.db_path,
+            web_dist_dir=self.settings.web_dist_dir,
+            admin_phones=("13800130003",),
+        )
+        with TestClient(create_app(settings)) as client:
+            open_bootstrap = client.post("/api/demo/bootstrap")
+            register = client.post(
+                "/api/auth/register",
+                json=self._register_payload(
+                    "正式管理员",
+                    "13800130003",
+                    "医创赛团队",
+                    "身体状态良好",
+                    "项目负责人",
+                    "负责系统管理和预实验导出",
+                ),
+            )
+            token = register.json()["token"]
+            admin_bootstrap = client.post("/api/demo/bootstrap", headers={"Authorization": f"Bearer {token}"})
+
+        self.assertEqual(open_bootstrap.status_code, 403)
+        self.assertEqual(register.status_code, 200)
+        self.assertEqual(admin_bootstrap.status_code, 200)
+
+    def test_audit_events_capture_sensitive_demo_and_actor_actions(self) -> None:
+        token = "test-demo-admin"
+        with self._client_with_demo_admin_token(token) as client:
+            denied_bootstrap = client.post("/api/demo/bootstrap")
+            bootstrapped = client.post(
+                "/api/demo/bootstrap",
+                headers={"X-demo-Admin-Token": token},
+            )
+            designated = client.post(
+                "/api/incidents/current/designate_patient",
+                headers={"X-demo-Admin-Token": token},
+                json={"patientUserId": "demo-patient"},
+            )
+            joined = client.post(
+                f"/api/incidents/{bootstrapped.json()['incidentId']}/join",
+                headers={"X-demo-Admin-Token": token},
+                json={"role": "PRIME", "userId": "demo-prime"},
+            )
+            package = client.get(
+                "/api/experiments/current/package",
+                headers={"X-demo-Admin-Token": token},
+            )
+            package_sha256 = hashlib.sha256(package.content).hexdigest()
+            audit_log = client.get(
+                "/api/audit/events?limit=20",
+                headers={"X-demo-Admin-Token": token},
+            )
+            health = client.get("/api/health/detail")
+
+        self.assertEqual(denied_bootstrap.status_code, 403)
+        self.assertEqual(bootstrapped.status_code, 200)
+        self.assertEqual(designated.status_code, 200)
+        self.assertEqual(joined.status_code, 200)
+        self.assertEqual(package.status_code, 200)
+        self.assertEqual(package.headers["X-LifeReflexArc-Package-Sha256"], package_sha256)
+        self.assertEqual(audit_log.status_code, 200)
+        events = audit_log.json()["events"]
+        event_types = {event["eventType"] for event in events}
+        self.assertIn("demo_admin_denied", event_types)
+        self.assertIn("demo_bootstrapped", event_types)
+        self.assertIn("patient_designated", event_types)
+        self.assertIn("role_joined", event_types)
+        self.assertIn("experiment_package_exported", event_types)
+        package_event = next(event for event in events if event["eventType"] == "experiment_package_exported")
+        self.assertEqual(package_event["metadata"]["packageSha256"], package_sha256)
+        self.assertEqual(package_event["metadata"]["bytes"], len(package.content))
+        self.assertTrue(str(package_event["metadata"]["filename"]).endswith(".zip"))
+        self.assertTrue(all("requestHash" in event for event in events))
+        self.assertGreater(health.json()["storage"]["auditEventCount"], 0)
+
+    def test_auth_rate_limit_returns_429(self) -> None:
+        with self._client_with_auth_rate_limit(limit=1) as client:
+            first = client.post("/api/auth/login", json={"phone": "13800139999", "password": "bad"})
+            second = client.post("/api/auth/login", json={"phone": "13800139999", "password": "bad"})
+
+        self.assertEqual(first.status_code, 401)
+        self.assertEqual(second.status_code, 429)
 
     def test_role_progress_does_not_reset_prime_after_runner_update(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
 
             client.post(
                 f"/api/incidents/{incident_id}/join",
@@ -246,9 +2185,95 @@ class ServerTestCase(unittest.TestCase):
         self.assertEqual(payload["roles"]["PRIME"]["status"], "CPR_STARTED")
         self.assertEqual(payload["roles"]["RUNNER"]["status"], "AED_PICKED")
 
+    def test_repeated_join_does_not_reset_completed_role_progress(self) -> None:
+        with self._client() as client:
+            incident_id = self._create_dispatchable_incident(client)
+            joined = client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            action = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            after_action = client.get(f"/api/incidents/{incident_id}").json()
+            repeated_join = client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            after_repeated_join = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(joined.status_code, 200)
+        self.assertEqual(action.status_code, 200)
+        self.assertEqual(repeated_join.status_code, 200)
+        self.assertEqual(after_repeated_join["phase"], "CPR")
+        self.assertEqual(after_repeated_join["roles"]["PRIME"]["status"], "CPR_STARTED")
+        self.assertEqual(len(after_repeated_join["logs"]), len(after_action["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_repeated_join["logs"] if log["msg"] == "PRIME joined (prime-user)"),
+            1,
+        )
+
+    def test_repeated_role_action_is_idempotent_and_does_not_duplicate_logs(self) -> None:
+        with self._client() as client:
+            incident_id = self._create_dispatchable_incident(client)
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            first = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            after_first = client.get(f"/api/incidents/{incident_id}").json()
+            second = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            after_second = client.get(f"/api/incidents/{incident_id}").json()
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
+            )
+            analysis_first = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_ANALYSIS_STARTED", "userId": "prime-user"},
+            )
+            after_analysis_first = client.get(f"/api/incidents/{incident_id}").json()
+            analysis_second = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_ANALYSIS_STARTED", "userId": "prime-user"},
+            )
+            after_analysis_second = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(after_second["phase"], "CPR")
+        self.assertEqual(len(after_second["logs"]), len(after_first["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_second["logs"] if log["msg"] == "CPR started by prime-user"),
+            1,
+        )
+        self.assertEqual(analysis_first.status_code, 200)
+        self.assertEqual(analysis_second.status_code, 200)
+        self.assertEqual(after_analysis_second["phase"], "AED_ANALYZING")
+        self.assertEqual(len(after_analysis_second["logs"]), len(after_analysis_first["logs"]))
+        self.assertEqual(
+            sum(1 for log in after_analysis_second["logs"] if log["msg"] == "AED analysis started by prime-user"),
+            1,
+        )
+
     def test_runner_cannot_deliver_before_pickup(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "RUNNER", "userId": "runner-user"},
@@ -262,7 +2287,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_prime_can_complete_aed_analysis_and_shock_after_delivery(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -303,7 +2328,7 @@ class ServerTestCase(unittest.TestCase):
 
     def test_prime_can_start_second_aed_analysis_after_shock(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "PRIME", "userId": "prime-user"},
@@ -346,10 +2371,30 @@ class ServerTestCase(unittest.TestCase):
 
     def test_handover_can_be_completed_and_archived(self) -> None:
         with self._client() as client:
-            incident_id = client.post("/api/incidents").json()["incidentId"]
+            incident_id = self._create_dispatchable_incident(client)
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
             client.post(
                 f"/api/incidents/{incident_id}/join",
                 json={"role": "GUIDE", "userId": "guide-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
             )
 
             arrived = client.post(
@@ -367,6 +2412,147 @@ class ServerTestCase(unittest.TestCase):
         payload = current.json()
         self.assertEqual(payload["phase"], "ARCHIVED")
         self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
+
+    def test_handover_completion_repairs_arrived_phase_drift(self) -> None:
+        with self._client() as client:
+            incident_id = self._create_dispatchable_incident(client)
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "GUIDE", "userId": "guide-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_DELIVERED", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+
+            service = client.app.state.incident_service
+            state = service.incidents[incident_id]
+            state.phase = "AED_DELIVERED"
+            service._persist()
+
+            completed = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "HANDOVER_COMPLETED", "userId": "guide-user"},
+            )
+            current = client.get(f"/api/incidents/{incident_id}")
+
+        self.assertEqual(completed.status_code, 200)
+        payload = current.json()
+        self.assertEqual(payload["phase"], "ARCHIVED")
+        self.assertEqual(payload["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
+
+    def test_guide_can_report_ambulance_before_cpr_and_aed_delivery(self) -> None:
+        with self._client() as client:
+            incident_id = self._create_dispatchable_incident(client)
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "PRIME", "userId": "prime-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "RUNNER", "userId": "runner-user"},
+            )
+            client.post(
+                f"/api/incidents/{incident_id}/join",
+                json={"role": "GUIDE", "userId": "guide-user"},
+            )
+
+            too_early = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+            current_after_arrival = client.get(f"/api/incidents/{incident_id}").json()
+            cpr_after_arrival = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "CPR_STARTED", "userId": "prime-user"},
+            )
+            aed_pickup_after_arrival = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AED_PICKED", "userId": "runner-user"},
+            )
+            current_after_followup_actions = client.get(f"/api/incidents/{incident_id}").json()
+            repeated_arrival = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "AMBULANCE_ARRIVED", "userId": "guide-user"},
+            )
+            completed = client.post(
+                f"/api/incidents/{incident_id}/actions",
+                json={"action": "HANDOVER_COMPLETED", "userId": "guide-user"},
+            )
+            current = client.get(f"/api/incidents/{incident_id}").json()
+
+        self.assertEqual(too_early.status_code, 200)
+        self.assertEqual(current_after_arrival["phase"], "HANDOVER")
+        self.assertEqual(current_after_arrival["roles"]["GUIDE"]["status"], "AMBULANCE_ARRIVED")
+        self.assertEqual(cpr_after_arrival.status_code, 200)
+        self.assertEqual(aed_pickup_after_arrival.status_code, 200)
+        self.assertEqual(current_after_followup_actions["phase"], "HANDOVER")
+        self.assertEqual(current_after_followup_actions["roles"]["PRIME"]["status"], "CPR_STARTED")
+        self.assertEqual(current_after_followup_actions["roles"]["RUNNER"]["status"], "AED_PICKED")
+        self.assertEqual(repeated_arrival.status_code, 200)
+        self.assertEqual(completed.status_code, 200)
+        self.assertEqual(current["phase"], "ARCHIVED")
+        self.assertEqual(current["roles"]["GUIDE"]["status"], "HANDOVER_COMPLETED")
+
+    def test_completed_demo_package_quality_report_is_ready(self) -> None:
+        with self._client() as client:
+            bootstrapped = client.post("/api/demo/bootstrap")
+            self.assertEqual(bootstrapped.status_code, 200)
+            dispatch = client.post(
+                "/api/incidents/current/designate_patient",
+                json={"patientUserId": "demo-patient"},
+            )
+            self.assertEqual(dispatch.status_code, 200)
+            incident_id = dispatch.json()["incidentId"]
+            for action, user_id in (
+                ("CPR_STARTED", "demo-prime"),
+                ("AED_PICKED", "demo-runner"),
+                ("AED_DELIVERED", "demo-runner"),
+                ("AMBULANCE_ARRIVED", "demo-guide"),
+                ("HANDOVER_COMPLETED", "demo-guide"),
+            ):
+                response = client.post(
+                    f"/api/incidents/{incident_id}/actions",
+                    json={"action": action, "userId": user_id},
+                )
+                self.assertEqual(response.status_code, 200)
+
+            package = client.get(f"/api/experiments/{incident_id}/package")
+            self.assertEqual(package.status_code, 200)
+
+        with zipfile.ZipFile(BytesIO(package.content)) as archive:
+            report = json.loads(archive.read("evidence_quality_report.json").decode("utf-8"))
+
+        self.assertEqual(report["phase"], "ARCHIVED")
+        self.assertEqual(report["qualityLevel"], "ready_for_low_cost_pre_experiment_summary")
+        self.assertGreaterEqual(report["qualityScore"], 85)
+        self.assertEqual(report["missingKeyEvents"], [])
+        self.assertEqual({item["code"] for item in report["warnings"]}, {"dispatch_fallback_used"})
+        self.assertTrue(report["metricCoverage"]["firstResponderResponseSeconds"])
+        self.assertTrue(report["metricCoverage"]["cprStartSeconds"])
+        self.assertTrue(report["metricCoverage"]["aedPickupSeconds"])
+        self.assertTrue(report["metricCoverage"]["aedDeliverySeconds"])
+        self.assertTrue(report["metricCoverage"]["ambulanceArriveSeconds"])
 
 
 if __name__ == "__main__":

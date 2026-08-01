@@ -24,6 +24,9 @@ fun screenFor(state: IncidentState, role: Role): PhoneScreen {
     if (state.phase == "CREATED") {
         return PhoneScreen.SosCountdown
     }
+    if (state.phase == "HANDOVER" || state.phase == "ARCHIVED") {
+        return PhoneScreen.HandoverArchive
+    }
     val status = when (role) {
         Role.PRIME -> state.roles.PRIME.status
         Role.RUNNER -> state.roles.RUNNER.status
@@ -33,15 +36,11 @@ fun screenFor(state: IncidentState, role: Role): PhoneScreen {
         Role.PRIME -> when (status) {
             "CPR_STARTED" -> PhoneScreen.CprMetronome
             "JOINED" -> PhoneScreen.PrimeNavigation
-            else -> {
-                if (state.phase == "HANDOVER") PhoneScreen.HandoverArchive else PhoneScreen.EmergencyAlert
-            }
+            else -> PhoneScreen.EmergencyAlert
         }
         Role.RUNNER -> when (status) {
             "AED_PICKED", "AED_DELIVERED", "JOINED" -> PhoneScreen.AedDelivery
-            else -> {
-                if (state.phase == "HANDOVER") PhoneScreen.HandoverArchive else PhoneScreen.RunnerIdle
-            }
+            else -> PhoneScreen.RunnerIdle
         }
         Role.GUIDE -> when (status) {
             "AMBULANCE_ARRIVED", "JOINED" -> PhoneScreen.GuideTask

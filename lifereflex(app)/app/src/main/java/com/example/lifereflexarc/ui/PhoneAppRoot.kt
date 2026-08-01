@@ -76,7 +76,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
             while (true) {
                 nowTick.value = System.currentTimeMillis()
                 delay(500)
-                if (phase != "CREATED" || sos?.status != "ALERTING") {
+                if (phase != "CREATED" || sos.status != "ALERTING") {
                     return@LaunchedEffect
                 }
             }
@@ -165,7 +165,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
                         } else {
                             SosCountdownScreen(
                                 seconds = countdown.value,
-                                totalSeconds = sos?.durationSec ?: 10,
+                                totalSeconds = sos?.durationSec ?: 5,
                                 onCancel = {
                                     cancelRequested.value = true
                                     victimView.value = "monitoring"
@@ -179,6 +179,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
                         onJoin = { viewModel.joinPrime(userId) }
                     )
                     PhoneScreen.PrimeNavigation -> PrimeNavigationScreen(
+                        distanceToPatientMeters = incidentState!!.dispatchRationale["PRIME"]?.distanceToPatientMeters,
                         onArrived = { viewModel.actionCprStarted(userId) }
                     )
                     PhoneScreen.CprMetronome -> CprMetronomeScreen(
@@ -198,7 +199,7 @@ fun PhoneAppRoot(viewModel: IncidentViewModel, userId: String, role: Role = Role
                     PhoneScreen.GuideTask -> GuideTaskScreen(
                         onAmbulanceArrived = { viewModel.actionAmbulanceArrived(userId) }
                     )
-                    PhoneScreen.HandoverArchive -> HandoverArchiveScreen()
+                    PhoneScreen.HandoverArchive -> HandoverArchiveScreen(incidentState = incidentState!!)
                 }
             }
         }

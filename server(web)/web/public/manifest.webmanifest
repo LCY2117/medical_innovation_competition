@@ -1,0 +1,19 @@
+{
+  "name": "生命反射弧移动应急端",
+  "short_name": "生命反射弧",
+  "description": "用于手机浏览器访问的分布式急救协同应急端。",
+  "start_url": "/mobile",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#071014",
+  "theme_color": "#071014",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

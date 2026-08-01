@@ -99,6 +99,11 @@ bash scripts/deploy_linux.sh
 - `LRA_API_BASE=https://你的域名/`
 - `LRA_WS_BASE=wss://你的域名/ws`
 
+当前部署地址：
+
+- `LRA_API_BASE=https://111.230.52.99/`
+- `LRA_WS_BASE=wss://111.230.52.99/ws`
+
 ## 项目介绍
 
 这是已经完成 `server + web` 合并后的统一工程。后端现在不再是单文件 MVP，而是一个分层的 FastAPI 项目。

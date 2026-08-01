@@ -38,6 +38,15 @@ def _parse_csv(value: str | None, default: list[str]) -> list[str]:
     return parsed or default
 
 
+def _parse_phone_csv(value: str | None) -> tuple[str, ...]:
+    phones = []
+    for item in _parse_csv(value, default=[]):
+        normalized = "".join(ch for ch in item if ch.isdigit())
+        if normalized:
+            phones.append(normalized)
+    return tuple(dict.fromkeys(phones))
+
+
 def _resolve_path(value: str | None, default: Path) -> Path:
     if not value:
         return default
@@ -65,10 +74,26 @@ class Settings:
     siliconflow_model: str = "Qwen/Qwen2-7B-Instruct"
     siliconflow_base_url: str = "https://api.siliconflow.cn/v1"
     siliconflow_timeout_sec: int = 8
+    dispatch_llm_budget_sec: float = 1.0
     local_model_base_url: str | None = None
     local_model_name: str = "default"
     local_model_timeout_sec: int = 30
     prefer_local_model: bool = True
+    demo_admin_token: str | None = None
+    admin_phones: tuple[str, ...] = ()
+    auth_token_ttl_sec: int = 604800
+    health_provider: str = "mock"
+    map_provider: str = "demo"
+    amap_web_key: str | None = None
+    amap_web_security_js_code: str | None = None
+    amap_service_key: str | None = None
+    map_distance_timeout_sec: int = 3
+    audit_log_enabled: bool = True
+    rate_limit_enabled: bool = True
+    rate_limit_auth_per_minute: int = 20
+    rate_limit_admin_per_minute: int = 60
+    rate_limit_actor_per_minute: int = 120
+    push_provider: str = "websocket"
 
 
 @lru_cache(maxsize=1)
@@ -85,8 +110,8 @@ def get_settings() -> Settings:
         host=os.getenv("LRA_HOST", "0.0.0.0"),
         port=int(os.getenv("LRA_PORT", "8080")),
         reload=_parse_bool(os.getenv("LRA_RELOAD"), default=False),
-        sos_duration_sec=int(os.getenv("LRA_SOS_DURATION_SEC", "10")),
-        dispatch_delay_sec=int(os.getenv("LRA_DISPATCH_DELAY_SEC", "3")),
+        sos_duration_sec=int(os.getenv("LRA_SOS_DURATION_SEC", "5")),
+        dispatch_delay_sec=int(os.getenv("LRA_DISPATCH_DELAY_SEC", "0")),
         cors_origins=_parse_csv(
             os.getenv("LRA_CORS_ORIGINS"),
             default=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -99,8 +124,24 @@ def get_settings() -> Settings:
         siliconflow_model=os.getenv("LRA_SILICONFLOW_MODEL", "Qwen/Qwen2-7B-Instruct"),
         siliconflow_base_url=os.getenv("LRA_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1").rstrip("/"),
         siliconflow_timeout_sec=int(os.getenv("LRA_SILICONFLOW_TIMEOUT_SEC", "8")),
+        dispatch_llm_budget_sec=float(os.getenv("LRA_DISPATCH_LLM_BUDGET_SEC", "1")),
         local_model_base_url=os.getenv("LRA_LOCAL_MODEL_BASE_URL", "http://localhost:8008/v1").rstrip("/") if os.getenv("LRA_LOCAL_MODEL_BASE_URL") else None,
         local_model_name=os.getenv("LRA_LOCAL_MODEL_NAME", "default"),
         local_model_timeout_sec=int(os.getenv("LRA_LOCAL_MODEL_TIMEOUT_SEC", "30")),
         prefer_local_model=_parse_bool(os.getenv("LRA_PREFER_LOCAL_MODEL"), default=True),
+        demo_admin_token=(os.getenv("LRA_demo_ADMIN_TOKEN") or "").strip() or None,
+        admin_phones=_parse_phone_csv(os.getenv("LRA_ADMIN_PHONES")),
+        auth_token_ttl_sec=int(os.getenv("LRA_AUTH_TOKEN_TTL_SEC", "604800")),
+        health_provider=os.getenv("LRA_HEALTH_PROVIDER", "mock").strip() or "mock",
+        map_provider=os.getenv("LRA_MAP_PROVIDER", "demo").strip() or "demo",
+        amap_web_key=(os.getenv("LRA_AMAP_WEB_KEY") or "").strip() or None,
+        amap_web_security_js_code=(os.getenv("LRA_AMAP_WEB_SECURITY_JS_CODE") or "").strip() or None,
+        amap_service_key=(os.getenv("LRA_AMAP_SERVICE_KEY") or "").strip() or None,
+        map_distance_timeout_sec=int(os.getenv("LRA_MAP_DISTANCE_TIMEOUT_SEC", "3")),
+        audit_log_enabled=_parse_bool(os.getenv("LRA_AUDIT_LOG_ENABLED"), default=True),
+        rate_limit_enabled=_parse_bool(os.getenv("LRA_RATE_LIMIT_ENABLED"), default=True),
+        rate_limit_auth_per_minute=int(os.getenv("LRA_RATE_LIMIT_AUTH_PER_MINUTE", "20")),
+        rate_limit_admin_per_minute=int(os.getenv("LRA_RATE_LIMIT_ADMIN_PER_MINUTE", "60")),
+        rate_limit_actor_per_minute=int(os.getenv("LRA_RATE_LIMIT_ACTOR_PER_MINUTE", "120")),
+        push_provider=os.getenv("LRA_PUSH_PROVIDER", "websocket").strip() or "websocket",
     )

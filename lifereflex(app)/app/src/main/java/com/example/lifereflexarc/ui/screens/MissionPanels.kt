@@ -133,6 +133,7 @@ fun MissionPanel(
     assignedRole: UserRole?,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
 ) {
     val activeRole = assignedRole
 
@@ -149,6 +150,7 @@ fun MissionPanel(
             deviceUserId = deviceUserId,
             onJoin = { incidentViewModel.joinPrime(deviceUserId) },
             onStartCpr = { incidentViewModel.actionCprStarted(deviceUserId) },
+            pendingAction = pendingAction,
         )
         activeRole == UserRole.RUNNER -> RunnerMissionCard(
             incidentState = incidentState,
@@ -156,12 +158,14 @@ fun MissionPanel(
             onJoin = { incidentViewModel.joinRunner(deviceUserId) },
             onPicked = { incidentViewModel.actionAedPicked(deviceUserId) },
             onDelivered = { incidentViewModel.actionAedDelivered(deviceUserId) },
+            pendingAction = pendingAction,
         )
         activeRole == UserRole.GUIDE -> GuideMissionCard(
             incidentState = incidentState,
             deviceUserId = deviceUserId,
             onJoin = { incidentViewModel.joinGuide(deviceUserId) },
             onAmbulanceArrived = { incidentViewModel.actionAmbulanceArrived(deviceUserId) },
+            pendingAction = pendingAction,
         )
         else -> ObserverMissionCard()
     }
@@ -186,7 +190,7 @@ private fun CreatedMissionCard(
                 text = if (isAlerting) {
                     "检测到异常倒地，系统正在执行 SOS 倒计时。"
                 } else {
-                    "当前处于监测态，可手动确认异常并发起急救接力。"
+                    "当前处于监测态，可手动确认异常并发起协同 SOS。"
                 },
                 color = PhoneColors.GrayText,
                 fontSize = 14.sp,
@@ -225,6 +229,7 @@ private fun PrimeMissionCard(
     deviceUserId: String,
     onJoin: () -> Unit,
     onStartCpr: () -> Unit,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.PRIME.status
     val title: String
@@ -235,7 +240,7 @@ private fun PrimeMissionCard(
 
     when {
         status.isNullOrBlank() || status == "IDLE" -> {
-            title = "等待 AI 分配"
+            title = "等待智能分派"
             body = "当前终端尚未被分配到核心施救任务。"
             cta = null
             action = null
@@ -248,7 +253,7 @@ private fun PrimeMissionCard(
         }
         else -> {
             title = "CPR 执行中"
-            body = "保持 100-120 次/分钟节律，等待 AED 与急救车汇合。"
+            body = "保持 100-120 次/分钟节律，等待 AED 与救护车汇合。"
             cta = null
             action = null
         }
@@ -260,6 +265,8 @@ private fun PrimeMissionCard(
         accent = PhoneColors.Red,
         status = "核心施救 · ${roleStatusLabel(status)} · ${deviceUserId.takeLast(4)}",
         cta = cta,
+        actionCode = "CPR_STARTED",
+        pendingAction = pendingAction,
         onAction = action,
     ) {
         if (voiceCue != null) {
@@ -275,36 +282,42 @@ private fun RunnerMissionCard(
     onJoin: () -> Unit,
     onPicked: () -> Unit,
     onDelivered: () -> Unit,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.RUNNER.status
     val title: String
     val body: String
     val cta: String?
+    val actionCode: String?
     val action: (() -> Unit)?
 
     when (status) {
         null, "", "IDLE" -> {
-            title = "等待 AI 分配"
+            title = "等待智能分派"
             body = "当前终端尚未被分配到 AED 保障任务。"
             cta = null
+            actionCode = null
             action = null
         }
         "ASSIGNED", "JOINED" -> {
             title = "前往 AED 点位"
             body = "系统已锁定最近 AED，拿到设备后立即回返患者位置。"
             cta = "确认已取到 AED"
+            actionCode = "AED_PICKED"
             action = onPicked
         }
         "AED_PICKED" -> {
             title = "回送患者位置"
             body = "继续赶往现场，与核心施救者汇合。"
             cta = "确认 AED 已送达"
+            actionCode = "AED_DELIVERED"
             action = onDelivered
         }
         else -> {
             title = "AED 已完成交付"
             body = "设备已到场，保持通信畅通，等待进一步调度。"
             cta = null
+            actionCode = null
             action = null
         }
     }
@@ -315,6 +328,8 @@ private fun RunnerMissionCard(
         accent = PhoneColors.Blue,
         status = "AED保障 · ${roleStatusLabel(status)} · ${deviceUserId.takeLast(4)}",
         cta = cta,
+        actionCode = actionCode,
+        pendingAction = pendingAction,
         onAction = action,
     )
 }
@@ -325,6 +340,7 @@ private fun GuideMissionCard(
     deviceUserId: String,
     onJoin: () -> Unit,
     onAmbulanceArrived: () -> Unit,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.GUIDE.status
     val title: String
@@ -334,14 +350,14 @@ private fun GuideMissionCard(
 
     when (status) {
         null, "", "IDLE" -> {
-            title = "等待 AI 分配"
+            title = "等待智能分派"
             body = "当前终端尚未被分配到环境清障任务。"
             cta = null
             action = null
         }
         "ASSIGNED", "JOINED" -> {
             title = "生命通道处理中"
-            body = "请疏通消防通道、引导电梯与路口，等待急救车靠近。"
+            body = "请疏通消防通道、引导电梯与路口，等待救护车靠近。"
             cta = "确认救护车已到达"
             action = onAmbulanceArrived
         }
@@ -359,6 +375,8 @@ private fun GuideMissionCard(
         accent = PhoneColors.Yellow,
         status = "环境清障 · ${roleStatusLabel(status)} · ${deviceUserId.takeLast(4)}",
         cta = cta,
+        actionCode = "AMBULANCE_ARRIVED",
+        pendingAction = pendingAction,
         onAction = action,
     )
 }
@@ -366,8 +384,8 @@ private fun GuideMissionCard(
 @Composable
 private fun DispatchingMissionCard() {
     EmptyStateCard(
-        title = "AI 正在生成任务分配",
-        body = "患者终端已经被网页指挥台触发。所有在线终端会先收到全屏红色告警，约 3 秒后进入各自专属任务页。",
+        title = "智能协同正在生成任务",
+        body = "患者终端已经触发告警。所有在线终端会先收到全屏红色告警，约 3 秒后进入各自专属任务页。",
     )
 }
 
@@ -383,7 +401,7 @@ private fun ObserverMissionCard() {
 private fun HandoverMissionCard() {
     EmptyStateCard(
         title = "进入交接阶段",
-        body = "现场任务已转入 HANDOVER，可前往归档页查看汇总与后续交接。",
+        body = "现场任务已进入救护车接管阶段，可前往归档页查看汇总与后续交接记录。",
     )
 }
 
@@ -394,6 +412,8 @@ private fun MissionActionCard(
     accent: Color,
     status: String,
     cta: String?,
+    actionCode: String?,
+    pendingAction: String?,
     onAction: (() -> Unit)?,
     extraContent: @Composable () -> Unit = {},
 ) {
@@ -412,8 +432,9 @@ private fun MissionActionCard(
             Text(body, color = PhoneColors.GrayText, fontSize = 14.sp, lineHeight = 22.sp)
             if (cta != null && onAction != null) {
                 PressableButton(
-                    text = cta,
+                    text = actionButtonText(pendingAction, actionCode, cta),
                     onClick = onAction,
+                    enabled = pendingAction == null,
                     colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.White),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -421,6 +442,10 @@ private fun MissionActionCard(
             extraContent()
         }
     }
+}
+
+private fun actionButtonText(pendingAction: String?, actionCode: String?, idleText: String): String {
+    return if (actionCode != null && pendingAction == actionCode) "提交中..." else idleText
 }
 
 @Composable

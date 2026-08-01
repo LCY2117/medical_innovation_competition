@@ -42,11 +42,15 @@ local.properties
 .env.*
 !.env.example
 
+# Local inspection/verification artifacts
+output/
+
 # Common binary artifacts
 *.apk
 *.aab
 *.keystore
 *.jks
+*.db
 *.db-shm
 *.db-wal
 

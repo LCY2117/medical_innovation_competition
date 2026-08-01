@@ -7,12 +7,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okhttp3.OkHttpClient
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
@@ -31,11 +33,14 @@ class WsClient(
     private var webSocket: WebSocket? = null
     private var incidentId: String? = null
     private var reconnectAttempt = 0
+    private var reconnectJob: Job? = null
     private var manualClose = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun connect(id: String) {
         manualClose = true
+        reconnectJob?.cancel()
+        reconnectJob = null
         webSocket?.close(1000, "switching incident")
         webSocket = null
         incidentId = id
@@ -48,6 +53,8 @@ class WsClient(
     fun close() {
         manualClose = true
         incidentId = null
+        reconnectJob?.cancel()
+        reconnectJob = null
         webSocket?.close(1000, "closed")
         webSocket = null
         connected.value = false
@@ -55,12 +62,16 @@ class WsClient(
 
     private fun openSocket() {
         val id = incidentId ?: return
+        val separator = if ("?" in baseWsUrl) "&" else "?"
+        val encodedIncidentId = URLEncoder.encode(id, "UTF-8")
         val request = Request.Builder()
-            .url("$baseWsUrl?incidentId=$id")
+            .url("$baseWsUrl${separator}incidentId=$encodedIncidentId")
             .build()
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                reconnectJob?.cancel()
+                reconnectJob = null
                 connected.value = true
                 reconnectAttempt = 0
                 latestError.value = null
@@ -74,10 +85,10 @@ class WsClient(
                         latestState.value = gson.fromJson(envelope.get("payload"), IncidentState::class.java)
                         latestError.value = null
                     } else if (type == "ERROR") {
-                        latestError.value = envelope.get("payload")?.asString ?: "Server error"
+                        latestError.value = ErrorMessages.forWebSocketPayload(envelope.get("payload")?.asString)
                     }
                 } catch (e: Exception) {
-                    latestError.value = e.message ?: "Invalid websocket payload"
+                    latestError.value = "实时连接收到的数据格式异常，正在等待下一次同步。"
                 }
             }
 
@@ -90,7 +101,7 @@ class WsClient(
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 connected.value = false
-                latestError.value = t.message ?: "WebSocket connection failed"
+                latestError.value = ErrorMessages.forWebSocketFailure(t)
                 if (!manualClose) {
                     scheduleReconnect()
                 }
@@ -100,10 +111,14 @@ class WsClient(
 
     private fun scheduleReconnect() {
         val id = incidentId ?: return
+        if (reconnectJob?.isActive == true) {
+            return
+        }
         val delayMs = min(10_000L, 1_000L * (1 shl reconnectAttempt))
         reconnectAttempt = min(reconnectAttempt + 1, 4)
-        scope.launch {
+        reconnectJob = scope.launch {
             delay(delayMs)
+            reconnectJob = null
             if (incidentId == id) {
                 openSocket()
             }

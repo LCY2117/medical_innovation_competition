@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 import threading
+import time
 from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
@@ -80,22 +81,68 @@ class SqliteAuthStore:
             ).fetchone()
         return self._row_to_user(row)
 
-    def save_token(self, token: str, user_id: str, issued_at: int) -> None:
+    def update_user_profile(
+        self,
+        user_id: str,
+        display_name: str,
+        organization: str,
+        health_condition: str,
+        profession_identity: str,
+        profile_bio: str,
+        credential_status: str,
+    ) -> UserRecord | None:
         with closing(self._connect()) as conn, self._lock:
             conn.execute(
                 """
-                INSERT OR REPLACE INTO auth_tokens (token, user_id, issued_at)
-                VALUES (?, ?, ?)
+                UPDATE users
+                SET display_name = ?,
+                    organization = ?,
+                    health_condition = ?,
+                    profession_identity = ?,
+                    profile_bio = ?,
+                    credential_status = ?
+                WHERE user_id = ?
                 """,
-                (token, user_id, issued_at),
+                (
+                    display_name,
+                    organization,
+                    health_condition,
+                    profession_identity,
+                    profile_bio,
+                    credential_status,
+                    user_id,
+                ),
+            )
+            conn.commit()
+            row = conn.execute(
+                """
+                SELECT user_id, display_name, phone, password_hash, organization,
+                       health_condition, profession_identity, profile_bio, credential_status, created_at
+                FROM users
+                WHERE user_id = ?
+                LIMIT 1
+                """,
+                (user_id,),
+            ).fetchone()
+        return self._row_to_user(row)
+
+    def save_token(self, token: str, user_id: str, issued_at: int, expires_at: int | None) -> None:
+        with closing(self._connect()) as conn, self._lock:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO auth_tokens (token, user_id, issued_at, expires_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (token, user_id, issued_at, expires_at),
             )
             conn.commit()
 
-    def get_user_by_token(self, token: str) -> UserRecord | None:
+    def get_user_by_token(self, token: str, now_ms: int) -> UserRecord | None:
         with closing(self._connect()) as conn, self._lock:
             row = conn.execute(
                 """
-                SELECT u.user_id, u.display_name, u.phone, u.password_hash, u.organization,
+                SELECT t.expires_at,
+                       u.user_id, u.display_name, u.phone, u.password_hash, u.organization,
                        u.health_condition, u.profession_identity, u.profile_bio, u.credential_status, u.created_at
                 FROM auth_tokens t
                 JOIN users u ON u.user_id = t.user_id
@@ -104,12 +151,44 @@ class SqliteAuthStore:
                 """,
                 (token,),
             ).fetchone()
+            if row is not None and row["expires_at"] is not None and row["expires_at"] <= now_ms:
+                conn.execute("DELETE FROM auth_tokens WHERE token = ?", (token,))
+                conn.commit()
+                return None
         return self._row_to_user(row)
 
+    def get_token_expires_at(self, token: str) -> int | None:
+        with closing(self._connect()) as conn, self._lock:
+            row = conn.execute(
+                """
+                SELECT expires_at
+                FROM auth_tokens
+                WHERE token = ?
+                LIMIT 1
+                """,
+                (token,),
+            ).fetchone()
+        if row is None:
+            return None
+        return row["expires_at"]
+
+    def delete_token(self, token: str) -> None:
+        with closing(self._connect()) as conn, self._lock:
+            conn.execute("DELETE FROM auth_tokens WHERE token = ?", (token,))
+            conn.commit()
+
     def health(self) -> dict:
+        now_ms = int(time.time() * 1000)
         with closing(self._connect()) as conn, self._lock:
             user_count = conn.execute("SELECT COUNT(*) AS count FROM users").fetchone()["count"]
-            token_count = conn.execute("SELECT COUNT(*) AS count FROM auth_tokens").fetchone()["count"]
+            token_count = conn.execute(
+                """
+                SELECT COUNT(*) AS count
+                FROM auth_tokens
+                WHERE expires_at IS NULL OR expires_at > ?
+                """,
+                (now_ms,),
+            ).fetchone()["count"]
         return {"ok": True, "userCount": user_count, "tokenCount": token_count}
 
     def _initialize(self) -> None:
@@ -136,10 +215,17 @@ class SqliteAuthStore:
                     token TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
                     issued_at INTEGER NOT NULL,
+                    expires_at INTEGER,
                     FOREIGN KEY(user_id) REFERENCES users(user_id)
                 )
                 """
             )
+            columns = {
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(auth_tokens)").fetchall()
+            }
+            if "expires_at" not in columns:
+                conn.execute("ALTER TABLE auth_tokens ADD COLUMN expires_at INTEGER")
             conn.commit()
 
     def _connect(self) -> sqlite3.Connection:

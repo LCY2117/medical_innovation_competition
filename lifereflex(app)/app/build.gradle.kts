@@ -3,8 +3,53 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val apiBase = providers.gradleProperty("LRA_API_BASE").orElse("http://111.230.52.99:8080/").get()
-val wsBase = providers.gradleProperty("LRA_WS_BASE").orElse("ws://111.230.52.99:8080/ws").get()
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.isFile) {
+        localFile.inputStream().use(::load)
+    }
+}
+
+fun projectLocalOrEnv(name: String): String? =
+    providers.gradleProperty(name).orNull
+        ?: localProperties.getProperty(name)
+        ?: providers.environmentVariable(name).orNull
+
+val apiBase = projectLocalOrEnv("LRA_API_BASE") ?: "https://111.230.52.99/"
+val wsBase = projectLocalOrEnv("LRA_WS_BASE") ?: "wss://111.230.52.99/ws"
+val releaseStoreFilePath = projectLocalOrEnv("LRA_RELEASE_STORE_FILE")
+val releaseStorePassword = projectLocalOrEnv("LRA_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = projectLocalOrEnv("LRA_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = projectLocalOrEnv("LRA_RELEASE_KEY_PASSWORD")
+val hasReleaseSigning = listOf(
+    releaseStoreFilePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
+
+fun isReleaseBuildTask(taskName: String): Boolean {
+    val lowerName = taskName.lowercase()
+    return "release" in lowerName && listOf("assemble", "bundle", "package", "install", "process").any { it in lowerName }
+}
+
+fun requireReleaseUrlScheme(name: String, value: String, scheme: String) {
+    if (!value.trim().startsWith(scheme)) {
+        throw GradleException(
+            "$name must start with $scheme for release builds. " +
+                "Use local HTTP/WS only for debug builds."
+        )
+    }
+}
+
+gradle.taskGraph.whenReady {
+    if (allTasks.any { isReleaseBuildTask(it.name) }) {
+        requireReleaseUrlScheme("LRA_API_BASE", apiBase, "https://")
+        requireReleaseUrlScheme("LRA_WS_BASE", wsBase, "wss://")
+    }
+}
 
 android {
     namespace = "com.example.lifereflexarc"
@@ -14,7 +59,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.lifereflexarc"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -24,9 +69,23 @@ android {
         buildConfigField("String", "LRA_WS_BASE", "\"$wsBase\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFilePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -60,6 +119,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.gson)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.health.connect)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

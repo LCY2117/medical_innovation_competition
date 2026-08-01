@@ -1,0 +1,1362 @@
+:root[data-mobile-route='true'] {
+  color-scheme: light;
+  --mobile-bg: #edf3f4;
+  --mobile-surface: #ffffff;
+  --mobile-surface-2: #f4f8f9;
+  --mobile-surface-3: #e7eef0;
+  --mobile-ink: #07181c;
+  --mobile-text: #122428;
+  --mobile-muted: #5f7378;
+  --mobile-soft: #82959a;
+  --mobile-border: #d4e0e3;
+  --mobile-danger: #dc2740;
+  --mobile-danger-2: #a8122a;
+  --mobile-danger-soft: #fff0f3;
+  --mobile-ok: #0c9f71;
+  --mobile-ok-soft: #e6f8f1;
+  --mobile-ok-text: #075b43;
+  --mobile-warn: #b7791f;
+  --mobile-blue: #2563eb;
+  --mobile-blue-soft: #edf4ff;
+  --mobile-guide: #d97706;
+  --mobile-shadow: 0 18px 44px rgba(10, 30, 36, 0.1);
+  --mobile-panel-shadow: 0 14px 34px rgba(10, 30, 36, 0.08);
+  --mobile-tab-bg: rgba(255, 255, 255, 0.96);
+  --mobile-topbar-bg: rgba(237, 243, 244, 0.9);
+  --mobile-cta: #0f2f36;
+  --mobile-cta-text: #ffffff;
+  --mobile-danger-text: #7a1f32;
+  --mobile-card-radius: 18px;
+  --mobile-control-radius: 14px;
+}
+
+:root[data-mobile-route='true'][data-mobile-theme='dark'] {
+  color-scheme: dark;
+  --mobile-bg: #061012;
+  --mobile-surface: #101b1f;
+  --mobile-surface-2: #17262b;
+  --mobile-surface-3: #0c171a;
+  --mobile-ink: #f4fbfb;
+  --mobile-text: #edf6f6;
+  --mobile-muted: #a3b3b8;
+  --mobile-soft: #768a90;
+  --mobile-border: #24383e;
+  --mobile-danger: #ff546b;
+  --mobile-danger-2: #ff8fa0;
+  --mobile-danger-soft: #341018;
+  --mobile-ok: #28d299;
+  --mobile-ok-soft: #0d3027;
+  --mobile-ok-text: #a8f6d9;
+  --mobile-warn: #f4bf54;
+  --mobile-blue: #76a2ff;
+  --mobile-blue-soft: #102341;
+  --mobile-guide: #f59e0b;
+  --mobile-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+  --mobile-panel-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --mobile-tab-bg: rgba(12, 23, 26, 0.94);
+  --mobile-topbar-bg: rgba(6, 16, 18, 0.88);
+  --mobile-cta: #d7f0ef;
+  --mobile-cta-text: #0c1719;
+  --mobile-danger-text: #ffd7dd;
+}
+
+:root[data-mobile-route='true'],
+:root[data-mobile-route='true'] body,
+:root[data-mobile-route='true'] #root {
+  min-height: 100%;
+  background: var(--mobile-bg);
+}
+
+.mobile-shell {
+  min-height: 100dvh;
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: calc(10px + env(safe-area-inset-top)) 14px calc(98px + env(safe-area-inset-bottom));
+  color: var(--mobile-text);
+  background: var(--mobile-bg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.mobile-auth-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: center;
+}
+
+.mobile-loading {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: var(--mobile-muted);
+}
+
+.mobile-hero {
+  padding: 18px 2px 8px;
+}
+
+.mobile-hero h1,
+.mobile-topbar h1,
+.mobile-panel h2,
+.mobile-role-card h3,
+.mobile-summary h2 {
+  margin: 0;
+  color: var(--mobile-ink);
+  letter-spacing: 0;
+}
+
+.mobile-hero h1 {
+  font-size: 2rem;
+  line-height: 1.08;
+  font-weight: 780;
+}
+
+.mobile-hero p {
+  max-width: 28rem;
+  margin: 10px 0 0;
+  color: var(--mobile-muted);
+  line-height: 1.6;
+}
+
+.mobile-hero .mobile-safety-copy {
+  border-left: 3px solid var(--mobile-warn);
+  padding-left: 10px;
+  color: var(--mobile-ink);
+  font-size: 0.82rem;
+}
+
+.mobile-app-mark,
+.mobile-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+}
+
+.mobile-kicker {
+  margin: 0 0 4px;
+  color: var(--mobile-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.mobile-panel,
+.mobile-emergency-panel {
+  margin-top: 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-card-radius);
+  background: var(--mobile-surface);
+  box-shadow: var(--mobile-panel-shadow);
+}
+
+.mobile-panel {
+  padding: 16px;
+}
+
+.mobile-emergency-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-color: #f6c8cf;
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-emergency-panel.patient {
+  border-color: #ef9aaa;
+}
+
+.mobile-emergency-panel.responder {
+  border-color: rgba(15, 159, 114, 0.38);
+  background: var(--mobile-ok-soft);
+}
+
+.mobile-emergency-panel.role-prime {
+  border-color: color-mix(in srgb, var(--mobile-danger) 42%, var(--mobile-border));
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-emergency-panel.role-runner {
+  border-color: color-mix(in srgb, var(--mobile-blue) 42%, var(--mobile-border));
+  background: var(--mobile-blue-soft);
+}
+
+.mobile-emergency-panel.role-guide {
+  border-color: color-mix(in srgb, var(--mobile-guide) 42%, var(--mobile-border));
+  background: color-mix(in srgb, var(--mobile-guide) 12%, var(--mobile-surface));
+}
+
+.mobile-emergency-panel.readonly {
+  border-color: color-mix(in srgb, var(--mobile-border) 72%, var(--mobile-cta));
+  background: var(--mobile-surface);
+}
+
+.mobile-emergency-panel svg {
+  color: var(--mobile-danger);
+}
+
+.mobile-emergency-panel.responder svg {
+  color: var(--mobile-ok);
+}
+
+.mobile-emergency-panel.role-prime svg {
+  color: var(--mobile-danger);
+}
+
+.mobile-emergency-panel.role-runner svg {
+  color: var(--mobile-blue);
+}
+
+.mobile-emergency-panel.role-guide svg {
+  color: var(--mobile-guide);
+}
+
+.mobile-emergency-panel.readonly svg {
+  color: var(--mobile-cta);
+}
+
+.mobile-emergency-panel h2,
+.mobile-emergency-panel p {
+  margin: 8px 0 0;
+}
+
+.mobile-emergency-panel p {
+  color: var(--mobile-danger-text);
+  line-height: 1.52;
+}
+
+.mobile-emergency-panel.responder p {
+  color: var(--mobile-ok-text);
+}
+
+.mobile-emergency-panel.role-prime p {
+  color: var(--mobile-danger-text);
+}
+
+.mobile-emergency-panel.role-runner p,
+.mobile-emergency-panel.role-guide p {
+  color: var(--mobile-muted);
+}
+
+.mobile-emergency-panel.readonly p {
+  color: var(--mobile-muted);
+}
+
+.mobile-topbar,
+.mobile-section-head,
+.mobile-status-strip,
+.mobile-user-panel,
+.mobile-role-title,
+.mobile-aed-card,
+.mobile-team-list > div,
+.mobile-log-list > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-topbar,
+.mobile-section-head,
+.mobile-status-strip {
+  justify-content: space-between;
+}
+
+.mobile-topbar {
+  margin: -12px -14px 0;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 10px;
+  background: var(--mobile-topbar-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--mobile-border) 78%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-topbar h1,
+.mobile-panel h2 {
+  font-size: 1.18rem;
+  line-height: 1.2;
+  font-weight: 760;
+}
+
+.mobile-command-header {
+  margin-top: 12px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 22px;
+  padding: 13px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mobile-surface) 92%, var(--mobile-blue)) 0%, var(--mobile-surface) 58%),
+    var(--mobile-surface);
+  box-shadow: var(--mobile-shadow);
+}
+
+.mobile-command-header.patient {
+  border-color: color-mix(in srgb, var(--mobile-danger) 38%, var(--mobile-border));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--mobile-danger) 20%, transparent) 0, transparent 42%),
+    var(--mobile-surface);
+}
+
+.mobile-command-header.role-prime {
+  border-color: color-mix(in srgb, var(--mobile-danger) 36%, var(--mobile-border));
+}
+
+.mobile-command-header.role-runner {
+  border-color: color-mix(in srgb, var(--mobile-blue) 38%, var(--mobile-border));
+}
+
+.mobile-command-header.role-guide {
+  border-color: color-mix(in srgb, var(--mobile-guide) 42%, var(--mobile-border));
+}
+
+.mobile-command-header.standby {
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--mobile-ok) 14%, transparent) 0, transparent 42%),
+    var(--mobile-surface);
+}
+
+.mobile-command-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mobile-muted);
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+
+.mobile-command-status strong {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-ink);
+  font-size: 0.76rem;
+}
+
+.mobile-command-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+}
+
+.mobile-command-main h2 {
+  margin: 0;
+  color: var(--mobile-ink);
+  font-size: 1.46rem;
+  line-height: 1.15;
+  font-weight: 850;
+}
+
+.mobile-command-main p {
+  margin: 6px 0 0;
+  color: var(--mobile-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.mobile-command-metric {
+  min-width: 72px;
+  border-radius: 18px;
+  padding: 10px 11px;
+  background: var(--mobile-surface-2);
+  text-align: right;
+}
+
+.mobile-command-metric span,
+.mobile-command-facts span {
+  display: block;
+  color: var(--mobile-soft);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.mobile-command-metric strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--mobile-ink);
+  font-size: 1rem;
+}
+
+.mobile-hero-visual,
+.mobile-card-visual,
+.mobile-action-illustration {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.mobile-hero-visual {
+  position: relative;
+  overflow: hidden;
+  margin-top: 13px;
+  border: 1px solid color-mix(in srgb, var(--mobile-border) 64%, transparent);
+  border-radius: 20px;
+  background: var(--mobile-surface-3);
+  aspect-ratio: 16 / 8.2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.mobile-hero-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 54%, color-mix(in srgb, var(--mobile-surface) 62%, transparent) 100%);
+  pointer-events: none;
+}
+
+.mobile-hero-visual img,
+.mobile-card-visual {
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-card-visual {
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid color-mix(in srgb, var(--mobile-border) 70%, transparent);
+  border-radius: 18px;
+  aspect-ratio: 16 / 7.5;
+  background: var(--mobile-surface-2);
+}
+
+.mobile-route-visual {
+  margin: 2px 0 12px;
+}
+
+.mobile-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 12px;
+  align-items: center;
+}
+
+.mobile-action-row > div {
+  min-width: 0;
+}
+
+.mobile-action-illustration {
+  overflow: hidden;
+  width: 96px;
+  height: 96px;
+  border: 1px solid color-mix(in srgb, var(--mobile-border) 62%, transparent);
+  border-radius: 22px;
+  background: var(--mobile-surface);
+  object-fit: cover;
+  box-shadow: 0 12px 28px rgba(10, 30, 36, 0.1);
+}
+
+.mobile-command-facts {
+  display: grid;
+  grid-template-columns: 0.8fr 1.35fr 0.7fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-command-facts > div {
+  min-width: 0;
+  border: 1px solid var(--mobile-border);
+  border-radius: 16px;
+  padding: 9px 10px;
+  background: color-mix(in srgb, var(--mobile-surface-2) 72%, transparent);
+}
+
+.mobile-command-facts strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--mobile-ink);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-status-strip {
+  min-height: 36px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-control-radius);
+  background: var(--mobile-surface);
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  box-shadow: 0 6px 18px rgba(21, 38, 44, 0.05);
+}
+
+.mobile-context-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 14px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-muted);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.mobile-context-strip span {
+  min-width: 0;
+}
+
+.mobile-context-strip span:first-of-type {
+  color: var(--mobile-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.mobile-context-strip strong {
+  flex-basis: 100%;
+  color: var(--mobile-ink);
+  font-size: 0.84rem;
+}
+
+.mobile-status-strip div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-status-strip strong {
+  color: var(--mobile-ink);
+  font-size: 0.84rem;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.sync-dot.live {
+  background: var(--mobile-ok);
+}
+
+.sync-dot.connecting,
+.sync-dot.reconnecting {
+  background: var(--mobile-warn);
+}
+
+.sync-dot.offline {
+  background: var(--mobile-danger);
+}
+
+.mobile-segment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--mobile-control-radius);
+  background: var(--mobile-surface-2);
+}
+
+.mobile-demo-entry {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--mobile-border);
+}
+
+.mobile-demo-entry .mobile-section-head {
+  margin-bottom: 10px;
+}
+
+.mobile-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-demo-grid button {
+  min-height: 78px;
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-control-radius);
+  padding: 10px;
+  background: var(--mobile-surface-3);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.mobile-demo-grid strong,
+.mobile-demo-grid span {
+  display: block;
+}
+
+.mobile-demo-grid strong {
+  color: var(--mobile-ink);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.mobile-demo-grid span {
+  margin-top: 4px;
+  color: var(--mobile-muted);
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+.mobile-view-tabs {
+  position: fixed;
+  right: max(14px, calc((100vw - 480px) / 2 + 14px));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  left: max(14px, calc((100vw - 480px) / 2 + 14px));
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  max-width: 452px;
+  margin: 0 auto;
+  padding: 4px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 20px;
+  background: var(--mobile-tab-bg);
+  box-shadow: 0 12px 34px rgba(21, 38, 44, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.mobile-view-tabs button {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--mobile-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.mobile-view-tabs button.active {
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+}
+
+.mobile-segment button,
+.mobile-presets button,
+.mobile-icon-button,
+.mobile-small-button,
+.mobile-input-row button,
+.mobile-role-grid button,
+.mobile-primary-button,
+.mobile-danger-button,
+.mobile-ghost-button,
+.mobile-summary-link {
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--mobile-control-radius);
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  touch-action: manipulation;
+  text-decoration: none;
+}
+
+.mobile-segment button {
+  background: transparent;
+  color: var(--mobile-muted);
+  font-weight: 740;
+}
+
+.mobile-segment button.active {
+  background: #ffffff;
+  color: var(--mobile-ink);
+  box-shadow: 0 4px 14px rgba(21, 38, 44, 0.08);
+}
+
+.mobile-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-presets button,
+.mobile-small-button,
+.mobile-role-grid button,
+.mobile-ghost-button,
+.mobile-summary-link {
+  border: 1px solid var(--mobile-border);
+  background: var(--mobile-surface);
+}
+
+.mobile-icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  padding: 0;
+  line-height: 1;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-muted);
+}
+
+.mobile-icon-button svg {
+  display: block;
+}
+
+.mobile-top-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.mobile-small-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+}
+
+.mobile-primary-button,
+.mobile-danger-button {
+  width: 100%;
+  min-height: 54px;
+  font-weight: 800;
+}
+
+.mobile-primary-button {
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+}
+
+.mobile-danger-button {
+  background: var(--mobile-danger);
+  color: #ffffff;
+}
+
+.mobile-danger-button.confirming {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.24);
+}
+
+.mobile-ghost-button {
+  width: 100%;
+  color: var(--mobile-danger-text);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.mobile-panel label {
+  display: block;
+  margin-top: 12px;
+  color: var(--mobile-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.mobile-panel input,
+.mobile-panel textarea,
+.mobile-input-row input {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-control-radius);
+  padding: 10px 12px;
+  background: var(--mobile-surface);
+  color: var(--mobile-ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.mobile-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 8px;
+}
+
+.mobile-input-row input {
+  margin-top: 0;
+}
+
+.mobile-input-row button {
+  background: var(--mobile-surface-2);
+  color: var(--mobile-ink);
+  font-weight: 760;
+}
+
+.mobile-notice {
+  margin-top: 10px;
+  border-radius: var(--mobile-control-radius);
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.mobile-notice.ok {
+  background: var(--mobile-ok-soft);
+  color: var(--mobile-ok-text);
+}
+
+.mobile-notice.error {
+  background: var(--mobile-danger-soft);
+  color: var(--mobile-danger-text);
+}
+
+.mobile-notice.info {
+  background: #eef4ff;
+  color: #1d4ed8;
+}
+
+.mobile-user-panel,
+.mobile-identity-main {
+  align-items: flex-start;
+}
+
+.mobile-user-panel > div:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.mobile-identity-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-card-radius);
+  padding: 12px;
+  background: var(--mobile-surface);
+  box-shadow: var(--mobile-panel-shadow);
+}
+
+.mobile-identity-main,
+.mobile-location-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-identity-main > div:last-child {
+  min-width: 0;
+}
+
+.mobile-identity-main strong {
+  display: block;
+  color: var(--mobile-ink);
+  font-size: 1.05rem;
+  font-weight: 820;
+}
+
+.mobile-identity-main p:not(.mobile-kicker),
+.mobile-location-line {
+  color: var(--mobile-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.mobile-location-line {
+  border-top: 1px solid var(--mobile-border);
+  padding-top: 10px;
+}
+
+.mobile-location-line svg {
+  flex: 0 0 auto;
+  color: var(--mobile-blue);
+}
+
+.mobile-location-line span {
+  min-width: 0;
+}
+
+.mobile-health-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-health-stats > div {
+  border: 1px solid var(--mobile-border);
+  border-radius: 16px;
+  padding: 8px 9px;
+  background: var(--mobile-surface-2);
+}
+
+.mobile-health-stats span {
+  display: block;
+  color: var(--mobile-soft);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.mobile-health-stats strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mobile-ink);
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.mobile-health-stats .tone-danger {
+  border-color: color-mix(in srgb, var(--mobile-danger) 42%, var(--mobile-border));
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-health-stats .tone-danger strong {
+  color: var(--mobile-danger-2);
+}
+
+.mobile-health-stats .tone-ok strong {
+  color: var(--mobile-ok-text);
+}
+
+.mobile-user-panel strong,
+.mobile-aed-card strong,
+.mobile-team-list strong {
+  display: block;
+  color: var(--mobile-ink);
+  font-weight: 760;
+}
+
+.mobile-user-panel p,
+.mobile-aed-card p,
+.mobile-team-list p,
+.mobile-role-card p,
+.mobile-summary p {
+  margin: 4px 0 0;
+  color: var(--mobile-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.mobile-health-line {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  border: 1px solid var(--mobile-border);
+  border-radius: 14px;
+  padding: 6px 8px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-ink);
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.mobile-health-line span {
+  min-width: 0;
+  white-space: normal;
+}
+
+.mobile-health-line svg {
+  flex: 0 0 auto;
+}
+
+.mobile-health-copy {
+  color: var(--mobile-soft) !important;
+  font-size: 0.76rem !important;
+}
+
+.mobile-health-copy.warning {
+  color: var(--mobile-danger-text) !important;
+}
+
+.mobile-incident-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-incident-panel {
+  box-shadow: none;
+  background: var(--mobile-surface-3);
+}
+
+.mobile-incident-panel .mobile-section-head {
+  margin-bottom: 8px;
+}
+
+.mobile-incident-panel h2 {
+  font-size: 1.02rem;
+}
+
+.mobile-compact-input-row input,
+.mobile-compact-input-row button {
+  min-height: 40px;
+}
+
+.mobile-incident-card > div,
+.mobile-rationale > div,
+.mobile-cpr-meter {
+  border-radius: 16px;
+  background: var(--mobile-surface-2);
+  padding: 10px;
+}
+
+.mobile-incident-card span,
+.mobile-rationale span {
+  display: block;
+  color: var(--mobile-muted);
+  font-size: 0.72rem;
+}
+
+.mobile-incident-card strong,
+.mobile-rationale strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--mobile-ink);
+  overflow-wrap: anywhere;
+}
+
+.mobile-emergency-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 8px;
+}
+
+.mobile-emergency-actions.single {
+  grid-template-columns: 1fr;
+}
+
+.mobile-role-card {
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-card-radius);
+  padding: 16px;
+  background: var(--mobile-surface);
+  overflow: hidden;
+}
+
+.mobile-role-card.role-prime {
+  border-color: color-mix(in srgb, var(--mobile-danger) 42%, var(--mobile-border));
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-role-card.role-runner {
+  border-color: color-mix(in srgb, var(--mobile-blue) 42%, var(--mobile-border));
+  background: var(--mobile-blue-soft);
+}
+
+.mobile-role-card.role-guide {
+  border-color: color-mix(in srgb, var(--mobile-guide) 42%, var(--mobile-border));
+  background: color-mix(in srgb, var(--mobile-guide) 12%, var(--mobile-surface));
+}
+
+.mobile-role-title {
+  align-items: flex-start;
+}
+
+.mobile-role-title h3 {
+  font-size: 1.22rem;
+  line-height: 1.18;
+}
+
+.mobile-role-title svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.mobile-cpr-meter {
+  margin: 12px 0;
+  border: 1px solid color-mix(in srgb, var(--mobile-danger) 32%, var(--mobile-border));
+  background: color-mix(in srgb, var(--mobile-danger) 10%, var(--mobile-surface));
+}
+
+.mobile-next-step {
+  margin: 10px 0;
+  border: 1px solid var(--mobile-border);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--mobile-surface-2);
+}
+
+.mobile-next-step strong,
+.mobile-next-step p {
+  display: block;
+  margin: 0;
+}
+
+.mobile-next-step strong {
+  color: var(--mobile-ink);
+  font-size: 0.9rem;
+}
+
+.mobile-next-step p {
+  margin-top: 4px;
+  color: var(--mobile-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.mobile-next-step.ready {
+  border-color: color-mix(in srgb, var(--mobile-ok) 45%, var(--mobile-border));
+  background: color-mix(in srgb, var(--mobile-ok) 12%, var(--mobile-surface));
+}
+
+.mobile-next-step.danger {
+  border-color: color-mix(in srgb, var(--mobile-danger) 45%, var(--mobile-border));
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-cpr-meter div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-cpr-meter strong {
+  color: var(--mobile-ink);
+}
+
+.mobile-cpr-meter span {
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+}
+
+.mobile-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mobile-manual-join {
+  margin-top: 12px;
+  border-top: 1px solid var(--mobile-border);
+  padding-top: 10px;
+  opacity: 0.88;
+}
+
+.mobile-manual-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  justify-content: space-between;
+  border-color: var(--mobile-border);
+  background: var(--mobile-surface-2);
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.mobile-manual-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.mobile-role-grid button {
+  min-height: 64px;
+  padding: 8px;
+  text-align: left;
+}
+
+.mobile-role-grid strong,
+.mobile-role-grid span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.mobile-role-grid strong {
+  color: var(--mobile-ink);
+  font-size: 0.78rem;
+}
+
+.mobile-role-grid span {
+  margin-top: 4px;
+  color: var(--mobile-muted);
+  font-size: 0.72rem;
+}
+
+.mobile-aed-card {
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--mobile-guide) 34%, var(--mobile-border));
+  background: color-mix(in srgb, var(--mobile-warn) 14%, var(--mobile-surface));
+}
+
+.mobile-aed-card svg {
+  color: var(--mobile-warn);
+}
+
+.mobile-rationale {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mobile-scene-details {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.mobile-rationale p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--mobile-muted);
+  line-height: 1.5;
+}
+
+.mobile-team-list,
+.mobile-log-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-team-list > div,
+.mobile-log-list > div {
+  align-items: flex-start;
+  border-radius: 16px;
+  background: var(--mobile-surface-2);
+  padding: 10px;
+}
+
+.mobile-team-list span {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.mobile-team-list span.online {
+  background: var(--mobile-ok);
+}
+
+.mobile-log-list time {
+  flex: 0 0 62px;
+  color: var(--mobile-muted);
+  font-size: 0.75rem;
+}
+
+.mobile-log-list p {
+  margin: 0;
+  color: var(--mobile-ink);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.mobile-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 108px;
+  color: var(--mobile-muted);
+  text-align: center;
+  line-height: 1.55;
+}
+
+.mobile-empty-state.compact {
+  min-height: auto;
+  display: block;
+  padding: 10px;
+  text-align: left;
+}
+
+.mobile-count {
+  color: var(--mobile-muted);
+  font-weight: 800;
+}
+
+.mobile-summary {
+  text-align: center;
+}
+
+.mobile-summary-action {
+  margin-top: 12px;
+}
+
+.mobile-summary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mobile-summary-actions button,
+.mobile-summary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.mobile-token-field {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.mobile-token-field input {
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.mobile-summary-note {
+  margin: 8px 0 0;
+  color: var(--mobile-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.mobile-bottom-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  border: 1px solid var(--mobile-border);
+  border-radius: var(--mobile-control-radius);
+  padding: 10px 12px;
+  background: var(--mobile-tab-bg);
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  box-shadow: 0 10px 30px rgba(21, 38, 44, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-mobile-route='true'] {
+    color-scheme: light dark;
+  }
+}
+
+@media (max-width: 380px) {
+  .mobile-shell {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .mobile-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-incident-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

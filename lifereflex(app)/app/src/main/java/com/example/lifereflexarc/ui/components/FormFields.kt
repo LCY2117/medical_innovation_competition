@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.VisualTransformation
 import com.example.lifereflexarc.ui.theme.PhoneColors
 
 @Composable
@@ -16,6 +17,7 @@ fun LraOutlinedTextField(
     modifier: Modifier = Modifier,
     supportingText: String? = null,
     keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     OutlinedTextField(
         value = value,
@@ -23,6 +25,7 @@ fun LraOutlinedTextField(
         label = { Text(label, color = PhoneColors.GrayText) },
         supportingText = supportingText?.let { { Text(it, color = PhoneColors.GrayText) } },
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         modifier = modifier,
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(

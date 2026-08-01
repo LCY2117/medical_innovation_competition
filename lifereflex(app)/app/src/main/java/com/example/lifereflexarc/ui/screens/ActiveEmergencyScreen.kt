@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +28,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,12 +36,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.lifereflexarc.data.AedSite
 import com.example.lifereflexarc.data.IncidentState
 import com.example.lifereflexarc.data.UserRole
 import com.example.lifereflexarc.data.UserSession
+import com.example.lifereflexarc.ui.components.CprBeatAnimation
+import com.example.lifereflexarc.ui.components.CprMetronomeTicker
+import com.example.lifereflexarc.ui.components.DEFAULT_CPR_BPM
 import com.example.lifereflexarc.ui.accentForRole
+import com.example.lifereflexarc.ui.dispatchSourceLabel
 import com.example.lifereflexarc.ui.primeVoiceCue
 import com.example.lifereflexarc.ui.components.PressableButton
+import com.example.lifereflexarc.ui.formatAedStatusLabel
+import com.example.lifereflexarc.ui.formatFloorLabel
 import com.example.lifereflexarc.ui.phaseTitle
 import com.example.lifereflexarc.ui.roleStatusLabel
 import com.example.lifereflexarc.ui.rememberCountdownValue
@@ -56,13 +65,17 @@ fun ActiveEmergencyScreen(
     assignedRole: UserRole?,
     deviceUserId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
+    voiceGuidanceEnabled: Boolean = true,
     onExitEmergency: () -> Unit,
 ) {
-    PrimeVoicePrompt(
-        incidentState = incidentState,
-        assignedRole = assignedRole,
-        isPatient = incidentState.patientUserId == deviceUserId,
-    )
+    if (voiceGuidanceEnabled) {
+        PrimeVoicePrompt(
+            incidentState = incidentState,
+            assignedRole = assignedRole,
+            isPatient = incidentState.patientUserId == deviceUserId,
+        )
+    }
     when {
         incidentState.phase == "ARCHIVED" -> ArchivedFullScreen(
             session = session,
@@ -74,6 +87,7 @@ fun ActiveEmergencyScreen(
             incidentState = incidentState,
             userId = deviceUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
         )
         incidentState.phase == "DISPATCHING" -> DispatchingFullScreen(incidentState = incidentState)
         incidentState.patientUserId == deviceUserId -> PatientFullScreen(incidentState = incidentState)
@@ -81,16 +95,19 @@ fun ActiveEmergencyScreen(
             incidentState = incidentState,
             userId = deviceUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
         )
         assignedRole == UserRole.RUNNER -> RunnerFullScreen(
             incidentState = incidentState,
             userId = deviceUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
         )
         assignedRole == UserRole.GUIDE -> GuideFullScreen(
             incidentState = incidentState,
             userId = deviceUserId,
             incidentViewModel = incidentViewModel,
+            pendingAction = pendingAction,
         )
         else -> UnassignedFullScreen(session = session, incidentState = incidentState)
     }
@@ -130,8 +147,8 @@ private fun PrimeVoicePrompt(
         }
         tts = engine
         onDispose {
-            engine?.stop()
-            engine?.shutdown()
+            engine.stop()
+            engine.shutdown()
             tts = null
         }
     }
@@ -155,10 +172,10 @@ private fun DispatchingFullScreen(
     CriticalScaffold(
         eyebrow = "心脏骤停警报",
         title = "心脏骤停告警已触发",
-        body = "所有在线终端已收到覆盖全屏的红色告警。云端正在结合用户画像调用 AI 进行 PRIME、RUNNER、GUIDE 三类任务分配。",
+        body = "所有在线终端已收到覆盖全屏的红色告警。系统正在结合用户画像、距离和 AED 可达性生成核心施救、AED 保障和环境清障三类任务。",
         accent = PhoneColors.Red,
     ) {
-        MetricTile(label = "AI 分配倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
+        MetricTile(label = "任务生成倒计时", value = "${countdown.coerceAtLeast(0)} 秒")
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
     }
 }
@@ -170,11 +187,11 @@ private fun PatientFullScreen(
     CriticalScaffold(
         eyebrow = "患者端",
         title = "已进入患者应急态",
-        body = "系统已向周边协同成员发出求助，并同步生成急救任务。患者端保持当前位置，等待周边力量到场和救护车接管。",
+        body = "系统已向周边协同成员发出求助，并同步生成现场任务。患者端保持当前位置，等待周边力量到场和救护车接管。",
         accent = PhoneColors.Red,
     ) {
         MetricTile(label = "当前阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "已通知分配", value = incidentState.dispatchSource ?: "规则/AI 处理中")
+        MetricTile(label = "通知状态", value = dispatchSourceLabel(incidentState.dispatchSource))
         MetricTile(label = "事件耗时", value = rememberElapsedLabel(incidentState.logs.firstOrNull()?.ts))
     }
 }
@@ -184,6 +201,7 @@ private fun PrimeFullScreen(
     incidentState: IncidentState,
     userId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.PRIME.status
     val cprStarted = status == "CPR_STARTED"
@@ -218,7 +236,7 @@ private fun PrimeFullScreen(
     ) {
         MetricTile(label = "任务状态", value = roleStatusLabel(status))
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "调度来源", value = incidentState.dispatchSource ?: "规则调度")
+        MetricTile(label = "调度来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         if (voiceCue != null) {
             VoiceCueCard(message = voiceCue)
         }
@@ -226,24 +244,28 @@ private fun PrimeFullScreen(
             shockDelivered -> ResuscitationGuidancePanel(
                 startTs = guidanceStartTs,
                 aedReady = true,
+                pendingAction = pendingAction,
                 onRequestAnalysis = { incidentViewModel.actionAedAnalysisStarted(userId) },
             )
             analyzing -> PressableButton(
-                text = "确认已完成一次电击除颤",
+                text = actionButtonText(pendingAction, "AED_SHOCK_DELIVERED", "确认已完成一次电击除颤"),
                 onClick = { incidentViewModel.actionAedShockDelivered(userId) },
+                enabled = pendingAction == null,
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Red, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
             aedDelivered -> PressableButton(
-                text = "开始 AED 心律分析",
+                text = actionButtonText(pendingAction, "AED_ANALYSIS_STARTED", "开始 AED 心律分析"),
                 onClick = { incidentViewModel.actionAedAnalysisStarted(userId) },
+                enabled = pendingAction == null,
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Red, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
             !cprStarted -> {
             PressableButton(
-                text = "确认到场并开始基础复苏",
+                text = actionButtonText(pendingAction, "CPR_STARTED", "确认到场并开始基础复苏"),
                 onClick = { incidentViewModel.actionCprStarted(userId) },
+                enabled = pendingAction == null,
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Red, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -254,6 +276,7 @@ private fun PrimeFullScreen(
             ResuscitationGuidancePanel(
                 startTs = guidanceStartTs,
                 aedReady = aedDelivered || shockDelivered,
+                pendingAction = pendingAction,
                 onRequestAnalysis = if (shockDelivered) {
                     { incidentViewModel.actionAedAnalysisStarted(userId) }
                 } else {
@@ -268,6 +291,7 @@ private fun PrimeFullScreen(
 private fun ResuscitationGuidancePanel(
     startTs: Long?,
     aedReady: Boolean,
+    pendingAction: String? = null,
     onRequestAnalysis: (() -> Unit)? = null,
 ) {
     val cycleElapsedSec by produceState(initialValue = 0, startTs) {
@@ -292,6 +316,8 @@ private fun ResuscitationGuidancePanel(
         "保持 100-120 次/分钟按压频率，深度 5-6 厘米，尽量减少中断。"
     }
 
+    CprMetronomeTicker(active = !isBreathing)
+
     MetricTile(label = "复苏循环剩余", value = "${cycleRemaining} 秒")
     MetricTile(label = "当前阶段", value = guidanceTitle)
     MetricTile(label = "阶段切换倒计时", value = "${blockRemaining.coerceAtLeast(0)} 秒")
@@ -306,6 +332,35 @@ private fun ResuscitationGuidancePanel(
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier.size(44.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CprBeatAnimation(
+                        active = !isBreathing,
+                        modifier = Modifier.fillMaxSize(),
+                        color = if (isBreathing) PhoneColors.Yellow else PhoneColors.Green,
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = if (isBreathing) "节拍器暂停" else "节拍器 ${DEFAULT_CPR_BPM} BPM",
+                        color = if (isBreathing) PhoneColors.Yellow else PhoneColors.Green,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    )
+                    Text(
+                        text = if (isBreathing) "呼吸阶段 · 按压阶段自动恢复节拍" else "按压时跟随提示音节奏",
+                        color = PhoneColors.GrayText,
+                        fontSize = 11.sp,
+                    )
+                }
+            }
             Text(
                 text = if (isBreathing) "2 次人工呼吸" else "30 次胸外按压",
                 color = if (isBreathing) PhoneColors.Yellow else PhoneColors.Green,
@@ -338,8 +393,9 @@ private fun ResuscitationGuidancePanel(
                     )
                 } else {
                     PressableButton(
-                        text = "开始第二轮 AED 心律分析",
+                        text = actionButtonText(pendingAction, "AED_ANALYSIS_STARTED", "开始第二轮 AED 心律分析"),
                         onClick = onRequestAnalysis,
+                        enabled = pendingAction == null,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = PhoneColors.Red,
                             contentColor = Color.White,
@@ -388,8 +444,15 @@ private fun RunnerFullScreen(
     incidentState: IncidentState,
     userId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.RUNNER.status
+    val runnerDecision = incidentState.dispatchRationale["RUNNER"]
+    val targetAed = remember(incidentState.aedSites, runnerDecision?.nearestAedSiteId) {
+        incidentState.aedSites.firstOrNull { it.siteId == runnerDecision?.nearestAedSiteId }
+            ?: incidentState.aedSites.firstOrNull { it.status == "AVAILABLE" }
+            ?: incidentState.aedSites.firstOrNull()
+    }
     CriticalScaffold(
         eyebrow = "AED 保障任务",
         title = when (status) {
@@ -398,28 +461,83 @@ private fun RunnerFullScreen(
             else -> "你被分配为 AED 保障者"
         },
         body = when (status) {
-            "AED_PICKED" -> "沿最短路径回返患者位置，与 PRIME 汇合。"
-            "AED_DELIVERED" -> "设备已送达现场，提醒 PRIME 贴附电极片并按 AED 语音提示分析与除颤。"
+            "AED_PICKED" -> "沿最短路径回返患者位置，与核心施救者汇合。"
+            "AED_DELIVERED" -> "设备已送达现场，提醒核心施救者贴附电极片并按 AED 语音提示分析与除颤。"
             else -> "立即前往最近 AED 点位，取到设备后第一时间返回现场。"
         },
         accent = accentForRole(UserRole.RUNNER),
     ) {
         MetricTile(label = "任务状态", value = roleStatusLabel(status))
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
+        AedTargetCard(
+            targetAed = targetAed,
+            distanceToAedMeters = runnerDecision?.distanceToAedMeters,
+            aedToPatientMeters = runnerDecision?.aedToPatientMeters,
+        )
         when (status) {
             "AED_PICKED" -> PressableButton(
-                text = "确认 AED 已送达",
+                text = actionButtonText(pendingAction, "AED_DELIVERED", "确认 AED 已送达"),
                 onClick = { incidentViewModel.actionAedDelivered(userId) },
+                enabled = pendingAction == null,
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Blue, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
             "AED_DELIVERED" -> Unit
             else -> PressableButton(
-                text = "确认已取到 AED",
+                text = actionButtonText(pendingAction, "AED_PICKED", "确认已取到 AED"),
                 onClick = { incidentViewModel.actionAedPicked(userId) },
+                enabled = pendingAction == null,
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Blue, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+@Composable
+private fun AedTargetCard(
+    targetAed: AedSite?,
+    distanceToAedMeters: Double?,
+    aedToPatientMeters: Double?,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0B1E3A)),
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1D4ED8)),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("目标 AED", color = Color(0xFF93C5FD), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            if (targetAed == null) {
+                Text(
+                    text = "当前事件尚未同步 AED 点位，请按现场指挥或最近标识取用设备。",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                )
+                return@Column
+            }
+            Text(targetAed.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = listOfNotNull(
+                    targetAed.location.label,
+                    formatFloorLabel(targetAed.location.floor),
+                    formatAedStatusLabel(targetAed.status),
+                )
+                    .joinToString(" · "),
+                color = Color(0xFFE2E8F0),
+                fontSize = 13.sp,
+                lineHeight = 20.sp,
+            )
+            if (targetAed.accessNotes.isNotBlank()) {
+                Text(targetAed.accessNotes, color = PhoneColors.GrayText, fontSize = 12.sp, lineHeight = 18.sp)
+            }
+            MetricTile(label = "你到 AED", value = formatMeters(distanceToAedMeters))
+            MetricTile(label = "AED 回送患者", value = formatMeters(aedToPatientMeters))
         }
     }
 }
@@ -429,6 +547,7 @@ private fun GuideFullScreen(
     incidentState: IncidentState,
     userId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
 ) {
     val status = incidentState.roles.GUIDE.status
     val handoverReady = status == "AMBULANCE_ARRIVED" || incidentState.phase == "HANDOVER"
@@ -444,11 +563,12 @@ private fun GuideFullScreen(
     ) {
         MetricTile(label = "任务状态", value = roleStatusLabel(status))
         MetricTile(label = "事件阶段", value = phaseTitle(incidentState.phase))
-        MetricTile(label = "调度来源", value = incidentState.dispatchSource ?: "规则调度")
+        MetricTile(label = "调度来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         if (!handoverReady) {
             PressableButton(
-                text = "确认救护车已到达",
+                text = actionButtonText(pendingAction, "AMBULANCE_ARRIVED", "确认救护车已到达"),
                 onClick = { incidentViewModel.actionAmbulanceArrived(userId) },
+                enabled = pendingAction == null,
                 colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Yellow, contentColor = Color.Black),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -478,18 +598,20 @@ private fun HandoverFullScreen(
     incidentState: IncidentState,
     userId: String,
     incidentViewModel: IncidentViewModel,
+    pendingAction: String?,
 ) {
     CriticalScaffold(
         eyebrow = "医疗交接",
-        title = "急救车已接管患者",
+        title = "救护车已接管患者",
         body = "本轮社会化协同任务已经完成，现场进入医疗交接与日志归档阶段。",
         accent = PhoneColors.Green,
     ) {
         MetricTile(label = "总耗时", value = rememberElapsedLabel(incidentState.logs.firstOrNull()?.ts))
-        MetricTile(label = "分配来源", value = incidentState.dispatchSource ?: "规则调度")
+        MetricTile(label = "分配来源", value = dispatchSourceLabel(incidentState.dispatchSource))
         PressableButton(
-            text = "确认完成救护车交接并归档",
+            text = actionButtonText(pendingAction, "HANDOVER_COMPLETED", "确认完成交接并归档"),
             onClick = { incidentViewModel.actionHandoverCompleted(userId) },
+            enabled = pendingAction == null,
             colors = ButtonDefaults.buttonColors(containerColor = PhoneColors.Green, contentColor = Color.White),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -506,11 +628,11 @@ private fun ArchivedFullScreen(
     val isPatient = incidentState.patientUserId == session.userId
     CriticalScaffold(
         eyebrow = "已归档",
-        title = if (isPatient) "患者端记录已保存" else "本轮救援记录已保存",
+        title = if (isPatient) "患者端记录已保存" else "本轮协同记录已保存",
         body = if (isPatient) {
-            "救护车已完成接管，本次被救援记录已经写入手机档案。你现在可以退出应急模式。"
+            "救护车已完成接管，本次协同记录已经写入手机档案。你现在可以退出应急模式。"
         } else {
-            "你的现场任务和处置日志已经归档到本机，可在档案页复盘本次协同救援。"
+            "你的现场任务和处置日志已经归档到本机，可在档案页复盘本次协同流程。"
         },
         accent = PhoneColors.Green,
     ) {
@@ -573,6 +695,10 @@ private fun CriticalScaffold(
     }
 }
 
+private fun actionButtonText(pendingAction: String?, action: String, idleText: String): String {
+    return if (pendingAction == action) "提交中..." else idleText
+}
+
 @Composable
 private fun MetricTile(
     label: String,
@@ -595,4 +721,15 @@ private fun dispatchStartTs(incidentState: IncidentState): Long? {
         entry.msg.contains("Patient designated", ignoreCase = true) ||
             entry.msg.contains("AI dispatching", ignoreCase = true)
     }?.ts ?: incidentState.logs.lastOrNull()?.ts
+}
+
+private fun formatMeters(value: Double?): String {
+    if (value == null) {
+        return "待计算"
+    }
+    return if (value >= 1000) {
+        String.format(Locale.CHINA, "%.1f km", value / 1000)
+    } else {
+        "${value.toInt()} m"
+    }
 }

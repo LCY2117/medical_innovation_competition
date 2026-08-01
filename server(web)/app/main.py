@@ -17,7 +17,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     store = SqliteIncidentStore(db_path=settings.db_path)
     auth_store = SqliteAuthStore(db_path=settings.db_path)
-    auth_service = AuthService(store=auth_store)
+    auth_service = AuthService(
+        store=auth_store,
+        token_ttl_sec=settings.auth_token_ttl_sec,
+        admin_phones=settings.admin_phones,
+    )
     service = IncidentService(
         store=store,
         sos_duration_sec=settings.sos_duration_sec,
@@ -26,10 +30,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         siliconflow_model=settings.siliconflow_model,
         siliconflow_base_url=settings.siliconflow_base_url,
         siliconflow_timeout_sec=settings.siliconflow_timeout_sec,
+        dispatch_llm_budget_sec=settings.dispatch_llm_budget_sec,
         local_model_base_url=settings.local_model_base_url,
         local_model_name=settings.local_model_name,
         local_model_timeout_sec=settings.local_model_timeout_sec,
         prefer_local_model=settings.prefer_local_model,
+        map_provider=settings.map_provider,
+        amap_service_key=settings.amap_service_key,
+        map_distance_timeout_sec=settings.map_distance_timeout_sec,
+        push_provider=settings.push_provider,
     )
 
     @asynccontextmanager

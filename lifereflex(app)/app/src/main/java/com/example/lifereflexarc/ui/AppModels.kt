@@ -12,7 +12,6 @@ enum class MainTab(val label: String) {
     Home("首页"),
     Tasks("任务"),
     Incident("事件"),
-    Archive("归档"),
     Profile("我的"),
 }
 
@@ -54,21 +53,21 @@ fun phaseHeadline(phase: String): String = when (phase) {
     "AED_ANALYZING" -> "AED 正在分析心律"
     "SHOCK_DELIVERED" -> "已完成一次电击除颤"
     "HANDOVER" -> "救护车交接完成"
-    "ARCHIVED" -> "救援记录已归档"
+    "ARCHIVED" -> "协同记录已归档"
     else -> "现场状态更新"
 }
 
 fun phaseBody(phase: String): String = when (phase) {
-    "CREATED" -> "系统正在等待异常确认或自动告警。"
-    "DISPATCHING" -> "患者已被网页指挥台触发，硅基流动正在根据画像和能力标签生成核心施救、AED保障、环境清障分派。"
+    "CREATED" -> "系统正在等待异常确认或协同 SOS。"
+    "DISPATCHING" -> "患者已被网页指挥台触发，系统正在根据画像、距离和能力标签生成核心施救、AED保障、环境清障分派。"
     "DISPATCHED" -> "云端已向核心施救、AED保障、环境清障三类角色派发并行任务。"
     "CPR" -> "核心施救者已开始基础复苏循环，正在按 30:2 节律持续执行胸外按压与人工呼吸。"
     "AED_PICKED" -> "设备链路已经打通，AED 正向患者位置回送。"
     "AED_DELIVERED" -> "设备已抵达现场，核心施救者应立即贴附电极片并按 AED 语音提示分析。"
     "AED_ANALYZING" -> "AED 正在分析患者心律，请停止接触患者并等待是否建议电击。"
     "SHOCK_DELIVERED" -> "已完成一次 AED 除颤，应立刻恢复 30:2 基础复苏循环，并在 2 分钟后再次等待 AED 分析。"
-    "HANDOVER" -> "院前社会力量已完成阶段任务，进入急救车接管与归档。"
-    "ARCHIVED" -> "本次救援任务已完成归档，终端可退出应急模式并在档案页查看记录。"
+    "HANDOVER" -> "院前社会力量已完成阶段任务，进入救护车接管与归档。"
+    "ARCHIVED" -> "本次协同任务已完成归档，终端可退出应急模式并在档案页查看记录。"
     else -> "等待更多事件同步。"
 }
 
@@ -84,6 +83,44 @@ fun roleStatusLabel(status: String?): String = when (status) {
     "AMBULANCE_ARRIVED" -> "救护车已到场"
     "HANDOVER_COMPLETED" -> "交接已完成"
     else -> "未识别状态"
+}
+
+fun formatFloorLabel(floor: String?): String? = when (floor?.trim()?.uppercase()) {
+    null, "" -> null
+    "B1" -> "地下一层"
+    "B2" -> "地下二层"
+    "1F", "F1" -> "一层"
+    "2F", "F2" -> "二层"
+    "3F", "F3" -> "三层"
+    "4F", "F4" -> "四层"
+    else -> floor
+}
+
+fun formatAedStatusLabel(status: String?): String? = when (status?.trim()?.uppercase()) {
+    null, "" -> null
+    "AVAILABLE" -> "可用"
+    "MAINTENANCE" -> "维护中"
+    "UNAVAILABLE" -> "不可用"
+    else -> status
+}
+
+fun formatLocationSourceLabel(source: String?): String = when (source?.trim()?.lowercase()) {
+    null, "" -> "--"
+    "app-demo", "app-demo-fallback", "mobile-demo" -> "协同点位"
+    "manual" -> "手动录入"
+    "android-gps" -> "系统 GPS 定位"
+    "android-network" -> "系统网络定位"
+    "android-passive" -> "系统被动定位"
+    "android-system" -> "系统定位"
+    else -> source
+}
+
+fun dispatchSourceLabel(source: String?): String = when (source?.trim()?.lowercase()) {
+    null, "" -> "智能协同处理中"
+    "fallback" -> "规则兜底"
+    "ai", "local_model" -> "本地智能分派"
+    "siliconflow" -> "云端智能分派"
+    else -> if (source.any { it in 'A'..'Z' || it in 'a'..'z' || it == '_' }) "智能分派" else source
 }
 
 fun primeVoiceCue(incidentState: IncidentState): String? = when {
@@ -122,9 +159,9 @@ fun rememberElapsedLabel(startTs: Long?): String {
 
 @Composable
 fun rememberCountdownValue(startTs: Long?, durationSec: Int?): Int {
-    val countdown = produceState(initialValue = durationSec ?: 10, startTs, durationSec) {
+    val countdown = produceState(initialValue = durationSec ?: 5, startTs, durationSec) {
         if (startTs == null || durationSec == null) {
-            value = durationSec ?: 10
+            value = durationSec ?: 5
             return@produceState
         }
         while (true) {
