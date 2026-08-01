@@ -1467,3 +1467,120 @@ button:disabled {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ============================================================
+   Real-device touch/display polish
+   真机触控与显示优化：按压反馈、触控缩放、滚动、可点元素
+   ============================================================ */
+
+:root[data-mobile-route='true'] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior-y: none;
+}
+
+/* 防 iOS 输入框自动缩放（字号 >= 16px 即可避免） */
+:root[data-mobile-route='true'] input,
+:root[data-mobile-route='true'] select,
+:root[data-mobile-route='true'] textarea {
+  font-size: 16px;
+}
+
+/* 按钮按压反馈：缩放 + 变暗，反馈即时、不打断点按 */
+:root[data-mobile-route='true'] button {
+  transition: transform 0.08s ease, filter 0.12s ease, opacity 0.15s ease;
+}
+
+:root[data-mobile-route='true'] button:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(0.92);
+}
+
+:root[data-mobile-route='true'] .mobile-danger-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* 主按钮（SOS）更强的视觉冲击 */
+:root[data-mobile-route='true'] .mobile-danger-button {
+  min-height: 60px;
+  border-radius: 18px;
+  font-size: 1.06rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 24px rgba(220, 38, 40, 0.28);
+}
+
+:root[data-mobile-route='true'] .mobile-danger-button.confirming {
+  animation: mobile-danger-pulse 1.1s ease-in-out infinite;
+  box-shadow: 0 0 0 4px rgba(220, 38, 40, 0.18), 0 10px 30px rgba(220, 38, 40, 0.4);
+}
+
+@keyframes mobile-danger-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+
+/* 主行动按钮（接单/CPR 等） */
+:root[data-mobile-route='true'] .mobile-primary-button {
+  min-height: 58px;
+  border-radius: 18px;
+  font-size: 1.02rem;
+  letter-spacing: 0.03em;
+  box-shadow: 0 8px 22px rgba(15, 47, 54, 0.22);
+}
+
+/* 底部 tab 栏：毛玻璃 + 大触控区 */
+:root[data-mobile-route='true'] .mobile-view-tabs {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+:root[data-mobile-route='true'] .mobile-view-tabs button {
+  min-height: 52px;
+  border-radius: 14px;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.08s ease;
+}
+
+:root[data-mobile-route='true'] .mobile-view-tabs button:active:not(.active) {
+  transform: scale(0.95);
+}
+
+/* 滚动区域：隐藏横向滚动条，保留纵向 */
+:root[data-mobile-route='true'] * {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mobile-border) 80%, transparent) transparent;
+}
+
+:root[data-mobile-route='true'] ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+:root[data-mobile-route='true'] ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--mobile-border) 85%, transparent);
+  border-radius: 999px;
+}
+
+:root[data-mobile-route='true'] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 下拉刷新 / 过度滚动：回到顶部不弹白屏 */
+:root[data-mobile-route='true'] .mobile-shell {
+  scroll-padding-top: env(safe-area-inset-top);
+}
+
+/* 可点元素默认 cursor */
+:root[data-mobile-route='true'] button,
+:root[data-mobile-route='true'] summary,
+:root[data-mobile-route='true'] a {
+  cursor: pointer;
+}
+
+/* 文本选中克制：内容区可复制，标签/按钮不误选 */
+:root[data-mobile-route='true'] .mobile-kicker,
+:root[data-mobile-route='true'] .mobile-topbar h1,
+:root[data-mobile-route='true'] .mobile-view-tabs,
+:root[data-mobile-route='true'] .mobile-command-metric {
+  user-select: none;
+  -webkit-user-select: none;
+}
