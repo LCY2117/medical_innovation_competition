@@ -30,6 +30,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
     private val legacyPrefs = application.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
     private val prefs = runCatching { createSecurePreferences(application).also { migrateLegacyPreferences(it) } }
         .getOrNull()
+        ?: runCatching { application.getSharedPreferences(SECURE_PREFS_NAME, Context.MODE_PRIVATE) }.getOrNull()
     private val repository = AuthRepository(apiBase = BuildConfig.LRA_API_BASE)
     private val gson = Gson()
 
@@ -533,6 +534,7 @@ class SessionViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun createSecurePreferences(context: Context): SharedPreferences {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
