@@ -1,0 +1,1089 @@
+:root {
+  color-scheme: dark;
+  --mobile-bg: #05090e;
+  --mobile-surface: #0c131a;
+  --mobile-surface-2: #101a24;
+  --mobile-surface-3: #0a1016;
+  --mobile-ink: #f0f6f8;
+  --mobile-text: #e8f0f3;
+  --mobile-muted: #8ea2ac;
+  --mobile-soft: #647a85;
+  --mobile-border: #1c2a35;
+  --mobile-danger: #e3344f;
+  --mobile-danger-2: #ff7a8c;
+  --mobile-danger-soft: #2a0f16;
+  --mobile-ok: #22c98f;
+  --mobile-ok-soft: #0b241b;
+  --mobile-ok-text: #7ef0c4;
+  --mobile-warn: #f0b64a;
+  --mobile-blue: #4da3ff;
+  --mobile-blue-soft: #0e1d33;
+  --mobile-guide: #f59e0b;
+  --mobile-gold: #fdd835;
+  --mobile-cta: #0d3a3a;
+  --mobile-cta-text: #d9f3f0;
+  --mobile-card-radius: 20px;
+  --mobile-control-radius: 16px;
+}
+
+:root[data-mobile-theme='light'] {
+  color-scheme: light;
+  --mobile-bg: #eef4f5;
+  --mobile-surface: #ffffff;
+  --mobile-surface-2: #f2f7f8;
+  --mobile-surface-3: #e6eef0;
+  --mobile-ink: #0a1a20;
+  --mobile-text: #14262c;
+  --mobile-muted: #5c7077;
+  --mobile-soft: #82949a;
+  --mobile-border: #d5e0e3;
+  --mobile-danger: #dc2740;
+  --mobile-danger-2: #a8122a;
+  --mobile-danger-soft: #ffeef1;
+  --mobile-ok: #0c9f71;
+  --mobile-ok-soft: #e2f7ef;
+  --mobile-ok-text: #075b43;
+  --mobile-warn: #b7791f;
+  --mobile-blue: #1d5fd0;
+  --mobile-blue-soft: #eaf2ff;
+  --mobile-guide: #d97706;
+  --mobile-gold: #b98a10;
+  --mobile-cta: #0f2f36;
+  --mobile-cta-text: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--mobile-bg);
+  color: var(--mobile-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  overscroll-behavior-y: none;
+  -webkit-touch-callout: none;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  touch-action: manipulation;
+  transition: transform 0.08s ease, filter 0.12s ease, opacity 0.15s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+  filter: brightness(0.92);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input, select, textarea {
+  font-size: 16px;
+}
+
+.mobile-shell {
+  min-height: 100dvh;
+  width: min(100%, 500px);
+  margin: 0 auto;
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  background: var(--mobile-bg);
+}
+
+.mobile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--mobile-muted);
+}
+
+.mobile-app-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  color: var(--mobile-danger);
+  background: var(--mobile-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--mobile-danger) 35%, transparent);
+}
+
+.mobile-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mobile-soft);
+}
+
+/* ============ Top bar ============ */
+.mobile-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.mobile-topbar h1 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--mobile-ink);
+}
+
+.mobile-top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+}
+
+/* ============ Command header ============ */
+.mobile-command-header {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--mobile-card-radius);
+  padding: 18px 18px 16px;
+  background: linear-gradient(160deg, var(--mobile-surface), var(--mobile-surface-2));
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-command-header.patient {
+  border-color: color-mix(in srgb, var(--mobile-danger) 40%, var(--mobile-border));
+}
+
+.mobile-command-header.role-prime {
+  border-color: color-mix(in srgb, var(--mobile-danger) 40%, var(--mobile-border));
+}
+
+.mobile-command-header.role-runner {
+  border-color: color-mix(in srgb, var(--mobile-blue) 45%, var(--mobile-border));
+}
+
+.mobile-command-header.role-guide {
+  border-color: color-mix(in srgb, var(--mobile-guide) 45%, var(--mobile-border));
+}
+
+.mobile-command-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--mobile-muted);
+}
+
+.mobile-command-status strong {
+  color: var(--mobile-ink);
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.sync-dot.live {
+  background: var(--mobile-ok);
+  box-shadow: 0 0 8px var(--mobile-ok);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.sync-dot.reconnecting, .sync-dot.connecting {
+  background: var(--mobile-warn);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.sync-dot.offline {
+  background: var(--mobile-danger);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.mobile-command-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-command-main h2 {
+  margin-top: 2px;
+  font-size: 1.5rem;
+  font-weight: 850;
+  color: var(--mobile-ink);
+  line-height: 1.25;
+}
+
+.mobile-command-main p:not(.mobile-kicker) {
+  margin-top: 6px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--mobile-muted);
+}
+
+.mobile-command-metric {
+  flex: 0 0 auto;
+  min-width: 88px;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: var(--mobile-surface-3);
+  border: 1px solid color-mix(in srgb, var(--mobile-gold) 35%, var(--mobile-border));
+  text-align: right;
+}
+
+.mobile-command-metric span {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--mobile-gold);
+  letter-spacing: 0.06em;
+}
+
+.mobile-command-metric strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.95rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--mobile-gold);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--mobile-gold) 60%, transparent);
+}
+
+/* ============ Notice ============ */
+.mobile-notice {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.mobile-notice.ok {
+  background: var(--mobile-ok-soft);
+  color: var(--mobile-ok-text);
+  border: 1px solid color-mix(in srgb, var(--mobile-ok) 35%, transparent);
+}
+
+.mobile-notice.error {
+  background: var(--mobile-danger-soft);
+  color: var(--mobile-danger-2);
+  border: 1px solid color-mix(in srgb, var(--mobile-danger) 35%, transparent);
+}
+
+.mobile-notice.info {
+  background: var(--mobile-blue-soft);
+  color: var(--mobile-blue);
+  border: 1px solid color-mix(in srgb, var(--mobile-blue) 35%, transparent);
+}
+
+/* ============ Emergency panel ============ */
+.mobile-emergency-panel {
+  margin-top: 14px;
+  border-radius: var(--mobile-card-radius);
+  padding: 20px 18px;
+  background: var(--mobile-surface);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-emergency-panel.patient {
+  border-color: color-mix(in srgb, var(--mobile-danger) 35%, var(--mobile-border));
+  background: linear-gradient(180deg, var(--mobile-danger-soft), var(--mobile-surface));
+}
+
+.mobile-emergency-panel.responder.role-prime {
+  border-color: color-mix(in srgb, var(--mobile-danger) 40%, var(--mobile-border));
+}
+
+.mobile-emergency-panel.responder.role-runner {
+  border-color: color-mix(in srgb, var(--mobile-blue) 45%, var(--mobile-border));
+}
+
+.mobile-emergency-panel.responder.role-guide {
+  border-color: color-mix(in srgb, var(--mobile-guide) 45%, var(--mobile-border));
+}
+
+.mobile-action-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.mobile-action-row svg {
+  flex: 0 0 auto;
+  color: var(--mobile-blue);
+}
+
+.mobile-emergency-panel.role-prime .mobile-action-row svg {
+  color: var(--mobile-danger);
+}
+
+.mobile-emergency-panel.role-runner .mobile-action-row svg {
+  color: var(--mobile-blue);
+}
+
+.mobile-emergency-panel.role-guide .mobile-action-row svg {
+  color: var(--mobile-guide);
+}
+
+.mobile-action-row h2 {
+  margin-top: 2px;
+  font-size: 1.3rem;
+  font-weight: 850;
+  color: var(--mobile-ink);
+}
+
+.mobile-action-row p:not(.mobile-kicker) {
+  margin-top: 6px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--mobile-muted);
+}
+
+.mobile-next-step {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.mobile-next-step strong {
+  display: block;
+  font-weight: 800;
+  margin-bottom: 3px;
+}
+
+.mobile-next-step.danger {
+  background: var(--mobile-danger-soft);
+  color: var(--mobile-danger-2);
+  border: 1px solid color-mix(in srgb, var(--mobile-danger) 30%, transparent);
+}
+
+.mobile-next-step.ready {
+  background: var(--mobile-ok-soft);
+  color: var(--mobile-ok-text);
+  border: 1px solid color-mix(in srgb, var(--mobile-ok) 30%, transparent);
+}
+
+.mobile-next-step.wait {
+  background: var(--mobile-blue-soft);
+  color: var(--mobile-blue);
+  border: 1px solid color-mix(in srgb, var(--mobile-blue) 30%, transparent);
+}
+
+/* ============ Buttons ============ */
+.mobile-primary-button,
+.mobile-danger-button,
+.mobile-ghost-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 56px;
+  border-radius: 18px;
+  font-size: 1.02rem;
+  font-weight: 820;
+  letter-spacing: 0.03em;
+}
+
+.mobile-primary-button {
+  background: var(--mobile-cta);
+  color: var(--mobile-cta-text);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+}
+
+.mobile-primary-button.prime {
+  background: linear-gradient(160deg, #b91c2c, #7f1d1d);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(185, 28, 44, 0.35);
+}
+
+.mobile-primary-button.runner {
+  background: linear-gradient(160deg, #1d4ed8, #1e3a8a);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(29, 78, 216, 0.35);
+}
+
+.mobile-primary-button.guide {
+  background: linear-gradient(160deg, #b45309, #92400e);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(180, 83, 9, 0.35);
+}
+
+.mobile-danger-button {
+  min-height: 62px;
+  background: linear-gradient(160deg, var(--mobile-danger), #a8102a);
+  color: #fff;
+  font-size: 1.12rem;
+  letter-spacing: 0.06em;
+  box-shadow: 0 10px 28px rgba(227, 52, 79, 0.4);
+}
+
+.mobile-danger-button.confirming {
+  animation: danger-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.mobile-ghost-button {
+  margin-top: 10px;
+  background: var(--mobile-surface-2);
+  color: var(--mobile-muted);
+  border: 1px solid var(--mobile-border);
+}
+
+/* ============ Patient SOS block ============ */
+.mobile-sos-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-sos-lead {
+  color: var(--mobile-muted);
+  font-size: 0.84rem;
+}
+
+/* ============ Rescue progress ============ */
+.mobile-rescue-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-rescue-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  color: var(--mobile-ink);
+}
+
+.mobile-rescue-head svg {
+  color: var(--mobile-danger);
+}
+
+.mobile-rescue-head small {
+  margin-left: auto;
+  color: var(--mobile-muted);
+  font-size: 0.76rem;
+}
+
+.mobile-rescue-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mobile-rescue-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 6px;
+  border-radius: 16px;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+  font-size: 0.8rem;
+  font-weight: 760;
+  color: var(--mobile-muted);
+}
+
+.mobile-rescue-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--mobile-soft);
+}
+
+.mobile-rescue-item small {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--mobile-soft);
+}
+
+.mobile-rescue-item.onway .mobile-rescue-dot {
+  background: var(--mobile-blue);
+  box-shadow: 0 0 10px var(--mobile-blue);
+}
+
+.mobile-rescue-item.onway {
+  border-color: color-mix(in srgb, var(--mobile-blue) 40%, var(--mobile-border));
+  color: var(--mobile-ink);
+}
+
+.mobile-rescue-item.arrived .mobile-rescue-dot {
+  background: var(--mobile-ok);
+  box-shadow: 0 0 10px var(--mobile-ok);
+}
+
+.mobile-rescue-item.arrived {
+  border-color: color-mix(in srgb, var(--mobile-ok) 45%, var(--mobile-border));
+  color: var(--mobile-ink);
+}
+
+.mobile-rescue-item.arrived small {
+  color: var(--mobile-ok-text);
+}
+
+/* ============ Panels & cards ============ */
+.mobile-panel {
+  margin-top: 14px;
+  border-radius: var(--mobile-card-radius);
+  padding: 18px;
+  background: var(--mobile-surface);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.mobile-section-head h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--mobile-ink);
+}
+
+.mobile-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mobile-demo-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 14px;
+  border-radius: 16px;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+  text-align: left;
+}
+
+.mobile-demo-grid button strong {
+  color: var(--mobile-ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.mobile-demo-grid button span {
+  color: var(--mobile-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.mobile-segment {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-segment button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 11px;
+  font-weight: 760;
+  color: var(--mobile-muted);
+}
+
+.mobile-segment button.active {
+  background: var(--mobile-surface);
+  color: var(--mobile-ink);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mobile-presets button {
+  padding: 8px 4px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--mobile-blue);
+  background: var(--mobile-blue-soft);
+  border: 1px solid color-mix(in srgb, var(--mobile-blue) 30%, transparent);
+}
+
+.mobile-panel label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mobile-muted);
+}
+
+.mobile-panel input,
+.mobile-panel select,
+.mobile-panel textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+  color: var(--mobile-ink);
+  outline: none;
+}
+
+.mobile-panel input:focus,
+.mobile-panel select:focus,
+.mobile-panel textarea:focus {
+  border-color: var(--mobile-blue);
+}
+
+/* ============ Identity card ============ */
+.mobile-identity-card {
+  margin-top: 14px;
+  border-radius: var(--mobile-card-radius);
+  padding: 18px;
+  background: var(--mobile-surface);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-identity-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-user-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--mobile-blue);
+  background: var(--mobile-blue-soft);
+}
+
+.mobile-identity-main strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 820;
+  color: var(--mobile-ink);
+}
+
+.mobile-identity-main p:not(.mobile-kicker) {
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.mobile-location-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mobile-border);
+  color: var(--mobile-muted);
+  font-size: 0.82rem;
+}
+
+.mobile-location-line svg {
+  flex: 0 0 auto;
+  color: var(--mobile-blue);
+}
+
+.mobile-location-line span {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-location-refresh {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--mobile-blue);
+  background: var(--mobile-blue-soft);
+}
+
+.mobile-health-details {
+  margin-top: 12px;
+  border-top: 1px solid var(--mobile-border);
+  padding-top: 12px;
+}
+
+.mobile-health-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.82rem;
+  font-weight: 760;
+  color: var(--mobile-soft);
+}
+
+.mobile-health-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-health-summary svg {
+  color: var(--mobile-blue);
+}
+
+.mobile-health-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mobile-health-stats > div {
+  border-radius: 14px;
+  padding: 10px;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-health-stats span {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--mobile-soft);
+}
+
+.mobile-health-stats strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: var(--mobile-ink);
+}
+
+.mobile-health-stats .tone-danger {
+  border-color: color-mix(in srgb, var(--mobile-danger) 45%, var(--mobile-border));
+  background: var(--mobile-danger-soft);
+}
+
+.mobile-health-stats .tone-danger strong {
+  color: var(--mobile-danger-2);
+}
+
+.mobile-health-stats .tone-ok strong {
+  color: var(--mobile-ok-text);
+}
+
+.mobile-health-line {
+  margin-top: 10px;
+  color: var(--mobile-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.mobile-event-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mobile-border);
+  color: var(--mobile-soft);
+  font-size: 0.72rem;
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+/* ============ Auth hero ============ */
+.mobile-auth-shell {
+  padding-top: calc(40px + env(safe-area-inset-top));
+}
+
+.mobile-hero {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.mobile-hero .mobile-app-mark {
+  margin: 0 auto 16px;
+}
+
+.mobile-hero h1 {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: var(--mobile-ink);
+  margin-top: 4px;
+}
+
+.mobile-hero p:not(.mobile-kicker):not(.mobile-safety-copy) {
+  margin-top: 8px;
+  color: var(--mobile-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.mobile-safety-copy {
+  margin-top: 12px;
+  color: var(--mobile-soft);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+/* ============ Role status ============ */
+.mobile-role-status-card {
+  margin-top: 14px;
+  border-radius: var(--mobile-card-radius);
+  padding: 16px 18px;
+  background: var(--mobile-surface);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-role-status-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-role-status-head strong {
+  color: var(--mobile-ink);
+  font-size: 1rem;
+  font-weight: 820;
+}
+
+.mobile-role-status-line {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--mobile-border);
+}
+
+.mobile-role-status-line span {
+  color: var(--mobile-muted);
+  font-size: 0.8rem;
+}
+
+.mobile-role-status-line strong {
+  color: var(--mobile-ok-text);
+  font-size: 0.84rem;
+}
+
+/* ============ Manual join ============ */
+.mobile-join-panel {
+  margin-top: 14px;
+}
+
+.mobile-small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--mobile-muted);
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+}
+
+.mobile-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mobile-role-join {
+  padding: 12px 6px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  font-weight: 760;
+  color: var(--mobile-blue);
+  background: var(--mobile-blue-soft);
+  border: 1px solid color-mix(in srgb, var(--mobile-blue) 30%, transparent);
+}
+
+.mobile-incident-panel {
+  margin-top: 14px;
+}
+
+/* ============ CPR Metronome ============ */
+.cpr-metronome {
+  margin-bottom: 16px;
+  border-radius: 18px;
+  padding: 16px;
+  background: var(--mobile-surface-2);
+  border: 1px solid var(--mobile-border);
+  text-align: center;
+}
+
+.cpr-metronome.compress {
+  border-color: color-mix(in srgb, var(--mobile-danger) 50%, var(--mobile-border));
+  background: linear-gradient(180deg, var(--mobile-danger-soft), var(--mobile-surface-2));
+}
+
+.cpr-metronome.breathe {
+  border-color: color-mix(in srgb, var(--mobile-ok) 50%, var(--mobile-border));
+  background: linear-gradient(180deg, var(--mobile-ok-soft), var(--mobile-surface-2));
+}
+
+.cpr-metronome-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--mobile-ink);
+}
+
+.cpr-metronome-head span:last-child {
+  color: var(--mobile-muted);
+  font-weight: 700;
+  font-size: 0.74rem;
+}
+
+.cpr-pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--mobile-danger);
+  animation: cpr-pulse 0.545s ease-in-out infinite;
+}
+
+.cpr-metronome.breathe .cpr-pulse-dot {
+  background: var(--mobile-ok);
+  animation-duration: 1.6s;
+}
+
+@keyframes cpr-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+}
+
+.cpr-metronome-beat {
+  margin: 14px 0 10px;
+}
+
+.cpr-beat-ring {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto;
+  border-radius: 999px;
+  border: 3px solid var(--mobile-danger);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--mobile-danger) 40%, transparent);
+  animation: cpr-ring 0.545s ease-in-out infinite;
+}
+
+.cpr-metronome.breathe .cpr-beat-ring {
+  border-color: var(--mobile-ok);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--mobile-ok) 40%, transparent);
+  animation-duration: 1.6s;
+}
+
+@keyframes cpr-ring {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+.cpr-beat-count {
+  font-size: 2rem;
+  font-weight: 900;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--mobile-ink);
+}
+
+.cpr-beat-label {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 760;
+  color: var(--mobile-muted);
+}
+
+.cpr-phase-track {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+
+.cpr-phase-seg {
+  padding: 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--mobile-muted);
+  background: var(--mobile-surface-3);
+  border: 1px solid var(--mobile-border);
+}
+
+.cpr-phase-seg.filled {
+  color: var(--mobile-danger-2);
+  border-color: color-mix(in srgb, var(--mobile-danger) 40%, transparent);
+  background: var(--mobile-danger-soft);
+}
+
+.cpr-phase-seg.breathe.filled {
+  color: var(--mobile-ok-text);
+  border-color: color-mix(in srgb, var(--mobile-ok) 40%, transparent);
+  background: var(--mobile-ok-soft);
+}
+
+@media (max-width: 380px) {
+  .mobile-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
