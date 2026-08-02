@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 前端
+node_modules/
+dist/
+
+# SQLite 数据（compose 卷挂载目标）
+data/
+*.db
+*.db-wal
+*.db-shm
+lifereflex.db
+
+# 测试缓存
+.pytest_cache/
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
