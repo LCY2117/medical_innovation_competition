@@ -68,6 +68,15 @@ class AuthService:
             "profession_identity": "退休人员",
             "profile_bio": "对楼栋位置不熟，体力一般，可协助简单取送",
         },
+        "runner4": {
+            "user_id": "demo-runner4",
+            "display_name": "跑腿小赵",
+            "phone": "13900001007",
+            "organization": "交通和苑便利店",
+            "health_condition": "身体素质良好",
+            "profession_identity": "外卖骑手 / 社区商户",
+            "profile_bio": "便利店店员，熟悉小区楼栋与动线，配送快，可快速取送物资",
+        },
     }
 
     def __init__(

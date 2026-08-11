@@ -36,6 +36,7 @@ const personaRole: Record<string, RoleName | null> = {
   runner: 'RUNNER',
   runner2: null,
   runner3: null,
+  runner4: null,
   guide: 'GUIDE',
 };
 
@@ -45,6 +46,7 @@ const personaTone: Record<string, string> = {
   runner: 'runner',
   runner2: 'runner',
   runner3: 'runner',
+  runner4: 'runner',
   guide: 'guide',
 };
 
@@ -57,12 +59,14 @@ const TERMINAL_ORDER: Record<string, number> = {
   'demo-guide': 3,
   'demo-runner2': 4,
   'demo-runner3': 5,
+  'demo-runner4': 6,
   patient: 0,
   prime: 1,
   runner: 2,
   guide: 3,
   runner2: 4,
   runner3: 5,
+  runner4: 6,
 };
 
 function toSlot(terminal: DemoTerminal): TerminalSlot {

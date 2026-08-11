@@ -858,6 +858,7 @@ class IncidentService:
             "guide": GeoPoint(latitude=39.915509, longitude=116.464892, label="交通和苑北门出入口", floor="1F", source="demo"),
             "runner2": GeoPoint(latitude=39.916320, longitude=116.465900, label="交通和苑 8 号楼西侧广场", floor="1F", source="demo"),
             "runner3": GeoPoint(latitude=39.914900, longitude=116.466800, label="交通和苑东门外", floor="1F", source="demo"),
+            "runner4": GeoPoint(latitude=39.917150, longitude=116.465550, label="交通和苑 9 号楼南侧小广场", floor="1F", source="demo"),
             "aed1": GeoPoint(latitude=39.915122, longitude=116.465922, label="交通和苑南门岗亭 AED 箱", floor="1F", source="demo"),
             "aed2": GeoPoint(latitude=39.916533, longitude=116.466741, label="交通和苑车库入口 AED 箱", floor="B1", source="demo"),
         }
@@ -918,6 +919,17 @@ class IncidentService:
                 riskTags=[],
                 note="健康摘要样例：一般协助者",
             ),
+            "runner4": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="sample",
+                heartRateBpm=78,
+                bloodOxygenPercent=98,
+                pressureScore=30,
+                activityLevel="high",
+                sleepQuality="good",
+                riskTags=[],
+                note="健康摘要样例：高机动商户骑手",
+            ),
             "guide": HealthSignalSummary(
                 source="mock",
                 authorizationStatus="sample",
@@ -937,6 +949,7 @@ class IncidentService:
         self.register_client("demo-guide", "安保老刘", "交通和苑安保部", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉小区出入口、单元门和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
         self.register_client("demo-runner2", "跑腿小王", "小区志愿者服务队", "身体素质优秀", "退伍军人 / 志愿者", "退伍军人，体能出色，跑得快，熟悉小区各栋楼位置，可快速取送物资", "ANDROID", demo_locations["runner2"], demo_health["runner2"])
         self.register_client("demo-runner3", "跑腿老李", "小区业主", "身体状态一般", "退休人员", "对楼栋位置不熟，体力一般，可协助简单取送", "ANDROID", demo_locations["runner3"], demo_health["runner3"])
+        self.register_client("demo-runner4", "跑腿小赵", "交通和苑便利店", "身体素质良好", "外卖骑手 / 社区商户", "便利店店员，熟悉小区楼栋与动线，配送快，可快速取送物资", "ANDROID", demo_locations["runner4"], demo_health["runner4"])
         self.upsert_aed_site("南门岗亭 AED", demo_locations["aed1"], access_notes="南门岗亭内红色 AED 箱，24 小时可取用", site_id="demo-aed-1")
         self.upsert_aed_site("车库入口 AED", demo_locations["aed2"], access_notes="车库入口岗亭处，24 小时可取用", site_id="demo-aed-2")
 

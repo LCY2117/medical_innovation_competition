@@ -78,7 +78,7 @@ type SyncStatus = 'idle' | 'connecting' | 'live' | 'reconnecting' | 'offline';
 type MobileView = 'home' | 'mission' | 'scene' | 'logs';
 type MobileTheme = 'light' | 'dark';
 type Notice = { kind: 'ok' | 'error' | 'info'; text: string } | null;
-type demoPersona = 'patient' | 'prime' | 'runner' | 'guide' | 'runner2' | 'runner3';
+type demoPersona = 'patient' | 'prime' | 'runner' | 'guide' | 'runner2' | 'runner3' | 'runner4';
 
 interface StoredSession {
   token: string;
@@ -192,6 +192,20 @@ const demoPersonas: Array<{
       source: 'mobile-demo',
     },
   },
+  {
+    key: 'runner4',
+    label: '跑腿小赵',
+    title: '跑腿骑手端',
+    description: '熟悉小区，可快速取送物资',
+    location: {
+      latitude: 39.917150,
+      longitude: 116.465550,
+      accuracyMeters: 18,
+      label: '交通和苑 9 号楼南侧小广场',
+      floor: '1F',
+      source: 'mobile-demo',
+    },
+  },
 ];
 
 const defaultLocation: GeoPoint = {
@@ -205,7 +219,7 @@ const defaultLocation: GeoPoint = {
 
 function readdemoPersonaFromUrl(): demoPersona | null {
   const raw = new URLSearchParams(window.location.search).get('demo')?.trim().toLowerCase();
-  if (raw === 'patient' || raw === 'prime' || raw === 'runner' || raw === 'guide' || raw === 'runner2' || raw === 'runner3') {
+  if (raw === 'patient' || raw === 'prime' || raw === 'runner' || raw === 'guide' || raw === 'runner2' || raw === 'runner3' || raw === 'runner4') {
     return raw;
   }
   return null;
