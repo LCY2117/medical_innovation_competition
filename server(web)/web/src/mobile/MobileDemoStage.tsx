@@ -431,7 +431,7 @@ function MobiledemoStage() {
       return;
     }
     setActiveTerminalKeys((current) => {
-      const base = current ?? [];
+      const base = current ?? CORE_TERMINAL_KEYS;
       const merged = [...new Set([...base, ...candidateKeys])];
       return merged.length === base.length ? current : merged;
     });
