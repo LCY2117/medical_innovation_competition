@@ -234,14 +234,17 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             try:
                 user = auth_service.require_admin_user(authorization)
             except HTTPException as exc:
-                audit(
-                    request,
-                    "admin_user_denied",
-                    "user",
-                    outcome="denied",
-                    metadata={"statusCode": exc.status_code},
-                )
-                raise
+                if settings.demo_admin_token or settings.admin_phones:
+                    audit(
+                        request,
+                        "admin_user_denied",
+                        "user",
+                        outcome="denied",
+                        metadata={"statusCode": exc.status_code},
+                    )
+                    raise
+                # 公开演示模式：忽略无效/过期的 Bearer，不阻塞操作
+                return "open_demo_admin"
             return user.user_id
         if settings.demo_admin_token or settings.admin_phones:
             denied_event = "demo_admin_denied" if settings.demo_admin_token else "admin_denied"
@@ -376,7 +379,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         details["version"] = "competition-hardening"
         details["auth"] = {
             "tokenTtlSec": settings.auth_token_ttl_sec,
-            "demoAdminAuthEnabled": settings.demo_admin_token is not None,
+            "demoAdminAuthEnabled": bool(settings.demo_admin_token and settings.demo_admin_token.strip()),
             "adminAccountAuthEnabled": bool(settings.admin_phones),
             "adminPhoneCount": len(settings.admin_phones),
         }
@@ -401,7 +404,7 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             "adminAccountAuthEnabled": bool(settings.admin_phones),
             "adminPhoneCount": len(settings.admin_phones),
         }
-        details["demoAdminAuthEnabled"] = settings.demo_admin_token is not None
+        details["demoAdminAuthEnabled"] = bool(settings.demo_admin_token and settings.demo_admin_token.strip())
         return HealthDetailResponse(**details)
 
     @router.post("/incidents", response_model=CreateIncidentResponse)
