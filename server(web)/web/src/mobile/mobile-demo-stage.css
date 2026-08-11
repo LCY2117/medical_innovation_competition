@@ -593,3 +593,154 @@
   }
 
 }
+
+
+/* 终端管理工具栏 */
+.mobile-demo-stage-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+}
+.mobile-demo-stage-toolbar-count {
+  font-size: 0.82rem;
+  color: var(--stage-muted, #8b93a3);
+  font-weight: 700;
+}
+.mobile-demo-stage-addwrap {
+  position: relative;
+}
+.mobile-demo-stage-add {
+  border: 1px dashed var(--stage-border, rgba(120, 130, 150, 0.4));
+  background: transparent;
+  color: var(--stage-text, #dfe6f0);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.mobile-demo-stage-add:hover {
+  background: rgba(120, 130, 150, 0.15);
+}
+.mobile-demo-stage-addmenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 200px;
+  background: #1a2233;
+  border: 1px solid rgba(120, 130, 150, 0.35);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  display: grid;
+  gap: 4px;
+}
+.mobile-demo-stage-addmenu button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--stage-text, #dfe6f0);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+.mobile-demo-stage-addmenu button:hover {
+  background: rgba(120, 130, 150, 0.18);
+}
+.mobile-demo-stage-addmenu small {
+  color: var(--stage-muted, #8b93a3);
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobile-demo-stage-unfocus {
+  border: 1px solid rgba(120, 130, 150, 0.4);
+  background: transparent;
+  color: var(--stage-text, #dfe6f0);
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.mobile-demo-stage-unfocus:hover {
+  background: rgba(120, 130, 150, 0.15);
+}
+
+/* 面板头部操作区（移除按钮） */
+.mobile-demo-stage-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mobile-demo-stage-remove {
+  border: 0;
+  background: transparent;
+  color: var(--stage-muted, #8b93a3);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.mobile-demo-stage-remove:hover {
+  color: #ff5d5d;
+  background: rgba(255, 93, 93, 0.12);
+}
+
+/* 聚焦放大模式 */
+.mobile-demo-stage-focus-wrap {
+  cursor: zoom-in;
+  border-radius: 14px;
+}
+.mobile-demo-stage-grid.is-focused {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.mobile-demo-stage-grid.is-focused .mobile-demo-stage-panel.is-focused {
+  justify-self: center;
+  max-width: 560px;
+  width: 100%;
+}
+.mobile-demo-stage-grid.is-focused .mobile-demo-stage-panel.is-focused .lra-stage-phone {
+  margin: 0 auto;
+}
+.mobile-demo-stage-thumbs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 2px;
+}
+.mobile-demo-stage-thumb {
+  position: relative;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: zoom-in;
+}
+.mobile-demo-stage-thumb .mobile-demo-stage-panel {
+  pointer-events: none;
+}
+.mobile-demo-stage-thumb .mobile-demo-stage-remove,
+.mobile-demo-stage-thumb .mobile-demo-stage-panel-actions {
+  display: none;
+}
+.mobile-demo-stage-thumb-name {
+  display: block;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--stage-text, #dfe6f0);
+  margin-top: 4px;
+  font-weight: 700;
+}

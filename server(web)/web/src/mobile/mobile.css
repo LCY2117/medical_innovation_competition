@@ -1584,3 +1584,149 @@ button:disabled {
   user-select: none;
   -webkit-user-select: none;
 }
+
+
+/* AI 任务助手 */
+.mobile-ai-panel {
+  margin-top: 14px;
+}
+.mobile-ai-hint {
+  color: var(--mobile-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.mobile-ai-input-row {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mobile-ai-input-row textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--mobile-border, rgba(0, 0, 0, 0.14));
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  background: var(--mobile-card, #fff);
+  color: var(--mobile-text, #111);
+}
+.mobile-ai-input-row .mobile-primary-button {
+  width: 100%;
+}
+.mobile-ai-task-card {
+  border: 1px solid var(--mobile-border, rgba(0, 0, 0, 0.14));
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--mobile-card, #fff);
+}
+.mobile-ai-task-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.mobile-ai-task-head strong {
+  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.mobile-ai-priority {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.mobile-ai-priority.p1 { background: #e11d48; }
+.mobile-ai-priority.p2 { background: #f97316; }
+.mobile-ai-priority.p3 { background: #eab308; color: #332e00; }
+.mobile-ai-priority.p4 { background: #22c55e; }
+.mobile-ai-priority.p5 { background: #38bdf8; }
+.mobile-ai-status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.mobile-ai-status.s-pending { background: #fef3c7; color: #92400e; }
+.mobile-ai-status.s-active { background: #dbeafe; color: #1e40af; }
+.mobile-ai-status.s-completed { background: #dcfce7; color: #166534; }
+.mobile-ai-task-desc {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--mobile-muted);
+  margin: 0 0 6px;
+}
+.mobile-ai-task-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--mobile-muted);
+  margin: 0 0 8px;
+}
+.mobile-ai-score-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.mobile-ai-score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+}
+.mobile-ai-score-row.me {
+  outline: 2px solid var(--mobile-accent, #2f6fed);
+  outline-offset: -1px;
+}
+.mobile-ai-score-row.runner .mobile-ai-score-name {
+  color: #16a34a;
+  font-weight: 800;
+}
+.mobile-ai-score-name {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mobile-ai-score-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+.mobile-ai-score-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #2f6fed);
+  transition: width 0.4s ease;
+}
+.mobile-ai-score-row strong {
+  font-size: 0.78rem;
+  text-align: right;
+}
+.mobile-ai-task-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mobile-ai-task-actions .mobile-primary-button {
+  flex: 1;
+}
+.mobile-ai-support-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--mobile-muted);
+  line-height: 1.45;
+}

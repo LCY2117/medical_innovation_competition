@@ -168,6 +168,15 @@ class AuthMeResponse(BaseModel):
     tokenExpiresAt: int | None = None
 
 
+class CreateAiTaskReq(BaseModel):
+    userId: str
+    message: str
+
+
+class AiTaskActionReq(BaseModel):
+    userId: str
+
+
 class SimpleOkResponse(BaseModel):
     ok: bool = True
 
@@ -351,6 +360,32 @@ class SosState(BaseModel):
     durationSec: int
 
 
+class AiTaskState(BaseModel):
+    taskId: str
+    title: str
+    description: str
+    requiredSkill: str = "fetch"
+    priority: int = 3
+    locationLabel: str | None = None
+    createdBy: str = ""
+    createdRole: str = ""
+    status: str = "PENDING"
+    assignableUserIds: list[str] = []
+    runnerUserId: str | None = None
+    supportUserIds: list[str] = []
+    capScores: dict[str, int] = {}
+    matchScores: dict[str, float] = {}
+    matchReasons: dict[str, list[str]] = {}
+    scoreRev: int = 0
+    requires: list[str] = []
+    createdAt: int = 0
+    updatedAt: int = 0
+    acceptedAt: int | None = None
+    releasedAt: int | None = None
+    completedAt: int | None = None
+    statusLogs: list[dict] = []
+
+
 class IncidentState(BaseModel):
     incidentId: str
     phase: str
@@ -361,6 +396,7 @@ class IncidentState(BaseModel):
     dispatchSource: str | None = None
     aedSites: list[AedSite] = []
     dispatchRationale: dict[str, DispatchRoleDecision] = {}
+    aiTasks: dict[str, AiTaskState] = {}
 
 
 class CreateIncidentResponse(BaseModel):

@@ -16,6 +16,8 @@ from app.core.config import Settings
 from app.core.frontend import frontend_health
 from app.models.schemas import (
     ActionReq,
+    AiTaskActionReq,
+    AiTaskState,
     AuditEvent,
     AuditLogResponse,
     AedSiteListResponse,
@@ -39,6 +41,7 @@ from app.models.schemas import (
     ClientLocationUpdateReq,
     ClientRegisterReq,
     ClientRegisterResponse,
+    CreateAiTaskReq,
     CreateIncidentResponse,
     demoBootstrapResponse,
     DispatchExplainResponse,
@@ -819,6 +822,72 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             metadata={"action": req.action.upper()},
         )
         return response
+
+    @router.post("/incidents/{incident_id}/ai-tasks", response_model=AiTaskState)
+    async def create_ai_task(
+        incident_id: str,
+        req: CreateAiTaskReq,
+        request: Request,
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
+    ) -> AiTaskState:
+        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
+        task = await service.create_ai_task(incident_id, req.userId, req.message)
+        audit(
+            request,
+            "ai_task_created",
+            "client",
+            actor_id=req.userId,
+            target_type="incident",
+            target_id=incident_id,
+            metadata={"taskId": task.taskId},
+        )
+        return task
+
+    @router.post("/incidents/{incident_id}/ai-tasks/{task_id}/accept", response_model=AiTaskState)
+    async def accept_ai_task(
+        incident_id: str,
+        task_id: str,
+        req: AiTaskActionReq,
+        request: Request,
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
+    ) -> AiTaskState:
+        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
+        return await service.accept_ai_task(incident_id, task_id, req.userId)
+
+    @router.post("/incidents/{incident_id}/ai-tasks/{task_id}/release", response_model=AiTaskState)
+    async def release_ai_task(
+        incident_id: str,
+        task_id: str,
+        req: AiTaskActionReq,
+        request: Request,
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
+    ) -> AiTaskState:
+        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
+        return await service.release_ai_task(incident_id, task_id, req.userId)
+
+    @router.post("/incidents/{incident_id}/ai-tasks/{task_id}/complete", response_model=AiTaskState)
+    async def complete_ai_task(
+        incident_id: str,
+        task_id: str,
+        req: AiTaskActionReq,
+        request: Request,
+        authorization: str | None = Header(default=None),
+        x_demo_admin_token: str | None = Header(default=None),
+    ) -> AiTaskState:
+        require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
+        rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
+        return await service.complete_ai_task(incident_id, task_id, req.userId)
+
+    @router.get("/demo/terminals")
+    async def demo_terminals(request: Request) -> dict:
+        rate_limit(request, "admin", settings.rate_limit_admin_per_minute, "demo-terminals")
+        return {"terminals": service.list_demo_terminals()}
 
     @router.post("/incidents/{incident_id}/sos_start", response_model=MutationResponse)
     async def sos_start(

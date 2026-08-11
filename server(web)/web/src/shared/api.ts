@@ -247,6 +247,91 @@ export async function postIncidentAction(incidentId: string, action: string, use
   );
 }
 
+
+export async function createAiTask(
+  incidentId: string,
+  userId: string,
+  message: string,
+  token: string,
+): Promise<AiTaskState> {
+  return requestJson(
+    `/incidents/${encodeURIComponent(incidentId)}/ai-tasks`,
+    {
+      method: 'POST',
+      headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ userId, message }),
+    },
+    '创建 AI 任务失败',
+  );
+}
+
+export async function acceptAiTask(
+  incidentId: string,
+  taskId: string,
+  userId: string,
+  token: string,
+): Promise<AiTaskState> {
+  return requestJson(
+    `/incidents/${encodeURIComponent(incidentId)}/ai-tasks/${encodeURIComponent(taskId)}/accept`,
+    {
+      method: 'POST',
+      headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ userId }),
+    },
+    '接单失败',
+  );
+}
+
+export async function releaseAiTask(
+  incidentId: string,
+  taskId: string,
+  userId: string,
+  token: string,
+): Promise<AiTaskState> {
+  return requestJson(
+    `/incidents/${encodeURIComponent(incidentId)}/ai-tasks/${encodeURIComponent(taskId)}/release`,
+    {
+      method: 'POST',
+      headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ userId }),
+    },
+    '放单失败',
+  );
+}
+
+export async function completeAiTask(
+  incidentId: string,
+  taskId: string,
+  userId: string,
+  token: string,
+): Promise<AiTaskState> {
+  return requestJson(
+    `/incidents/${encodeURIComponent(incidentId)}/ai-tasks/${encodeURIComponent(taskId)}/complete`,
+    {
+      method: 'POST',
+      headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ userId }),
+    },
+    '完成任务失败',
+  );
+}
+
+export interface DemoTerminal {
+  userId: string;
+  displayName: string;
+  organization: string;
+  online: boolean;
+  isPatient?: boolean;
+  assignedRole?: string | null;
+  location?: { latitude: number; longitude: number; label?: string } | null;
+  deviceType?: string;
+}
+
+export async function fetchDemoTerminals(): Promise<DemoTerminal[]> {
+  const data = await requestJson<{ terminals: DemoTerminal[] }>('/demo/terminals', {}, '获取终端列表失败');
+  return data.terminals ?? [];
+}
+
 export async function patientSosStart(incidentId: string, token: string): Promise<void> {
   await requestJson(
     `/incidents/${encodeURIComponent(incidentId)}/patient_sos_start`,

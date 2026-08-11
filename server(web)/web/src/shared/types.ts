@@ -51,6 +51,32 @@ export interface RoleState {
   userId?: string | null;
 }
 
+export interface AiTaskState {
+  taskId: string;
+  title: string;
+  description: string;
+  requiredSkill: string;
+  priority: number;
+  locationLabel: string | null;
+  createdBy: string;
+  createdRole: string;
+  status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  assignableUserIds: string[];
+  runnerUserId: string | null;
+  supportUserIds: string[];
+  capScores: Record<string, number>;
+  matchScores: Record<string, number>;
+  matchReasons: Record<string, string[]>;
+  scoreRev: number;
+  requires: string[];
+  createdAt: number;
+  updatedAt: number;
+  acceptedAt: number | null;
+  releasedAt: number | null;
+  completedAt: number | null;
+  statusLogs: { ts: number; type: string; userId: string; note?: string }[];
+}
+
 export interface IncidentState {
   incidentId: string;
   phase: string;
@@ -61,6 +87,7 @@ export interface IncidentState {
   logs: { ts: number; msg: string }[];
   aedSites?: AedSite[];
   dispatchRationale?: Record<string, DispatchRoleDecision>;
+  aiTasks?: Record<string, AiTaskState>;
 }
 
 export interface ClientInfo {

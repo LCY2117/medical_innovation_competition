@@ -57,8 +57,6 @@ output/
 
 # Keep data files (csv/json/md etc.) tracked by default as requested
 
-# Backup / packaging / runtime artifacts
-*.bak*
-*.bak_*
-*.zip
+# Local runtime data
 server(web)/data/
+*.zip

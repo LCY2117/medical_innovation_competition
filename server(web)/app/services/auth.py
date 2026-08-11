@@ -50,6 +50,24 @@ class AuthService:
             "profession_identity": "安保 / 物业 / 场地协调人员",
             "profile_bio": "熟悉商场出入口、电梯和救护车通道，可承担环境协调与接驳。",
         },
+        "runner2": {
+            "user_id": "demo-runner2",
+            "display_name": "志愿者小王",
+            "phone": "13900001005",
+            "organization": "小区志愿者服务队",
+            "health_condition": "身体素质优秀",
+            "profession_identity": "退伍军人 / 志愿者",
+            "profile_bio": "退伍军人，体能出色，跑得快，熟悉小区各栋楼位置，可快速取送物资",
+        },
+        "runner3": {
+            "user_id": "demo-runner3",
+            "display_name": "业主老李",
+            "phone": "13900001006",
+            "organization": "小区业主",
+            "health_condition": "身体状态一般",
+            "profession_identity": "退休人员",
+            "profile_bio": "对楼栋位置不熟，体力一般，可协助简单取送",
+        },
     }
 
     def __init__(

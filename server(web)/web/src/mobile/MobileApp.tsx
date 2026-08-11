@@ -21,6 +21,10 @@ import {
   Zap,
 } from 'lucide-react';
 import {
+  acceptAiTask,
+  completeAiTask,
+  createAiTask,
+  releaseAiTask,
   autoJoinCurrent,
   downloadExperimentPackage,
   fetchAedSites,
@@ -74,7 +78,7 @@ type SyncStatus = 'idle' | 'connecting' | 'live' | 'reconnecting' | 'offline';
 type MobileView = 'home' | 'mission' | 'scene' | 'logs';
 type MobileTheme = 'light' | 'dark';
 type Notice = { kind: 'ok' | 'error' | 'info'; text: string } | null;
-type demoPersona = 'patient' | 'prime' | 'runner' | 'guide';
+type demoPersona = 'patient' | 'prime' | 'runner' | 'guide' | 'runner2' | 'runner3';
 
 interface StoredSession {
   token: string;
@@ -153,6 +157,34 @@ const demoPersonas: Array<{
       source: 'mobile-demo',
     },
   },
+  {
+    key: 'runner2',
+    label: '跑腿小王',
+    title: '跑腿志愿者端',
+    description: '体能出色，熟悉小区，快速取送物资',
+    location: {
+      latitude: 39.916320,
+      longitude: 116.465900,
+      accuracyMeters: 18,
+      label: '交通和苑 8 号楼西侧广场',
+      floor: '1F',
+      source: 'mobile-demo',
+    },
+  },
+  {
+    key: 'runner3',
+    label: '跑腿老李',
+    title: '跑腿业主端',
+    description: '退休业主，可协助简单取送',
+    location: {
+      latitude: 39.914900,
+      longitude: 116.466800,
+      accuracyMeters: 20,
+      label: '交通和苑东门外',
+      floor: '1F',
+      source: 'mobile-demo',
+    },
+  },
 ];
 
 const defaultLocation: GeoPoint = {
@@ -166,7 +198,7 @@ const defaultLocation: GeoPoint = {
 
 function readdemoPersonaFromUrl(): demoPersona | null {
   const raw = new URLSearchParams(window.location.search).get('demo')?.trim().toLowerCase();
-  if (raw === 'patient' || raw === 'prime' || raw === 'runner' || raw === 'guide') {
+  if (raw === 'patient' || raw === 'prime' || raw === 'runner' || raw === 'guide' || raw === 'runner2' || raw === 'runner3') {
     return raw;
   }
   return null;
@@ -847,6 +879,7 @@ function MobileApp() {
   const busyActionRef = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [activeView, setActiveView] = useState<MobileView>('home');
+  const [aiTaskMessage, setAiTaskMessage] = useState('');
   const [sosConfirming, setSosConfirming] = useState(false);
   const [showManualJoin, setShowManualJoin] = useState(false);
   const [showSceneDetails, setShowSceneDetails] = useState(false);
@@ -1141,6 +1174,42 @@ function MobileApp() {
       window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
       connectIncident(state.incidentId);
       await loadPeripheralData();
+    });
+  }
+
+  const displayNameOf = useCallback((uid: string) => clients.find((c) => c.userId === uid)?.displayName ?? uid, [clients]);
+
+  async function submitAiTask() {
+    if (!incident || !user) {
+      return;
+    }
+    const message = aiTaskMessage.trim();
+    if (!message) {
+      setNotice({ kind: 'error', text: '请输入任务描述，如：患者磕到头流血，请取送止血绷带到 8 号楼。' });
+      return;
+    }
+    await runAction('ai-create', async () => {
+      const task = await createAiTask(incident.incidentId, user.userId, message, token);
+      setAiTaskMessage('');
+      return `AI 任务已创建：${task.title}`;
+    });
+  }
+
+  function actOnAiTask(taskId: string, kind: 'accept' | 'release' | 'complete') {
+    if (!incident || !user) {
+      return;
+    }
+    void runAction(`ai-${kind}-${taskId}`, async () => {
+      if (kind === 'accept') {
+        const task = await acceptAiTask(incident.incidentId, taskId, user.userId, token);
+        return `接单成功，${task.title} → 你已成为 runner`;
+      }
+      if (kind === 'release') {
+        await releaseAiTask(incident.incidentId, taskId, user.userId, token);
+        return '已放单，任务重新开放接单';
+      }
+      await completeAiTask(incident.incidentId, taskId, user.userId, token);
+      return '任务已完成，物资已送达';
     });
   }
 
@@ -1647,6 +1716,108 @@ function MobileApp() {
                 </button>
               ))}
             </div>
+          )}
+        </div>
+
+        <div className="mobile-ai-panel">
+          <div className="mobile-section-head">
+            <div>
+              <p className="mobile-kicker">AI 任务</p>
+              <h2>AI 任务助手</h2>
+            </div>
+            <span className="mobile-count">{(incident?.aiTasks ? Object.keys(incident.aiTasks).length : 0)}</span>
+          </div>
+          <p className="mobile-ai-hint">用一句话描述临时任务，AI 拆解需求，系统按距离与资质动态匹配候选端。</p>
+          <div className="mobile-ai-input-row">
+            <textarea
+              value={aiTaskMessage}
+              onChange={(event) => setAiTaskMessage(event.target.value)}
+              placeholder="如：患者磕到头流血，请取送止血绷带到 8 号楼前"
+              rows={2}
+            />
+            <button
+              className="mobile-primary-button"
+              onClick={submitAiTask}
+              disabled={!incident || Boolean(busyAction) || !aiTaskMessage.trim()}
+            >
+              {busyAction === 'ai-create' ? 'AI 解析中...' : '智能派发'}
+            </button>
+          </div>
+
+          {incident?.aiTasks && Object.values(incident.aiTasks)
+            .sort((a, b) => b.createdAt - a.createdAt)
+            .map((task) => (
+              <div key={task.taskId} className="mobile-ai-task-card">
+                <div className="mobile-ai-task-head">
+                  <span className={`mobile-ai-priority p${Math.max(1, Math.min(5, task.priority))}`}>P{task.priority}</span>
+                  <strong>{task.title}</strong>
+                  <span className={`mobile-ai-status s-${task.status.toLowerCase()}`}>
+                    {task.status === 'PENDING' ? '待接单' : task.status === 'ACTIVE' ? '执行中' : '已完成'}
+                  </span>
+                </div>
+                <p className="mobile-ai-task-desc">{task.description}</p>
+                {task.locationLabel && (
+                  <p className="mobile-ai-task-loc">
+                    <MapPin size={12} />
+                    {task.locationLabel}
+                  </p>
+                )}
+
+                <div className="mobile-ai-score-list">
+                  {(() => {
+                    const rows = task.status === 'ACTIVE' && task.runnerUserId
+                      ? [task.runnerUserId, ...task.supportUserIds]
+                      : task.assignableUserIds;
+                    const sorted = [...rows].sort((a, b) => (task.matchScores[b] ?? -1) - (task.matchScores[a] ?? -1));
+                    return sorted.map((uid) => {
+                      const score = task.matchScores[uid];
+                      const isMe = uid === user?.userId;
+                      const isRunner = task.status === 'ACTIVE' && uid === task.runnerUserId;
+                      return (
+                        <div key={uid} className={`mobile-ai-score-row${isMe ? ' me' : ''}${isRunner ? ' runner' : ''}`}>
+                          <span className="mobile-ai-score-name">
+                            {displayNameOf(uid)}
+                            {isMe ? '（我）' : ''}
+                            {isRunner ? ' · runner' : ''}
+                          </span>
+                          <span className="mobile-ai-score-bar">
+                            <i style={{ width: `${Math.max(0, Math.min(100, Math.round(score ?? 0))) }%` }} />
+                          </span>
+                          <strong>{score != null ? score.toFixed(1) : '—'}</strong>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                <div className="mobile-ai-task-actions">
+                  {task.status === 'PENDING' && task.assignableUserIds.includes(user?.userId ?? '') && (
+                    <button
+                      className="mobile-primary-button"
+                      onClick={() => actOnAiTask(task.taskId, 'accept')}
+                      disabled={Boolean(busyAction)}
+                    >
+                      接单
+                    </button>
+                  )}
+                  {task.status === 'ACTIVE' && task.runnerUserId === user?.userId && (
+                    <>
+                      <button className="mobile-primary-button" onClick={() => actOnAiTask(task.taskId, 'release')} disabled={Boolean(busyAction)}>
+                        放单
+                      </button>
+                      <button className="mobile-primary-button" onClick={() => actOnAiTask(task.taskId, 'complete')} disabled={Boolean(busyAction)}>
+                        完成
+                      </button>
+                    </>
+                  )}
+                  {task.status === 'ACTIVE' && task.supportUserIds.includes(user?.userId ?? '') && (
+                    <p className="mobile-ai-support-hint">协勤中，runner 放单后可接替接单</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          {(!incident?.aiTasks || Object.keys(incident.aiTasks).length === 0) && (
+            <div className="mobile-empty-state compact">暂无 AI 任务，用上方输入框发起第一个任务。</div>
           )}
         </div>
       </section>

@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 
+import asyncio
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -40,12 +42,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         baidu_service_ak=settings.baidu_service_ak,
         map_distance_timeout_sec=settings.map_distance_timeout_sec,
         push_provider=settings.push_provider,
+        deepseek_api_key=settings.deepseek_api_key,
+        deepseek_model=settings.deepseek_model,
+        deepseek_base_url=settings.deepseek_base_url,
+        deepseek_timeout_sec=settings.deepseek_timeout_sec,
     )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         await service.bootstrap()
+        ai_refresh_task = asyncio.create_task(service.refresh_ai_task_scores_loop())
         yield
+        ai_refresh_task.cancel()
 
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
     app.state.settings = settings

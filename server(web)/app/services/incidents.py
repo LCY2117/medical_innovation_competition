@@ -17,6 +17,7 @@ from fastapi import HTTPException, WebSocket, WebSocketDisconnect
 
 from app.models.schemas import (
     AedSite,
+    AiTaskState,
     AuditEvent,
     AutoJoinResponse,
     ClientInfo,
@@ -34,6 +35,7 @@ from app.models.schemas import (
     SosState,
 )
 from app.services.dispatch_ai import DispatchPlanner
+from app.services.ai_tasks import AiTaskPlanner
 from app.services.notifications import NotificationIntent, NotificationProvider, WebSocketFallbackNotificationProvider
 from app.services.spatial import SpatialProvider
 from app.storage.sqlite_store import SqliteIncidentStore
@@ -66,6 +68,10 @@ class IncidentService:
         map_distance_timeout_sec: int = 3,
         push_provider: str = "websocket",
         notification_provider: NotificationProvider | None = None,
+        deepseek_api_key: str | None = None,
+        deepseek_model: str = "deepseek-v4-flash",
+        deepseek_base_url: str = "https://api.deepseek.com",
+        deepseek_timeout_sec: int = 15,
     ) -> None:
         self.store = store
         self.sos_duration_sec = sos_duration_sec
@@ -86,6 +92,13 @@ class IncidentService:
         self.notification_provider = notification_provider or WebSocketFallbackNotificationProvider(
             provider=push_provider,
             send_state=self._send_websocket_state,
+        )
+        self.ai_task_planner = AiTaskPlanner(
+            api_key=deepseek_api_key,
+            model=deepseek_model,
+            base_url=deepseek_base_url,
+            timeout_sec=deepseek_timeout_sec,
+            spatial_provider=self.spatial_provider,
         )
         self.dispatch_planner = DispatchPlanner(
             api_key=siliconflow_api_key,
@@ -168,6 +181,224 @@ class IncidentService:
         self.clients[user_id] = updated
         self._persist()
         return updated
+
+    # ---------- AI 临时任务（DeepSeek 解析 + 硬算法匹配） ----------
+    def _mainline_busy_user_ids(self, state: IncidentState) -> set[str]:
+        busy: set[str] = set()
+        for role_name in ("PRIME", "RUNNER", "GUIDE"):
+            role_state = getattr(state.roles, role_name)
+            if role_state.userId and role_state.status and role_state.status not in ("", "PENDING"):
+                busy.add(role_state.userId)
+        return busy
+
+    def _ai_task_busy_user_ids(self, state: IncidentState) -> set[str]:
+        busy = self._mainline_busy_user_ids(state)
+        for task in state.aiTasks.values():
+            if task.status in ("PENDING", "ACTIVE") and task.runnerUserId:
+                busy.add(task.runnerUserId)
+        return busy
+
+    def _task_target_location(self, state: IncidentState, task: AiTaskState) -> GeoPoint | None:
+        if task.locationLabel:
+            for site in state.aedSites:
+                if task.locationLabel in (site.name, site.siteId) or (site.name or "") in (task.locationLabel or ""):
+                    return site.location
+        patient = self.clients.get(state.patientUserId or "")
+        if patient and patient.location:
+            return patient.location
+        creator = self.clients.get(task.createdBy)
+        return creator.location if creator and creator.location else None
+
+    def _refresh_task_scores(self, state: IncidentState, task: AiTaskState) -> bool:
+        busy = self._ai_task_busy_user_ids(state)
+        target = self._task_target_location(state, task)
+        changed = False
+        for client in self.clients.values():
+            if client.userId not in task.assignableUserIds:
+                continue
+            is_busy = client.userId in busy and not (
+                task.status == "ACTIVE" and task.runnerUserId == client.userId
+            )
+            result = self.ai_task_planner.match_score(
+                client,
+                task.requiredSkill,
+                target,
+                is_busy=is_busy,
+                cooperation_bonus=0,
+            )
+            old = task.matchScores.get(client.userId)
+            if old != result.score:
+                changed = True
+                task.matchScores[client.userId] = result.score
+                task.matchReasons[client.userId] = result.reasons
+        if changed:
+            task.scoreRev += 1
+            task.updatedAt = self._now_ms()
+        return changed
+
+    def _refresh_all_task_scores(self, incident_id: str) -> bool:
+        state = self.incidents.get(incident_id)
+        if state is None or not state.aiTasks:
+            return False
+        changed = False
+        for task in state.aiTasks.values():
+            if task.status in ("PENDING", "ACTIVE"):
+                changed = self._refresh_task_scores(state, task) or changed
+        if changed:
+            self._persist()
+        return changed
+
+    async def refresh_ai_task_scores_loop(self) -> None:
+        while True:
+            try:
+                await asyncio.sleep(3)
+                for incident_id in list(self.incidents.keys()):
+                    if self._refresh_all_task_scores(incident_id):
+                        await self._broadcast_state_async(incident_id)
+            except asyncio.CancelledError:
+                break
+            except Exception:
+                pass
+
+    async def create_ai_task(self, incident_id: str, requester_user_id: str, message: str) -> AiTaskState:
+        state = self.incidents.get(incident_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        requester = self.clients.get(requester_user_id)
+        if requester is None:
+            raise HTTPException(status_code=404, detail="Requester client not registered")
+        patient = self.clients.get(state.patientUserId or "")
+        patient_note = patient.profileBio if patient else None
+        spec = await asyncio.to_thread(self.ai_task_planner.parse_task, message, requester, patient_note)
+        now = self._now_ms()
+        task = AiTaskState(
+            taskId=f"ai-{uuid.uuid4().hex[:8]}",
+            title=spec.title,
+            description=spec.description,
+            requiredSkill=spec.required_skill,
+            priority=spec.priority,
+            locationLabel=spec.location_label,
+            createdBy=requester_user_id,
+            createdRole=requester.assignedRole or "",
+            createdAt=now,
+            updatedAt=now,
+            requires=spec.requires or [],
+            statusLogs=[{"ts": now, "type": "CREATED", "userId": requester_user_id, "note": spec.description}],
+        )
+        busy = self._ai_task_busy_user_ids(state)
+        candidates = [
+            client
+            for client in self.clients.values()
+            if client.userId != requester_user_id
+            and client.online
+            and not client.isPatient
+            and client.userId not in busy
+            and not self.ai_task_planner.health_risk(client)
+        ]
+        task.assignableUserIds = [client.userId for client in candidates]
+        self._refresh_task_scores(state, task)
+        task.assignableUserIds = sorted(
+            task.assignableUserIds,
+            key=lambda uid: task.matchScores.get(uid, -1000),
+            reverse=True,
+        )
+        state.aiTasks[task.taskId] = task
+        state.logs.append(IncidentLogEntry(ts=now, msg=f"AI 任务创建：{task.title}（发起 {requester.displayName}）"))
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+        return task
+
+    async def accept_ai_task(self, incident_id: str, task_id: str, user_id: str) -> AiTaskState:
+        state = self.incidents.get(incident_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        task = state.aiTasks.get(task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+        if task.status != "PENDING":
+            raise HTTPException(status_code=409, detail=f"任务当前状态 {task.status}，不可接单")
+        if user_id not in task.assignableUserIds:
+            raise HTTPException(status_code=409, detail="该终端不在任务候选名单中")
+        if user_id in self._ai_task_busy_user_ids(state):
+            raise HTTPException(status_code=409, detail="该终端当前繁忙，无法接单")
+        now = self._now_ms()
+        client = self.clients.get(user_id)
+        display = client.displayName if client else user_id
+        task.status = "ACTIVE"
+        task.runnerUserId = user_id
+        task.supportUserIds = [uid for uid in task.assignableUserIds if uid != user_id]
+        task.acceptedAt = now
+        task.updatedAt = now
+        task.statusLogs.append({"ts": now, "type": "ACCEPTED", "userId": user_id, "note": f"{display} 接单成为 runner"})
+        state.logs.append(IncidentLogEntry(ts=now, msg=f"AI 任务接单：{task.title} → {display}"))
+        self._refresh_task_scores(state, task)
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+        return task
+
+    async def release_ai_task(self, incident_id: str, task_id: str, user_id: str) -> AiTaskState:
+        state = self.incidents.get(incident_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        task = state.aiTasks.get(task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+        if task.status != "ACTIVE":
+            raise HTTPException(status_code=409, detail=f"任务当前状态 {task.status}，不可放单")
+        if task.runnerUserId != user_id:
+            raise HTTPException(status_code=409, detail="仅当前 runner 可放单")
+        now = self._now_ms()
+        task.status = "PENDING"
+        task.releasedAt = now
+        task.assignableUserIds = list(dict.fromkeys(task.assignableUserIds + task.supportUserIds + [user_id]))
+        task.supportUserIds = []
+        task.runnerUserId = None
+        task.acceptedAt = None
+        task.updatedAt = now
+        task.statusLogs.append({"ts": now, "type": "RELEASED", "userId": user_id, "note": "runner 放单，任务重新开放"})
+        state.logs.append(IncidentLogEntry(ts=now, msg=f"AI 任务放单：{task.title} 重新开放接单"))
+        self._refresh_task_scores(state, task)
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+        return task
+
+    async def complete_ai_task(self, incident_id: str, task_id: str, user_id: str) -> AiTaskState:
+        state = self.incidents.get(incident_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        task = state.aiTasks.get(task_id)
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+        if task.status != "ACTIVE":
+            raise HTTPException(status_code=409, detail=f"任务当前状态 {task.status}，不可完成")
+        if task.runnerUserId != user_id:
+            raise HTTPException(status_code=409, detail="仅当前 runner 可完成")
+        now = self._now_ms()
+        task.status = "COMPLETED"
+        task.completedAt = now
+        task.updatedAt = now
+        task.statusLogs.append({"ts": now, "type": "COMPLETED", "userId": user_id, "note": "任务完成"})
+        state.logs.append(IncidentLogEntry(ts=now, msg=f"AI 任务完成：{task.title}"))
+        self._persist()
+        await self._broadcast_state_async(incident_id)
+        return task
+
+    def list_demo_terminals(self) -> list[dict]:
+        terminals: list[dict] = []
+        for client in self.list_clients():
+            terminals.append(
+                {
+                    "userId": client.userId,
+                    "displayName": client.displayName,
+                    "organization": client.organization,
+                    "online": client.online,
+                    "isPatient": client.isPatient,
+                    "assignedRole": client.assignedRole,
+                    "location": client.location.model_dump(mode="json") if client.location else None,
+                    "deviceType": client.deviceType,
+                }
+            )
+        return terminals
 
     def list_clients(self) -> list[ClientInfo]:
         clients: list[ClientInfo] = []
@@ -619,6 +850,8 @@ class IncidentService:
             "doctor": GeoPoint(latitude=39.916030, longitude=116.466039, label="交通和苑中心花园", floor="1F", source="demo"),
             "runner": GeoPoint(latitude=39.915868, longitude=116.466566, label="交通和苑物业用房（AED 保障）", floor="1F", source="demo"),
             "guide": GeoPoint(latitude=39.915509, longitude=116.464892, label="交通和苑北门出入口", floor="1F", source="demo"),
+            "runner2": GeoPoint(latitude=39.916320, longitude=116.465900, label="交通和苑 8 号楼西侧广场", floor="1F", source="demo"),
+            "runner3": GeoPoint(latitude=39.914900, longitude=116.466800, label="交通和苑东门外", floor="1F", source="demo"),
             "aed1": GeoPoint(latitude=39.915122, longitude=116.465922, label="交通和苑南门岗亭 AED 箱", floor="1F", source="demo"),
             "aed2": GeoPoint(latitude=39.916533, longitude=116.466741, label="交通和苑车库入口 AED 箱", floor="B1", source="demo"),
         }
@@ -657,6 +890,28 @@ class IncidentService:
                 riskTags=[],
                 note="健康摘要样例：高机动响应者",
             ),
+            "runner2": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="sample",
+                heartRateBpm=72,
+                bloodOxygenPercent=99,
+                pressureScore=22,
+                activityLevel="high",
+                sleepQuality="good",
+                riskTags=[],
+                note="健康摘要样例：高机动志愿者",
+            ),
+            "runner3": HealthSignalSummary(
+                source="mock",
+                authorizationStatus="sample",
+                heartRateBpm=86,
+                bloodOxygenPercent=96,
+                pressureScore=58,
+                activityLevel="normal",
+                sleepQuality="fair",
+                riskTags=[],
+                note="健康摘要样例：一般协助者",
+            ),
             "guide": HealthSignalSummary(
                 source="mock",
                 authorizationStatus="sample",
@@ -672,8 +927,10 @@ class IncidentService:
 
         self.register_client("demo-patient", "冠心病患者", "示范社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"], demo_health["patient"])
         self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"], demo_health["doctor"])
-        self.register_client("demo-runner", "小区物业小周", "交通和苑物业", "身体素质良好", "有一定急救常识", "小区物业员工，熟悉各楼栋和单元动线，可快速取送 AED", "ANDROID", demo_locations["runner"], demo_health["runner"])
+        self.register_client("demo-runner", "小区物业小周", "交通和苑物业", "身体素质良好", "有一定急救常识", "小区物业员工，熟悉各楼栋和单元动线，负责日常巡检", "ANDROID", demo_locations["runner"], demo_health["runner"])
         self.register_client("demo-guide", "安保老刘", "交通和苑安保部", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉小区出入口、单元门和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
+        self.register_client("demo-runner2", "志愿者小王", "小区志愿者服务队", "身体素质优秀", "退伍军人 / 志愿者", "退伍军人，体能出色，跑得快，熟悉小区各栋楼位置，可快速取送物资", "ANDROID", demo_locations["runner2"], demo_health["runner2"])
+        self.register_client("demo-runner3", "业主老李", "小区业主", "身体状态一般", "退休人员", "对楼栋位置不熟，体力一般，可协助简单取送", "ANDROID", demo_locations["runner3"], demo_health["runner3"])
         self.upsert_aed_site("南门岗亭 AED", demo_locations["aed1"], access_notes="南门岗亭内红色 AED 箱，24 小时可取用", site_id="demo-aed-1")
         self.upsert_aed_site("车库入口 AED", demo_locations["aed2"], access_notes="车库入口岗亭处，24 小时可取用", site_id="demo-aed-2")
 

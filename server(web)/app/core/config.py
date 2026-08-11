@@ -97,6 +97,10 @@ class Settings:
     rate_limit_admin_per_minute: int = 60
     rate_limit_actor_per_minute: int = 120
     push_provider: str = "websocket"
+    deepseek_api_key: str | None = None
+    deepseek_model: str = "deepseek-v4-flash"
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_timeout_sec: int = 15
 
 
 @lru_cache(maxsize=1)
@@ -150,4 +154,8 @@ def get_settings() -> Settings:
         rate_limit_admin_per_minute=int(os.getenv("LRA_RATE_LIMIT_ADMIN_PER_MINUTE", "60")),
         rate_limit_actor_per_minute=int(os.getenv("LRA_RATE_LIMIT_ACTOR_PER_MINUTE", "120")),
         push_provider=os.getenv("LRA_PUSH_PROVIDER", "websocket").strip() or "websocket",
+        deepseek_api_key=os.getenv("LRA_DEEPSEEK_API_KEY"),
+        deepseek_model=os.getenv("LRA_DEEPSEEK_MODEL", "deepseek-v4-flash"),
+        deepseek_base_url=os.getenv("LRA_DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/"),
+        deepseek_timeout_sec=int(os.getenv("LRA_DEEPSEEK_TIMEOUT_SEC", "15")),
     )

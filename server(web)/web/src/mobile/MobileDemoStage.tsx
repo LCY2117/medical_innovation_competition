@@ -10,7 +10,8 @@ import {
   Smartphone,
   Zap,
 } from 'lucide-react';
-import { fetchCurrentIncident, fetchIncident } from '@/shared/api';
+import { fetchCurrentIncident, fetchDemoTerminals, fetchIncident } from '@/shared/api';
+import type { DemoTerminal } from '../shared/api';
 import type { IncidentState, RoleName } from '../shared/types';
 import './mobile-demo-stage.css';
 
@@ -20,6 +21,51 @@ const demoFrames = [
   { key: 'runner', label: 'AED', caption: '取送设备', tone: 'runner', role: 'RUNNER' as const },
   { key: 'guide', label: '接应', caption: '通道清障', tone: 'guide', role: 'GUIDE' as const },
 ];
+
+type TerminalSlot = {
+  key: string;
+  label: string;
+  caption: string;
+  tone: string;
+  role: RoleName | null;
+};
+
+const personaRole: Record<string, RoleName | null> = {
+  patient: null,
+  prime: 'PRIME',
+  runner: 'RUNNER',
+  runner2: null,
+  runner3: null,
+  guide: 'GUIDE',
+};
+
+const personaTone: Record<string, string> = {
+  patient: 'patient',
+  prime: 'prime',
+  runner: 'runner',
+  runner2: 'runner',
+  runner3: 'runner',
+  guide: 'guide',
+};
+
+function toSlot(terminal: DemoTerminal): TerminalSlot {
+  const persona = terminal.userId.replace('demo-', '');
+  const role = personaRole[persona] ?? null;
+  const tone = personaTone[persona] ?? (role ? role.toLowerCase() : 'runner');
+  const caption =
+    persona === 'patient' ? 'SOS 触发' : terminal.isPatient ? '患者端' : terminal.assignedRole ? terminal.assignedRole : terminal.organization || '响应端';
+  return { key: terminal.userId, label: terminal.displayName, caption, tone, role };
+}
+
+function fallbackSlots(): TerminalSlot[] {
+  return demoFrames.map((frame) => ({
+    key: frame.key,
+    label: frame.label,
+    caption: frame.caption,
+    tone: frame.tone,
+    role: frame.role,
+  }));
+}
 
 const runbookSteps = [
   'SOS',
@@ -217,7 +263,7 @@ function getEvidenceStatus(state: IncidentState | null): string {
   return `实时采集中，日志 ${state.logs?.length ?? 0} 条`;
 }
 
-function getTerminalStatus(frame: (typeof demoFrames)[number], state: IncidentState | null): string {
+function getTerminalStatus(frame: TerminalSlot, state: IncidentState | null): string {
   if (!state) {
     return '未接入事件';
   }
@@ -276,6 +322,10 @@ function MobiledemoStage() {
   const [incident, setIncident] = useState<IncidentState | null>(null);
   const [loadError, setLoadError] = useState('');
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [terminalPool, setTerminalPool] = useState<DemoTerminal[]>([]);
+  const [activeTerminalKeys, setActiveTerminalKeys] = useState<string[] | null>(null);
+  const [focusedKey, setFocusedKey] = useState<string | null>(null);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const shortIncidentId = incidentId ? `${incidentId.slice(0, 8)}...${incidentId.slice(-4)}` : '未绑定';
   const incidentStatus = incidentId ? '已绑定当前事件' : '未绑定事件';
   const incidentHint = incidentId
@@ -325,6 +375,97 @@ function MobiledemoStage() {
   }, [incidentId]);
 
   const phoneScale = usePhoneScale('.mobile-demo-stage-grid');
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadTerminals = async () => {
+      try {
+        const list = await fetchDemoTerminals();
+        if (!cancelled) {
+          setTerminalPool(list);
+          setActiveTerminalKeys((current) => current ?? list.map((t) => t.userId));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTerminalPool([]);
+          setActiveTerminalKeys((current) => current ?? fallbackSlots().map((s) => s.key));
+        }
+      }
+    };
+    void loadTerminals();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeSlots: TerminalSlot[] = useMemo(() => {
+    const usingPool = terminalPool.length > 0;
+    const pool = usingPool ? terminalPool : fallbackSlots();
+    const keys = activeTerminalKeys ?? pool.map((t) => ('userId' in t ? t.userId : t.key));
+    const slotByKey = new Map(
+      usingPool ? pool.map((t) => [t.userId, toSlot(t)]) : pool.map((s) => [s.key, s]),
+    );
+    return keys
+      .map((key) => slotByKey.get(key) ?? fallbackSlots().find((s) => s.key === key))
+      .filter((slot): slot is TerminalSlot => Boolean(slot));
+  }, [terminalPool, activeTerminalKeys]);
+
+  const addTerminal = (userId: string) => {
+    setActiveTerminalKeys((current) => (current ? [...current, userId] : [userId]));
+    setShowAddMenu(false);
+  };
+
+  const removeTerminal = (userId: string) => {
+    setActiveTerminalKeys((current) => (current ? current.filter((key) => key !== userId) : current));
+    setFocusedKey((current) => (current === userId ? null : current));
+  };
+
+  const renderFrame = (slot: TerminalSlot, options: { focused?: boolean; thumb?: boolean } = {}) => {
+    const params = new URLSearchParams({ demo: slot.key.replace('demo-', ''), slot: slot.key });
+    if (boundIncidentId) {
+      params.set('incidentId', boundIncidentId);
+    }
+    const src = `/mobile?${params.toString()}`;
+    const deviceScale = options.thumb ? 0.36 : phoneScale;
+    const deviceW = PHONE_W * deviceScale;
+    const deviceH = PHONE_H * deviceScale;
+    return (
+      <article
+        className={`mobile-demo-stage-panel is-${slot.tone}${options.focused ? ' is-focused' : ''}${options.thumb ? ' is-thumb' : ''}`}
+        key={slot.key}
+      >
+        <div className="mobile-demo-stage-panel-head">
+          <div>
+            <strong>{slot.label}</strong>
+            <span>{slot.caption} · {getTerminalStatus(slot, incident)}</span>
+            <small title={incident?.incidentId || incidentId || undefined}>事件 {incident?.incidentId ? shortId(incident.incidentId) : shortIncidentId}</small>
+          </div>
+          <div className="mobile-demo-stage-panel-actions">
+            <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${slot.label}`}>
+              <ExternalLink size={16} />
+            </a>
+            <button className="mobile-demo-stage-remove" onClick={() => removeTerminal(slot.key)} aria-label={`移除${slot.label}`} title="移除终端">
+              ×
+            </button>
+          </div>
+        </div>
+        <div className="mobile-demo-stage-device">
+          <div className="lra-stage-phone" style={{ width: deviceW, height: deviceH }}>
+            <iframe
+              className="mobile-demo-stage-frame"
+              title={slot.label}
+              src={src}
+              loading="eager"
+              style={{ width: PHONE_W, height: PHONE_H, transform: `scale(${deviceScale})` }}
+            />
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  const poolKeys = new Set(terminalPool.map((t) => t.userId));
+  const addable = terminalPool.filter((t) => !(activeTerminalKeys ?? []).includes(t.userId));
 
   const reloadAll = () => {
     document.querySelectorAll<HTMLIFrameElement>('.mobile-demo-stage-frame').forEach((frame) => {
@@ -418,42 +559,58 @@ function MobiledemoStage() {
         </div>
       </section>
 
-      <section className="mobile-demo-stage-grid">
-        {demoFrames.map((frame) => {
-          const params = new URLSearchParams({ demo: frame.key, slot: frame.key });
-          if (boundIncidentId) {
-            params.set('incidentId', boundIncidentId);
-          }
-          const src = `/mobile?${params.toString()}`;
-          return (
-            <article className={`mobile-demo-stage-panel is-${frame.tone}`} key={frame.key}>
-              <div className="mobile-demo-stage-panel-head">
-                <div>
-                  <strong>{frame.label}</strong>
-                  <span>{frame.caption} · {getTerminalStatus(frame, incident)}</span>
-                  <small title={incident?.incidentId || incidentId || undefined}>事件 {incident?.incidentId ? shortId(incident.incidentId) : shortIncidentId}</small>
-                </div>
-                <a href={src} target="_blank" rel="noreferrer" aria-label={`打开${frame.label}`}>
-                  <ExternalLink size={16} />
-                </a>
+            <section className="mobile-demo-stage-toolbar" aria-label="终端管理">
+        <span className="mobile-demo-stage-toolbar-count">{activeSlots.length} 个终端在线</span>
+        {addable.length > 0 && (
+          <div className="mobile-demo-stage-addwrap">
+            <button className="mobile-demo-stage-add" onClick={() => setShowAddMenu((v) => !v)}>
+              + 添加终端
+            </button>
+            {showAddMenu && (
+              <div className="mobile-demo-stage-addmenu">
+                {addable.map((t) => (
+                  <button key={t.userId} onClick={() => addTerminal(t.userId)}>
+                    {t.displayName}
+                    <small>{t.organization || t.userId}</small>
+                  </button>
+                ))}
               </div>
-              <div className="mobile-demo-stage-device">
-                <div
-                  className="lra-stage-phone"
-                  style={{ width: PHONE_W * phoneScale, height: PHONE_H * phoneScale }}
+            )}
+          </div>
+        )}
+        {focusedKey && (
+          <button className="mobile-demo-stage-unfocus" onClick={() => setFocusedKey(null)}>
+            退出聚焦（网格视图）
+          </button>
+        )}
+      </section>
+
+      <section className={`mobile-demo-stage-grid${focusedKey ? ' is-focused' : ''}`}>
+        {focusedKey ? (
+          <>
+            {activeSlots.filter((s) => s.key === focusedKey).map((slot) => renderFrame(slot, { focused: true }))}
+            <div className="mobile-demo-stage-thumbs">
+              {activeSlots.filter((s) => s.key !== focusedKey).map((slot) => (
+                <button
+                  type="button"
+                  key={slot.key}
+                  className="mobile-demo-stage-thumb"
+                  onClick={() => setFocusedKey(slot.key)}
+                  aria-label={`聚焦${slot.label}`}
                 >
-                  <iframe
-                    className="mobile-demo-stage-frame"
-                    title={frame.label}
-                    src={src}
-                    loading="eager"
-                    style={{ width: PHONE_W, height: PHONE_H, transform: `scale(${phoneScale})` }}
-                  />
-                </div>
-              </div>
-            </article>
-          );
-        })}
+                  {renderFrame(slot, { thumb: true })}
+                  <span className="mobile-demo-stage-thumb-name">{slot.label}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          activeSlots.map((slot) => (
+            <div key={slot.key} className="mobile-demo-stage-focus-wrap" onClick={() => setFocusedKey(slot.key)}>
+              {renderFrame(slot)}
+            </div>
+          ))
+        )}
       </section>
     </main>
   );

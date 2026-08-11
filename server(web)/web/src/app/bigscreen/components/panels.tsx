@@ -10,7 +10,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import type { ClientInfo, HealthSignalSummary } from '@/shared/types';
+import type { AiTaskState, ClientInfo, HealthSignalSummary } from '@/shared/types';
 import {
   formatHealthRiskTags,
   formatLocationLabel,
@@ -217,6 +217,21 @@ function focusClass(target: string | null | undefined, kind: string): string {
   return target === kind ? ' focused' : '';
 }
 
+function aiTaskRows(task: AiTaskState): { uid: string; isRunner: boolean }[] {
+  if (task.status === 'ACTIVE' && task.runnerUserId) {
+    return [task.runnerUserId, ...task.supportUserIds].map((uid) => ({ uid, isRunner: uid === task.runnerUserId }));
+  }
+  if (task.status === 'COMPLETED') {
+    return (task.runnerUserId ? [task.runnerUserId] : []).map((uid) => ({ uid, isRunner: true }));
+  }
+  return task.assignableUserIds.map((uid) => ({ uid, isRunner: false }));
+}
+
+function AiTaskBadge({ status }: { status: string }) {
+  const label = status === 'PENDING' ? '待接单' : status === 'ACTIVE' ? '执行中' : status === 'COMPLETED' ? '已完成' : status;
+  return <span className={`lra-ai-task-status s-${status.toLowerCase()}`}>{label}</span>;
+}
+
 export function RightPanel({ vm }: { vm: DashboardViewModel }) {
   const patient = terminalFor(vm, 'PATIENT');
   const prime = terminalFor(vm, 'PRIME');
@@ -323,6 +338,52 @@ export function RightPanel({ vm }: { vm: DashboardViewModel }) {
               ? vm.describeClientMission(guide)
               : '等待 AI 分派'}
         </div>
+      </ZjCard>
+
+      <ZjCard
+        title="AI 临时任务"
+        delay={0.9}
+        extra={
+          <span style={{ fontSize: 11, color: 'var(--lra-cyan-soft)' }}>
+            {vm.incidentState?.aiTasks ? Object.keys(vm.incidentState.aiTasks).length : 0} 个
+          </span>
+        }
+      >
+        {vm.incidentState?.aiTasks && Object.keys(vm.incidentState.aiTasks).length > 0 ? (
+          <div className="lra-ai-task-list">
+            {Object.values(vm.incidentState.aiTasks)
+              .sort((a, b) => b.createdAt - a.createdAt)
+              .map((task) => (
+                <div key={task.taskId} className="lra-ai-task">
+                  <div className="lra-ai-task-head">
+                    <AiTaskBadge status={task.status} />
+                    <strong>{task.title}</strong>
+                    <span className="lra-ai-task-priority">P{task.priority}</span>
+                  </div>
+                  <div className="lra-ai-task-meta">
+                    {task.locationLabel ? <span>📍 {task.locationLabel}</span> : null}
+                    {task.requires.length > 0 ? <span>物资：{task.requires.join('、')}</span> : null}
+                  </div>
+                  <div className="lra-ai-task-lines">
+                    {aiTaskRows(task)
+                      .slice(0, 3)
+                      .map((row) => {
+                        const score = task.matchScores[row.uid];
+                        return (
+                          <div key={row.uid} className={`lra-ai-task-line${row.isRunner ? ' runner' : ''}`}>
+                            <span>{vm.clients.find((c) => c.userId === row.uid)?.displayName ?? row.uid}</span>
+                            {row.isRunner && <em>runner</em>}
+                            <b>{score != null ? score.toFixed(1) : '—'}</b>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="lra-ai-task-empty">暂无 AI 临时任务，手机端发起自然语言任务后在此联动展示。</div>
+        )}
       </ZjCard>
 
       <ZjCard title="演示入口" delay={0.96}>
