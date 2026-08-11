@@ -94,6 +94,13 @@ const LOCATION_KEY = 'lra_mobile_location';
 const MOBILE_THEME_KEY = 'lra_mobile_theme';
 const demo_ADMIN_TOKEN_KEY = 'lra_demo_admin_token';
 
+// 主线分派角色：仅当系统已将对应角色分配给该终端时，才提示"已进入XX身份"
+const DISPATCH_ROLES: Partial<Record<demoPersona, RoleName>> = {
+  prime: 'PRIME',
+  runner: 'RUNNER',
+  guide: 'GUIDE',
+};
+
 const demoPersonas: Array<{
   key: demoPersona;
   label: string;
@@ -1052,8 +1059,10 @@ function MobileApp() {
           setSession(next);
           setLocation(nextLocation);
           await ensurePresence(next, nextLocation);
+          let bootState: IncidentState | null = null;
           if (urlIncidentId) {
             const state = await fetchIncident(urlIncidentId);
+            bootState = state;
             setIncident((current) => mergeIncidentState(current, state));
             setIncidentIdInput(state.incidentId);
             window.localStorage.setItem(INCIDENT_KEY, state.incidentId);
@@ -1061,8 +1070,18 @@ function MobileApp() {
             await loadPeripheralData();
           } else {
             await openCurrentIncident();
+            try {
+              bootState = await fetchCurrentIncident();
+            } catch {
+              bootState = null;
+            }
           }
-          setNotice({ kind: 'ok', text: `已进入${demoPersonas.find((item) => item.key === urldemoPersona)?.label ?? '演示'}身份。` });
+          // 主线角色未分派前不提示"已进入XX身份"（患者/跑腿端为自持身份，始终提示）
+          const dispatchRole = DISPATCH_ROLES[urldemoPersona];
+          const dispatched = dispatchRole ? bootState?.roles?.[dispatchRole]?.userId === auth.user.userId : true;
+          if (dispatched) {
+            setNotice({ kind: 'ok', text: `已进入${demoPersonas.find((item) => item.key === urldemoPersona)?.label ?? '演示'}身份。` });
+          }
         } catch (error) {
           saveSession(null);
           if (mounted) {
