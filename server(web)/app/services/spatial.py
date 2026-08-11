@@ -18,6 +18,7 @@ class DistanceResult:
     provider: str
     source: str
     fallbackReason: str | None = None
+    durationSec: float | None = None
 
 
 class SpatialProvider:
@@ -25,24 +26,28 @@ class SpatialProvider:
         self,
         provider: str = "demo",
         amap_service_key: str | None = None,
+        baidu_service_ak: str | None = None,
         timeout_sec: int = 3,
     ) -> None:
         normalized = provider.strip().lower() if provider else "demo"
         self.provider = normalized if normalized in SUPPORTED_MAP_PROVIDERS else "demo"
         self.requested_provider = normalized or "demo"
         self.amap_service_key = (amap_service_key or "").strip() or None
+        self.baidu_service_ak = (baidu_service_ak or "").strip() or None
         self.timeout_sec = max(1, timeout_sec)
         self._distance_cache: dict[tuple[str, str, str], DistanceResult] = {}
 
     def explain(self) -> dict:
-        configured = self.provider == "amap" and bool(self.amap_service_key)
+        configured = (self.provider == "amap" and bool(self.amap_service_key)) or (self.provider == "baidu" and bool(self.baidu_service_ak))
         fallback_reason = None
         if self.requested_provider not in SUPPORTED_MAP_PROVIDERS:
             fallback_reason = "unsupported_provider"
         elif self.provider == "amap" and not self.amap_service_key:
             fallback_reason = "amap_service_key_missing"
-        elif self.provider in {"tencent", "baidu"}:
-            fallback_reason = f"{self.provider}_adapter_pending"
+        elif self.provider == "baidu" and not self.baidu_service_ak:
+            fallback_reason = "baidu_service_key_missing"
+        elif self.provider == "tencent":
+            fallback_reason = "tencent_adapter_pending"
 
         active_provider = self.provider if configured else "demo"
         return {
@@ -52,7 +57,7 @@ class SpatialProvider:
             "configured": configured,
             "fallbackEnabled": True,
             "fallbackReason": fallback_reason,
-            "distanceSource": "amap_web_service" if configured else "haversine_demo",
+            "distanceSource": "amap_web_service" if self.provider == "amap" and configured else ("baidu_web_service" if self.provider == "baidu" and configured else "haversine_demo"),
             "timeoutSec": self.timeout_sec,
         }
 
@@ -68,13 +73,23 @@ class SpatialProvider:
             self._distance_cache[self._cache_key(origin, destination)] = result
             return result
 
+        if self.provider == "baidu" and self.baidu_service_ak:
+            cached = self._distance_cache.get(self._cache_key(origin, destination))
+            if cached is not None:
+                return cached
+            result = self._baidu_distance(origin, destination)
+            self._distance_cache[self._cache_key(origin, destination)] = result
+            return result
+
         fallback_reason = None
         if self.requested_provider not in SUPPORTED_MAP_PROVIDERS:
             fallback_reason = "unsupported_provider"
         elif self.provider == "amap":
             fallback_reason = "amap_service_key_missing"
-        elif self.provider in {"tencent", "baidu"}:
-            fallback_reason = f"{self.provider}_adapter_pending"
+        elif self.provider == "baidu" and not self.baidu_service_ak:
+            fallback_reason = "baidu_service_key_missing"
+        elif self.provider == "tencent":
+            fallback_reason = "tencent_adapter_pending"
         return DistanceResult(
             meters=self._haversine_distance_meters(origin, destination),
             provider="demo",
@@ -121,6 +136,41 @@ class SpatialProvider:
                 fallbackReason="amap_distance_failed",
             )
 
+    def _baidu_distance(self, origin: GeoPoint, destination: GeoPoint) -> DistanceResult:
+        query = parse.urlencode(
+            {
+                "origin": f"{origin.latitude},{origin.longitude}",
+                "destination": f"{destination.latitude},{destination.longitude}",
+                "ak": self.baidu_service_ak,
+            }
+        )
+        req = request.Request(
+            url=f"https://api.map.baidu.com/directionlite/v1/walking?{query}",
+            headers={"User-Agent": "LifeReflexArc/competition-hardening"},
+        )
+        try:
+            with request.urlopen(req, timeout=self.timeout_sec) as response:
+                body = json.loads(response.read().decode("utf-8"))
+            if not isinstance(body, dict) or body.get("status") != 0:
+                raise ValueError("baidu_directionlite_error")
+            routes = body.get("result", {}).get("routes") or []
+            first = routes[0] if routes else {}
+            distance = float(first.get("distance"))
+            duration = first.get("duration")
+            return DistanceResult(
+                meters=distance,
+                provider="baidu",
+                source="baidu_web_service",
+                durationSec=float(duration) if isinstance(duration, (int, float)) else None,
+            )
+        except (ValueError, KeyError, TypeError, json.JSONDecodeError, error.URLError, error.HTTPError, TimeoutError):
+            return DistanceResult(
+                meters=self._haversine_distance_meters(origin, destination),
+                provider="demo",
+                source="haversine_demo",
+                fallbackReason="baidu_distance_failed",
+            )
+
     @staticmethod
     def _cache_key(origin: GeoPoint, destination: GeoPoint) -> tuple[str, str, str]:
         return (
@@ -138,3 +188,4 @@ class SpatialProvider:
         delta_lon = math.radians(destination.longitude - origin.longitude)
         hav = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
         return 2 * radius * math.asin(math.sqrt(hav))
+

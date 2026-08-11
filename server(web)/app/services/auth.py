@@ -34,21 +34,21 @@ class AuthService:
         },
         "runner": {
             "user_id": "demo-runner",
-            "display_name": "体育生小李",
+            "display_name": "商场保洁小周",
             "phone": "13900001003",
-            "organization": "大学校园",
+            "organization": "朝阳大悦城物业",
             "health_condition": "身体素质良好",
             "profession_identity": "有一定急救常识",
-            "profile_bio": "体育生，跑得快，熟悉校园路线，可快速取送 AED。",
+            "profile_bio": "商场物业员工，熟悉各楼层动线，可快速取送 AED。",
         },
         "guide": {
             "user_id": "demo-guide",
-            "display_name": "安保老王",
+            "display_name": "安保老刘",
             "phone": "13900001004",
-            "organization": "校园安保",
+            "organization": "商场安保部",
             "health_condition": "身体状态一般",
             "profession_identity": "安保 / 物业 / 场地协调人员",
-            "profile_bio": "熟悉楼栋出入口、电梯和救护车通道，可承担环境协调与接驳。",
+            "profile_bio": "熟悉商场出入口、电梯和救护车通道，可承担环境协调与接驳。",
         },
     }
 

@@ -62,6 +62,7 @@ class IncidentService:
         prefer_local_model: bool = True,
         map_provider: str = "demo",
         amap_service_key: str | None = None,
+        baidu_service_ak: str | None = None,
         map_distance_timeout_sec: int = 3,
         push_provider: str = "websocket",
         notification_provider: NotificationProvider | None = None,
@@ -79,6 +80,7 @@ class IncidentService:
         self.spatial_provider = SpatialProvider(
             provider=map_provider,
             amap_service_key=amap_service_key,
+            baidu_service_ak=baidu_service_ak,
             timeout_sec=map_distance_timeout_sec,
         )
         self.notification_provider = notification_provider or WebSocketFallbackNotificationProvider(
@@ -613,12 +615,12 @@ class IncidentService:
         self.current_incident_id = incident_id
 
         demo_locations = {
-            "patient": GeoPoint(latitude=39.904120, longitude=116.407210, label="教学楼 A 座 2 层走廊", floor="2F", source="demo"),
-            "doctor": GeoPoint(latitude=39.904210, longitude=116.407260, label="教学楼 A 座 1 层大厅", floor="1F", source="demo"),
-            "runner": GeoPoint(latitude=39.903920, longitude=116.407020, label="操场入口", floor="1F", source="demo"),
-            "guide": GeoPoint(latitude=39.904500, longitude=116.407620, label="校门岗亭", floor="1F", source="demo"),
-            "aed1": GeoPoint(latitude=39.904030, longitude=116.406920, label="二楼服务台 AED 箱", floor="2F", source="demo"),
-            "aed2": GeoPoint(latitude=39.904560, longitude=116.407700, label="校门值班室 AED 箱", floor="1F", source="demo"),
+            "patient": GeoPoint(latitude=39.916156, longitude=116.465571, label="交通和苑 8 号楼前广场（患者现场）", floor="1F", source="demo"),
+            "doctor": GeoPoint(latitude=39.916030, longitude=116.466039, label="交通和苑中心花园", floor="1F", source="demo"),
+            "runner": GeoPoint(latitude=39.915868, longitude=116.466566, label="交通和苑物业用房（AED 保障）", floor="1F", source="demo"),
+            "guide": GeoPoint(latitude=39.915509, longitude=116.464892, label="交通和苑北门出入口", floor="1F", source="demo"),
+            "aed1": GeoPoint(latitude=39.915122, longitude=116.465922, label="交通和苑南门岗亭 AED 箱", floor="1F", source="demo"),
+            "aed2": GeoPoint(latitude=39.916533, longitude=116.466741, label="交通和苑车库入口 AED 箱", floor="B1", source="demo"),
         }
 
         demo_health = {
@@ -670,10 +672,10 @@ class IncidentService:
 
         self.register_client("demo-patient", "冠心病患者", "示范社区", "存在心脏骤停风险", "患者侧", "多年冠心病病史，需要重点监护", "ANDROID", demo_locations["patient"], demo_health["patient"])
         self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"], demo_health["doctor"])
-        self.register_client("demo-runner", "体育生小李", "大学校园", "身体素质良好", "有一定急救常识", "体育生，跑得快，熟悉校园路线，可快速取送 AED", "ANDROID", demo_locations["runner"], demo_health["runner"])
-        self.register_client("demo-guide", "安保老王", "校园安保", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉楼栋出入口、电梯和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
-        self.upsert_aed_site("二楼服务台 AED", demo_locations["aed1"], access_notes="教学楼 A 座服务台左侧红色 AED 箱", site_id="demo-aed-1")
-        self.upsert_aed_site("校门值班室 AED", demo_locations["aed2"], access_notes="校门岗亭内，安保可协助取用", site_id="demo-aed-2")
+        self.register_client("demo-runner", "小区物业小周", "交通和苑物业", "身体素质良好", "有一定急救常识", "小区物业员工，熟悉各楼栋和单元动线，可快速取送 AED", "ANDROID", demo_locations["runner"], demo_health["runner"])
+        self.register_client("demo-guide", "安保老刘", "交通和苑安保部", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉小区出入口、单元门和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
+        self.upsert_aed_site("南门岗亭 AED", demo_locations["aed1"], access_notes="南门岗亭内红色 AED 箱，24 小时可取用", site_id="demo-aed-1")
+        self.upsert_aed_site("车库入口 AED", demo_locations["aed2"], access_notes="车库入口岗亭处，24 小时可取用", site_id="demo-aed-2")
 
         state = self.incidents[incident_id]
         state.aedSites = self.list_aed_sites()
@@ -870,6 +872,8 @@ class IncidentService:
             "LRA_DISPATCH_LLM_BUDGET_SEC",
             "LRA_MAP_PROVIDER",
             "LRA_AMAP_SERVICE_KEY",
+            "LRA_BAIDU_WEB_AK",
+            "LRA_BAIDU_SERVICE_AK",
             "LRA_MAP_DISTANCE_TIMEOUT_SEC",
         ]
         explanation["mapProvider"] = self.spatial_provider.explain()

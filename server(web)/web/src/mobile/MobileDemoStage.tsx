@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Archive,
   ArrowLeft,
   ExternalLink,
   FileCheck2,
-  HeartPulse,
   RefreshCw,
   ShieldCheck,
   Smartphone,
@@ -231,6 +230,47 @@ function getTerminalStatus(frame: (typeof demoFrames)[number], state: IncidentSt
   return translateRoleStatus(state.roles?.[frame.role]?.status);
 }
 
+const PHONE_W = 390;
+const PHONE_H = 780;
+
+function usePhoneScale(gridSelector: string): number {
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    const compute = () => {
+      const grid = document.querySelector<HTMLElement>(gridSelector);
+      if (!grid) {
+        return;
+      }
+      const availW = grid.clientWidth;
+      const gap = 12;
+      if (!window.matchMedia('(min-width: 901px)').matches) {
+        // narrow screens: shrink so two phones can sit side by side
+        const next = Math.max(0.35, Math.min(1, (availW - gap) / 2 / PHONE_W));
+        setScale((current) => (Math.abs(current - next) < 0.01 ? current : next));
+        return;
+      }
+      // fit both width and height so the four phones always show fully on screen
+      const maxScaleW = (availW - gap * 3) / 4 / PHONE_W;
+      const availH = grid.clientHeight - 96;
+      const maxScaleH = Math.max(0.2, availH / PHONE_H);
+      const next = Math.max(0.2, Math.min(1, maxScaleW, maxScaleH));
+      setScale((current) => (Math.abs(current - next) < 0.01 ? current : next));
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    const observer = new ResizeObserver(compute);
+    const gridEl = document.querySelector<HTMLElement>(gridSelector);
+    if (gridEl) {
+      observer.observe(gridEl);
+    }
+    return () => {
+      window.removeEventListener('resize', compute);
+      observer.disconnect();
+    };
+  }, [gridSelector]);
+  return scale;
+}
+
 function MobiledemoStage() {
   const [incidentId, setIncidentId] = useState(() => new URLSearchParams(window.location.search).get('incidentId')?.trim() ?? '');
   const [incident, setIncident] = useState<IncidentState | null>(null);
@@ -244,13 +284,6 @@ function MobiledemoStage() {
   const boundIncidentId = incident?.incidentId || incidentId;
   const currentRunbookIndex = getRunbookIndex(incident);
   const latestLogs = useMemo(() => [...(incident?.logs ?? [])].slice(-3).reverse(), [incident?.logs]);
-  const roleSummary = roleNames.map((role) => ({
-    role,
-    label: role === 'PRIME' ? '施救' : role === 'RUNNER' ? 'AED' : '接应',
-    status: incident && incident.phase !== 'CREATED' && incident.phase !== 'DISPATCHING'
-      ? translateRoleStatus(incident.roles?.[role]?.status)
-      : '待分派',
-  }));
   const lastUpdatedLabel = lastUpdatedAt ? formatLogTime(lastUpdatedAt) : '--:--:--';
 
   useEffect(() => {
@@ -290,6 +323,8 @@ function MobiledemoStage() {
       }
     };
   }, [incidentId]);
+
+  const phoneScale = usePhoneScale('.mobile-demo-stage-grid');
 
   const reloadAll = () => {
     document.querySelectorAll<HTMLIFrameElement>('.mobile-demo-stage-frame').forEach((frame) => {
@@ -383,16 +418,6 @@ function MobiledemoStage() {
         </div>
       </section>
 
-      <section className="mobile-demo-stage-roles" aria-label="角色状态">
-        {roleSummary.map((role) => (
-          <div className="mobile-demo-stage-role" key={role.role}>
-            <HeartPulse size={16} />
-            <span>{role.label}</span>
-            <strong>{role.status}</strong>
-          </div>
-        ))}
-      </section>
-
       <section className="mobile-demo-stage-grid">
         {demoFrames.map((frame) => {
           const params = new URLSearchParams({ demo: frame.key, slot: frame.key });
@@ -413,7 +438,18 @@ function MobiledemoStage() {
                 </a>
               </div>
               <div className="mobile-demo-stage-device">
-                <iframe className="mobile-demo-stage-frame" title={frame.label} src={src} loading="eager" />
+                <div
+                  className="lra-stage-phone"
+                  style={{ width: PHONE_W * phoneScale, height: PHONE_H * phoneScale }}
+                >
+                  <iframe
+                    className="mobile-demo-stage-frame"
+                    title={frame.label}
+                    src={src}
+                    loading="eager"
+                    style={{ width: PHONE_W, height: PHONE_H, transform: `scale(${phoneScale})` }}
+                  />
+                </div>
               </div>
             </article>
           );

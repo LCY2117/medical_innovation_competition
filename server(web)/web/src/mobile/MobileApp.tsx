@@ -103,10 +103,10 @@ const demoPersonas: Array<{
     title: '患者端',
     description: '触发 SOS，观察系统分派',
     location: {
-      latitude: 39.90412,
-      longitude: 116.40721,
+      latitude: 39.916156,
+      longitude: 116.465571,
       accuracyMeters: 25,
-      label: '教学楼 A 座 2 层走廊',
+      label: '交通和苑 8 号楼前广场',
       floor: '2F',
       source: 'mobile-demo',
     },
@@ -117,10 +117,10 @@ const demoPersonas: Array<{
     title: '核心施救端',
     description: '接单、CPR、AED 分析',
     location: {
-      latitude: 39.90421,
-      longitude: 116.40726,
+      latitude: 39.916030,
+      longitude: 116.466039,
       accuracyMeters: 18,
-      label: '教学楼 A 座 1 层大厅',
+      label: '交通和苑中心花园',
       floor: '1F',
       source: 'mobile-demo',
     },
@@ -131,10 +131,10 @@ const demoPersonas: Array<{
     title: 'AED 保障端',
     description: '取 AED 并送达患者',
     location: {
-      latitude: 39.90392,
-      longitude: 116.40702,
+      latitude: 39.915868,
+      longitude: 116.466566,
       accuracyMeters: 18,
-      label: '操场入口',
+      label: '交通和苑物业用房',
       floor: '1F',
       source: 'mobile-demo',
     },
@@ -145,10 +145,10 @@ const demoPersonas: Array<{
     title: '清障接驳端',
     description: '疏通通道，接引救护车',
     location: {
-      latitude: 39.9045,
-      longitude: 116.40762,
+      latitude: 39.915509,
+      longitude: 116.464892,
       accuracyMeters: 20,
-      label: '校门岗亭',
+      label: '交通和苑北门出入口',
       floor: '1F',
       source: 'mobile-demo',
     },
@@ -156,10 +156,10 @@ const demoPersonas: Array<{
 ];
 
 const defaultLocation: GeoPoint = {
-  latitude: 39.90412,
-  longitude: 116.40721,
+  latitude: 39.915976,
+  longitude: 116.465922,
   accuracyMeters: 25,
-  label: '协同演示现场',
+  label: '交通和苑小区现场',
   floor: '二层',
   source: 'mobile-demo',
 };
@@ -302,19 +302,19 @@ const profilePresets = [
   {
     label: 'AED 保障',
     values: {
-      organization: '大学校园',
+      organization: '朝阳大悦城物业',
       healthCondition: '身体素质良好',
       professionIdentity: '有一定急救常识',
-      profileBio: '跑动能力强，熟悉路线，可快速取送 AED。',
+      profileBio: '商场物业员工，熟悉各楼层动线，可快速取送 AED。',
     },
   },
   {
     label: '清障接驳',
     values: {
-      organization: '校园安保',
+      organization: '商场安保部',
       healthCondition: '身体状态一般',
       professionIdentity: '安保 / 物业 / 场地协调人员',
-      profileBio: '熟悉出入口、电梯与救护车通道。',
+      profileBio: '熟悉商场出入口、电梯与救护车通道。',
     },
   },
 ];

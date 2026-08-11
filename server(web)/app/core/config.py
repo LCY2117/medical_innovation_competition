@@ -70,6 +70,7 @@ class Settings:
     web_dist_dir: Path
     web_dev_host: str = "127.0.0.1"
     web_dev_port: int = 5173
+    lan_ip: str | None = None
     siliconflow_api_key: str | None = None
     siliconflow_model: str = "Qwen/Qwen2-7B-Instruct"
     siliconflow_base_url: str = "https://api.siliconflow.cn/v1"
@@ -87,6 +88,8 @@ class Settings:
     amap_web_key: str | None = None
     amap_web_security_js_code: str | None = None
     amap_service_key: str | None = None
+    baidu_web_ak: str | None = None
+    baidu_service_ak: str | None = None
     map_distance_timeout_sec: int = 3
     audit_log_enabled: bool = True
     rate_limit_enabled: bool = True
@@ -120,6 +123,7 @@ def get_settings() -> Settings:
         web_dist_dir=_resolve_path(os.getenv("LRA_WEB_DIST_DIR"), ROOT_DIR / "web" / "dist"),
         web_dev_host=os.getenv("LRA_WEB_DEV_HOST", "127.0.0.1"),
         web_dev_port=int(os.getenv("LRA_WEB_DEV_PORT", "5173")),
+        lan_ip=(os.getenv("LRA_LAN_IP") or "").strip() or None,
         siliconflow_api_key=os.getenv("LRA_SILICONFLOW_API_KEY"),
         siliconflow_model=os.getenv("LRA_SILICONFLOW_MODEL", "Qwen/Qwen2-7B-Instruct"),
         siliconflow_base_url=os.getenv("LRA_SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1").rstrip("/"),
@@ -137,6 +141,8 @@ def get_settings() -> Settings:
         amap_web_key=(os.getenv("LRA_AMAP_WEB_KEY") or "").strip() or None,
         amap_web_security_js_code=(os.getenv("LRA_AMAP_WEB_SECURITY_JS_CODE") or "").strip() or None,
         amap_service_key=(os.getenv("LRA_AMAP_SERVICE_KEY") or "").strip() or None,
+        baidu_web_ak=(os.getenv("LRA_BAIDU_WEB_AK") or "").strip() or None,
+        baidu_service_ak=(os.getenv("LRA_BAIDU_SERVICE_AK") or "").strip() or None,
         map_distance_timeout_sec=int(os.getenv("LRA_MAP_DISTANCE_TIMEOUT_SEC", "3")),
         audit_log_enabled=_parse_bool(os.getenv("LRA_AUDIT_LOG_ENABLED"), default=True),
         rate_limit_enabled=_parse_bool(os.getenv("LRA_RATE_LIMIT_ENABLED"), default=True),

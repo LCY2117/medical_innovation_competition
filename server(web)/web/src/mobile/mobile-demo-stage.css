@@ -3,7 +3,11 @@
 }
 
 .mobile-demo-stage {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
   min-height: 100dvh;
+  overflow-y: auto;
   padding: 14px;
   background:
     linear-gradient(180deg, rgba(226, 232, 240, 0.7), rgba(248, 250, 252, 0.2) 180px),
@@ -12,14 +16,21 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.mobile-demo-stage-header,
+.mobile-demo-stage-strip,
+.mobile-demo-stage-dashboard,
+.mobile-demo-stage-roles {
+  flex: 0 0 auto;
+}
+
 .mobile-demo-stage-header {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 42px;
-  gap: 12px;
+  display: flex;
   align-items: center;
-  min-height: 52px;
-  margin: 0 auto 10px;
+  position: relative;
+  width: 100%;
   max-width: 1720px;
+  min-height: 44px;
+  margin: 0 auto 8px;
 }
 
 .mobile-demo-stage-icon-link,
@@ -44,15 +55,21 @@
 .mobile-demo-stage-icon-button {
   cursor: pointer;
   font: inherit;
+  margin-left: auto;
 }
 
 .mobile-demo-stage-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   min-width: 0;
+  max-width: calc(100% - 180px);
   text-align: center;
+  pointer-events: none;
 }
 
 .mobile-demo-stage-title svg {
@@ -82,9 +99,10 @@
   grid-template-columns: minmax(210px, 0.72fr) minmax(260px, 1fr) minmax(290px, 0.95fr);
   gap: 10px;
   align-items: center;
-  margin: 0 auto 12px;
+  width: 100%;
   max-width: 1720px;
-  padding: 10px;
+  margin: 0 auto 8px;
+  padding: 8px;
   border: 1px solid #dbe3ea;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.82);
@@ -176,8 +194,8 @@
   justify-content: center;
   gap: 6px;
   min-width: 0;
-  min-height: 34px;
-  padding: 6px 8px;
+  min-height: 30px;
+  padding: 5px 8px;
   border: 1px solid #e2e8f0;
   border-radius: 999px;
   background: #f8fafc;
@@ -233,8 +251,9 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(190px, 0.78fr)) minmax(280px, 1.25fr);
   gap: 10px;
+  width: 100%;
   max-width: 1720px;
-  margin: 0 auto 10px;
+  margin: 0 auto 8px;
 }
 
 .mobile-demo-stage-metric,
@@ -250,8 +269,8 @@
   grid-template-columns: 22px minmax(0, 1fr);
   gap: 2px 8px;
   align-items: center;
-  min-height: 86px;
-  padding: 10px 12px;
+  min-height: 72px;
+  padding: 8px 10px;
   border-radius: 14px;
 }
 
@@ -291,8 +310,8 @@
 
 .mobile-demo-stage-log-card {
   min-width: 0;
-  min-height: 86px;
-  padding: 10px 12px;
+  min-height: 72px;
+  padding: 8px 10px;
   border-radius: 14px;
 }
 
@@ -333,8 +352,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  max-width: 1720px;
-  margin: 0 auto 10px;
+  margin: 0 auto 8px;
 }
 
 .mobile-demo-stage-role {
@@ -342,8 +360,8 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  min-height: 42px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 6px 12px;
   border-radius: 13px;
 }
 
@@ -368,18 +386,23 @@
 }
 
 .mobile-demo-stage-grid {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(230px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
   gap: 12px;
-  align-items: start;
   max-width: 1720px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .mobile-demo-stage-panel {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   border: 1px solid #dbe3ea;
   border-radius: 22px;
@@ -412,8 +435,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 56px;
-  padding: 10px 12px;
+  min-height: 40px;
+  padding: 6px 10px;
   border-bottom: 1px solid #edf2f7;
   background: var(--stage-accent-soft);
 }
@@ -479,15 +502,25 @@
 
 .mobile-demo-stage-device {
   display: grid;
-  min-height: 0;
-  padding: 10px;
+  place-items: center;
+  padding: 8px;
   background: #f8fafc;
 }
 
+.lra-stage-phone {
+  position: relative;
+}
+
+.lra-stage-phone iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
 .mobile-demo-stage-frame {
-  width: 100%;
-  height: calc(100dvh - 292px);
-  min-height: 410px;
+  width: 390px;
+  height: 600px;
   border: 0;
   border-radius: 18px;
   background: #071014;
@@ -498,14 +531,9 @@
   .mobile-demo-stage {
     padding: 16px 18px;
   }
-
-  .mobile-demo-stage-frame {
-    height: calc(100dvh - 292px);
-    min-height: 640px;
-  }
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 900px) {
   .mobile-demo-stage-strip {
     grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr);
   }
@@ -520,11 +548,8 @@
   }
 
   .mobile-demo-stage-grid {
-    grid-template-columns: repeat(2, minmax(260px, 1fr));
-  }
-
-  .mobile-demo-stage-frame {
-    height: 720px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 }
 
@@ -557,10 +582,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .mobile-demo-stage-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .mobile-demo-stage-panel {
     border-radius: 18px;
   }
@@ -571,8 +592,4 @@
     gap: 2px;
   }
 
-  .mobile-demo-stage-frame {
-    height: 720px;
-    min-height: 620px;
-  }
 }

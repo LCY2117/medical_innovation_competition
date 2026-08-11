@@ -1,13 +1,16 @@
 import hmac
 import hashlib
 import threading
+import socket
 import time
 import uuid
 from collections import defaultdict, deque
 from urllib.parse import quote
 
+import qrcode
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import Response
+from qrcode.image.svg import SvgPathImage
 
 from app.core.config import Settings
 from app.core.frontend import frontend_health
@@ -18,6 +21,7 @@ from app.models.schemas import (
     AedSiteListResponse,
     AedSiteUpsertReq,
     AuthCodeLoginReq,
+    GeoPoint,
     AuthCodeLoginResponse,
     AuthCodeRegisterReq,
     AuthCodeRequestReq,
@@ -51,6 +55,68 @@ from app.models.schemas import (
 from app.services.auth import AuthService
 from app.services.incidents import IncidentService
 
+
+def _is_preferred_lan_ip(ip: str) -> bool:
+    """Keep private LAN addresses, drop loopback / proxy-TUN / CGNAT / link-local."""
+    if not ip or ip.startswith("127.") or ip.startswith("169.254."):
+        return False
+    parts = ip.split(".")
+    if len(parts) != 4:
+        return False
+    try:
+        first, second = int(parts[0]), int(parts[1])
+    except ValueError:
+        return False
+    # 198.18.0.0/15 benchmark range (used by proxy TUN adapters)
+    if first == 198 and 18 <= second <= 19:
+        return False
+    # 100.64.0.0/10 CGNAT
+    if first == 100 and 64 <= second <= 127:
+        return False
+    return True
+
+
+def _detect_lan_ips() -> list[str]:
+    """Detect LAN IPv4 addresses, preferring a real private LAN interface."""
+    candidates: list[str] = []
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            probe.connect(("8.8.8.8", 80))
+            ip = probe.getsockname()[0]
+            if ip:
+                candidates.append(ip)
+        except OSError:
+            pass
+        finally:
+            probe.close()
+    except OSError:
+        pass
+    try:
+        hostname = socket.gethostname()
+        for info in socket.getaddrinfo(hostname, None, socket.AF_INET):
+            ip = info[4][0]
+            if ip and ip not in candidates:
+                candidates.append(ip)
+        for ip in socket.gethostbyname_ex(hostname)[2]:
+            if ip and ip not in candidates:
+                candidates.append(ip)
+    except OSError:
+        pass
+
+    def score(ip: str) -> int:
+        if not _is_preferred_lan_ip(ip):
+            return -1
+        first, second = int(ip.split(".")[0]), int(ip.split(".")[1])
+        if first == 192 and second == 168:
+            return 0
+        if first == 10:
+            return 1
+        if first == 172 and 16 <= second <= 31:
+            return 2
+        return 3
+
+    return sorted((ip for ip in candidates if score(ip) >= 0), key=score)
 
 class SlidingWindowRateLimiter:
     def __init__(self) -> None:
@@ -229,6 +295,72 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
                 outcome="denied",
             )
             raise HTTPException(status_code=403, detail="终端 userId 与登录账号不一致")
+
+    @router.get("/map/config")
+    async def map_config() -> dict:
+        # The browser-side AK is intentionally limited to the public map SDK
+        # configuration; server-side service credentials are never returned.
+        provider = settings.map_provider.strip().lower()
+        return {
+            "provider": provider,
+            "baiduWebAk": settings.baidu_web_ak if provider == "baidu" else None,
+        }
+
+    @router.get("/map/distance")
+    async def map_distance(
+        fromLat: float = Query(..., description="璧风偣绾害"),
+        fromLng: float = Query(..., description="璧风偣缁忓害"),
+        toLat: float = Query(..., description="缁堢偣绾害"),
+        toLng: float = Query(..., description="缁堢偣缁忓害"),
+    ) -> dict:
+        result = service.spatial_provider.distance_meters(
+            GeoPoint(latitude=fromLat, longitude=fromLng),
+            GeoPoint(latitude=toLat, longitude=toLng),
+        )
+        return {
+            "meters": result.meters,
+            "durationSec": result.durationSec,
+            "source": result.source,
+        }
+
+    @router.get("/demo/links")
+    async def demo_links(request: Request) -> dict:
+        """Return LAN-reachable demo entry URLs (for the big-screen QR code)."""
+        lan_ips = _detect_lan_ips()
+        if settings.lan_ip:
+            lan_ips = [settings.lan_ip] + [ip for ip in lan_ips if ip != settings.lan_ip]
+        hostname = request.url.hostname or "127.0.0.1"
+        is_loopback = hostname in ("localhost", "127.0.0.1", "::1") or hostname.startswith("127.")
+        host = lan_ips[0] if (lan_ips and is_loopback) else hostname
+        scheme = request.url.scheme
+        # Behind an OpenResty reverse proxy the public port arrives as
+        # X-Forwarded-Port (e.g. 443); fall back to the local bind port.
+        forwarded_port = request.headers.get("x-forwarded-port")
+        port = int(forwarded_port) if forwarded_port and forwarded_port.isdigit() else settings.port
+        base_url = f"{scheme}://{host}" if port in (80, 443) else f"{scheme}://{host}:{port}"
+        return {
+            "baseUrl": base_url,
+            "lanIps": lan_ips,
+            "port": port,
+            "mobileDemoUrl": f"{base_url}/mobile-demo",
+        }
+
+    @router.get("/demo/qr")
+    async def demo_qr(text: str = Query(..., min_length=1, max_length=512)) -> Response:
+        """Generate a QR-code SVG for the given text."""
+        qr = qrcode.QRCode(
+            border=4,
+            box_size=10,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+        )
+        qr.add_data(text)
+        qr.make(fit=True)
+        image = qr.make_image(image_factory=SvgPathImage, fill_color="#0a1520")
+        return Response(
+            content=image.to_string(),
+            media_type="image/svg+xml",
+            headers={"Cache-Control": "no-store"},
+        )
 
     @router.get("/health", response_model=HealthResponse)
     async def health() -> HealthResponse:

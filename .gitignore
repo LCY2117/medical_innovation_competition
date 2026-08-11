@@ -56,3 +56,9 @@ output/
 *.db-wal
 
 # Keep data files (csv/json/md etc.) tracked by default as requested
+
+# Backup / packaging / runtime artifacts
+*.bak*
+*.bak_*
+*.zip
+server(web)/data/
