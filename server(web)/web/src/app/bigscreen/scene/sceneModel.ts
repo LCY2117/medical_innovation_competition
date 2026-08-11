@@ -323,25 +323,27 @@ export function buildSceneModel(
   // 事件驱动的角色移动目标：点位随事件阶段设置目标，渲染层做平滑插值动画
   const patientNodeForMove = nodes.find((node) => node.kind === 'patient');
   const aedNodesForMove = nodes.filter((node) => node.kind === 'aed');
-  // 到达患者旁时停在侧旁错开的位置，避免标签重叠（RUNNER 站患者右下，PRIME 站左上）
+  // 到达患者旁：点位与患者几乎重合（约 5 米内的物理偏移），
+  // 仅斜向微错开避免完全重叠，标签由标签层的碰撞避让自动分置两侧
   const approachTarget = (
     target: SceneNode,
     slot: 'runner' | 'prime',
   ): { x: number; y: number; latitude: number | null; longitude: number | null } => {
-    const dx = slot === 'runner' ? 24 : -24;
-    const dy = slot === 'runner' ? -18 : 18;
+    // runner 站患者东南（东 3m 南 4m），prime 站患者西北（西 3m 北 4m），总偏移 5 米
+    const westMeters = slot === 'runner' ? -3 : 3;
+    const northMeters = slot === 'runner' ? -4 : 4;
     const metersPerDegreeLat = 111320;
     const metersPerDegreeLng = 111320 * Math.cos((centerLat * Math.PI) / 180);
     return {
-      x: target.x + dx,
-      y: target.y + dy,
+      x: target.x - westMeters / metersPerUnit,
+      y: target.y + northMeters / metersPerUnit,
       latitude:
         typeof target.latitude === 'number'
-          ? target.latitude + (dy * metersPerUnit) / metersPerDegreeLat
+          ? target.latitude + northMeters / metersPerDegreeLat
           : null,
       longitude:
         typeof target.longitude === 'number'
-          ? target.longitude + (dx * metersPerUnit) / metersPerDegreeLng
+          ? target.longitude - westMeters / metersPerDegreeLng
           : null,
     };
   };
