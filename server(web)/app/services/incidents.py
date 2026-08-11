@@ -846,10 +846,32 @@ class IncidentService:
         return MutationResponse(incidentId=incident_id, phase=state.phase)
 
     async def bootstrap_demo(self) -> demoBootstrapResponse:
+        # 保留手机端（MOBILE_WEB）在线客户端，初始化时不清掉真实手机端注册
+        existing_mobile = {
+            uid: c
+            for uid, c in self.clients.items()
+            if getattr(c, "deviceType", "") == "MOBILE_WEB"
+        }
         self.clients = {}
         self.aed_sites = {}
-        incident_id = self._new_incident()
-        self.current_incident_id = incident_id
+        # 固定演示事件：复用当前事件（只重置场景，不新建 incidentId），
+        # 保证手机端提前准备的张医生网址与电脑大屏落在同一个事件上
+        if self.current_incident_id and self.current_incident_id in self.incidents:
+            incident_id = self.current_incident_id
+            state = self.incidents[incident_id]
+            state.phase = "CREATED"
+            state.sos = self._new_sos(status="MONITORING", start_ts=None)
+            state.roles = self._new_roles()
+            state.patientUserId = None
+            state.dispatchSource = None
+            state.dispatchRationale = {}
+            # 保留 aiTasks：手机端提前发布的 AI 任务在演示大屏上继续展示
+            task = self.sos_tasks.get(incident_id)
+            if task and not task.done():
+                task.cancel()
+        else:
+            incident_id = self._new_incident()
+            self.current_incident_id = incident_id
 
         demo_locations = {
             "patient": GeoPoint(latitude=39.916156, longitude=116.465571, label="交通和苑 8 号楼前广场（患者现场）", floor="1F", source="demo"),
@@ -950,6 +972,8 @@ class IncidentService:
         self.register_client("demo-runner2", "跑腿小王", "小区志愿者服务队", "身体素质优秀", "退伍军人 / 志愿者", "退伍军人，体能出色，跑得快，熟悉小区各栋楼位置，可快速取送物资", "ANDROID", demo_locations["runner2"], demo_health["runner2"])
         self.register_client("demo-runner3", "跑腿老李", "小区业主", "身体状态一般", "退休人员", "对楼栋位置不熟，体力一般，可协助简单取送", "ANDROID", demo_locations["runner3"], demo_health["runner3"])
         self.register_client("demo-runner4", "跑腿小赵", "交通和苑便利店", "身体素质良好", "外卖骑手 / 社区商户", "便利店店员，熟悉小区楼栋与动线，配送快，可快速取送物资", "ANDROID", demo_locations["runner4"], demo_health["runner4"])
+        # 保留手机端注册（MOBILE_WEB），手机端提前进入后仍可继续发布/操作任务
+        self.clients.update(existing_mobile)
         self.upsert_aed_site("南门岗亭 AED", demo_locations["aed1"], access_notes="南门岗亭内红色 AED 箱，24 小时可取用", site_id="demo-aed-1")
         self.upsert_aed_site("车库入口 AED", demo_locations["aed2"], access_notes="车库入口岗亭处，24 小时可取用", site_id="demo-aed-2")
 
