@@ -367,6 +367,7 @@ class AiTaskState(BaseModel):
     requiredSkill: str = "fetch"
     priority: int = 3
     locationLabel: str | None = None
+    targetLocation: GeoPoint | None = None
     createdBy: str = ""
     createdRole: str = ""
     status: str = "PENDING"

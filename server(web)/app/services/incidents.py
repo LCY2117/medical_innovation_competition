@@ -260,7 +260,7 @@ class IncidentService:
             except Exception:
                 pass
 
-    async def create_ai_task(self, incident_id: str, requester_user_id: str, message: str) -> AiTaskState:
+    async def create_ai_task(self, incident_id: str, requester_user_id: str, message: str) -> list[AiTaskState]:
         state = self.incidents.get(incident_id)
         if state is None:
             raise HTTPException(status_code=404, detail="Incident not found")
@@ -269,22 +269,8 @@ class IncidentService:
             raise HTTPException(status_code=404, detail="Requester client not registered")
         patient = self.clients.get(state.patientUserId or "")
         patient_note = patient.profileBio if patient else None
-        spec = await asyncio.to_thread(self.ai_task_planner.parse_task, message, requester, patient_note)
+        specs = await asyncio.to_thread(self.ai_task_planner.parse_tasks, message, requester, patient_note)
         now = self._now_ms()
-        task = AiTaskState(
-            taskId=f"ai-{uuid.uuid4().hex[:8]}",
-            title=spec.title,
-            description=spec.description,
-            requiredSkill=spec.required_skill,
-            priority=spec.priority,
-            locationLabel=spec.location_label,
-            createdBy=requester_user_id,
-            createdRole=requester.assignedRole or "",
-            createdAt=now,
-            updatedAt=now,
-            requires=spec.requires or [],
-            statusLogs=[{"ts": now, "type": "CREATED", "userId": requester_user_id, "note": spec.description}],
-        )
         busy = self._ai_task_busy_user_ids(state)
         candidates = [
             client
@@ -295,18 +281,37 @@ class IncidentService:
             and client.userId not in busy
             and not self.ai_task_planner.health_risk(client)
         ]
-        task.assignableUserIds = [client.userId for client in candidates]
-        self._refresh_task_scores(state, task)
-        task.assignableUserIds = sorted(
-            task.assignableUserIds,
-            key=lambda uid: task.matchScores.get(uid, -1000),
-            reverse=True,
-        )
-        state.aiTasks[task.taskId] = task
-        state.logs.append(IncidentLogEntry(ts=now, msg=f"AI 任务创建：{task.title}（发起 {requester.displayName}）"))
+        tasks: list[AiTaskState] = []
+        for spec in specs:
+            task = AiTaskState(
+                taskId=f"ai-{uuid.uuid4().hex[:8]}",
+                title=spec.title,
+                description=spec.description,
+                requiredSkill=spec.required_skill,
+                priority=spec.priority,
+                locationLabel=spec.location_label,
+                createdBy=requester_user_id,
+                createdRole=requester.assignedRole or "",
+                createdAt=now,
+                updatedAt=now,
+                requires=spec.requires or [],
+                statusLogs=[{"ts": now, "type": "CREATED", "userId": requester_user_id, "note": spec.description}],
+            )
+            task.assignableUserIds = [client.userId for client in candidates]
+            self._refresh_task_scores(state, task)
+            task.assignableUserIds = sorted(
+                task.assignableUserIds,
+                key=lambda uid: task.matchScores.get(uid, -1000),
+                reverse=True,
+            )
+            task.targetLocation = self._task_target_location(state, task)
+            state.aiTasks[task.taskId] = task
+            tasks.append(task)
+        for task in tasks:
+            state.logs.append(IncidentLogEntry(ts=now, msg=f"AI 任务创建：{task.title}（发起 {requester.displayName}）"))
         self._persist()
         await self._broadcast_state_async(incident_id)
-        return task
+        return tasks
 
     async def accept_ai_task(self, incident_id: str, task_id: str, user_id: str) -> AiTaskState:
         state = self.incidents.get(incident_id)

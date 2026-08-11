@@ -32,9 +32,11 @@ SYSTEM_PROMPT = (
     "priority 取 1-5（涉及出血、窒息等紧急情况给高值）；"
     "locationLabel 在需求未指明地点时返回 null；"
     "requires 是完成任务所需的物资或技能清单（数组）。"
+    "一条求助可能包含多个并列需求（例如同时要止血绷带和速效救心丸），必须拆分为多个独立任务；"
+    "只有单一需求时也返回只含一个任务的数组。"
     '只返回紧凑 JSON，不要 markdown 围栏，格式为 '
-    '{"task":{"title":"…","description":"…","requiredSkill":"fetch|save|guide|coordinate",'
-    '"priority":3,"locationLabel":null},"requires":["…"]}'
+    '{"tasks":[{"task":{"title":"…","description":"…","requiredSkill":"fetch|save|guide|coordinate",'
+    '"priority":3,"locationLabel":null},"requires":["…"]}]}'
 )
 
 # 资质分规则：requiredSkill -> (关键词, 加分)
@@ -108,13 +110,17 @@ class AiTaskPlanner:
     # ------------------------------------------------------------------
     # 1. AI 解析：自然语言 -> TaskSpec（失败走关键词兜底，永不阻塞）
     # ------------------------------------------------------------------
-    def parse_task(self, demand: str, requester: ClientInfo | None = None, patient_note: str | None = None) -> TaskSpec:
-        spec = self._parse_with_llm(demand, requester, patient_note)
-        if spec is None:
-            spec = self._parse_with_rules(demand)
-        if not spec.description:
-            spec.description = demand.strip()
-        return spec
+    def parse_tasks(self, demand: str, requester: ClientInfo | None = None, patient_note: str | None = None) -> list[TaskSpec]:
+        specs = self._parse_with_llm(demand, requester, patient_note)
+        if not specs:
+            specs = [self._parse_with_rules(demand)]
+        cleaned = [spec for spec in specs if spec and spec.title.strip()]
+        if not cleaned:
+            cleaned = [TaskSpec(title="临时任务", description=demand.strip())]
+        for spec in cleaned:
+            if not spec.description:
+                spec.description = demand.strip()
+        return cleaned
 
     def _parse_with_llm(self, demand: str, requester: ClientInfo | None, patient_note: str | None) -> TaskSpec | None:
         if not self.api_key:
@@ -155,11 +161,11 @@ class AiTaskPlanner:
         except (error.URLError, error.HTTPError, TimeoutError, json.JSONDecodeError):
             return None
         content = body.get("choices", [{}])[0].get("message", {}).get("content", "")
-        return self._extract_task(content)
+        return self._extract_tasks(content)
 
-    def _extract_task(self, content: str) -> TaskSpec | None:
+    def _extract_tasks(self, content: str) -> list[TaskSpec]:
         if not content:
-            return None
+            return []
         cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip(), flags=re.MULTILINE)
         match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
         raw = match.group(0) if match else cleaned
@@ -168,18 +174,34 @@ class AiTaskPlanner:
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
-            return None
-        task = data.get("task") if isinstance(data, dict) else None
-        if not isinstance(task, dict):
-            return None
-        return TaskSpec(
-            title=str(task.get("title") or ""),
-            description=str(task.get("description") or ""),
-            required_skill=str(task.get("requiredSkill") or SKILL_FETCH),
-            priority=int(task.get("priority") or 3),
-            location_label=task.get("locationLabel"),
-            requires=data.get("requires") if isinstance(data.get("requires"), list) else [],
-        )
+            return []
+        if not isinstance(data, dict):
+            return []
+        # 优先解析 tasks 数组；兼容旧的单任务对象
+        raw_tasks = data.get("tasks")
+        if not isinstance(raw_tasks, list):
+            if isinstance(data.get("task"), dict):
+                raw_tasks = [data]
+            else:
+                return []
+        specs: list[TaskSpec] = []
+        for item in raw_tasks:
+            if not isinstance(item, dict):
+                continue
+            task = item.get("task") if isinstance(item.get("task"), dict) else item
+            if not isinstance(task, dict):
+                continue
+            specs.append(
+                TaskSpec(
+                    title=str(task.get("title") or ""),
+                    description=str(task.get("description") or ""),
+                    required_skill=str(task.get("requiredSkill") or SKILL_FETCH),
+                    priority=int(task.get("priority") or 3),
+                    location_label=task.get("locationLabel"),
+                    requires=item.get("requires") if isinstance(item.get("requires"), list) else [],
+                )
+            )
+        return specs
 
     def _parse_with_rules(self, demand: str) -> TaskSpec:
         text = demand.strip()

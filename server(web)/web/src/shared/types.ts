@@ -58,6 +58,7 @@ export interface AiTaskState {
   requiredSkill: string;
   priority: number;
   locationLabel: string | null;
+  targetLocation: GeoPoint | null;
   createdBy: string;
   createdRole: string;
   status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';

@@ -2,7 +2,7 @@ import type { AedSite, ClientInfo, IncidentState } from '@/shared/types';
 import type { SpotlightTarget } from '@/shared/spotlight';
 import { hasGuideCompleted, hasRunnerDelivered, hasRunnerPicked, hasPrimeStarted } from '@/shared/domain';
 
-export type SceneNodeKind = 'patient' | 'prime' | 'runner' | 'guide' | 'aed' | 'ambulance';
+export type SceneNodeKind = 'patient' | 'prime' | 'runner' | 'guide' | 'aed' | 'ambulance' | 'ai-task';
 
 export interface SceneNode {
   id: string;
@@ -43,6 +43,7 @@ const COLORS: Record<SceneNodeKind, string> = {
   guide: '#ffc857',
   aed: '#17e5c3',
   ambulance: '#eef6ff',
+  'ai-task': '#ff9f43',
 };
 
 const DEFAULT_LAYOUT: Array<Pick<SceneNode, 'id' | 'kind' | 'x' | 'y'>> = [
@@ -107,6 +108,13 @@ function computePositions(
   // 鏈€灏忛棿璺濓細鎶婅繃浜庨潬杩戠殑鐐规帹寮€锛屼繚璇佸ぇ灞忎笂鏍囪涓庢爣绛句笉閲嶅彔
   // real positions only: label collision is handled by the renderer,
   // so points keep their true physical coordinates
+
+  // 无真实坐标的点（如 AI 任务点）必须始终有位置：落入演示布局
+  for (const point of points) {
+    if (!result.has(point.id) && point.fallback) {
+      result.set(point.id, { x: point.fallback[0], y: point.fallback[1] });
+    }
+  }
 
   // convert final unit positions back to (virtual) lat/lng for real basemaps
   const metersPerDegreeLat = 111320;
@@ -175,6 +183,27 @@ export function buildSceneModel(
       label: site.location.label ?? site.name,
       fallback: fallbackById[`aed-${index + 1}`] ?? [index % 2 === 0 ? -100 : 100, -60 - index * 40],
     })),
+    ...Object.values(incidentState?.aiTasks ?? {}).map((task, index) => ({
+      id: `ai-task-${task.taskId}`,
+      lat: task.targetLocation?.latitude ?? null,
+      lng: task.targetLocation?.longitude ?? null,
+      label: task.title,
+      fallback: [50 + (index % 3) * 70, 80 - Math.floor(index / 3) * 70],
+    })),
+    ...Object.values(incidentState?.aiTasks ?? {})
+      .map((task, index) => {
+        if (task.status !== 'ACTIVE' || !task.runnerUserId) return null;
+        const rc = clients.find((c) => c.userId === task.runnerUserId);
+        if (!rc?.location) return null;
+        return {
+          id: `ai-runner-${task.taskId}`,
+          lat: rc.location.latitude,
+          lng: rc.location.longitude,
+          label: rc.displayName ?? 'AI 执行员',
+          fallback: [30 + (index % 2) * 90, -130 + Math.floor(index / 2) * 50],
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null),
   ];
 
   const { positions, latLng, metersPerUnit } = computePositions(points, centerLat, centerLng);
@@ -248,6 +277,30 @@ export function buildSceneModel(
       `AED-${index + 1}`,
       site.status === 'AVAILABLE',
     );
+  });
+
+  // AI 临时任务点：PENDING 琥珀 / ACTIVE 青色 / 已完成灰
+  Object.values(incidentState?.aiTasks ?? {}).forEach((task) => {
+    const before = nodes.length;
+    pushNode(
+      `ai-task-${task.taskId}`,
+      'ai-task',
+      task.title,
+      `${task.status === 'PENDING' ? '待接单' : task.status === 'ACTIVE' ? '执行中' : '已完成'} · 优先级${task.priority}`,
+      task.status === 'ACTIVE',
+    );
+    if (nodes.length > before) {
+      const taskNode = nodes[nodes.length - 1];
+      taskNode.color =
+        task.status === 'PENDING' ? '#ffc857' : task.status === 'ACTIVE' ? '#4be3ff' : '#8a94a6';
+    }
+  });
+  // ACTIVE 任务的 runner 位置节点（用于画到任务点的流动连线）
+  Object.values(incidentState?.aiTasks ?? {}).forEach((task) => {
+    if (task.status !== 'ACTIVE' || !task.runnerUserId) return;
+    const rc = clients.find((c) => c.userId === task.runnerUserId);
+    if (!rc?.location) return;
+    pushNode(`ai-runner-${task.taskId}`, 'runner', rc.displayName ?? 'AI 执行员', 'AI 任务执行中', true);
   });
 
   // 救护车：仅在事件推进到救护阶段出现
@@ -361,6 +414,19 @@ export function buildSceneModel(
     if (primeNode && hasPrimeStarted(incidentState)) {
       links.push({ id: 'fly-prime', from: 'prime', to: 'patient', kind: 'fly', active: true });
     }
+  }
+
+  // AI 任务 runner → 任务点 流动连线（仅执行中）
+  for (const task of Object.values(incidentState?.aiTasks ?? {})) {
+    if (task.status !== 'ACTIVE' || !task.runnerUserId) continue;
+    if (!nodes.some((n) => n.id === `ai-runner-${task.taskId}`)) continue;
+    links.push({
+      id: `fly-ai-${task.taskId}`,
+      from: `ai-runner-${task.taskId}`,
+      to: `ai-task-${task.taskId}`,
+      kind: 'fly',
+      active: true,
+    });
   }
 
   const radarTarget =

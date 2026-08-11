@@ -823,17 +823,17 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
         )
         return response
 
-    @router.post("/incidents/{incident_id}/ai-tasks", response_model=AiTaskState)
+    @router.post("/incidents/{incident_id}/ai-tasks", response_model=list[AiTaskState])
     async def create_ai_task(
         incident_id: str,
         req: CreateAiTaskReq,
         request: Request,
         authorization: str | None = Header(default=None),
         x_demo_admin_token: str | None = Header(default=None),
-    ) -> AiTaskState:
+    ) -> list[AiTaskState]:
         require_actor_when_public_demo_is_protected(req.userId, request, authorization, x_demo_admin_token)
         rate_limit(request, "actor", settings.rate_limit_actor_per_minute, req.userId)
-        task = await service.create_ai_task(incident_id, req.userId, req.message)
+        tasks = await service.create_ai_task(incident_id, req.userId, req.message)
         audit(
             request,
             "ai_task_created",
@@ -841,9 +841,9 @@ def build_rest_router(service: IncidentService, auth_service: AuthService, setti
             actor_id=req.userId,
             target_type="incident",
             target_id=incident_id,
-            metadata={"taskId": task.taskId},
+            metadata={"taskIds": [t.taskId for t in tasks]},
         )
-        return task
+        return tasks
 
     @router.post("/incidents/{incident_id}/ai-tasks/{task_id}/accept", response_model=AiTaskState)
     async def accept_ai_task(

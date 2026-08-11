@@ -1189,9 +1189,12 @@ function MobileApp() {
       return;
     }
     await runAction('ai-create', async () => {
-      const task = await createAiTask(incident.incidentId, user.userId, message, token);
+      const tasks = await createAiTask(incident.incidentId, user.userId, message, token);
       setAiTaskMessage('');
-      return `AI 任务已创建：${task.title}`;
+      if (tasks.length > 1) {
+        return `AI 任务已拆分为 ${tasks.length} 个：${tasks.map((t) => t.title).join('、')}`;
+      }
+      return `AI 任务已创建：${tasks[0]?.title ?? '临时任务'}`;
     });
   }
 

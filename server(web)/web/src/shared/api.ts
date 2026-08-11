@@ -253,7 +253,7 @@ export async function createAiTask(
   userId: string,
   message: string,
   token: string,
-): Promise<AiTaskState> {
+): Promise<AiTaskState[]> {
   return requestJson(
     `/incidents/${encodeURIComponent(incidentId)}/ai-tasks`,
     {
