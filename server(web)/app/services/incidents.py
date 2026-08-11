@@ -568,6 +568,7 @@ class IncidentService:
         state.dispatchSource = None
         state.dispatchRationale = {}
         state.aedSites = self.list_aed_sites()
+        state.aiTasks = {}
         state.logs = [IncidentLogEntry(ts=self._now_ms(), msg="Incident reset")]
 
         task = self.sos_tasks.get(self.current_incident_id)
