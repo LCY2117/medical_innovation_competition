@@ -1730,7 +1730,8 @@ function MobileApp() {
             </div>
             <span className="mobile-count">{(incident?.aiTasks ? Object.keys(incident.aiTasks).length : 0)}</span>
           </div>
-          <p className="mobile-ai-hint">用一句话描述临时任务，AI 拆解需求，系统按距离与资质动态匹配候选端。</p>
+          <p className="mobile-ai-hint">指挥台用一句话描述临时任务，AI 拆解需求，系统按距离与资质动态匹配候选端。</p>
+          {user?.userId === 'demo-prime' && (
           <div className="mobile-ai-input-row">
             <textarea
               value={aiTaskMessage}
@@ -1746,6 +1747,7 @@ function MobileApp() {
               {busyAction === 'ai-create' ? 'AI 解析中...' : '智能派发'}
             </button>
           </div>
+          )}
 
           {incident?.aiTasks && Object.values(incident.aiTasks)
             .sort((a, b) => b.createdAt - a.createdAt)
@@ -1820,7 +1822,7 @@ function MobileApp() {
               </div>
             ))}
           {(!incident?.aiTasks || Object.keys(incident.aiTasks).length === 0) && (
-            <div className="mobile-empty-state compact">暂无 AI 任务，用上方输入框发起第一个任务。</div>
+            <div className="mobile-empty-state compact">暂无 AI 任务，等待指挥台派发。</div>
           )}
         </div>
       </section>

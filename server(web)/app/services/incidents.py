@@ -934,8 +934,8 @@ class IncidentService:
         self.register_client("demo-prime", "张医生", "市医院急救科", "身体状态一般", "医生 / 专业急救人员", "急救科医生，熟悉 CPR 和 AED 处置", "ANDROID", demo_locations["doctor"], demo_health["doctor"])
         self.register_client("demo-runner", "小区物业小周", "交通和苑物业", "身体素质良好", "有一定急救常识", "小区物业员工，熟悉各楼栋和单元动线，负责日常巡检", "ANDROID", demo_locations["runner"], demo_health["runner"])
         self.register_client("demo-guide", "安保老刘", "交通和苑安保部", "身体状态一般", "安保 / 物业 / 场地协调人员", "熟悉小区出入口、单元门和救护车通道", "ANDROID", demo_locations["guide"], demo_health["guide"])
-        self.register_client("demo-runner2", "志愿者小王", "小区志愿者服务队", "身体素质优秀", "退伍军人 / 志愿者", "退伍军人，体能出色，跑得快，熟悉小区各栋楼位置，可快速取送物资", "ANDROID", demo_locations["runner2"], demo_health["runner2"])
-        self.register_client("demo-runner3", "业主老李", "小区业主", "身体状态一般", "退休人员", "对楼栋位置不熟，体力一般，可协助简单取送", "ANDROID", demo_locations["runner3"], demo_health["runner3"])
+        self.register_client("demo-runner2", "跑腿小王", "小区志愿者服务队", "身体素质优秀", "退伍军人 / 志愿者", "退伍军人，体能出色，跑得快，熟悉小区各栋楼位置，可快速取送物资", "ANDROID", demo_locations["runner2"], demo_health["runner2"])
+        self.register_client("demo-runner3", "跑腿老李", "小区业主", "身体状态一般", "退休人员", "对楼栋位置不熟，体力一般，可协助简单取送", "ANDROID", demo_locations["runner3"], demo_health["runner3"])
         self.upsert_aed_site("南门岗亭 AED", demo_locations["aed1"], access_notes="南门岗亭内红色 AED 箱，24 小时可取用", site_id="demo-aed-1")
         self.upsert_aed_site("车库入口 AED", demo_locations["aed2"], access_notes="车库入口岗亭处，24 小时可取用", site_id="demo-aed-2")
 

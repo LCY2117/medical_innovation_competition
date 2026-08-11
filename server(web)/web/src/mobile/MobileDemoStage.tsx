@@ -48,6 +48,23 @@ const personaTone: Record<string, string> = {
   guide: 'guide',
 };
 
+// 舞台默认只挂主线 4 端；AI 任务派发后，候选跑腿端再动态加入
+const CORE_TERMINAL_KEYS = ['demo-patient', 'demo-prime', 'demo-runner', 'demo-guide'];
+const TERMINAL_ORDER: Record<string, number> = {
+  'demo-patient': 0,
+  'demo-prime': 1,
+  'demo-runner': 2,
+  'demo-guide': 3,
+  'demo-runner2': 4,
+  'demo-runner3': 5,
+  patient: 0,
+  prime: 1,
+  runner: 2,
+  guide: 3,
+  runner2: 4,
+  runner3: 5,
+};
+
 function toSlot(terminal: DemoTerminal): TerminalSlot {
   const persona = terminal.userId.replace('demo-', '');
   const role = personaRole[persona] ?? null;
@@ -383,7 +400,7 @@ function MobiledemoStage() {
         const list = await fetchDemoTerminals();
         if (!cancelled) {
           setTerminalPool(list);
-          setActiveTerminalKeys((current) => current ?? list.map((t) => t.userId));
+          setActiveTerminalKeys((current) => current ?? list.filter((t) => CORE_TERMINAL_KEYS.includes(t.userId)).map((t) => t.userId));
         }
       } catch (error) {
         if (!cancelled) {
@@ -398,6 +415,28 @@ function MobiledemoStage() {
     };
   }, []);
 
+  // AI 任务派发后，候选跑腿端自动加入舞台
+  useEffect(() => {
+    const tasks = Object.values(incident?.aiTasks ?? {});
+    if (tasks.length === 0) {
+      return;
+    }
+    const candidateKeys = new Set<string>();
+    for (const task of tasks) {
+      for (const uid of task.assignableUserIds) {
+        candidateKeys.add(uid);
+      }
+    }
+    if (candidateKeys.size === 0) {
+      return;
+    }
+    setActiveTerminalKeys((current) => {
+      const base = current ?? [];
+      const merged = [...new Set([...base, ...candidateKeys])];
+      return merged.length === base.length ? current : merged;
+    });
+  }, [incident?.aiTasks]);
+
   const activeSlots: TerminalSlot[] = useMemo(() => {
     const usingPool = terminalPool.length > 0;
     const pool = usingPool ? terminalPool : fallbackSlots();
@@ -407,7 +446,8 @@ function MobiledemoStage() {
     );
     return keys
       .map((key) => slotByKey.get(key) ?? fallbackSlots().find((s) => s.key === key))
-      .filter((slot): slot is TerminalSlot => Boolean(slot));
+      .filter((slot): slot is TerminalSlot => Boolean(slot))
+      .sort((a, b) => (TERMINAL_ORDER[a.key] ?? 99) - (TERMINAL_ORDER[b.key] ?? 99));
   }, [terminalPool, activeTerminalKeys]);
 
   const addTerminal = (userId: string) => {
